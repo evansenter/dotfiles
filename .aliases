@@ -10,7 +10,7 @@ alias -- -="cd -"
 alias d="cd ~/Documents/Dropbox"
 alias dl="cd ~/Downloads"
 alias dt="cd ~/Desktop"
-alias p="cd ~/projects"
+alias src="cd ~/Source"
 alias g="git"
 alias h="history"
 alias j="jobs"
@@ -140,5 +140,20 @@ alias afk="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resource
 # Reload the shell (i.e. invoke as a login shell)
 alias reload="exec $SHELL -l"
 
-# Faster npm for Europeans
-command -v npm > /dev/null && alias npme="npm --registry http://registry.npmjs.eu/"
+# Evan's aliases
+alias astyle='astyle --style=google --indent=spaces=2 --indent-switches --indent-cases --indent-namespaces --indent-labels --indent-col1-comments --break-blocks --pad-oper --pad-header --unpad-paren --fill-empty-lines --align-pointer=type --add-brackets --convert-tabs --recursive *.cpp *.c *.h'
+alias ccat="pygmentize -g"
+alias clavius="ssh -R 52698:localhost:52698 evansenter@bc-clavius"
+alias gem_release='rake install && pom && gem release'
+alias git_gc="ruby -e 'Dir[\"/Users/evansenter/Source/*/.git\"].map { |i| i.split(/\//)[0..-2].join(\"/\") }.map { |i| Dir.chdir(i) { print(\"%s\n%s\n\" % [i, %x|git gc|]) } }'"
+alias gitdiff="git difftool -y"
+alias hom="git push heroku master"
+alias mrm="rake db:migrate && rake db:rollback && migrate"
+alias pam="pom && hom"
+alias pnp="git pull && git push"
+alias pob='git push origin $(git symbolic-ref HEAD --short)'
+alias pom="git push origin master"
+alias ssh_pi="ssh evansenter@209.6.200.128"
+alias ssh_pi_local="ssh evansenter@10.0.1.50"
+alias sync_clavius="rsync -avzhe ssh --exclude '*.so' --exclude 'android*' --exclude '*.o' --exclude '*.a' --exclude '*.bin' /Users/evansenter/Source evansenter@bc-clavius:~"
+alias updatedb="sudo /usr/local/bin/update_database"

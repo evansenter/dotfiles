@@ -60,5 +60,27 @@ install zopfli
 
 install homebrew/versions/lua52
 
+# Science stuff
+tap homebrew/science
+
+install tpl
+install elixir
+install unison
+install r
+install erlang
+install lapack
+install leiningen
+install cloc
+install cmake
+install clojure
+install fftw
+install gsl
+install gsl
+install julia
+install mysql
+install sqlite
+install valgrind
+install watch
+
 # Remove outdated versions from the cellar
 cleanup
