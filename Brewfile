@@ -38,7 +38,6 @@ install homebrew/php/php55 --with-gmp
 # Install other useful binaries
 install ack
 install bfg
-#install exiv2
 install foremost
 install git
 install hashpump
@@ -63,22 +62,22 @@ install homebrew/versions/lua52
 # Science stuff
 tap homebrew/science
 
-install tpl
-install elixir
-install unison
-install r
-install erlang
-install lapack
-install leiningen
 install cloc
-install cmake
 install clojure
+install cmake
+install elixir
+install erlang
 install fftw
 install gsl
 install gsl
 install julia
+install lapack
+install leiningen
 install mysql
+install r
 install sqlite
+install tpl
+install unison
 install valgrind
 install watch
 

@@ -145,8 +145,8 @@ alias astyle='astyle --style=google --indent=spaces=2 --indent-switches --indent
 alias ccat="pygmentize -g"
 alias clavius="ssh -R 52698:localhost:52698 evansenter@bc-clavius"
 alias gem_release='rake install && pom && gem release'
-alias git_gc="ruby -e 'Dir[\"/Users/evansenter/Source/*/.git\"].map { |i| i.split(/\//)[0..-2].join(\"/\") }.map { |i| Dir.chdir(i) { print(\"%s\n%s\n\" % [i, %x|git gc|]) } }'"
 alias gitdiff="git difftool -y"
+alias git_gc="ruby -e 'Dir[\"/Users/evansenter/Source/*/.git\"].map { |i| i.split(/\//)[0..-2].join(\"/\") }.map { |i| Dir.chdir(i) { print(\"%s\n%s\n\" % [i, %x|git gc|]) } }'"
 alias hom="git push heroku master"
 alias mrm="rake db:migrate && rake db:rollback && migrate"
 alias pam="pom && hom"
