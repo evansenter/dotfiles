@@ -58,7 +58,7 @@
 	contributors = shortlog --summary --numbered
 
 	# Evan's aliases
-	df = difftool -y
+	dt = difftool -y
 
 	pnp = !git pull && git push
 
