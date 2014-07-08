@@ -57,6 +57,19 @@
 	# List contributors with number of commits
 	contributors = shortlog --summary --numbered
 
+	# Evan's aliases
+	df = difftool -y
+
+	pnp = !git pull && git push
+
+	pom = push origin master
+	phm = push heroku master
+	pam = !git push origin master && git push heroku master
+
+	pob = !git push origin $(git symbolic-ref HEAD --short)
+	phb = !git push heroku $(git symbolic-ref HEAD --short)
+	pah = !git push origin $(git symbolic-ref HEAD --short) && git push heroku $(git symbolic-ref HEAD --short)
+
 [apply]
 
 	# Detect whitespace errors when applying a patch
