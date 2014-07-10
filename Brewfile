@@ -73,6 +73,7 @@ install gsl
 install julia
 install lapack
 install leiningen
+install libuv
 install mysql
 install r
 install sqlite
