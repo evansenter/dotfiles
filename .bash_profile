@@ -1,5 +1,4 @@
-# Add `~/bin` to the `$PATH`
-export PATH="$HOME/bin:$PATH";
+source $(brew --prefix)/etc/profile.d/z.sh
 
 # Load the shell dotfiles, and then some:
 # * ~/.path can be used to extend `$PATH`.
