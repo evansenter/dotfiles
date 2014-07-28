@@ -1,0 +1,9 @@
+[ * ]
+softTabs         = true
+tabSize          = 2
+include          = "{$include,.*}"
+exclude          = "{$exclude,.git}"
+
+[ "Makefile.*" ]
+softTabs         = false
+tabSize          = 4
