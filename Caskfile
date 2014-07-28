@@ -4,10 +4,11 @@
 install caskroom/cask/brew-cask
 tap caskroom/versions
 
-cask install adium 2> /dev/null
 cask install airmail 2> /dev/null
 cask install alfred 2> /dev/null
 cask install appcleaner 2> /dev/null
+cask install arq3 2> /dev/null
+cask install atom 2> /dev/null
 cask install bartender 2> /dev/null
 cask install caffeine 2> /dev/null
 cask install diffmerge 2> /dev/null
@@ -16,16 +17,21 @@ cask install dropbox 2> /dev/null
 cask install flux 2> /dev/null
 cask install github 2> /dev/null
 cask install google-chrome 2> /dev/null
-cask install google-chrome-canary 2> /dev/null
 cask install google-drive 2> /dev/null
 cask install istat-menus 2> /dev/null
 cask install keyboard-cleaner 2> /dev/null
+cask install lighttable 2> /dev/null
+cask install macupdate-desktop 2> /dev/null
 cask install mumble 2> /dev/null
+cask install music-manager 2> /dev/null
 cask install onyx 2> /dev/null
 cask install papers 2> /dev/null
 cask install path-finder 2> /dev/null
 cask install rightzoom 2> /dev/null
+cask install textmate2 2> /dev/null
 cask install the-unarchiver 2> /dev/null
+cask install totalfinder 2> /dev/null
+cask install tower 2> /dev/null
 cask install transmission 2> /dev/null
 cask install virtualbox 2> /dev/null
 cask install vlc 2> /dev/null
