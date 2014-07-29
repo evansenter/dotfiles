@@ -33,6 +33,7 @@ cask install the-unarchiver 2> /dev/null
 cask install totalfinder 2> /dev/null
 cask install tower 2> /dev/null
 cask install transmission 2> /dev/null
+cask install skype 2> /dev/null
 cask install virtualbox 2> /dev/null
 cask install vlc 2> /dev/null
 cask install xld 2> /dev/null

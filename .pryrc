@@ -1,4 +1,5 @@
-Pry.config.pager = false
+Pry.config.pager    = false
+ENV["ENTREZ_EMAIL"] = "evansenter@gmail.com"
 
 require "awesome_print"
 require "benchmark"

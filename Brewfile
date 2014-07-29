@@ -20,6 +20,7 @@ install gnu-sed --default-names
 # Note: don’t forget to add `/usr/local/bin/bash` to `/etc/shells` before running `chsh`.
 install bash
 install bash-completion
+install htop
 
 # Install wget with IRI support
 install wget --enable-iri
@@ -33,7 +34,6 @@ install narwhal
 install vim --override-system-vi
 install homebrew/dupes/grep
 install homebrew/dupes/screen
-install homebrew/php/php55 --with-gmp
 
 # Install other useful binaries
 install ack
@@ -63,14 +63,9 @@ install homebrew/versions/lua52
 tap homebrew/science
 
 install cloc
-install clojure
 install cmake
-install elixir
-install erlang
 install fftw
 install gsl
-install gsl
-install julia
 install lapack
 install leiningen
 install libuv
@@ -79,7 +74,6 @@ install r
 install sqlite
 install tpl
 install unison
-install valgrind
 install watch
 
 # Remove outdated versions from the cellar
