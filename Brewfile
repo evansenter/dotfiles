@@ -65,6 +65,7 @@ tap homebrew/science
 install cloc
 install cmake
 install fftw
+install gcutil
 install gsl
 install lapack
 install leiningen
@@ -75,6 +76,7 @@ install sqlite
 install tpl
 install unison
 install watch
+install z
 
 # Remove outdated versions from the cellar
 cleanup

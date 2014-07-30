@@ -197,6 +197,16 @@ function getcertnames() {
 	fi;
 }
 
+# `m` with no arguments opens the current directory in Textmate, otherwise
+# opens the given location
+function m() {
+	if [ $# -eq 0 ]; then
+		mate .;
+	else
+		mate "$@";
+	fi;
+}
+
 # `s` with no arguments opens the current directory in Sublime Text, otherwise
 # opens the given location
 function s() {
@@ -243,4 +253,9 @@ function o() {
 # small enough for one screen.
 function tre() {
 	tree -aC -I '.git|node_modules|bower_components' --dirsfirst "$@" | less -FRNX;
+}
+
+# Create a new directory and enter it
+function cdl() {
+	cd "$1" && l "$1";
 }

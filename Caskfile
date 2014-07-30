@@ -16,12 +16,12 @@ cask install divvy 2> /dev/null
 cask install dropbox 2> /dev/null
 cask install flux 2> /dev/null
 cask install github 2> /dev/null
+cask install google-chrome-canary 2> /dev/null
 cask install google-chrome 2> /dev/null
 cask install google-drive 2> /dev/null
 cask install istat-menus 2> /dev/null
 cask install keyboard-cleaner 2> /dev/null
 cask install lighttable 2> /dev/null
-cask install macupdate-desktop 2> /dev/null
 cask install mumble 2> /dev/null
 cask install music-manager 2> /dev/null
 cask install onyx 2> /dev/null
@@ -31,7 +31,6 @@ cask install rightzoom 2> /dev/null
 cask install textmate2 2> /dev/null
 cask install the-unarchiver 2> /dev/null
 cask install totalfinder 2> /dev/null
-cask install tower 2> /dev/null
 cask install transmission 2> /dev/null
 cask install skype 2> /dev/null
 cask install virtualbox 2> /dev/null

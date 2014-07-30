@@ -15,7 +15,7 @@ ignore = Name *.out
 ignore = Path Kinetics/sprinzl_trna/2009_sequences/output/rnasubopt/*
 
 # keep log
-log = true
+log = false
 
 # skip asking for confirmations for non-conflicting changes
 auto = true
