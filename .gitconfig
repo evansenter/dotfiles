@@ -119,11 +119,7 @@
 
 	# Detect copies as well as renames
 	renames = copies
-	tool = diffmerge
-
-[difftool "diffmerge"]
-
-	cmd = diffmerge \"$LOCAL\" \"$REMOTE\"
+	tool = Kaleidoscope
 
 [help]
 
@@ -134,13 +130,7 @@
 
 	# Include summaries of merged commits in newly created merge commit messages
 	log = true
-	tool = diffmerge
-
-[mergetool "diffmerge"]
-
-	cmd = "diffmerge --merge --result=\"$MERGED\" \"$LOCAL\" \"$(if test -f \"$BASE\"; then echo \"$BASE\"; else echo \"$LOCAL\"; fi)\" \"$REMOTE\""
-	trustExitCode = true
-
+	tool = Kaleidoscope
 
 [push]
 
@@ -170,3 +160,18 @@
 [url "git://gist.github.com/"]
 
 	insteadOf = "gist:"
+[user]
+	name = Evan Senter
+	email = evansenter@gmail.com
+[filter "media"]
+	clean = git-media-clean %f
+	smudge = git-media-smudge %f
+[mergetool "Kaleidoscope"]
+	cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
+	trustexitcode = true
+[difftool "Kaleidoscope"]
+	cmd = ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
+[difftool]
+	prompt = false
+[mergetool]
+	prompt = false

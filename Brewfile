@@ -62,6 +62,7 @@ install homebrew/versions/lua52
 # Science stuff
 tap homebrew/science
 
+install astyle
 install cloc
 install cmake
 install fftw
