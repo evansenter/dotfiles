@@ -128,6 +128,16 @@ class Array
     mean, sigma = avg, stdev_population
     map { |i| (i - mean) / sigma }
   end
+  
+  def stats
+    {
+      avg:   avg,
+      stdev: stdev_sample,
+      min:   min,
+      max:   max,
+      n:     size
+    }
+  end
 end
 
 class Hash
