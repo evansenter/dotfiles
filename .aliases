@@ -153,13 +153,15 @@ alias ssh_pi_local="ssh evansenter@10.0.1.50"
 alias sync_clavius="rsync -avzhe ssh --exclude '*.so' --exclude 'android*' --exclude '*.o' --exclude '*.a' --exclude '*.bin' /Users/evansenter/Source evansenter@bc-clavius:~"
 alias updatedb="sudo /usr/local/bin/update_database"
 
-export CC=/usr/local/bin/gcc-4.9
-export CXX=/usr/local/bin/g++-4.9
-export CPP=/usr/local/bin/cpp-4.9
-export LD=/usr/local/bin/gcc-4.9
-alias c++=/usr/local/bin/c++-4.9
-alias g++=/usr/local/bin/g++-4.9
-alias gcc=/usr/local/bin/gcc-4.9
-alias cpp=/usr/local/bin/cpp-4.9
-alias ld=/usr/local/bin/gcc-4.9
-alias cc=/usr/local/bin/gcc-4.9
+if [[ "$unamestr" == "Darwin" ]]; then
+	export CC=/usr/local/bin/gcc-4.9
+	export CXX=/usr/local/bin/g++-4.9
+	export CPP=/usr/local/bin/cpp-4.9
+	export LD=/usr/local/bin/gcc-4.9
+	alias c++=/usr/local/bin/c++-4.9
+	alias g++=/usr/local/bin/g++-4.9
+	alias gcc=/usr/local/bin/gcc-4.9
+	alias cpp=/usr/local/bin/cpp-4.9
+	alias ld=/usr/local/bin/gcc-4.9
+	alias cc=/usr/local/bin/gcc-4.9
+fi
