@@ -28,7 +28,7 @@ for option in autocd globstar; do
 done;
 
 # Add tab completion for many Bash commands
-if command -v > /dev/null && [ -f "$(brew --prefix)/etc/bash_completion" ]; then
+if command -v brew >/dev/null 2>&1 && [ -f "$(brew --prefix)/etc/bash_completion" ]; then
 	source "$(brew --prefix)/etc/bash_completion";
 elif [ -f /etc/bash_completion ]; then
 	source /etc/bash_completion;
