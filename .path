@@ -1,0 +1,1 @@
+export CLASSPATH=$HOME/Source/VARNAv3-9/*:$CLASSPATH
