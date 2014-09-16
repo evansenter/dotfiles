@@ -143,13 +143,13 @@ alias reload="exec $SHELL -l"
 # Evan's aliases
 alias astyle='astyle --style=google --indent=spaces=2 --indent-switches --indent-cases --indent-namespaces --indent-labels --indent-col1-comments --break-blocks --pad-oper --pad-header --unpad-paren --fill-empty-lines --align-pointer=type --add-brackets --convert-tabs --recursive *.cpp *.c *.h'
 alias ccat="pygmentize -g"
-alias clavius="ssh -R 52698:localhost:52698 evansenter@bc-clavius"
+alias clavius="ssh evansenter@bc-clavius"
 alias gem_release='rake install && pom && gem release'
 alias git_gc="ruby -e 'Dir[\"/Users/evansenter/Source/*/.git\"].map { |i| i.split(/\//)[0..-2].join(\"/\") }.map { |i| Dir.chdir(i) { print(\"%s\n%s\n\" % [i, %x|git gc|]) } }'"
 alias mrm="rake db:migrate && rake db:rollback && migrate"
 alias mumble='gcutil --service_version="v1" --project="onyx-shoreline-642" ssh --zone="us-central1-a" "instance-1"'
-alias ssh_pi="ssh pi@209.6.200.128"
-alias ssh_pi_local="ssh pi@10.0.1.50"
+alias ssh_pi="ssh pi@rpi"
+alias ssh_pi_local="ssh pi@rpi-local"
 alias sync_clavius="rsync -avzhe ssh --exclude '*.so' --exclude 'android*' --exclude '*.o' --exclude '*.a' --exclude '*.bin' /Users/evansenter/Source evansenter@bc-clavius:~"
 alias updatedb="sudo /usr/local/bin/update_database"
 
