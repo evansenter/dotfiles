@@ -1,6 +1,7 @@
 Pry.config.pager    = false
 ENV["ENTREZ_EMAIL"] = "evansenter@gmail.com"
 
+require "active_support"
 require "awesome_print"
 require "benchmark"
 require "wrnap"
