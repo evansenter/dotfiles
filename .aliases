@@ -148,8 +148,8 @@ alias gem_release='rake install && pom && gem release'
 alias git_gc="ruby -e 'Dir[\"/Users/evansenter/Source/*/.git\"].map { |i| i.split(/\//)[0..-2].join(\"/\") }.map { |i| Dir.chdir(i) { print(\"%s\n%s\n\" % [i, %x|git gc|]) } }'"
 alias mrm="rake db:migrate && rake db:rollback && migrate"
 alias mumble='gcutil --service_version="v1" --project="onyx-shoreline-642" ssh --zone="us-central1-a" "instance-1"'
-alias ssh_pi="ssh pi@rpi"
-alias ssh_pi_local="ssh pi@rpi-local"
+alias ssh_pi="ssh volumio@rpi"
+alias ssh_pi_local="ssh volumio@rpi-local"
 alias sync_clavius="rsync -avzhe ssh --exclude '*.so' --exclude 'android*' --exclude '*.o' --exclude '*.a' --exclude '*.bin' /Users/evansenter/Source evansenter@bc-clavius:~"
 alias updatedb="sudo /usr/local/bin/update_database"
 
