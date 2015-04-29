@@ -217,6 +217,17 @@ function s() {
 	fi;
 }
 
+# `zs` with no arguments opens the current directory in Sublime Text, otherwise
+# opens the given location using z
+function zs() {
+	if [ $# -eq 0 ]; then
+		subl .;
+	else
+		local match="$(z -l "$@" | head -n 1 | tr -s " " | cut -d " " -f 2)"
+		subl "$match";
+	fi;
+}
+
 # `a` with no arguments opens the current directory in Atom Editor, otherwise
 # opens the given location
 function a() {
