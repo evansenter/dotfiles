@@ -224,7 +224,8 @@ function zs() {
 		subl .;
 	else
 		local match="$(z -l "$@" | head -n 1 | tr -s " " | cut -d " " -f 2)"
-		subl "$match";
+		cd "$match";
+		subl .;
 	fi;
 }
 

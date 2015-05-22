@@ -142,7 +142,6 @@ alias reload="exec $SHELL -l"
 
 # Evan's aliases
 alias astyle='astyle --style=google --indent=spaces=2 --indent-switches --indent-cases --indent-namespaces --indent-labels --indent-col1-comments --break-blocks --pad-oper --pad-header --unpad-paren --fill-empty-lines --align-pointer=type --add-brackets --convert-tabs --recursive *.cpp *.c *.h'
-alias ccat="pygmentize -g"
 alias clavius="ssh evansenter@bc-clavius"
 alias gem_release='rake install && pom && gem release'
 alias git_gc="ruby -e 'Dir[\"/Users/evansenter/Source/*/.git\"].map { |i| i.split(/\//)[0..-2].join(\"/\") }.map { |i| Dir.chdir(i) { print(\"%s\n%s\n\" % [i, %x|git gc|]) } }'"
@@ -157,14 +156,14 @@ alias updatedb="sudo /usr/local/bin/update_database"
 
 unamestr=`uname`;
 if [[ "$unamestr" == "Darwin" ]]; then
-	export CC=/usr/local/bin/gcc-4.9
-	export CXX=/usr/local/bin/g++-4.9
-	export CPP=/usr/local/bin/cpp-4.9
-	export LD=/usr/local/bin/gcc-4.9
-	alias c++=/usr/local/bin/c++-4.9
-	alias g++=/usr/local/bin/g++-4.9
-	alias gcc=/usr/local/bin/gcc-4.9
-	alias cpp=/usr/local/bin/cpp-4.9
-	alias ld=/usr/local/bin/gcc-4.9
-	alias cc=/usr/local/bin/gcc-4.9
+	export CC=/usr/local/bin/gcc-5
+	export CXX=/usr/local/bin/g++-5
+	export CPP=/usr/local/bin/cpp-5
+	export LD=/usr/local/bin/gcc-5
+	alias c++=/usr/local/bin/c++-5
+	alias g++=/usr/local/bin/g++-5
+	alias gcc=/usr/local/bin/gcc-5
+	alias cpp=/usr/local/bin/cpp-5
+	alias ld=/usr/local/bin/gcc-5
+	alias cc=/usr/local/bin/gcc-5
 fi
