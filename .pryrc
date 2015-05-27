@@ -1,15 +1,10 @@
 Pry.config.pager    = false
 ENV["ENTREZ_EMAIL"] = "evansenter@gmail.com"
 
-require "active_support"
 require "awesome_print"
 require "benchmark"
 require "wrnap"
-require "diverge"
-require "fileutils"
 require "csv"
-require "open-uri"
-require "nokogiri"
 
 $LOAD_PATH << "."
 
@@ -57,17 +52,13 @@ module Enumerable
 end
 
 class Integer
-  def factorial
+  alias_method :fact, def factorial
     self > 2 ? (2..self).inject(&:*) : (self.zero? ? 1 : self)
   end
 
-  alias :fact :factorial
-
-  def choose(number)
+  alias_method :c, def choose(number)
     fact.to_f / ((self - number).fact * number.fact)
   end
-
-  alias :c :choose
 end
 
 class Array
@@ -82,7 +73,6 @@ class Array
   end
 
   def select_rand(number = 1)
-    # Alexa helped / independently came up with this technique!
     if number >= length
       shuffle
     elsif number >= 1
@@ -96,18 +86,17 @@ class Array
     end
   end
 
-  def expected_value
+  alias_method :first_moment, def expected_value
     # Assumes x = index, p(x) = array[index]
     graphify.map { |array| array.inject(&:*) }.sum
   end
-  alias :first_moment :expected_value
 
   def second_moment
     # Assumes x = index, p(x) = array[index]
     graphify.map { |x, p_x| x ** 2 * p_x }.sum
   end
 
-  def avg
+  alias_method :mean, def avg
     inject(&:+) / length.to_f
   end
 
@@ -129,7 +118,7 @@ class Array
     mean, sigma = avg, stdev_population
     map { |i| (i - mean) / sigma }
   end
-  
+
   def stats
     {
       avg:   avg,
@@ -154,6 +143,10 @@ module PryHelperMethods
     end
   end
 
+  def gaussian_pdf(x, mu, sigma)
+    (1 / (sigma * Math.sqrt(2 * Math::PI))) * (Math::E ** (-0.5 * ((x - mu) / sigma) ** 2))
+  end
+
   def inline_rails
     require "logger"
 
@@ -161,15 +154,6 @@ module PryHelperMethods
     ActiveRecord::Base.logger   = logger if defined?(ActiveRecord)
     ActiveResource::Base.logger = logger if defined?(ActiveResource)
     puts "Logging ActiveRecord::Base and ActiveResource::Base inline."
-  end
-
-  def autobot_helper(name)
-    require "/Users/evansenter/Source/autobot/lib/autobot/helpers/#{name}"
-  end
-
-  def distribution_connect
-     inline_rails
-     autobot_helper("data_loader_mysql_config")
   end
 
   def run_pbs_job(action = nil, pbs_script_name = nil, nodes = "1:clotelabsub:ppn=8")
@@ -209,24 +193,6 @@ module PryHelperMethods
       SH
 
       content.gsub(/^\s*/, "")
-  end
-
-  def merge_gaussian(distributions)
-    distributions.map(&:length).max.times.map { |i| distributions.map { |distribution| distribution[i] || 0 } }.map(&:avg)
-  end
-
-  def gaussian_pdf(x, mu, sigma)
-    (1 / (sigma * Math.sqrt(2 * Math::PI))) * (Math::E ** (-0.5 * ((x - mu) / sigma) ** 2))
-  end
-
-  def fasta_map
-    Dir["*.fa"].map do |file|
-      yield Bio::FlatFile.open(file).first, File.basename(file, ".fa")
-    end
-  end
-
-  def group_map(*lists)
-    lists.inject { |a, b| a.zip(b).map(&:flatten) }
   end
 end
 
