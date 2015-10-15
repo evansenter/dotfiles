@@ -3,7 +3,6 @@ ENV["ENTREZ_EMAIL"] = "evansenter@gmail.com"
 
 require "awesome_print"
 require "benchmark"
-require "wrnap"
 require "csv"
 
 $LOAD_PATH << "."
@@ -53,7 +52,7 @@ end
 
 class Integer
   alias_method :fact, def factorial
-    self > 2 ? (2..self).inject(&:*) : (self.zero? ? 1 : self)
+    self > 2 ? (2..self).inject(&:*) : (zero? ? 1 : self)
   end
 
   alias_method :c, def choose(number)
