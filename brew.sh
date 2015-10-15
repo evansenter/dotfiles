@@ -35,70 +35,51 @@ brew install bash-completion2
 # Install `wget` with IRI support.
 brew install wget --with-iri
 
-# Install RingoJS and Narwhal.
-# Note that the order in which these are installed is important;
-# see http://git.io/brew-narwhal-ringo.
-brew install ringojs
-brew install narwhal
-
 # Install more recent versions of some OS X tools.
 brew install vim --override-system-vi
 brew install homebrew/dupes/grep
 brew install homebrew/dupes/openssh
 brew install homebrew/dupes/screen
-brew install homebrew/php/php55 --with-gmp
 
-# Install font tools.
-brew tap bramstein/webfonttools
-brew install sfnt2woff
-brew install sfnt2woff-zopfli
-brew install woff2
-
-# Install some CTF tools; see https://github.com/ctfs/write-ups.
-brew install aircrack-ng
-brew install bfg
-brew install binutils
-brew install binwalk
-brew install cifer
-brew install dex2jar
-brew install dns2tcp
-brew install fcrackzip
-brew install foremost
-brew install hashpump
-brew install hydra
-brew install john
-brew install knock
-brew install netpbm
-brew install nmap
-brew install pngcheck
-brew install socat
-brew install sqlmap
-brew install tcpflow
-brew install tcpreplay
-brew install tcptrace
-brew install ucspi-tcp # `tcpserver` etc.
-brew install xpdf
-brew install xz
-
-# Install other useful binaries.
+# Install other useful binaries
 brew install ack
-brew install dark-mode
-#brew install exiv2
+brew install bfg
+brew install foremost
 brew install git
-brew install git-lfs
+brew install hashpump
 brew install imagemagick --with-webp
-brew install lua
 brew install lynx
+brew install nmap
+brew install nvm
 brew install p7zip
 brew install pigz
 brew install pv
 brew install rename
 brew install rhino
-brew install speedtest_cli
-brew install ssh-copy-id
+brew install sqlmap
 brew install tree
 brew install webkit2png
 brew install zopfli
+
+# Science stuff
+brew tap homebrew/science
+
+brew install astyle
+brew install cloc
+brew install cmake
+brew install fftw
+brew install gcutil
+brew install gsl
+brew install lapack
+brew install leiningen
+brew install libuv
+brew install mysql
+brew install r
+brew install sqlite
+brew install tpl
+brew install unison
+brew install watch
+brew install z
 
 # Remove outdated versions from the cellar.
 brew cleanup
