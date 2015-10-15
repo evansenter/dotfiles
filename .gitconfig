@@ -38,6 +38,9 @@
 	# Interactive rebase with the given number of latest commits
 	reb = "!r() { git rebase -i HEAD~$1; }; r"
 
+	# Remove the old tag with this name and tag the latest commit with it.
+	retag = "!r() { git tag -d $1 && git push origin :refs/tags/$1 && git tag $1; }; r"
+
 	# Find branches containing commit
 	fb = "!f() { git branch -a --contains $1; }; f"
 
@@ -57,11 +60,21 @@
 	# List contributors with number of commits
 	contributors = shortlog --summary --numbered
 
+	# Merge GitHub pull request on top of the `master` branch
+	mpr = "!f() { \
+		if [ $(printf \"%s\" \"$1\" | grep '^[0-9]\\+$' > /dev/null; printf $?) -eq 0 ]; then \
+			git fetch origin refs/pull/$1/head:pr/$1 && \
+			git rebase master pr/$1 && \
+			git checkout master && \
+			git merge pr/$1 && \
+			git branch -D pr/$1 && \
+			git commit --amend -m \"$(git log -1 --pretty=%B)\n\nCloses #$1.\"; \
+		fi \
+	}; f"
+
 	# Evan's aliases
-	dt = difftool -y
-
+	dt  = difftool -y
 	pnp = !git pull && git push
-
 	pom = push origin master
 	phm = push heroku master
 	pam = !git push origin master && git push heroku master
@@ -88,6 +101,10 @@
 	# Make `git rebase` safer on OS X
 	# More info: <http://www.git-tower.com/blog/make-git-rebase-safe-on-osx/>
 	trustctime = false
+
+	# Prevent showing files whose names contain non-ASCII symbols as unversioned.
+	# http://michael-kuehnel.de/git/2014/11/21/git-mac-osx-and-german-umlaute.html
+	precomposeunicode = false
 
 [color]
 
@@ -119,17 +136,24 @@
 	# Detect copies as well as renames
 	renames = copies
 	tool = Kaleidoscope
-	
+
+[diff "bin"]
+
+	# Use `hexdump` to diff binary files
+	textconv = hexdump -v -C
+
 [merge]
 
 	# Include summaries of merged commits in newly created merge commit messages
 	log = true
 	tool = Kaleidoscope
-	
+
 [mergetool "Kaleidoscope"]
 
 	cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
 	trustexitcode = true
+	# Use `hexdump` to diff binary files
+	textconv = hexdump -v -C
 	prompt = false
 
 [difftool "Kaleidoscope"]
@@ -148,6 +172,8 @@
 	# installations. To use `simple` instead, add this to your `~/.extra` file:
 	# `git config --global push.default simple`. See http://git.io/mMah-w.
 	default = matching
+	# Make `git push` push relevant annotated tags when pushing branches out.
+	followTags = true
 
 # URL shorthands
 
