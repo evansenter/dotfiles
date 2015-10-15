@@ -24,7 +24,7 @@ done;
 
 # Load rupa's z if installed
 if command -v brew >/dev/null 2>&1 && [ -f "$(brew --prefix)/etc/profile.d/z.sh" ]; then
-     source $(brew --prefix)/etc/profile.d/z.sh
+	source $(brew --prefix)/etc/profile.d/z.sh
 fi
 
 # Add tab completion for many Bash commands
@@ -50,7 +50,7 @@ complete -W "NSGlobalDomain" defaults;
 complete -o "nospace" -W "Contacts Calendar Dock Finder Mail Safari iTunes SystemUIServer Terminal Twitter" killall;
 
 if command -v brew >/dev/null 2>&1; then
-  export NVM_DIR=~/.nvm
+  export NVM_DIR=$HOME/.nvm
   source $(brew --prefix nvm)/nvm.sh
 fi
 
