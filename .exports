@@ -1,5 +1,6 @@
 # Make Sublime Text the default editor
 export EDITOR="subl";
+export P4EDITOR="vim";
 
 # Larger bash history (allow 32³ entries; default is 500)
 export HISTSIZE=32768;
@@ -24,8 +25,7 @@ export GREP_OPTIONS="--color=auto";
 # Link Homebrew casks in `/Applications` rather than `~/Applications`
 export HOMEBREW_CASK_OPTS="--appdir=/Applications";
 
-# Supplement PATH with Homebrew sbin location
-export PATH=$PATH:/usr/local/sbin
-
 # Supplement NODE_PATH with Homebrew location, since NPM isn't installed by Homebrew
-export NODE_PATH=$NODE_PATH:/usr/local/lib/node_modules
+export NODE_PATH=$NODE_PATH:$(brew --prefix)/lib/node_modules;
+
+export ENTREZ_EMAIL="evansenter@gmail.com";

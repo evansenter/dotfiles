@@ -155,45 +155,6 @@ module PryHelperMethods
     ActiveResource::Base.logger = logger if defined?(ActiveResource)
     puts "Logging ActiveRecord::Base and ActiveResource::Base inline."
   end
-
-  def run_pbs_job(action = nil, pbs_script_name = nil, nodes = "1:clotelabsub:ppn=8")
-    unless action && pbs_script_name
-      puts "run_pbs_job(action = nil, pbs_script_name = nil, nodes = '1:clotelabsub:ppn=8')"
-      return
-    end
-
-    write_pbs_file(action, pbs_script_name, nodes)
-
-    puts "Submitting job #{pbs_script_name}: #{action}"
-
-    print %x|qsub "pbs_#{pbs_script_name}.sh"|
-  end
-
-  def write_pbs_file(commands, output_name, nodes = "1:clotelabsub:ppn=8")
-    File.open("pbs_#{output_name}.sh", "w") do |file|
-      file.write(pbs_string(commands, output_name, nodes))
-    end
-  end
-
-  def pbs_string(commands, output_name, nodes = "1:clotelabsub:ppn=8")
-    action = case commands
-    when Array  then commands.join("\n")
-    else commands
-    end
-
-    content = <<-SH
-        #!/bin/sh
-        #PBS -l nodes=#{nodes}
-        #PBS -o pbs_#{output_name}.log
-        #PBS -e pbs_#{output_name}.err
-        #PBS -q stage
-        #PBS -l walltime=24:00:00
-        cd $PBS_O_WORKDIR
-        #{action}
-      SH
-
-      content.gsub(/^\s*/, "")
-  end
 end
 
 include PryHelperMethods

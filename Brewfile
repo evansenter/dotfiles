@@ -1,5 +1,5 @@
 # Install command-line tools using Homebrew
-# Usage: `brew bundle Brewfile`
+# Usage: `brew tap Homebrew/bundle && brew bundle`
 
 # Make sure we’re using the latest Homebrew
 update
@@ -15,7 +15,7 @@ install moreutils
 # Install GNU `find`, `locate`, `updatedb`, and `xargs`, `g`-prefixed
 install findutils
 # Install GNU `sed`, overwriting the built-in `sed`
-install gnu-sed --default-names
+install gnu-sed, args: ["default-names"]
 # Install Bash 4
 # Note: don’t forget to add `/usr/local/bin/bash` to `/etc/shells` before running `chsh`.
 install bash
@@ -23,7 +23,7 @@ install bash-completion
 install htop
 
 # Install wget with IRI support
-install wget --enable-iri
+install wget, args: ["enable-iri"]
 
 # Install RingoJS and Narwhal
 # Note that the order in which these are installed is important; see http://git.io/brew-narwhal-ringo.
@@ -31,7 +31,7 @@ install ringojs
 install narwhal
 
 # Install more recent versions of some OS X tools
-install vim --override-system-vi
+install vim, args: ["override-system-vi"]
 install homebrew/dupes/grep
 install homebrew/dupes/screen
 
@@ -41,10 +41,10 @@ install bfg
 install foremost
 install git
 install hashpump
-install imagemagick --with-webp
+install imagemagick, args: ["with-webp"]
 install lynx
 install nmap
-install node --without-npm
+install nvm
 install p7zip
 install pigz
 install pv
@@ -52,12 +52,8 @@ install rename
 install rhino
 install sqlmap
 install tree
-install ucspi-tcp # `tcpserver` et al.
 install webkit2png
-install xpdf
 install zopfli
-
-install homebrew/versions/lua52
 
 # Science stuff
 tap homebrew/science

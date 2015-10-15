@@ -1,1 +1,1 @@
-export CLASSPATH=$HOME/Source/science/VARNAv3-9/*:$CLASSPATH
+export PATH=$HOME/bin:$HOME/homebrew/bin:$PATH;
