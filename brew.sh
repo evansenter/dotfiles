@@ -44,6 +44,7 @@ brew install homebrew/dupes/screen
 # Install other useful binaries
 brew install ack
 brew install bfg
+brew install ccat
 brew install foremost
 brew install git
 brew install hashpump
