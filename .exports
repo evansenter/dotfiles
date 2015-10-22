@@ -25,10 +25,12 @@ export MANPAGER='less -X';
 # Always enable colored `grep` output.
 export GREP_OPTIONS='--color=auto';
 
-# Link Homebrew casks in `/Applications` rather than `~/Applications`
-export HOMEBREW_CASK_OPTS="--appdir=/Applications";
+if command -v brew >/dev/null 2>&1; then
+  # Link Homebrew casks in `/Applications` rather than `~/Applications`
+  export HOMEBREW_CASK_OPTS="--appdir=/Applications";
 
-# Supplement NODE_PATH with Homebrew location, since NPM isn't installed by Homebrew
-export NODE_PATH=$NODE_PATH:$(brew --prefix)/lib/node_modules;
+  # Supplement NODE_PATH with Homebrew location, since NPM isn't installed by Homebrew
+  export NODE_PATH=$NODE_PATH:$(brew --prefix)/lib/node_modules;
+fi
 
 export ENTREZ_EMAIL="evansenter@gmail.com";

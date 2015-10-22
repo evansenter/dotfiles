@@ -25,6 +25,8 @@ done;
 # Load rupa's z if installed
 if command -v brew >/dev/null 2>&1 && [ -f "$(brew --prefix)/etc/profile.d/z.sh" ]; then
 	source $(brew --prefix)/etc/profile.d/z.sh
+elif [ -r "$HOME/bin/z.sh" ]; then
+  source "$HOME/bin/z.sh"
 fi
 
 # Enable tab completion for `g` by marking it as an alias for `git`
