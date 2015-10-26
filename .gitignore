@@ -16,3 +16,5 @@ Thumbs.db
 # Any log or file locks
 npm-debug.log
 Gemfile.lock
+
+.extra
