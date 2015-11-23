@@ -23,7 +23,9 @@ export LESS_TERMCAP_md="${yellow}";
 export MANPAGER='less -X';
 
 # Always enable colored `grep` output.
-export GREP_OPTIONS='--color=auto';
+if [ $(uname -s) == "Darwin" ]; then
+  export GREP_OPTIONS='--color=auto';
+fi
 
 if command -v brew >/dev/null 2>&1; then
   # Link Homebrew casks in `/Applications` rather than `~/Applications`
