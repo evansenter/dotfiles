@@ -1,5 +1,5 @@
 # Make Sublime Text the default editor
-export EDITOR="subl";
+export EDITOR="subl -w";
 
 # Enable persistent REPL history for `node`.
 export NODE_REPL_HISTORY_FILE=~/.node_history;
@@ -21,6 +21,9 @@ export LESS_TERMCAP_md="${yellow}";
 
 # Don’t clear the screen after quitting a manual page.
 export MANPAGER='less -X';
+
+# Go files
+export GOPATH="$HOME/Source/google/go"
 
 # Always enable colored `grep` output.
 if [ $(uname -s) == "Darwin" ]; then

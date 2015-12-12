@@ -72,11 +72,13 @@ brew install cloc
 brew install cmake
 brew install fftw
 brew install gcutil
+brew install gnuplot --with-aquaterm
 brew install gsl
 brew install lapack
 brew install leiningen
 brew install libuv
 brew install mysql
+brew install octave
 brew install r
 brew install sqlite
 brew install tpl
