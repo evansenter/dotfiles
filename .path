@@ -1,1 +1,2 @@
-export PATH=$HOME/bin:$HOME/homebrew/bin:$HOME/homebrew/sbin:$PATH;
+export SRC="$HOME/Source"
+export PATH=$HOME/bin:$HOME/homebrew/bin:$HOME/homebrew/sbin:$SRC/google/go/bin:$PATH;

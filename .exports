@@ -23,7 +23,7 @@ export LESS_TERMCAP_md="${yellow}";
 export MANPAGER='less -X';
 
 # Go files
-export GOPATH="$HOME/Source/google/go"
+export GOPATH="$SRC/google/go"
 
 # Always enable colored `grep` output.
 if [ $(uname -s) == "Darwin" ]; then
