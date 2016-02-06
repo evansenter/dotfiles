@@ -27,9 +27,12 @@ export LESS_TERMCAP_md="${yellow}";
 # Don’t clear the screen after quitting a manual page.
 export MANPAGER='less -X';
 
-# Go files
+# Go files.
 export GOPATH="$SRC/google/go"
 export GO15VENDOREXPERIMENT=1
+
+# Android Studio settings.
+export STUDIO_PROPERTIES="$HOME/.idea.properties"
 
 # Always enable colored `grep` output.
 if [ $(uname -s) == "Darwin" ]; then
