@@ -29,6 +29,7 @@ export MANPAGER='less -X';
 
 # Go files
 export GOPATH="$SRC/google/go"
+export GO15VENDOREXPERIMENT=1
 
 # Always enable colored `grep` output.
 if [ $(uname -s) == "Darwin" ]; then
