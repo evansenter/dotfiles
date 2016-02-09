@@ -77,9 +77,12 @@ brew install gsl
 brew install lapack
 brew install leiningen
 brew install libuv
+brew install maven
 brew install mysql
 brew install octave
+brew install postgres
 brew install r
+brew install solr
 brew install sqlite
 brew install tpl
 brew install unison
