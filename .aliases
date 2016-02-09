@@ -154,3 +154,44 @@ alias reload="exec $SHELL -l"
 
 # C/C++ styling
 alias astyle='astyle --style=google --indent=spaces=2 --indent-switches --indent-cases --indent-namespaces --indent-labels --indent-col1-comments --break-blocks --pad-oper --pad-header --unpad-paren --fill-empty-lines --align-pointer=type --add-brackets --convert-tabs --recursive *.cpp *.c *.h'
+
+# Author.: Ole J
+# Date...: 23.03.2008
+# License: Whatever
+
+# Wraps a completion function
+# make-completion-wrapper <actual completion function> <name of new func.>
+#                         <command name> <list supplied arguments>
+# eg.
+#   alias agi='apt-get install'
+#   make-completion-wrapper _apt_get _apt_get_install apt-get install
+# defines a function called _apt_get_install (that's $2) that will complete
+# the 'agi' alias. (complete -F _apt_get_install agi)
+#
+function make-completion-wrapper () {
+    local function_name="$2"
+    local arg_count=$(($#-3))
+    local comp_function_name="$1"
+    shift 2
+    local function="
+function $function_name {
+    ((COMP_CWORD+=$arg_count))
+    COMP_WORDS=( "$@" \${COMP_WORDS[@]:1} )
+    "$comp_function_name"
+    return 0
+}"
+    eval "$function"
+}
+
+# and now the commands that are specific to this SO question
+# alias gco='git checkout'
+alias agi='apt-get install'
+
+# we create a _git_checkout_mine function that will do the completion for "gco"
+# using the completion function "_git"
+# make-completion-wrapper _git _git_checkout_mine git checkout
+make-completion-wrapper _apt_get _apt_get_install apt-get install
+
+# we tell bash to actually use _git_checkout_mine to complete "gco"
+# complete -o bashdefault -o default -o nospace -F _git_checkout_mine gco
+complete -F _apt_get_install agi
