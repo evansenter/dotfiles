@@ -29,7 +29,6 @@ export MANPAGER='less -X';
 
 # Go files.
 export GOPATH="$SRC/google/go"
-export GO15VENDOREXPERIMENT=1
 
 # Android Studio settings.
 export STUDIO_PROPERTIES="$HOME/.idea.properties"
