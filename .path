@@ -1,2 +1,2 @@
 export SRC="$HOME/Source"
-export PATH=$HOME/bin:$HOME/homebrew/bin:$HOME/homebrew/sbin:$SRC/google/go/bin:$PATH;
+export PATH=$HOME/bin:$HOME/bin/go_appengine:$HOME/homebrew/bin:$HOME/homebrew/sbin:$SRC/google/go/bin:$PATH;
