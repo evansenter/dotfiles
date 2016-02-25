@@ -185,7 +185,7 @@ function $function_name {
 
 # and now the commands that are specific to this SO question
 # alias gco='git checkout'
-alias agi='apt-get install'
+alias agi='sudo apt-get install'
 
 # we create a _git_checkout_mine function that will do the completion for "gco"
 # using the completion function "_git"
