@@ -214,6 +214,7 @@ defaults write com.apple.NetworkBrowser BrowseAllInterfaces -bool true
 # Folder visibilitt
 chflags nohidden ~/Library
 sudo chflags nohidden /Volumes
+chflags hidden ~/.DS_Store
 chflags hidden ~/bin
 chflags hidden ~/homebrew
 
