@@ -49,7 +49,7 @@ brew install bfg
 brew install ccat
 brew install foremost
 brew install git
-brew install hashpump
+brew install git-lfs
 brew install imagemagick --with-webp
 brew install lynx
 brew install nmap
