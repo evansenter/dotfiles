@@ -78,13 +78,14 @@
 
 	# Evan's aliases
 	dt  = difftool -y
-	pnp = !git pull && git push
-	pom = push origin master
-	phm = push heroku master
-	pam = !git push origin master && git push heroku master
-	pob = !git push origin $(git symbolic-ref HEAD --short)
-	phb = !git push heroku $(git symbolic-ref HEAD --short)
+	mt  = mergetool -y
 	pab = !git push origin $(git symbolic-ref HEAD --short) && git push heroku $(git symbolic-ref HEAD --short)
+	pam = !git push origin master && git push heroku master
+	phb = !git push heroku $(git symbolic-ref HEAD --short)
+	phm = push heroku master
+	pnp = !git pull && git push
+	pob = !git push origin $(git symbolic-ref HEAD --short)
+	pom = push origin master
 
 [apply]
 
