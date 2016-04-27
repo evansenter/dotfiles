@@ -76,14 +76,41 @@
 		fi \
 	}; f"
 
+	#######################################################################################
 	# Evan's aliases
+	#######################################################################################
+
+	# commit with message
+	com = !"f() { git commit -m \"$1\"; }; f"
+
+	# checkout
+	co = !"f() { git checkout \"$1\"; }; f"
+
+	# difftool
 	dt  = difftool -y
+
+	# run from root dir of repo
+	root = "!exec "
+
+	# pull and push
 	pnp = !git pull && git push
+
+	# push origin master
 	pom = push origin master
+
+	# push heroku master
 	phm = push heroku master
+
+	# push all master
 	pam = !git push origin master && git push heroku master
+
+	# push origin current-branch
 	pob = !git push origin $(git symbolic-ref HEAD --short)
+
+	# push heroku current-branch
 	phb = !git push heroku $(git symbolic-ref HEAD --short)
+
+	# push all current-branch
 	pab = !git push origin $(git symbolic-ref HEAD --short) && git push heroku $(git symbolic-ref HEAD --short)
 
 [apply]
@@ -200,11 +227,17 @@
 [url "git://gist.github.com/"]
 
 	insteadOf = "gist:"
+
 [user]
+
 	name = Evan Senter
 	email = evansenter@gmail.com
+
 [filter "media"]
+
 	clean = git-media-clean %f
 	smudge = git-media-smudge %f
+
 [credential]
+
 	helper = osxkeychain
