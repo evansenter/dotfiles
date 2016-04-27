@@ -87,10 +87,10 @@
 	co = !"f() { git checkout \"$1\"; }; f"
 
 	# difftool
-	dt  = difftool -y
+	dt = difftool -y
 
-	# run from root dir of repo
-	root = "!exec "
+	# mergetool
+	mt = mergetool -y
 
 	# pull and push
 	pnp = !git pull && git push
@@ -112,6 +112,9 @@
 
 	# push all current-branch
 	pab = !git push origin $(git symbolic-ref HEAD --short) && git push heroku $(git symbolic-ref HEAD --short)
+
+	# run from root dir of repo
+	root = "!exec "
 
 [apply]
 
