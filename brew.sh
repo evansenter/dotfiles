@@ -43,15 +43,17 @@ brew install vim --override-system-vi
 brew install homebrew/dupes/grep
 brew install homebrew/dupes/screen
 
-# Install other useful binaries
+# Install other useful packages
 brew install ack
 brew install bfg
 brew install ccat
+brew install diff-so-fancy
 brew install foremost
 brew install git
 brew install git-lfs
 brew install imagemagick --with-webp
 brew install lynx
+brew install mosh
 brew install nmap
 brew install nvm
 brew install p7zip
@@ -60,6 +62,7 @@ brew install pv
 brew install rename
 brew install rhino
 brew install sqlmap
+brew install tmux
 brew install tree
 brew install webkit2png
 brew install zopfli
