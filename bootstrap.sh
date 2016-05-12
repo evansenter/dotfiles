@@ -9,6 +9,8 @@ function doIt() {
     --exclude "Gemfile" --exclude "Gemfile.lock" --exclude "bootstrap.sh" --exclude "README.md" \
     --exclude "LICENSE-MIT.txt" --exclude "git-semver/" -avh --no-perms . ~;
 
+	g submodule update --init --recursive
+
 	# https://github.com/tmux-plugins/tpm
 	tpm_dir="$HOME/.tmux/plugins/tpm"
 	if [[ ! -e $tpm_dir ]]; then
