@@ -54,9 +54,16 @@ complete -W "NSGlobalDomain" defaults;
 # Add `killall` tab completion for common apps
 complete -o "nospace" -W "Contacts Calendar Dock Finder Mail Safari iTunes SystemUIServer Terminal Twitter" killall;
 
+# https://github.com/creationix/nvm
 if command -v brew >/dev/null 2>&1; then
   export NVM_DIR=$HOME/.nvm
   source $(brew --prefix nvm)/nvm.sh
 fi
+
+# https://github.com/shyiko/commacd
+source $HOME/.commacd.bash
+
+# https://github.com/Jintin/aliasme
+source $HOME/.aliasme/aliasme.sh
 
 [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
