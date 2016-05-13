@@ -29,10 +29,12 @@ elif [ -r "$HOME/bin/z.sh" ]; then
   source "$HOME/bin/z.sh"
 fi
 
-# Enable programmable completion features
-if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
-  . /etc/bash_completion
-fi
+# Add tab completion for many Bash commands
+if command -v brew >/dev/null 2>&1 && [ -f "$(brew --prefix)/share/bash-completion/bash_completion" ]; then
+	source "$(brew --prefix)/share/bash-completion/bash_completion";
+elif [ -f /etc/bash_completion ]; then
+	source /etc/bash_completion;
+fi;
 
 # Enable tab completion for `g` by marking it as an alias for `git`
 if command -v brew >/dev/null 2>&1 && type _git &> /dev/null && [ -f "$(brew --prefix)/etc/bash_completion.d/git-completion.bash" ]; then
