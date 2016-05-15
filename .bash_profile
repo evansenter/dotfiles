@@ -45,7 +45,7 @@ fi;
 
 if [ $(uname -s) == "Darwin" ]; then
   # Load up the RSA key
-  eval `keychain --eval id_rsa`
+  eval `keychain --agents gpg,ssh --eval id_rsa 7A2C193B`
 fi
 
 if command -v brew >/dev/null 2>&1; then
