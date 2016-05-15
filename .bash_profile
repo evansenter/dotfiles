@@ -6,6 +6,12 @@ for file in ~/.{path,bash_prompt,exports,aliases,functions,extra}; do
 done;
 unset file;
 
+if command -v tmux >/dev/null; then
+  if [ ! -z "$PS1" ]; then # unless shell not loaded interactively, run tmux
+    [[ ! $TERM =~ screen ]] && [ -z $TMUX ] && tmux
+  fi
+fi
+
 # Case-insensitive globbing (used in pathname expansion)
 shopt -s nocaseglob;
 
@@ -29,13 +35,6 @@ elif [ -r "$HOME/bin/z.sh" ]; then
   source "$HOME/bin/z.sh"
 fi
 
-# Add tab completion for many Bash commands
-if command -v brew >/dev/null 2>&1 && [ -f "$(brew --prefix)/share/bash-completion/bash_completion" ]; then
-	source "$(brew --prefix)/share/bash-completion/bash_completion";
-elif [ -f /etc/bash_completion ]; then
-	source /etc/bash_completion;
-fi;
-
 # Enable tab completion for `g` by marking it as an alias for `git`
 if command -v brew >/dev/null 2>&1 && type _git &> /dev/null && [ -f "$(brew --prefix)/etc/bash_completion.d/git-completion.bash" ]; then
 	complete -o default -o nospace -F _git g;
@@ -49,14 +48,6 @@ if [ $(uname -s) == "Darwin" ]; then
   eval `keychain --eval id_rsa`
 fi
 
-# Add tab completion for `defaults read|write NSGlobalDomain`
-# You could just use `-g` instead, but I like being explicit
-complete -W "NSGlobalDomain" defaults;
-
-# Add `killall` tab completion for common apps
-complete -o "nospace" -W "Contacts Calendar Dock Finder Mail Safari iTunes SystemUIServer Terminal Twitter" killall;
-
-# https://github.com/creationix/nvm
 if command -v brew >/dev/null 2>&1; then
   export NVM_DIR=$HOME/.nvm
   source $(brew --prefix nvm)/nvm.sh
