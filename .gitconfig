@@ -92,8 +92,14 @@
 	# difftool
 	dt = difftool -y
 
+	# diff meld
+	dm = difftool -t meld --dir-diff
+
 	# mergetool
 	mt = mergetool -y
+
+	# merge meld
+	mm = mergetool -t meld
 
 	# pull and push
 	pnp = !git pull && git push
@@ -118,6 +124,9 @@
 
 	# run from root dir of repo
 	root = "!exec "
+
+	# print root dir
+	pwd = !git root pwd
 
 [apply]
 
@@ -167,11 +176,6 @@
 	added = yellow
 	changed = green
 	untracked = cyan
-
-[commit]
-
-	# https://help.github.com/articles/signing-commits-using-gpg/
-	gpgsign = true
 
 [diff]
 
