@@ -41,16 +41,16 @@ set backupskip=/tmp/*,/private/tmp/*
 " Respect modeline in files
 set modeline
 set modelines=4
-" Enable per-directory .vimrc files and disable unsafe commands in them
-set exrc
-set secure
 " Enable line numbers
 set number
 set relativenumber
+" Auto indent
+set ai
+" Smart indent
+set si
+" Wrap lines
+set wrap
 " Use spaces instead of tabs
-set ai "Auto indent
-set si "Smart indent
-set wrap "Wrap lines
 set expandtab
 " Be smart when using tabs ;)
 set smarttab
@@ -92,10 +92,6 @@ set autoread
 " Show matching brackets when text indicator is over them
 set showmatch
 
-" :W sudo saves the file 
-" (useful for handling the permission-denied error)
-command W w !sudo tee % > /dev/null
-
 " Strip trailing whitespace (,ss)
 function! StripWhitespace()
 	let save_cursor = getpos(".")
@@ -133,6 +129,3 @@ au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g
 
 " Always show the status line
 set laststatus=2
-
-" Format the status line
-set statusline=\ %{HasPaste()}%F%m%r%h\ %w\ \ CWD:\ %r%{getcwd()}%h\ \ \ Line:\ %l\ \ Column:\ %c
