@@ -1,7 +1,10 @@
+execute pathogen#infect()
+syntax on
+filetype plugin indent on
+
 " Use the Solarized Dark theme
 set background=dark
 colorscheme Tomorrow-Night
-" let g:solarized_termtrans=1
 
 " Make Vim more useful
 set nocompatible
@@ -42,8 +45,6 @@ set exrc
 set secure
 " Enable line numbers
 set number
-" Enable syntax highlighting
-syntax on
 " Make tabs as wide as two spaces
 set tabstop=2
 " Show “invisible” characters
