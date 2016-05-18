@@ -6,6 +6,7 @@ for file in ~/.{path,bash_prompt,exports,aliases,functions,extra}; do
 done;
 unset file;
 
+# Start tmux on shell start, if PS1
 if command -v tmux >/dev/null; then
   if [ ! -z "$PS1" ]; then # unless shell not loaded interactively, run tmux
     [[ ! $TERM =~ screen ]] && [ -z $TMUX ] && tmux
@@ -43,14 +44,10 @@ fi;
 # Add tab completion for SSH hostnames based on ~/.ssh/config, ignoring wildcards
 [ -e "$HOME/.ssh/config" ] && complete -o "default" -o "nospace" -W "$(grep "^Host" ~/.ssh/config | grep -v "[?*]" | cut -d " " -f2- | tr ' ' '\n')" scp sftp ssh;
 
+# Use keychain on OSX for SSH key management
 if [ $(uname -s) == "Darwin" ]; then
   # Load up the RSA key
   eval `keychain --agents gpg,ssh --eval id_rsa 7A2C193B`
-fi
-
-if command -v brew >/dev/null 2>&1; then
-  export NVM_DIR=$HOME/.nvm
-  source $(brew --prefix nvm)/nvm.sh
 fi
 
 # https://github.com/shyiko/commacd
@@ -59,4 +56,11 @@ source $HOME/.commacd.bash
 # https://github.com/Jintin/aliasme
 source $HOME/.aliasme/aliasme.sh
 
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+# Source nvm
+if command -v brew >/dev/null 2>&1; then
+  export NVM_DIR=$HOME/.nvm
+  source $(brew --prefix nvm)/nvm.sh
+fi
+
+# Source rvm
+[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
