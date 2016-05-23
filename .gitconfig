@@ -194,6 +194,10 @@
 	log = true
 	tool = Kaleidoscope
 
+[mergetool]
+
+	keepBackup = false
+
 [mergetool "Kaleidoscope"]
 
 	cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
