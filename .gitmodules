@@ -1,6 +1,6 @@
 [submodule "git-semver"]
 	path = git-semver
-	url = git@github.com:markchalloner/git-semver.git
+	url = https://github.com/markchalloner/git-semver.git
 [submodule ".vim/bundle/nerdtree"]
 	path = .vim/bundle/nerdtree
 	url = https://github.com/scrooloose/nerdtree.git
@@ -12,4 +12,4 @@
 	url = https://github.com/Yggdroot/indentLine.git
 [submodule ".vim/bundle/vim-sensible"]
 	path = .vim/bundle/vim-sensible
-	url = git://github.com/tpope/vim-sensible.git
+	url = https://github.com/tpope/vim-sensible.git
