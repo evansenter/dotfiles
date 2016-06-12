@@ -36,6 +36,11 @@ elif [ -r "$HOME/bin/z.sh" ]; then
   source "$HOME/bin/z.sh"
 fi
 
+# Use bash-completion2 (for Bash 4)
+if [ -f $(brew --prefix)/share/bash-completion/bash_completion ]; then
+  . $(brew --prefix)/share/bash-completion/bash_completion
+fi
+
 # Enable tab completion for `g` by marking it as an alias for `git`
 if command -v brew >/dev/null 2>&1 && type _git &> /dev/null && [ -f "$(brew --prefix)/etc/bash_completion.d/git-completion.bash" ]; then
 	complete -o default -o nospace -F _git g;
