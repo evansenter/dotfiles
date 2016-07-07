@@ -6,6 +6,11 @@ for file in ~/.{path,bash_prompt,exports,aliases,functions,extra}; do
 done;
 unset file;
 
+# Load OSX-specific Bash settings.
+if [ -r "$HOME/.bash_mac" ] && [ -f "$HOME/.bash_mac" ] && [ $(uname -s) == "Darwin" ]; then
+  source "$HOME/.bash_mac";
+fi
+
 # Start tmux on shell start, if PS1
 if command -v tmux >/dev/null; then
   if [ ! -z "$PS1" ]; then # unless shell not loaded interactively, run tmux
@@ -29,10 +34,6 @@ for option in autocd globstar; do
 	shopt -s "$option" 2> /dev/null;
 done;
 
-if command -v brew >/dev/null 2>&1 && [ -f $(brew --prefix)/share/bash-completion/bash_completion ]; then
-  . $(brew --prefix)/share/bash-completion/bash_completion
-fi
-
 # Load rupa's z if installed
 if command -v brew >/dev/null 2>&1 && [ -f "$(brew --prefix)/etc/profile.d/z.sh" ]; then
 	source $(brew --prefix)/etc/profile.d/z.sh
@@ -40,36 +41,11 @@ elif [ -r "$HOME/bin/z.sh" ]; then
   source "$HOME/bin/z.sh"
 fi
 
-# Use bash-completion2 (for Bash 4)
-if [ -f $(brew --prefix)/share/bash-completion/bash_completion ]; then
-  . $(brew --prefix)/share/bash-completion/bash_completion
-fi
-
-# Enable tab completion for `g` by marking it as an alias for `git`
-if command -v brew >/dev/null 2>&1 && type _git &> /dev/null && [ -f "$(brew --prefix)/etc/bash_completion.d/git-completion.bash" ]; then
-	complete -o default -o nospace -F _git g;
-fi;
-
 # Add tab completion for SSH hostnames based on ~/.ssh/config, ignoring wildcards
 [ -e "$HOME/.ssh/config" ] && complete -o "default" -o "nospace" -W "$(grep "^Host" ~/.ssh/config | grep -v "[?*]" | cut -d " " -f2- | tr ' ' '\n')" scp sftp ssh;
-
-# Use keychain on OSX for SSH key management
-if [ $(uname -s) == "Darwin" ]; then
-  # Load up the RSA key
-  eval `keychain --agents gpg,ssh --eval id_rsa 7A2C193B`
-fi
 
 # https://github.com/shyiko/commacd
 source $HOME/.commacd.bash
 
 # https://github.com/Jintin/aliasme
 source $HOME/.aliasme/aliasme.sh
-
-# Source nvm
-if command -v brew >/dev/null 2>&1; then
-  export NVM_DIR=$HOME/.nvm
-  source $(brew --prefix nvm)/nvm.sh
-fi
-
-# Source rvm
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm"
