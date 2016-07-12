@@ -43,7 +43,6 @@ brew install homebrew/dupes/screen
 brew install ack
 brew install bfg
 brew install ccat
-brew install clang-omp
 brew install diff-so-fancy
 brew install foremost
 brew install gcc
