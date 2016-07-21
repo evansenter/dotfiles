@@ -266,3 +266,8 @@ function o() {
 function tre() {
 	tree -aC -I '.git|node_modules|bower_components' --dirsfirst "$@" | less -FRNX;
 }
+
+# Pretty less
+function cless() {
+  pygmentize -g "$1" | less -R
+}
