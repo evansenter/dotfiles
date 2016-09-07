@@ -11,13 +11,6 @@ if [ -r "$HOME/.bash_mac" ] && [ -f "$HOME/.bash_mac" ] && [ $(uname -s) == "Dar
   source "$HOME/.bash_mac";
 fi
 
-# Start tmux on shell start, if PS1
-if command -v tmux >/dev/null; then
-  if [ ! -z "$PS1" ]; then # unless shell not loaded interactively, run tmux
-    [[ ! $TERM =~ screen ]] && [ -z $TMUX ] && tmux
-  fi
-fi
-
 # Case-insensitive globbing (used in pathname expansion)
 shopt -s nocaseglob;
 
