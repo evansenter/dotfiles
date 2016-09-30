@@ -7,7 +7,7 @@ git pull origin master;
 function doIt() {
 	g submodule update --init --recursive
 
-	rsync --exclude ".git/" --exclude ".DS_Store" --exclude "brew.sh" --exclude "Caskfile" \
+	rsync --exclude ".git/" --exclude ".gitignore" --exclude ".DS_Store" --exclude "brew.sh" --exclude "Caskfile" \
     --exclude "Gemfile" --exclude "Gemfile.lock" --exclude "bootstrap.sh" --exclude "README.md" \
     --exclude "LICENSE-MIT.txt" --exclude "git-semver/" -avh --no-perms . ~;
 
