@@ -6,11 +6,12 @@
 brew update
 
 # Upgrade any already-installed formulae.
-brew upgrade --all
+brew upgrade
 
 # Install GNU core utilities (those that come with OS X are outdated).
 # Don’t forget to add `$(brew --prefix coreutils)/libexec/gnubin` to `$PATH`.
 brew install keychain
+brew install gpg
 brew install gpg-agent
 brew install coreutils
 ln -s /usr/local/bin/gsha256sum /usr/local/bin/sha256sum
@@ -25,7 +26,6 @@ brew install gnu-sed --with-default-names
 # Note: don’t forget to add `/usr/local/bin/bash` to `/etc/shells` before
 # running `chsh`.
 brew install bash
-brew install zsh
 brew tap homebrew/versions
 brew install bash-completion2
 
@@ -40,30 +40,17 @@ brew install homebrew/dupes/grep
 brew install homebrew/dupes/screen
 
 # Install other useful packages
-brew install ack
-brew install bfg
 brew install ccat
 brew install diff-so-fancy
-brew install foremost
 brew install gcc
 brew install git
-brew install git-lfs
-brew install imagemagick --with-webp
-brew install lynx
 brew install mosh
 brew install nmap
 brew install nvm
 brew install p7zip
-brew install pigz
-brew install pv
 brew install rename
-brew install rhino
-brew install sqlmap
 brew install tmux
 brew install tree
-brew install vbindiff
-brew install webkit2png
-brew install zopfli
 
 # Science stuff
 brew tap homebrew/science
@@ -72,7 +59,6 @@ brew install astyle
 brew install cloc
 brew install cmake
 brew install fftw
-brew install gcutil
 brew install gnuplot --with-aquaterm
 brew install gsl
 brew install lapack
@@ -80,10 +66,8 @@ brew install leiningen
 brew install libuv
 brew install maven
 brew install mysql
-brew install octave
 brew install postgres
 brew install r
-brew install solr
 brew install sqlite
 brew install tpl
 brew install unison
