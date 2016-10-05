@@ -67,6 +67,7 @@ brew install libuv
 brew install maven
 brew install mysql
 brew install postgres
+brew install python
 brew install r
 brew install sqlite
 brew install tpl
