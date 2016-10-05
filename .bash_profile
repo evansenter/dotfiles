@@ -42,3 +42,6 @@ source $HOME/.commacd.bash
 
 # https://github.com/Jintin/aliasme
 source $HOME/.aliasme/aliasme.sh
+
+# https://github.com/junegunn/fzf
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
