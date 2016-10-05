@@ -42,6 +42,7 @@ brew install homebrew/dupes/screen
 # Install other useful packages
 brew install ccat
 brew install diff-so-fancy
+brew install docker
 brew install gcc
 brew install git
 brew install mosh
