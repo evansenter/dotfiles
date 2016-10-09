@@ -7,9 +7,20 @@ git pull origin master;
 function doIt() {
 	g submodule update --init --recursive
 
-	rsync --exclude ".git/" --exclude ".gitignore" --exclude ".gitmodules" --exclude ".DS_Store" \
-	  --exclude "brew.sh" --exclude "Caskfile" --exclude "Gemfile" --exclude "Gemfile.lock" \
-	  --exclude "bootstrap.sh" --exclude "README.md" --exclude "LICENSE-MIT.txt" --exclude "git-semver/" \
+	rsync
+		--exclude ".DS_Store"
+		--exclude ".git/"
+		--exclude ".gitignore"
+		--exclude ".gitmodules"
+		--exclude ".macos"
+		--exclude "LICENSE-MIT.txt"
+		--exclude "README.md"
+	  --exclude "bootstrap.sh"
+	  --exclude "brew.sh"
+	  --exclude "Gemfile"
+	  --exclude "git-semver/"
+	  --exclude "LICENSE-MIT.txt"
+	  --exclude "README.md"
 	  -avh --no-perms . ~;
 
 	# https://github.com/tmux-plugins/tpm
