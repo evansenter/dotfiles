@@ -57,7 +57,7 @@ if [ $(uname -s) == "Darwin" ]; then
   # Get macOS Software Updates, and update installed Ruby gems, Homebrew, npm, and their installed packages
   alias update='sudo softwareupdate -i -a; brew update; brew upgrade; brew cleanup; npm update -g; npm cache clean; gem update --system; gem update; gem clean'
 else
-  alias update='sudo apt-get update && sudo apt-get -y upgrade'
+  alias update='sudo apt update && sudo apt -y upgrade'
 fi
 
 # IP addresses

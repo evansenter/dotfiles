@@ -1,16 +1,6 @@
 # Use keychain on OSX for SSH key management
 eval `keychain --agents gpg,ssh --eval id_rsa 7A2C193B id_rsa D7D22622`
 
-# Enable tab completion for more Bash commands
-if command -v brew >/dev/null 2>&1 && [ -f $(brew --prefix)/share/bash-completion/bash_completion ]; then
-  . $(brew --prefix)/share/bash-completion/bash_completion
-fi
-
-# Enable tab completion for `g` by marking it as an alias for `git`
-if command -v brew >/dev/null 2>&1 && type _git &> /dev/null && [ -f "$(brew --prefix)/etc/bash_completion.d/git-completion.bash" ]; then
-  complete -o default -o nospace -F _git g;
-fi;
-
 # Source nvm
 if command -v brew >/dev/null 2>&1; then
   export NVM_DIR=$HOME/.nvm
