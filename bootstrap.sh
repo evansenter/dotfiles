@@ -19,6 +19,7 @@ function doIt() {
 	  --exclude "brew.sh" \
 	  --exclude "Gemfile" \
 	  --exclude "git-semver/" \
+	  --exclude "z/" \
 	  --exclude "LICENSE-MIT.txt" \
 	  --exclude "README.md" \
 	  -avh --no-perms . ~;
