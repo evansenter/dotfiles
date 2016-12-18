@@ -42,6 +42,9 @@ elif [ -r "$HOME/bin/z.sh" ]; then
   source "$HOME/bin/z.sh"
 fi
 
+# fzf
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
+
 # https://github.com/shyiko/commacd
 source $HOME/.commacd.bash
 

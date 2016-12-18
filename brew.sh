@@ -46,6 +46,7 @@ brew install homebrew/dupes/screen
 brew install bazel
 brew install ccat
 brew install diff-so-fancy
+brew install fzf
 brew install gcc
 brew install git
 brew install mosh
