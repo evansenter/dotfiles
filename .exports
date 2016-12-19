@@ -35,4 +35,5 @@ export GOPATH="$SRC/google/go"
 # Android Studio settings.
 export STUDIO_PROPERTIES="$HOME/.idea.properties"
 
-export ENTREZ_EMAIL="evansenter@gmail.com";
+# ipython startup script.
+export PYTHONSTARTUP="$HOME/.ipython.py"
