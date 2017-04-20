@@ -24,16 +24,6 @@ function doIt() {
 	  --exclude "README.md" \
 	  -avh --no-perms . ~;
 
-	# https://github.com/tmux-plugins/tpm
-	tpm_dir="$HOME/.tmux/plugins/tpm"
-	if [[ ! -e $tpm_dir ]]; then
-		mkdir -p $tpm_dir
-		git clone https://github.com/tmux-plugins/tpm $tpm_dir
-		if command -v tmux >/dev/null 2>&1 && [[ -e $HOME/.tmux.conf ]]; then
-			tmux source $HOME/.tmux.conf
-		fi
-	fi
-
 	# https://github.com/markchalloner/git-semver
 	(cd git-semver && git checkout $(
     git tag | grep '^[0-9]\+\.[0-9]\+\.[0-9]\+$' | \
