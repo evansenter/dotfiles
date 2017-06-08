@@ -18,7 +18,6 @@ function doIt() {
 	  --exclude "bootstrap.sh" \
 	  --exclude "brew.sh" \
 	  --exclude "Gemfile" \
-	  --exclude "git-semver/" \
 	  --exclude "z/" \
 	  --exclude "LICENSE-MIT.txt" \
 	  --exclude "README.md" \
@@ -33,12 +32,6 @@ function doIt() {
 			tmux source $HOME/.tmux.conf
 		fi
 	fi
-
-	# https://github.com/markchalloner/git-semver
-	(cd git-semver && git checkout $(
-    git tag | grep '^[0-9]\+\.[0-9]\+\.[0-9]\+$' | \
-    sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -n 1
-	) && sudo ./install.sh)
 
 	# https://github.com/dborzov/lsp
 	if command -v go >/dev/null 2>&1; then
