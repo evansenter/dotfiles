@@ -13,3 +13,12 @@
 [submodule "z"]
 	path = z
 	url = https://github.com/rupa/z.git
+[submodule ".vim/bundle/onedark"]
+	path = .vim/bundle/onedark
+	url = https://github.com/joshdick/onedark.vim.git
+[submodule ".vim/bundle/vim-polyglot"]
+	path = .vim/bundle/vim-polyglot
+	url = https://github.com/sheerun/vim-polyglot
+[submodule ".vim/bundle/lightline"]
+	path = .vim/bundle/lightline
+	url = https://github.com/itchyny/lightline.vim.git
