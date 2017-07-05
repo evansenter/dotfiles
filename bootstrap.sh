@@ -17,7 +17,6 @@ function doIt() {
 		--exclude "README.md" \
 	  --exclude "bootstrap.sh" \
 	  --exclude "brew.sh" \
-	  --exclude "Gemfile" \
 	  --exclude "z/" \
 	  --exclude "LICENSE-MIT.txt" \
 	  --exclude "README.md" \
