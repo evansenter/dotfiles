@@ -25,7 +25,6 @@ brew install gnu-sed --with-default-names
 # Note: don’t forget to add `/usr/local/bin/bash` to `/etc/shells` before
 # running `chsh`.
 brew install bash
-brew tap homebrew/versions
 brew install bash-completion2
 
 # Switch to using brew-installed bash as default shell
@@ -39,7 +38,7 @@ brew install wget --with-iri
 
 # Install more recent versions of some macOS tools.
 brew install vim --with-override-system-vi
-brew install homebrew/dupes/grep
+brew install grep
 brew install homebrew/dupes/screen
 
 # Install other useful packages
@@ -55,6 +54,7 @@ brew install nvm
 brew install p7zip
 brew install rename
 brew install tmux
+brew install rlwrap
 brew install tree
 
 # Science stuff
