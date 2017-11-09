@@ -53,6 +53,7 @@ brew install nmap
 brew install nvm
 brew install p7zip
 brew install rename
+brew install tig
 brew install tmux
 brew install rlwrap
 brew install tree
