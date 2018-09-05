@@ -1,12 +1,6 @@
 # Use keychain on OSX for SSH key management
 eval `keychain --agents gpg,ssh --eval id_rsa 7A2C193B id_rsa D7D22622`
 
-# Source nvm
-if command -v brew >/dev/null 2>&1; then
-  export NVM_DIR=$HOME/.nvm
-  source $(brew --prefix nvm)/nvm.sh
-fi
-
 # Always enable colored `grep` output.
 export GREP_OPTIONS='--color=auto';
 
