@@ -50,12 +50,12 @@ alias week='date +%V'
 
 # Stopwatch
 alias timer='echo "Timer started. Stop with Ctrl-D." && date && time cat && date'
-# Get macOS Software Updates, and update installed Ruby gems, Homebrew, npm, and their installed packages
-alias update='sudo softwareupdate -i -a; brew update; brew upgrade; brew cleanup; npm install npm -g; npm update -g; sudo gem update --system; sudo gem update; sudo gem cleanup'
+# Update Homebrew stuff
+alias brewup='brew update; brew upgrade; brew prune; brew cleanup; brew doctor'
 
 if [ $(uname -s) == "Darwin" ]; then
   # Get macOS Software Updates, and update installed Ruby gems, Homebrew, npm, and their installed packages
-  alias update='sudo softwareupdate -i -a; brew update; brew upgrade; brew cleanup'
+  alias update='sudo softwareupdate -i -a; brewup'
 else
   alias update='sudo apt update && sudo apt -y upgrade'
 alias canary='/Applications/Google\ Chrome\ Canary.app/Contents/MacOS/Google\ Chrome\ Canary'
