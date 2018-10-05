@@ -6,11 +6,6 @@ for file in ~/.{path,bash_prompt,exports,aliases,functions,extra}; do
 done;
 unset file;
 
-# Load macOS-specific Bash settings.
-if [ -r "$HOME/.bash_mac" ] && [ -f "$HOME/.bash_mac" ] && [ $(uname -s) == "Darwin" ]; then
-  source "$HOME/.bash_mac";
-fi
-
 # Case-insensitive globbing (used in pathname expansion)
 shopt -s nocaseglob;
 
@@ -41,15 +36,6 @@ if command -v brew >/dev/null 2>&1 && [ -f "$(brew --prefix)/etc/profile.d/z.sh"
 elif [ -r "$HOME/bin/z.sh" ]; then
   source "$HOME/bin/z.sh"
 fi
-
-# fzf
-[ -f ~/.fzf.bash ] && source ~/.fzf.bash
-
-# https://github.com/shyiko/commacd
-source $HOME/.commacd.bash
-
-# https://github.com/Jintin/aliasme
-source $HOME/.aliasme/aliasme.sh
 
 # https://github.com/junegunn/fzf
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash

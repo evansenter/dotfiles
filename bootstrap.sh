@@ -32,21 +32,6 @@ function doIt() {
 		fi
 	fi
 
-	# https://github.com/dborzov/lsp
-	if command -v go >/dev/null 2>&1; then
-		go get github.com/dborzov/lsp
-	fi
-
-	# https://github.com/shyiko/commacd
-	curl https://raw.githubusercontent.com/shyiko/commacd/master/commacd.bash -o $HOME/.commacd.bash
-
-	# https://github.com/Jintin/aliasme
-	aliasme_dir="$HOME/.aliasme"
-	if [[ ! -e $aliasme_dir ]]; then
-    mkdir $aliasme_dir
-	fi
-	curl https://raw.githubusercontent.com/Jintin/aliasme/master/aliasme.sh > $aliasme_dir/aliasme.sh
-
 	source ~/.bash_profile;
 }
 
