@@ -188,39 +188,36 @@
 	# https://help.github.com/articles/signing-commits-using-gpg/
   # gpgsign = true
 
-[diff]
-
-	# Detect copies as well as renames
-	renames = copies
-	tool = Kaleidoscope
-
 [diff "bin"]
 
 	# Use `hexdump` to diff binary files
 	textconv = hexdump -v -C
 
+[diff]
+
+  tool = meld
+
+[difftool]
+      
+  prompt = false
+
+[difftool "meld"]
+        
+  trustExitCode = true
+  cmd = open -W -a Meld --args \"$LOCAL\" \"$REMOTE\"
+
 [merge]
 
-	# Include summaries of merged commits in newly created merge commit messages
-	log = true
-	tool = Kaleidoscope
+  tool = meld
 
 [mergetool]
 
-	keepBackup = false
+  prompt = false
 
-[mergetool "Kaleidoscope"]
+[mergetool "meld"]
 
-	cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
-	trustexitcode = true
-	# Use `hexdump` to diff binary files
-	textconv = hexdump -v -C
-	prompt = false
-
-[difftool "Kaleidoscope"]
-
-	cmd = ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
-	prompt = false
+  trustExitCode = true
+  cmd = open -W -a Meld --args --auto-merge \"$LOCAL\" \"$BASE\" \"$REMOTE\" --output=\"$MERGED\"
 
 [help]
 
