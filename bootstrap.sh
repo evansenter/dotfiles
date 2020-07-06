@@ -15,9 +15,6 @@ function doIt() {
 		--exclude "LICENSE-MIT.txt" \
 		--exclude "README.md" \
 	  --exclude "bootstrap.sh" \
-	  --exclude "z/" \
-	  --exclude "LICENSE-MIT.txt" \
-	  --exclude "README.md" \
 	  -avh --no-perms . ~;
 
 	# https://github.com/tmux-plugins/tpm

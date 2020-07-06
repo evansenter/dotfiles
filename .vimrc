@@ -12,7 +12,7 @@ if (has("termguicolors"))
   set termguicolors
 endif
 
-syntax on
+" syntax on
 filetype plugin indent on
 
 colorscheme onedark
