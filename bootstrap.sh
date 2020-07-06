@@ -5,7 +5,7 @@ cd "$(dirname "${BASH_SOURCE}")";
 git pull origin master;
 
 function doIt() {
-	g submodule update --init --recursive
+	git submodule update --init --recursive
 
 	rsync \
 		--exclude ".DS_Store" \
@@ -15,7 +15,7 @@ function doIt() {
 		--exclude "LICENSE-MIT.txt" \
 		--exclude "README.md" \
 	  --exclude "bootstrap.sh" \
-	  -avh --no-perms . ~;
+	  -avh --force --no-perms . ~;
 
 	# https://github.com/tmux-plugins/tpm
 	tpm_dir="$HOME/.tmux/plugins/tpm"
