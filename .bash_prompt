@@ -57,6 +57,9 @@ prompt_git() {
 	echo -e "${1}${branchName}${2}${s}";
 }
 
+# go/fig_status
+source /google/src/head/depot/google3/experimental/fig_contrib/prompts/fig_status/bash/fig_prompt.sh
+
 if tput setaf 1 &> /dev/null; then
 	tput sgr0; # reset colors
 	bold=$(tput bold);
@@ -101,6 +104,26 @@ else
 	hostStyle="${yellow}";
 fi;
 
+# Template Arguments:
+#   FIG_PROMPT_MODIFIED: Replaced with $modified
+#   FIG_PROMPT_ADDED: Replaced with $added
+#   FIG_PROMPT_DELETED: Replaced with $deleted
+#   FIG_PROMPT_UNKNOWN: Replaced with $unknown
+#   FIG_PROMPT_UNEXPORTED: Replaced with $unexported
+#   FIG_PROMPT_OBSOLETE: Replaced with $obsolete
+#   FIG_PROMPT_CL: Replaced with $cl
+#   FIG_PROMPT_DESCRIPTION: Replaced with $description
+#   FIG_PROMPT_CHANGENAME: Replaced with $changename
+#   FIG_PROMPT_HAS_SHELVE: Replaced with $has_shelve
+#   FIG_PROMPT_SHORT: Replaced with $short
+unset -f get_fig_prompt_template
+function get_fig_prompt_template() {
+  echo -n " (|FIG_PROMPT_MODIFIED||FIG_PROMPT_ADDED|"
+  echo -n "|FIG_PROMPT_DELETED||FIG_PROMPT_UNKNOWN|"
+  echo -n "|FIG_PROMPT_HAS_SHELVE| at cl/|FIG_PROMPT_CL|"
+  echo -n "|FIG_PROMPT_UNEXPORTED||FIG_PROMPT_OBSOLETE|)"
+}
+
 # Set the terminal title and prompt.
 PS1="\[\033]0;\W\007\]"; # working directory base name
 PS1+="\[${bold}\]\n"; # newline
@@ -109,6 +132,7 @@ PS1+="\[${white}\] at ";
 PS1+="\[${hostStyle}\]\h"; # host
 PS1+="\[${white}\] in ";
 PS1+="\[${green}\]\w"; # working directory full path
+PS1+="\[${violet}\]$(get_fig_prompt)";
 PS1+="\$(prompt_git \"\[${white}\] on \[${violet}\]\" \"\[${blue}\]\")"; # Git repository details
 PS1+="\n";
 PS1+="\[${white}\]\$ \[${reset}\]"; # `$` (and reset color)
