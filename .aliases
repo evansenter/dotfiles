@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # Easier navigation: .., ..., ...., ....., ~ and -
 alias ..="cd .."
@@ -52,7 +52,7 @@ alias timer='echo "Timer started. Stop with Ctrl-D." && date && time cat && date
 # Update Homebrew stuff
 alias brewup='brew update; brew upgrade; brew cleanup; brew doctor'
 
-if [ $(uname -s) == "Darwin" ]; then
+if [ $(uname -s) = "Darwin" ]; then
   # Get macOS Software Updates, and update installed Ruby gems, Homebrew, npm, and their installed packages
   alias update='sudo softwareupdate -i -a; brewup'
 else

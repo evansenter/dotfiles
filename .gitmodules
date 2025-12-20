@@ -1,15 +1,3 @@
-[submodule ".vim/bundle/vim-sensible"]
-	path = .vim/bundle/vim-sensible
-	url = https://github.com/tpope/vim-sensible.git
-[submodule ".vim/bundle/onedark.vim"]
-	path = .vim/bundle/onedark.vim
-	url = https://github.com/joshdick/onedark.vim.git
-[submodule ".vim/bundle/vim-polyglot"]
-	path = .vim/bundle/vim-polyglot
-	url = https://github.com/sheerun/vim-polyglot
 [submodule ".vim/bundle/lightline"]
 	path = .vim/bundle/lightline
-	url = https://github.com/itchyny/lightline.vim.git
-[submodule ".vim/bundle/lightline.vim"]
-	path = .vim/bundle/lightline.vim
 	url = https://github.com/itchyny/lightline.vim.git

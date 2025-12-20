@@ -1,0 +1,61 @@
+#!/usr/bin/env zsh
+
+# Solarized Dark color palette for zsh
+# Using zsh color codes
+autoload -U colors && colors
+
+# Enable parameter expansion and command substitution in prompts
+setopt PROMPT_SUBST
+
+# Git prompt integration
+autoload -Uz vcs_info
+zstyle ':vcs_info:*' enable git
+zstyle ':vcs_info:*' check-for-changes true
+zstyle ':vcs_info:*' stagedstr '%F{green}●%f'
+zstyle ':vcs_info:*' unstagedstr '%F{red}●%f'
+zstyle ':vcs_info:git:*' formats ' %F{blue}[%f%F{cyan}%b%f%c%u%F{blue}]%f'
+zstyle ':vcs_info:git:*' actionformats ' %F{blue}[%f%F{cyan}%b%f%F{yellow}|%a%f%c%u%F{blue}]%f'
+
+# Update vcs_info before each prompt
+precmd() {
+    vcs_info
+}
+
+# Solarized colors
+# Base colors
+local base03='%F{234}'   # dark background
+local base02='%F{235}'
+local base01='%F{240}'   # comments
+local base00='%F{241}'
+local base0='%F{244}'    # body text
+local base1='%F{245}'
+local base2='%F{254}'
+local base3='%F{230}'    # light background
+
+# Accent colors
+local yellow='%F{136}'
+local orange='%F{166}'
+local red='%F{160}'
+local magenta='%F{125}'
+local violet='%F{61}'
+local blue='%F{33}'
+local cyan='%F{37}'
+local green='%F{64}'
+
+# Reset color
+local reset='%f'
+
+# Build the prompt
+# First line: user@host in current directory
+PROMPT="${cyan}%n${reset}"           # username
+PROMPT+=" ${base01}at${reset} "
+PROMPT+="${yellow}%m${reset}"        # hostname
+PROMPT+=" ${base01}in${reset} "
+PROMPT+="${green}%~${reset}"         # current directory
+PROMPT+="\${vcs_info_msg_0_}"        # git info
+PROMPT+=$'\n'                         # newline
+PROMPT+="${base01}%*${reset} "       # time
+PROMPT+="${blue}→${reset} "          # prompt symbol
+
+# Right prompt (optional): show exit code if non-zero
+RPROMPT="${red}%(?..[%?])${reset}"

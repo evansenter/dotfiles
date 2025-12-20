@@ -5,17 +5,15 @@ cd "$(dirname "${BASH_SOURCE}")";
 git pull origin master;
 
 function doIt() {
-	git submodule update --init --recursive
-
 	rsync \
 		--exclude ".DS_Store" \
 		--exclude ".git/" \
 		--exclude ".gitignore" \
 		--exclude ".gitmodules" \
-		--exclude "LICENSE-MIT.txt" \
+		--exclude ".LICENSE-MIT.txt" \
 		--exclude "README.md" \
-	  --exclude "bootstrap.sh" \
-	  -avh --force --no-perms . ~;
+		--exclude "bootstrap.sh" \
+		-avh --force --no-perms . ~;
 
 	# https://github.com/tmux-plugins/tpm
 	tpm_dir="$HOME/.tmux/plugins/tpm"
@@ -27,7 +25,12 @@ function doIt() {
 		fi
 	fi
 
-	source ~/.bash_profile;
+	# Reload zsh if using zsh, otherwise try bash
+	if [[ -n "$ZSH_VERSION" ]]; then
+		source ~/.zshrc 2>/dev/null || echo "Restart your terminal or run: source ~/.zshrc"
+	elif [[ -n "$BASH_VERSION" ]]; then
+		source ~/.profile 2>/dev/null || echo "Restart your terminal or run: source ~/.profile"
+	fi
 }
 
 if [ "$1" == "--force" -o "$1" == "-f" ]; then

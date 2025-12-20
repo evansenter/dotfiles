@@ -1,2 +1,0 @@
-export SRC="$HOME/Source"
-export PATH=$SRC/misc/mgltools_1.5.6/bin:$HOME/bin:/usr/local/bin:/usr/local/sbin:$HOME/homebrew/bin:$HOME/homebrew/sbin:$PATH;
