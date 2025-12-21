@@ -10,7 +10,7 @@ function doIt() {
 		--exclude ".git/" \
 		--exclude ".gitignore" \
 		--exclude ".gitmodules" \
-		--exclude ".LICENSE-MIT.txt" \
+		--exclude "LICENSE-MIT.txt" \
 		--exclude "README.md" \
 		--exclude "bootstrap.sh" \
 		-avh --force --no-perms . ~;

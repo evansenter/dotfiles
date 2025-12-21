@@ -1,11 +1,8 @@
 #!/usr/bin/env sh
 
-# Easier navigation: .., ..., ...., ....., ~ and -
+# Easier navigation: .., ..., and -
 alias ..="cd .."
 alias ...="cd ../.."
-alias ....="cd ../../.."
-alias .....="cd ../../../.."
-alias ~="cd ~" # `cd` is probably faster to type though
 alias -- -="cd -"
 
 # Shortcuts
@@ -52,9 +49,6 @@ fi
 
 # Reload the shell (i.e. invoke as a login shell)
 alias reload="exec ${SHELL} -l"
-
-# Print each PATH entry on a separate line
-alias path='echo -e ${PATH//:/\\n}'
 
 # Pretty cat
 alias ccat="pygmentize -g"
