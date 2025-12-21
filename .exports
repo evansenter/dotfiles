@@ -1,11 +1,11 @@
-#!/usr/bin/env sh
+# ==============================================================================
+# Environment Variables
+# ==============================================================================
 
-# Make vim the default editor.
-export EDITOR='vim';
+# PATH configuration
+if [ -d "$HOME/.local/bin" ]; then
+    export PATH="$HOME/.local/bin:$PATH"
+fi
 
-# Prefer US English and use UTF-8.
-export LANG='en_US.UTF-8';
-export LC_ALL='en_US.UTF-8';
-
-# https://stackoverflow.com/a/42265848/96656
-export GPG_TTY=$(tty);
+# Default editor
+export EDITOR='vim'

@@ -1,20 +1,8 @@
-# Compiled Python files
-*.pyc
-
-# Folder view configuration files
+# macOS system files
 .DS_Store
-Desktop.ini
-
-# Thumbnail cache files
 ._*
-Thumbs.db
-
-# Files that might appear on external disks
 .Spotlight-V100
 .Trashes
 
-# Any log or file locks
-npm-debug.log
-Gemfile.lock
-
-.extra
+# Claude Code settings (project-specific, don't sync to home)
+.claude/

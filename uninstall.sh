@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 
-# Uninstall script for minimal zsh dotfiles
+# ==============================================================================
+# Uninstall Script - Remove Dotfiles
+# ==============================================================================
 
 echo "This will remove the following files from your home directory:"
 echo "  ~/.zshrc"
 echo "  ~/.zsh_prompt"
 echo "  ~/.aliases"
 echo "  ~/.exports"
-echo "  ~/.profile"
 echo "  ~/.tmux.conf"
 echo ""
 echo "Your original files (if any) will be permanently deleted."
@@ -23,7 +24,6 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     rm -f ~/.zsh_prompt
     rm -f ~/.aliases
     rm -f ~/.exports
-    rm -f ~/.profile
     rm -f ~/.tmux.conf
 
     echo "✓ Dotfiles removed successfully"
