@@ -1,0 +1,59 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Repository Overview
+
+This is a minimal macOS dotfiles repository for zsh configuration. The structure is flat with all configuration files in the root directory.
+
+## Installation and Updates
+
+**Install/sync dotfiles:**
+```bash
+./bootstrap.sh
+```
+
+**Force update (skip confirmation):**
+```bash
+./bootstrap.sh -f
+```
+
+**Uninstall:**
+```bash
+./uninstall.sh
+```
+
+## Architecture
+
+### Configuration Loading Order
+
+The `.zshrc` file sources other configuration files in this order:
+
+1. `.exports` - Environment variables and PATH configuration
+2. `.zsh_prompt` - Prompt configuration with command timer hooks
+3. `.aliases` - Command aliases
+4. `~/.extra` - Personal customizations (not tracked in repo)
+
+### Key Components
+
+**Prompt System** (.zsh_prompt:1-50)
+- Uses zsh hooks (`preexec` and `precmd`) to track command execution time
+- `preexec` captures start time before command runs
+- `precmd` calculates elapsed time after command completes
+- Timer only displayed if command takes >0 seconds
+
+**Bootstrap Process** (bootstrap.sh:34-59)
+- Uses `rsync` to sync dotfiles to home directory
+- Excludes git metadata, scripts, and documentation from sync
+- Installs tmux plugin manager (TPM) if not present
+- TPM must be manually activated in tmux with `prefix + I` after first install
+
+**Tmux Configuration** (.tmux.conf:1-54)
+- Uses tmux-onedark-theme for status bar styling
+- Custom key bindings: `|` for horizontal split, `-` for vertical split
+- Vim-style pane navigation with Ctrl-hjkl
+- Session resurrection with `prefix + Shift-S` (save) and `prefix + Shift-Y` (restore)
+
+## Personal Customizations
+
+Users can create `~/.extra` (not tracked) to add personal settings that override defaults. This file is sourced last in .zshrc:71-73.
