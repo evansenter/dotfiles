@@ -38,9 +38,9 @@ set smartcase                 " Unless uppercase used
 filetype plugin indent on     " File-type detection and indentation
 set autoindent                " Copy indent from current line
 set expandtab                 " Spaces instead of tabs
-set tabstop=4                 " Tab = 4 spaces
-set shiftwidth=4              " Indent = 4 spaces
-set softtabstop=4             " Backspace through spaces
+set tabstop=2                 " Tab = 2 spaces
+set shiftwidth=2              " Indent = 2 spaces
+set softtabstop=2             " Backspace through spaces
 
 " ==============================================================================
 " Files

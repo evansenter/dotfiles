@@ -62,7 +62,7 @@ The `.zshrc` file sources other configuration files in this order:
 - Uses GitHub CLI (`gh`) for credential management
 
 **Vim Configuration** (.vimrc)
-- 4-space indentation with spaces (expandtab)
+- 2-space indentation with spaces (expandtab)
 - Incremental, case-smart search with highlighting
 - No swap/backup files
 - Line numbers and always-visible status line
