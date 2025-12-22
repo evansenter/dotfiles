@@ -10,6 +10,8 @@ echo "  ~/.zsh_prompt"
 echo "  ~/.aliases"
 echo "  ~/.exports"
 echo "  ~/.tmux.conf"
+echo "  ~/.gitconfig"
+echo "  ~/.vimrc"
 echo ""
 echo "Your original files (if any) will be permanently deleted."
 echo ""
@@ -25,6 +27,8 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     rm -f ~/.aliases
     rm -f ~/.exports
     rm -f ~/.tmux.conf
+    rm -f ~/.gitconfig
+    rm -f ~/.vimrc
 
     echo "✓ Dotfiles removed successfully"
     echo ""

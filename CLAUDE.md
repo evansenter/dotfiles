@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a minimal macOS dotfiles repository for zsh configuration. The structure is flat with all configuration files in the root directory.
+This is a minimal macOS dotfiles repository for zsh, git, vim, and tmux. The structure is flat with all configuration files in the root directory.
 
 ## Installation and Updates
 
@@ -54,6 +54,18 @@ The `.zshrc` file sources other configuration files in this order:
 - Vim-style pane navigation with Ctrl-hjkl
 - Session resurrection with `prefix + S` (save) and `prefix + Y` (restore)
 - Auto-saves sessions every 15 minutes via tmux-continuum
+
+**Git Configuration** (.gitconfig)
+- Common aliases: `st`, `co`, `br`, `ci`, `lg`, `amend`, `unstage`, `discard`
+- Auto setup remote on push, prune on fetch
+- Default branch set to `main`
+- Uses GitHub CLI (`gh`) for credential management
+
+**Vim Configuration** (.vimrc)
+- 4-space indentation with spaces (expandtab)
+- Incremental, case-smart search with highlighting
+- No swap/backup files
+- Line numbers and always-visible status line
 
 ## Personal Customizations
 

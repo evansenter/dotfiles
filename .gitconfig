@@ -1,0 +1,68 @@
+# ==============================================================================
+# User
+# ==============================================================================
+
+[user]
+	name = Evan Senter
+	email = evansenter@gmail.com
+
+# ==============================================================================
+# Core
+# ==============================================================================
+
+[core]
+	editor = vim
+	excludesfile = ~/.gitignore_global
+
+[init]
+	defaultBranch = main
+
+# ==============================================================================
+# Behavior
+# ==============================================================================
+
+[pull]
+	rebase = false
+
+[push]
+	autoSetupRemote = true
+
+[fetch]
+	prune = true
+
+# ==============================================================================
+# Colors
+# ==============================================================================
+
+[color]
+	ui = auto
+
+# ==============================================================================
+# Aliases
+# ==============================================================================
+
+[alias]
+	st = status
+	co = checkout
+	br = branch
+	ci = commit
+	amend = commit --amend --no-edit
+	unstage = reset HEAD --
+	last = log -1 HEAD
+	lg = log --oneline --graph --decorate -20
+	branches = branch -a
+	tags = tag -l
+	stashes = stash list
+	discard = checkout --
+
+# ==============================================================================
+# Credentials
+# ==============================================================================
+
+[credential "https://github.com"]
+	helper =
+	helper = !/opt/homebrew/bin/gh auth git-credential
+
+[credential "https://gist.github.com"]
+	helper =
+	helper = !/opt/homebrew/bin/gh auth git-credential
