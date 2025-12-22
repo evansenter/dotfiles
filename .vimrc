@@ -12,6 +12,7 @@ set backspace=indent,eol,start " Backspace over everything
 " ==============================================================================
 
 syntax on                     " Syntax highlighting
+colorscheme catppuccin_mocha  " Catppuccin theme
 set number                    " Line numbers
 set ruler                     " Show cursor position
 set showcmd                   " Show incomplete commands
