@@ -36,7 +36,7 @@ The `.zshrc` file sources other configuration files in this order:
 
 ### Key Components
 
-**Prompt System** (.zsh_prompt:1-50)
+**Prompt System** (.zsh_prompt:23-40)
 - Uses zsh hooks (`preexec` and `precmd`) to track command execution time
 - `preexec` captures start time before command runs
 - `precmd` calculates elapsed time after command completes
@@ -48,11 +48,12 @@ The `.zshrc` file sources other configuration files in this order:
 - Installs tmux plugin manager (TPM) if not present
 - TPM must be manually activated in tmux with `prefix + I` after first install
 
-**Tmux Configuration** (.tmux.conf:1-54)
-- Uses tmux-onedark-theme for status bar styling
+**Tmux Configuration** (.tmux.conf)
+- Uses Catppuccin theme (mocha flavor) for status bar styling
 - Custom key bindings: `|` for horizontal split, `-` for vertical split
 - Vim-style pane navigation with Ctrl-hjkl
-- Session resurrection with `prefix + Shift-S` (save) and `prefix + Shift-Y` (restore)
+- Session resurrection with `prefix + S` (save) and `prefix + Y` (restore)
+- Auto-saves sessions every 15 minutes via tmux-continuum
 
 ## Personal Customizations
 
