@@ -23,6 +23,11 @@ git clone --recursive <repo-url>
 ./bootstrap.sh -f
 ```
 
+**Pull latest and install:**
+```bash
+./bootstrap.sh --pull
+```
+
 **Update submodules:**
 ```bash
 git submodule update --init --remote

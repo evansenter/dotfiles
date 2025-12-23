@@ -7,9 +7,6 @@
 # Change to the dotfiles directory
 cd "$(dirname "${BASH_SOURCE}")";
 
-# Pull latest changes from remote
-git pull origin main;
-
 # ==============================================================================
 # Functions
 # ==============================================================================
@@ -88,19 +85,31 @@ install_launch_agents() {
 	# Install dark-notify LaunchAgent (only if dark-notify is installed)
 	if command -v dark-notify >/dev/null 2>&1; then
 		local plist="com.user.dark-notify.plist"
-		echo "Installing LaunchAgent: $plist"
-		sed "s|__HOME__|$HOME|g" "LaunchAgents/$plist" > "$launch_agents_dir/$plist"
+		local new_plist_content
+		new_plist_content=$(sed "s|__HOME__|$HOME|g" "LaunchAgents/$plist")
+		local dest_plist="$launch_agents_dir/$plist"
 
-		# Load the agent if not already loaded
-		launchctl bootout "gui/$(id -u)/com.user.dark-notify" 2>/dev/null || true
-		launchctl bootstrap "gui/$(id -u)" "$launch_agents_dir/$plist"
+		# Only update and reload if plist content changed
+		if [[ ! -f "$dest_plist" ]] || [[ "$(cat "$dest_plist")" != "$new_plist_content" ]]; then
+			echo "Installing LaunchAgent: $plist"
+			echo "$new_plist_content" > "$dest_plist"
 
-		# Run the script once to set initial theme
-		"$HOME/.bin/toggle-btop-theme"
+			# Reload the agent
+			launchctl bootout "gui/$(id -u)/com.user.dark-notify" 2>/dev/null || true
+			launchctl bootstrap "gui/$(id -u)" "$dest_plist"
+
+			# Run the script once to set initial theme
+			"$HOME/.bin/toggle-btop-theme"
+		fi
 	else
 		echo "Skipping dark-notify LaunchAgent (dark-notify not installed)"
 		echo "  Install with: brew install cormacrelf/tap/dark-notify"
 	fi
+}
+
+pull_latest() {
+	echo "Pulling latest changes from origin/main..."
+	git pull origin main
 }
 
 install_btop_themes() {
@@ -184,8 +193,23 @@ sync_dotfiles() {
 # Main Execution
 # ==============================================================================
 
+# Parse arguments
+FORCE=false
+PULL=false
+for arg in "$@"; do
+	case "$arg" in
+		--force|-f) FORCE=true ;;
+		--pull|-p) PULL=true ;;
+	esac
+done
+
+# Pull if requested
+if [[ "$PULL" == true ]]; then
+	pull_latest
+fi
+
 # Run with or without confirmation
-if [[ "$1" == "--force" || "$1" == "-f" ]]; then
+if [[ "$FORCE" == true ]]; then
 	sync_dotfiles
 else
 	read -p "This may overwrite existing files in your home directory. Are you sure? (y/n) " -n 1
