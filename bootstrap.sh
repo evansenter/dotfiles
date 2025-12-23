@@ -87,6 +87,7 @@ sync_dotfiles() {
 		--exclude "README.md" \
 		--exclude "LaunchAgents/" \
 		--exclude "vendor/" \
+		--exclude "preferences/" \
 		--archive \
 		--verbose \
 		--human-readable \

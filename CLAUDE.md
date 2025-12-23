@@ -52,9 +52,9 @@ The `.zshrc` file sources other configuration files in this order:
 - `precmd` calculates elapsed time after command completes
 - Timer only displayed if command takes >0 seconds
 
-**Bootstrap Process** (bootstrap.sh:76-110)
+**Bootstrap Process** (bootstrap.sh:76-112)
 - Uses `rsync` to sync dotfiles to home directory
-- Excludes git metadata, scripts, documentation, LaunchAgents, and vendor from sync
+- Excludes git metadata, scripts, documentation, LaunchAgents, vendor, and preferences from sync
 - Installs tmux plugin manager (TPM) if not present
 - TPM must be manually activated in tmux with `prefix + I` after first install
 - Symlinks btop themes from `vendor/btop-catppuccin/` to `~/.config/btop/themes/`
@@ -85,6 +85,15 @@ The `.zshrc` file sources other configuration files in this order:
 - Requires `dark-notify` (`brew install cormacrelf/tap/dark-notify`)
 - LaunchAgent runs dark-notify daemon to watch for appearance changes
 - Sends SIGUSR2 to running btop instances to reload theme immediately
+
+**iTerm2 Configuration** (preferences/, vendor/iterm-catppuccin/)
+- Color schemes in `vendor/iterm-catppuccin/colors/`
+- Profile backup in `preferences/iTerm Profile.json`
+- Manual setup required:
+  1. Import color schemes: Preferences → Profiles → Colors → Color Presets → Import
+  2. Enable auto-switching: Check "Use different colors for light mode and dark mode"
+  3. Set catppuccin-latte for light, catppuccin-mocha for dark
+- To restore profile: Preferences → Profiles → Other Actions → Import JSON Profiles
 
 ## Personal Customizations
 
