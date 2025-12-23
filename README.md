@@ -1,64 +1,83 @@
 # Evan's dotfiles
 
-Minimal zsh configuration for macOS.
+Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mode theme switching.
 
 ## What's included
 
-- **Zsh configuration** - History management, completion caching, directory navigation
-- **Custom prompt** - Shows directory, current time, and elapsed time for commands
-- **Basic aliases** - Navigation shortcuts and colored ls/grep
-- **PATH setup** - Adds `~/.local/bin` to PATH
-- **Tmux config** - Basic tmux setup with plugin manager
+- **Zsh** - History management, completion caching, directory navigation, custom prompt with command timer
+- **Git** - Sensible defaults, common aliases (`st`, `co`, `br`, `lg`, etc.)
+- **Vim** - 2-space indentation, Catppuccin theme, sensible search settings
+- **Tmux** - Catppuccin theme, vim-style navigation, session persistence
+- **btop** - Automatic dark/light theme switching via macOS appearance
+- **iTerm2** - Catppuccin color schemes (manual import required)
 
 ## Installation
 
-Clone the repository and run the bootstrap script:
+Clone with submodules and run bootstrap:
 
 ```bash
-git clone https://github.com/evansenter/dotfiles.git
+git clone --recursive https://github.com/evansenter/dotfiles.git
 cd dotfiles
 ./bootstrap.sh
 ```
 
-The script will sync dotfiles to your home directory. Restart your terminal or run `source ~/.zshrc` to apply changes.
+Restart your terminal or run `source ~/.zshrc` to apply changes.
+
+### Optional: Dark mode theme switching
+
+For automatic btop theme switching based on macOS appearance:
+
+```bash
+brew install cormacrelf/tap/dark-notify
+./bootstrap.sh  # Re-run to install LaunchAgent
+```
 
 ## Updating
 
-To pull the latest changes and sync:
+Pull latest and sync:
 
 ```bash
 cd dotfiles
+git pull
+git submodule update --init --remote
 ./bootstrap.sh -f
 ```
 
 ## Uninstalling
-
-To remove all dotfiles from your home directory:
 
 ```bash
 cd dotfiles
 ./uninstall.sh
 ```
 
+## Structure
+
+```
+dotfiles/
+├── home/           # Synced to ~/ on install
+│   ├── .aliases
+│   ├── .bin/
+│   ├── .exports
+│   ├── .gitconfig
+│   ├── .tmux.conf
+│   ├── .vim/
+│   ├── .vimrc
+│   ├── .zsh_prompt
+│   └── .zshrc
+├── vendor/         # Git submodules (themes)
+├── preferences/    # App config backups
+├── LaunchAgents/   # macOS LaunchAgent templates
+└── bootstrap.sh
+```
+
 ## Customization
 
-Create a `~/.extra` file (not tracked by this repo) to add personal customizations without forking:
+Create `~/.extra` (not tracked) for personal settings:
 
 ```bash
-# ~/.extra example
+# ~/.extra
 export CUSTOM_VAR="value"
 alias myalias="some command"
-```
-
-## Features
-
-**Smart history search**: Type a command prefix (like `git`) and press ↑/↓ arrows to search matching commands in history.
-
-**Command timer**: The prompt shows how long the previous command took to run.
-
-**Clean prompt format**:
-```
-~/path/to/directory 14:32:45 3s →
 ```
 
 ## Credits
