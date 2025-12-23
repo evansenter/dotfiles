@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Toggle btop theme based on macOS dark/light mode
+# Called by dark-notify when system appearance changes
+# Usage: toggle-btop-theme [light|dark]
+
+BTOP_CONF="$HOME/.config/btop/btop.conf"
+
+# Check if btop config exists
+if [[ ! -f "$BTOP_CONF" ]]; then
+    exit 0
+fi
+
+# Determine mode from argument or system preference
+MODE="$1"
+if [[ -z "$MODE" ]]; then
+    # No argument - check system preference directly
+    if [[ $(defaults read -g AppleInterfaceStyle 2>/dev/null) == "Dark" ]]; then
+        MODE="dark"
+    else
+        MODE="light"
+    fi
+fi
+
+# Select theme based on mode
+if [[ "$MODE" == "dark" ]]; then
+    THEME="catppuccin_mocha"
+else
+    THEME="catppuccin_latte"
+fi
+
+# Update btop config
+sed -i '' "s/^color_theme = .*/color_theme = \"$THEME\"/" "$BTOP_CONF"
+
+# Signal btop to reload config (if running)
+pkill -SIGUSR2 btop 2>/dev/null || true
