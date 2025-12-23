@@ -211,6 +211,17 @@ for arg in "$@"; do
 	case "$arg" in
 		--force|-f) FORCE=true ;;
 		--pull|-p) PULL=true ;;
+		--help|-h)
+			echo "Usage: ./bootstrap.sh [OPTIONS]"
+			echo ""
+			echo "Install dotfiles from home/ to ~"
+			echo ""
+			echo "Options:"
+			echo "  -f, --force  Skip confirmation prompt"
+			echo "  -p, --pull   Pull latest changes before installing"
+			echo "  -h, --help   Show this help message"
+			exit 0
+			;;
 	esac
 done
 
