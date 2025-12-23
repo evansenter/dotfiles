@@ -8,7 +8,7 @@
 cd "$(dirname "${BASH_SOURCE}")";
 
 # Pull latest changes from remote
-git pull origin master;
+git pull origin main;
 
 # ==============================================================================
 # Functions
@@ -74,26 +74,15 @@ install_btop_themes() {
 }
 
 sync_dotfiles() {
-	# Sync dotfiles to home directory
+	# Sync dotfiles from home/ directory to ~
 	rsync \
 		--exclude ".DS_Store" \
-		--exclude ".git/" \
-		--exclude ".gitignore" \
-		--exclude ".claude/" \
-		--exclude "CLAUDE.md" \
-		--exclude "bootstrap.sh" \
-		--exclude "uninstall.sh" \
-		--exclude "LICENSE-MIT.txt" \
-		--exclude "README.md" \
-		--exclude "LaunchAgents/" \
-		--exclude "vendor/" \
-		--exclude "preferences/" \
 		--archive \
 		--verbose \
 		--human-readable \
 		--force \
 		--no-perms \
-		. ~
+		home/ ~
 
 	# Install tmux plugin manager if needed
 	install_tmux_plugin_manager
