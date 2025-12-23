@@ -38,6 +38,7 @@ sync_dotfiles() {
 		--exclude ".git/" \
 		--exclude ".gitignore" \
 		--exclude ".claude/" \
+		--exclude "CLAUDE.md" \
 		--exclude "bootstrap.sh" \
 		--exclude "uninstall.sh" \
 		--exclude "LICENSE-MIT.txt" \

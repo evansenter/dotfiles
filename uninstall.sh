@@ -12,6 +12,7 @@ echo "  ~/.exports"
 echo "  ~/.tmux.conf"
 echo "  ~/.gitconfig"
 echo "  ~/.vimrc"
+echo "  ~/.vim/"
 echo ""
 echo "Your original files (if any) will be permanently deleted."
 echo ""
@@ -29,6 +30,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     rm -f ~/.tmux.conf
     rm -f ~/.gitconfig
     rm -f ~/.vimrc
+    rm -rf ~/.vim
 
     echo "✓ Dotfiles removed successfully"
     echo ""
