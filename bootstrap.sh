@@ -90,9 +90,13 @@ install_launch_agents() {
 		local dest_plist="$launch_agents_dir/$plist"
 
 		# Only update and reload if plist content changed
-		if [[ ! -f "$dest_plist" ]] || [[ "$(cat "$dest_plist")" != "$new_plist_content" ]]; then
+		local tmp_plist
+		tmp_plist=$(mktemp)
+		echo "$new_plist_content" > "$tmp_plist"
+
+		if [[ ! -f "$dest_plist" ]] || ! cmp -s "$tmp_plist" "$dest_plist"; then
 			echo "Installing LaunchAgent: $plist"
-			echo "$new_plist_content" > "$dest_plist"
+			mv "$tmp_plist" "$dest_plist"
 
 			# Reload the agent
 			launchctl bootout "gui/$(id -u)/com.user.dark-notify" 2>/dev/null || true
@@ -100,6 +104,8 @@ install_launch_agents() {
 
 			# Run the script once to set initial theme
 			"$HOME/.bin/toggle-btop-theme"
+		else
+			rm -f "$tmp_plist"
 		fi
 	else
 		echo "Skipping dark-notify LaunchAgent (dark-notify not installed)"
@@ -154,8 +160,13 @@ merge_claude_hooks() {
 
 	# Merge hooks from repo into existing settings
 	echo "Merging Claude hooks into settings.json..."
-	jq -s '.[1] * {hooks: .[0].hooks}' "$hooks_src" "$dest" > "$dest.tmp" \
-		&& mv "$dest.tmp" "$dest"
+	if jq -s '.[1] * {hooks: .[0].hooks}' "$hooks_src" "$dest" > "$dest.tmp"; then
+		mv "$dest.tmp" "$dest"
+	else
+		echo "Error: Failed to merge Claude hooks (jq error)"
+		rm -f "$dest.tmp"
+		return 1
+	fi
 }
 
 sync_dotfiles() {
