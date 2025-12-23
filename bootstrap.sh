@@ -76,6 +76,7 @@ install_btop_themes() {
 sync_dotfiles() {
 	# Sync dotfiles from home/ directory to ~
 	rsync \
+		--exclude ".DS_Store" \
 		--archive \
 		--verbose \
 		--human-readable \
