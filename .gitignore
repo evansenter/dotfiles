@@ -5,4 +5,4 @@
 .Trashes
 
 # Claude Code settings (project-specific, don't sync to home)
-.claude/
+/.claude/

@@ -23,6 +23,11 @@ git clone --recursive <repo-url>
 ./bootstrap.sh -f
 ```
 
+**Pull latest and install:**
+```bash
+./bootstrap.sh --pull
+```
+
 **Update submodules:**
 ```bash
 git submodule update --init --remote
@@ -84,6 +89,15 @@ The `.zshrc` file sources other configuration files in this order:
 - Requires `dark-notify` (`brew install cormacrelf/tap/dark-notify`)
 - LaunchAgent runs dark-notify daemon to watch for appearance changes
 - Sends SIGUSR2 to running btop instances to reload theme immediately
+
+**Claude Code Hooks** (home/.claude/)
+- Hooks are merged into `~/.claude/settings.json` during bootstrap (requires `jq`)
+- `hooks.json` defines a PostToolUse hook that runs after Bash commands
+- `hooks/post-pr-review.py` triggers on `gh pr create` or `git push` commands:
+  - Detects PR number from command output
+  - Instructs Claude to watch CI and fetch review comments
+  - Prompts to address feedback from automated code review
+- To disable: remove the hooks section from `~/.claude/settings.json`
 
 **iTerm2 Configuration** (preferences/, vendor/iterm-catppuccin/)
 - Color schemes in `vendor/iterm-catppuccin/colors/`
