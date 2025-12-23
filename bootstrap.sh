@@ -14,6 +14,56 @@ git pull origin main;
 # Functions
 # ==============================================================================
 
+check_newer_local_files() {
+	local newer_files=()
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+	# Check if diff supports --color
+	local diff_cmd="diff -u"
+	if diff --color=auto -u /dev/null /dev/null &>/dev/null; then
+		diff_cmd="diff --color=auto -u"
+	fi
+
+	# Find all files in home/ directory
+	while IFS= read -r -d '' src_file; do
+		# Get relative path from home/
+		local rel_path="${src_file#$dotfiles_dir/home/}"
+		local dest_file="$HOME/$rel_path"
+
+		# Skip files that are merged separately, not overwritten
+		[[ "$rel_path" == ".claude/hooks.json" ]] && continue
+
+		# Skip if destination doesn't exist
+		[[ ! -e "$dest_file" ]] && continue
+
+		# Check if destination is newer than source
+		if [[ "$dest_file" -nt "$src_file" ]]; then
+			newer_files+=("$rel_path")
+		fi
+	done < <(find "$dotfiles_dir/home" -type f -print0)
+
+	# Return success if no newer files found
+	if [[ ${#newer_files[@]} -eq 0 ]]; then
+		return 0
+	fi
+
+	# Warn about newer local files
+	echo ""
+	echo "Warning: The following files in ~ are newer than their repo versions:"
+	echo ""
+
+	for file in "${newer_files[@]}"; do
+		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+		echo "~/$file"
+		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+		# Show diff: repo version vs local version (what would be lost)
+		$diff_cmd "$dotfiles_dir/home/$file" "$HOME/$file" || true
+		echo ""
+	done
+
+	return 1
+}
+
 install_tmux_plugin_manager() {
 	local tpm_dir="$HOME/.tmux/plugins/tpm"
 
@@ -73,10 +123,38 @@ install_btop_themes() {
 	done
 }
 
+merge_claude_hooks() {
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local hooks_src="$dotfiles_dir/home/.claude/hooks.json"
+	local dest="$HOME/.claude/settings.json"
+
+	if ! command -v jq >/dev/null 2>&1; then
+		echo "Skipping Claude hooks merge (jq not installed)"
+		echo "  Install with: brew install jq"
+		return 0
+	fi
+
+	mkdir -p "$HOME/.claude"
+
+	# Create settings.json if it doesn't exist
+	if [[ ! -f "$dest" ]]; then
+		cp "$hooks_src" "$dest"
+		echo "Created ~/.claude/settings.json with hooks"
+		return 0
+	fi
+
+	# Merge hooks from repo into existing settings
+	echo "Merging Claude hooks into settings.json..."
+	jq -s '.[1] * {hooks: .[0].hooks}' "$hooks_src" "$dest" > "$dest.tmp" \
+		&& mv "$dest.tmp" "$dest"
+}
+
 sync_dotfiles() {
 	# Sync dotfiles from home/ directory to ~
+	# Note: hooks.json is excluded and merged separately to preserve local settings
 	rsync \
 		--exclude ".DS_Store" \
+		--exclude ".claude/hooks.json" \
 		--archive \
 		--verbose \
 		--human-readable \
@@ -86,6 +164,9 @@ sync_dotfiles() {
 
 	# Install tmux plugin manager if needed
 	install_tmux_plugin_manager
+
+	# Merge Claude hooks into settings.json
+	merge_claude_hooks
 
 	# Install btop themes from submodule
 	install_btop_themes
@@ -110,6 +191,15 @@ else
 	read -p "This may overwrite existing files in your home directory. Are you sure? (y/n) " -n 1
 	echo ""
 	if [[ $REPLY =~ ^[Yy]$ ]]; then
+		# Check for newer local files
+		if ! check_newer_local_files; then
+			read -p "These local changes will be overwritten. Continue anyway? (y/n) " -n 1
+			echo ""
+			if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+				echo "Aborted."
+				exit 1
+			fi
+		fi
 		sync_dotfiles
 	fi
 fi
