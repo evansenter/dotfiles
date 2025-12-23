@@ -1,0 +1,6 @@
+[submodule "vendor/btop-catppuccin"]
+	path = vendor/btop-catppuccin
+	url = https://github.com/catppuccin/btop.git
+[submodule "vendor/iterm-catppuccin"]
+	path = vendor/iterm-catppuccin
+	url = https://github.com/catppuccin/iterm.git

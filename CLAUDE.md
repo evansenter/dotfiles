@@ -4,9 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a minimal macOS dotfiles repository for zsh, git, vim, and tmux. The structure is flat with all configuration files in the root directory.
+This is a minimal macOS dotfiles repository for zsh, git, vim, and tmux. The structure is flat with all configuration files in the root directory. External themes are managed as git submodules in `vendor/`.
 
 ## Installation and Updates
+
+**Clone with submodules:**
+```bash
+git clone --recursive <repo-url>
+```
 
 **Install/sync dotfiles:**
 ```bash
@@ -16,6 +21,11 @@ This is a minimal macOS dotfiles repository for zsh, git, vim, and tmux. The str
 **Force update (skip confirmation):**
 ```bash
 ./bootstrap.sh -f
+```
+
+**Update submodules:**
+```bash
+git submodule update --init --remote
 ```
 
 **Uninstall:**
@@ -42,11 +52,13 @@ The `.zshrc` file sources other configuration files in this order:
 - `precmd` calculates elapsed time after command completes
 - Timer only displayed if command takes >0 seconds
 
-**Bootstrap Process** (bootstrap.sh:34-59)
+**Bootstrap Process** (bootstrap.sh:76-112)
 - Uses `rsync` to sync dotfiles to home directory
-- Excludes git metadata, scripts, and documentation from sync
+- Excludes git metadata, scripts, documentation, LaunchAgents, vendor, and preferences from sync
 - Installs tmux plugin manager (TPM) if not present
 - TPM must be manually activated in tmux with `prefix + I` after first install
+- Symlinks btop themes from `vendor/btop-catppuccin/` to `~/.config/btop/themes/`
+- Installs LaunchAgents (if dependencies are available)
 
 **Tmux Configuration** (.tmux.conf)
 - Uses Catppuccin theme (mocha flavor) for status bar styling
@@ -66,6 +78,22 @@ The `.zshrc` file sources other configuration files in this order:
 - Incremental, case-smart search with highlighting
 - No swap/backup files
 - Line numbers and always-visible status line
+
+**Dark Mode Theme Switching** (.bin/toggle-btop-theme)
+- Automatically switches btop theme based on macOS appearance
+- Uses catppuccin_mocha for dark mode, catppuccin_latte for light mode
+- Requires `dark-notify` (`brew install cormacrelf/tap/dark-notify`)
+- LaunchAgent runs dark-notify daemon to watch for appearance changes
+- Sends SIGUSR2 to running btop instances to reload theme immediately
+
+**iTerm2 Configuration** (preferences/, vendor/iterm-catppuccin/)
+- Color schemes in `vendor/iterm-catppuccin/colors/`
+- Profile backup in `preferences/iTerm Profile.json`
+- Manual setup required:
+  1. Import color schemes: Preferences → Profiles → Colors → Color Presets → Import
+  2. Enable auto-switching: Check "Use different colors for light mode and dark mode"
+  3. Set catppuccin-latte for light, catppuccin-mocha for dark
+- To restore profile: Preferences → Profiles → Other Actions → Import JSON Profiles
 
 ## Personal Customizations
 

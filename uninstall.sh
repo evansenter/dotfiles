@@ -13,6 +13,9 @@ echo "  ~/.tmux.conf"
 echo "  ~/.gitconfig"
 echo "  ~/.vimrc"
 echo "  ~/.vim/"
+echo "  ~/.bin/"
+echo "  ~/Library/LaunchAgents/com.user.dark-notify.plist"
+echo "  ~/.config/btop/themes/catppuccin_*.theme (symlinks)"
 echo ""
 echo "Your original files (if any) will be permanently deleted."
 echo ""
@@ -31,8 +34,16 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     rm -f ~/.gitconfig
     rm -f ~/.vimrc
     rm -rf ~/.vim
+    rm -rf ~/.bin
 
-    echo "✓ Dotfiles removed successfully"
+    # Unload and remove dark-notify LaunchAgent
+    launchctl bootout "gui/$(id -u)/com.user.dark-notify" 2>/dev/null || true
+    rm -f ~/Library/LaunchAgents/com.user.dark-notify.plist
+
+    # Remove btop theme symlinks
+    rm -f ~/.config/btop/themes/catppuccin_*.theme
+
+    echo "Dotfiles removed successfully"
     echo ""
     echo "Note: This did not remove:"
     echo "  - ~/.zsh_history (your command history)"
