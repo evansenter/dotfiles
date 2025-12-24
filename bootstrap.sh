@@ -76,6 +76,9 @@ install_tmux_plugin_manager() {
 }
 
 install_launch_agents() {
+	# LaunchAgents are macOS-only
+	[[ "$(uname)" != "Darwin" ]] && return 0
+
 	local launch_agents_dir="$HOME/Library/LaunchAgents"
 	mkdir -p "$launch_agents_dir"
 
@@ -121,9 +124,8 @@ install_btop_themes() {
 	local vendor_themes="$dotfiles_dir/vendor/btop-catppuccin/themes"
 
 	if [[ ! -d "$vendor_themes" ]]; then
-		echo "Skipping btop themes (submodule not initialized)"
-		echo "  Run: git submodule update --init"
-		return 0
+		echo "Initializing submodules..."
+		git -C "$dotfiles_dir" submodule update --init
 	fi
 
 	mkdir -p "$btop_themes_dir"
