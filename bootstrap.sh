@@ -27,9 +27,6 @@ check_newer_local_files() {
 		local rel_path="${src_file#$dotfiles_dir/home/}"
 		local dest_file="$HOME/$rel_path"
 
-		# Skip files that are merged separately, not overwritten
-		[[ "$rel_path" == ".claude/hooks.json" ]] && continue
-
 		# Skip if destination doesn't exist
 		[[ ! -e "$dest_file" ]] && continue
 
@@ -138,43 +135,10 @@ install_btop_themes() {
 	done
 }
 
-merge_claude_hooks() {
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-	local hooks_src="$dotfiles_dir/home/.claude/hooks.json"
-	local dest="$HOME/.claude/settings.json"
-
-	if ! command -v jq >/dev/null 2>&1; then
-		echo "Skipping Claude hooks merge (jq not installed)"
-		echo "  Install with: brew install jq"
-		return 0
-	fi
-
-	mkdir -p "$HOME/.claude"
-
-	# Create settings.json if it doesn't exist
-	if [[ ! -f "$dest" ]]; then
-		cp "$hooks_src" "$dest"
-		echo "Created ~/.claude/settings.json with hooks"
-		return 0
-	fi
-
-	# Merge hooks from repo into existing settings
-	echo "Merging Claude hooks into settings.json..."
-	if jq -s '.[1] * {hooks: .[0].hooks}' "$hooks_src" "$dest" > "$dest.tmp"; then
-		mv "$dest.tmp" "$dest"
-	else
-		echo "Error: Failed to merge Claude hooks (jq error)"
-		rm -f "$dest.tmp"
-		return 1
-	fi
-}
-
 sync_dotfiles() {
 	# Sync dotfiles from home/ directory to ~
-	# Note: hooks.json is excluded and merged separately to preserve local settings
 	rsync \
 		--exclude ".DS_Store" \
-		--exclude ".claude/hooks.json" \
 		--archive \
 		--verbose \
 		--human-readable \
@@ -184,9 +148,6 @@ sync_dotfiles() {
 
 	# Install tmux plugin manager if needed
 	install_tmux_plugin_manager
-
-	# Merge Claude hooks into settings.json
-	merge_claude_hooks
 
 	# Install btop themes from submodule
 	install_btop_themes

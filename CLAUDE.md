@@ -94,13 +94,6 @@ The `.zshrc` file sources other configuration files in this order:
 - `CLAUDE.md` provides global workflow preferences for all Claude Code sessions
   - Synced to `~/.claude/CLAUDE.md` and applies to all projects
   - Supplements repository-level `CLAUDE.md` files at project roots
-- Hooks are merged into `~/.claude/settings.json` during bootstrap (requires `jq`)
-- `hooks.json` defines a PostToolUse hook that runs after Bash commands
-- `hooks/post-pr-review.py` triggers on `gh pr create` or `git push` commands:
-  - Detects PR number from command output
-  - Instructs Claude to watch CI and fetch review comments
-  - Prompts to address feedback from automated code review
-- To disable hooks: remove the hooks section from `~/.claude/settings.json`
 
 **iTerm2 Configuration** (preferences/, vendor/iterm-catppuccin/)
 - Color schemes in `vendor/iterm-catppuccin/colors/`
