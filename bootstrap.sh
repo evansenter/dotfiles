@@ -125,7 +125,17 @@ install_btop_themes() {
 
 	if [[ ! -d "$vendor_themes" ]]; then
 		echo "Initializing submodules..."
-		git -C "$dotfiles_dir" submodule update --init
+		if ! git -C "$dotfiles_dir" submodule update --init; then
+			echo "Warning: Failed to initialize submodules"
+			echo "  Run manually: git submodule update --init"
+			return 0
+		fi
+	fi
+
+	# Verify themes directory exists after initialization
+	if [[ ! -d "$vendor_themes" ]]; then
+		echo "Skipping btop themes (themes directory not found)"
+		return 0
 	fi
 
 	mkdir -p "$btop_themes_dir"
