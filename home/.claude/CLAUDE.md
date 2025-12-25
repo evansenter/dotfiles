@@ -2,8 +2,16 @@
 
 This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 
-## Workflow Preferences
+## Decision-Making
 
-- For any implementation task with multiple phases or steps, prefer using the `/feature-dev:feature-dev` skill to guide the work.
-- After pushing a PR, watch CI status with `gh pr checks <PR#> --watch --interval 5`, then fetch review comments with `gh pr view <PR#> --comments`. Address all sensible feedback from the code review, and open GitHub issues for items that should be deferred.
-- When discovering bugs, technical debt, or improvements that won't be addressed right away, create GitHub issues to track them so they aren't forgotten.
+- Proactively suggest improvements when you notice opportunities.
+- Feel free to use git and gh directly. Ask before pushing, merging, or creating/closing PRs.
+
+## Quality Gates
+
+- Always run linter, formatter, and all tests before pushing.
+
+## PR Workflow
+
+- After pushing a PR, watch CI with `gh pr checks <PR#> --watch --interval 5`, then fetch comments with `gh pr view <PR#> --comments`.
+- Implement all reviewer feedback that's topical to the PR, regardless of priority. Use GitHub issues only for out-of-scope work or unrelated bugs discovered along the way.
