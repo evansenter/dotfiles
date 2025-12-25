@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a minimal macOS/Linux dotfiles repository for zsh, git, vim, and tmux. Dotfiles live in `home/` and are symlinked to `~` on install. External themes are managed as git submodules in `vendor/`.
+This is a minimal dotfiles repository for zsh, git, vim, and tmux. While primarily designed for macOS, it works on Linux with graceful degradation of macOS-specific features. Dotfiles live in `home/` and are symlinked to `~` on install. External themes are managed as git submodules in `vendor/`.
 
 ## Installation and Updates
 
@@ -63,7 +63,8 @@ The `.zshrc` file sources other configuration files in this order:
 - Installs tmux plugin manager (TPM) if not present
 - TPM must be manually activated in tmux with `prefix + I` after first install
 - Symlinks btop themes from `vendor/btop-catppuccin/` to `~/.config/btop/themes/`
-- Installs LaunchAgents (if dependencies are available)
+- Auto-initializes git submodules if themes are missing
+- Installs LaunchAgents on macOS only (skipped on Linux)
 
 **Tmux Configuration** (home/.tmux.conf)
 - Uses Catppuccin theme (mocha flavor) for status bar styling
