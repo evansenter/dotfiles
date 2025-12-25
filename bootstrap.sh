@@ -11,51 +11,32 @@ cd "$(dirname "${BASH_SOURCE}")";
 # Functions
 # ==============================================================================
 
-check_newer_local_files() {
-	local newer_files=()
+symlink_dotfiles() {
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-	# Check if diff supports --color
-	local diff_cmd="diff -u"
-	if diff --color=auto -u /dev/null /dev/null &>/dev/null; then
-		diff_cmd="diff --color=auto -u"
-	fi
-
-	# Find all files in home/ directory
+	# Find all files in home/ directory and create symlinks
 	while IFS= read -r -d '' src_file; do
 		# Get relative path from home/
 		local rel_path="${src_file#$dotfiles_dir/home/}"
 		local dest_file="$HOME/$rel_path"
 
-		# Skip if destination doesn't exist
-		[[ ! -e "$dest_file" ]] && continue
+		# Create parent directory if needed
+		mkdir -p "$(dirname "$dest_file")"
 
-		# Check if destination is newer than source
-		if [[ "$dest_file" -nt "$src_file" ]]; then
-			newer_files+=("$rel_path")
+		# Skip if already correctly symlinked
+		if [[ -L "$dest_file" && "$(readlink "$dest_file")" == "$src_file" ]]; then
+			continue
 		fi
-	done < <(find "$dotfiles_dir/home" -type f -print0)
 
-	# Return success if no newer files found
-	if [[ ${#newer_files[@]} -eq 0 ]]; then
-		return 0
-	fi
+		# Remove existing file/symlink if present
+		if [[ -e "$dest_file" || -L "$dest_file" ]]; then
+			rm -f "$dest_file"
+		fi
 
-	# Warn about newer local files
-	echo ""
-	echo "Warning: The following files in ~ are newer than their repo versions:"
-	echo ""
-
-	for file in "${newer_files[@]}"; do
-		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-		echo "~/$file"
-		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-		# Show diff: repo version vs local version (what would be lost)
-		$diff_cmd "$dotfiles_dir/home/$file" "$HOME/$file" || true
-		echo ""
-	done
-
-	return 1
+		# Create symlink
+		ln -s "$src_file" "$dest_file"
+		echo "Linked: ~/$rel_path"
+	done < <(find "$dotfiles_dir/home" -type f -not -name ".DS_Store" -print0)
 }
 
 install_tmux_plugin_manager() {
@@ -136,15 +117,8 @@ install_btop_themes() {
 }
 
 sync_dotfiles() {
-	# Sync dotfiles from home/ directory to ~
-	rsync \
-		--exclude ".DS_Store" \
-		--archive \
-		--verbose \
-		--human-readable \
-		--force \
-		--no-perms \
-		home/ ~
+	# Symlink dotfiles from home/ directory to ~
+	symlink_dotfiles
 
 	# Install tmux plugin manager if needed
 	install_tmux_plugin_manager
@@ -195,18 +169,9 @@ fi
 if [[ "$FORCE" == true ]]; then
 	sync_dotfiles
 else
-	read -p "This may overwrite existing files in your home directory. Are you sure? (y/n) " -n 1
+	read -p "This will replace existing dotfiles with symlinks. Are you sure? (y/n) " -n 1
 	echo ""
 	if [[ $REPLY =~ ^[Yy]$ ]]; then
-		# Check for newer local files
-		if ! check_newer_local_files; then
-			read -p "These local changes will be overwritten. Continue anyway? (y/n) " -n 1
-			echo ""
-			if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-				echo "Aborted."
-				exit 1
-			fi
-		fi
 		sync_dotfiles
 	fi
 fi

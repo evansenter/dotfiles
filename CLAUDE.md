@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a minimal macOS dotfiles repository for zsh, git, vim, and tmux. Syncable dotfiles live in `home/` and are copied to `~` on install. External themes are managed as git submodules in `vendor/`.
+This is a minimal macOS/Linux dotfiles repository for zsh, git, vim, and tmux. Dotfiles live in `home/` and are symlinked to `~` on install. External themes are managed as git submodules in `vendor/`.
 
 ## Installation and Updates
 
@@ -57,8 +57,9 @@ The `.zshrc` file sources other configuration files in this order:
 - `precmd` calculates elapsed time after command completes
 - Timer only displayed if command takes >0 seconds
 
-**Bootstrap Process** (bootstrap.sh:172-201)
-- Uses `rsync` to sync `home/` directory contents to `~`
+**Bootstrap Process** (bootstrap.sh:119-132)
+- Symlinks all files in `home/` to corresponding locations in `~`
+- Skips files already correctly symlinked (idempotent)
 - Installs tmux plugin manager (TPM) if not present
 - TPM must be manually activated in tmux with `prefix + I` after first install
 - Symlinks btop themes from `vendor/btop-catppuccin/` to `~/.config/btop/themes/`
@@ -92,7 +93,7 @@ The `.zshrc` file sources other configuration files in this order:
 
 **Claude Code Configuration** (home/.claude/)
 - `CLAUDE.md` provides global workflow preferences for all Claude Code sessions
-  - Synced to `~/.claude/CLAUDE.md` and applies to all projects
+  - Symlinked to `~/.claude/CLAUDE.md` and applies to all projects
   - Supplements repository-level `CLAUDE.md` files at project roots
 
 **iTerm2 Configuration** (preferences/, vendor/iterm-catppuccin/)
