@@ -18,3 +18,8 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 - When considering the code reviewer's feedback, provide honest analysis of each suggestion: assess whether it's worth addressing, explain the trade-offs, and recommend skipping items that don't provide proportional value.
 - Implement all reviewer feedback that's topical to the PR, regardless of priority (issues, recommendations, and suggestions). Use GitHub issues only for out-of-scope work or unrelated bugs discovered along the way.
 - Never merge a PR without explicitly asking the user for permission first.
+
+## Issue Workflow
+
+- When making an issue, check if there are relevant labels to put on the issue. Suggest new labels as needed.
+
