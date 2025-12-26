@@ -57,7 +57,7 @@ The `.zshrc` file sources other configuration files in this order:
 - `precmd` calculates elapsed time after command completes
 - Timer only displayed if command takes >0 seconds
 
-**Bootstrap Process** (bootstrap.sh:119-132)
+**Bootstrap Process** (bootstrap.sh:139-156)
 - Symlinks all files in `home/` to corresponding locations in `~`
 - Skips files already correctly symlinked (idempotent)
 - Installs tmux plugin manager (TPM) if not present
