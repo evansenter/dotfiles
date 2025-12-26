@@ -14,4 +14,6 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 ## PR Workflow
 
 - After pushing a PR, watch CI with `gh pr checks <PR#> --watch --interval 5`, then fetch comments with `gh pr view <PR#> --comments`.
-- Implement all reviewer feedback that's topical to the PR, regardless of priority. Use GitHub issues only for out-of-scope work or unrelated bugs discovered along the way.
+- After CI code review completes, summarize all reviewer feedback and suggestions in a table with columns: #, Feedback, Opinion, Recommendation (address/skip).
+- Implement all reviewer feedback that's topical to the PR, regardless of priority (issues, recommendations, and suggestions). Use GitHub issues only for out-of-scope work or unrelated bugs discovered along the way.
+- When reviewing feedback, provide honest analysis of each suggestion: assess whether it's worth addressing, explain the trade-offs, and recommend skipping items that don't provide proportional value.
