@@ -13,6 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 
 ## PR Workflow
 
+- Before creating a PR with significant changes, check that CLAUDE.md and README.md are updated to reflect the changes.
 - Before creating a PR, run `/pr-review-toolkit:review-pr` to locally check the quality of your changes.
 - After pushing a PR, watch CI with `gh pr checks <PR#> --watch --interval 5`, then fetch comments with `gh pr view <PR#> --comments`.
 - After CI code review completes, summarize all reviewer feedback and suggestions in a table with columns: #, Feedback, Opinion, Recommendation (address/skip).
