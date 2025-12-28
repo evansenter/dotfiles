@@ -13,10 +13,36 @@ References:
 
 $ARGUMENTS
 
+## Check Global Setup First
+
+Before making suggestions, read the global Claude configuration to filter out stale recommendations:
+
+```bash
+cat ~/.claude/CLAUDE.md
+```
+
+Skip any suggestion that:
+- Proposes a workflow already documented in the global CLAUDE.md
+- Recommends a command or hook that already exists
+- Suggests a permission that's already configured
+
 ## Output
 
 Be specific about what each suggestion enables and the setup required.
 
+Group suggestions into two categories:
+
+**Local Improvements** - Specific to the current repository:
+- Repository-specific CLAUDE.md additions
+- Project-specific hooks or automation
+- Documentation for this codebase
+
+**Global Improvements** - Apply to all Claude Code sessions:
+- New commands or workflow enhancements for `~/.claude/commands/`
+- Permission configuration changes for `~/.claude/settings.json`
+- Hook improvements for `~/.claude/hooks/`
+- Global CLAUDE.md workflow documentation updates
+
 ## Follow-up
 
-For any global workflow improvements (changes to ~/.claude/ config, new commands, hooks, etc.), create an issue on `evansenter/dotfiles` to track the improvement. Use appropriate labels if available.
+When suggesting to create an issue against `evansenter/dotfiles`, **only include Global Improvements**. Local improvements should be tracked in the current repository's issues.

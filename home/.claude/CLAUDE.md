@@ -20,6 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 - Re-running flaky CI (once per failure)
 - Web searches for documentation/research
 - After completing implementation work: summarize changes and run `/pr-feedback --local`
+- After creating a PR: immediately run `/watch-ci <PR#>` to monitor CI
 
 ### Requires Discussion
 
@@ -93,6 +94,7 @@ After CI passes, run `/pr-feedback --remote` to fetch and process reviewer comme
 
 ## CI Handling
 
+- **Always run `/watch-ci <PR#>` immediately after creating a PR** - don't wait for user to ask
 - If CI fails due to flakiness, auto-rerun failed jobs once with `gh run rerun <run-id> --failed`
 - If CI fails twice, investigate the root cause
 
@@ -113,6 +115,6 @@ Available slash commands (in `~/.claude/commands/`):
 - `/audit-codebase` - Check for AI-generated anti-patterns and Evergreen violations
 - `/audit-tests` - Find redundant or stale tests
 - `/audit-issues` - Categorize open issues as current or needing updates
-- `/improve-workflow` - Suggest Claude Code features and config improvements
+- `/improve-workflow` - Suggest workflow improvements, categorized as local (this repo) or global (dotfiles)
 - `/watch-ci` - Monitor CI in background with notification when complete
 - `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (preferred for new PRs)
