@@ -15,6 +15,7 @@ symlink_dotfiles() {
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 	# Find all files in home/ directory and create symlinks
+	# Exclude .claude/hooks/ and .claude/commands/ since we symlink those directories separately
 	while IFS= read -r -d '' src_file; do
 		# Get relative path from home/
 		local rel_path="${src_file#$dotfiles_dir/home/}"
@@ -36,7 +37,33 @@ symlink_dotfiles() {
 		# Create symlink
 		ln -s "$src_file" "$dest_file"
 		echo "Linked: ~/$rel_path"
-	done < <(find "$dotfiles_dir/home" -type f -not -name ".DS_Store" -print0)
+	done < <(find "$dotfiles_dir/home" -type f -not -name ".DS_Store" -not -path "*/.claude/hooks/*" -not -path "*/.claude/commands/*" -print0)
+}
+
+symlink_claude_dir() {
+	local dir_name="$1"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local src_dir="$dotfiles_dir/home/.claude/$dir_name"
+	local dest_dir="$HOME/.claude/$dir_name"
+
+	if [[ ! -d "$src_dir" ]]; then
+		return 0
+	fi
+
+	mkdir -p "$HOME/.claude"
+
+	# Skip if already correctly symlinked
+	if [[ -L "$dest_dir" && "$(readlink "$dest_dir")" == "$src_dir" ]]; then
+		return 0
+	fi
+
+	# Remove existing directory/symlink if present
+	if [[ -e "$dest_dir" || -L "$dest_dir" ]]; then
+		rm -rf "$dest_dir"
+	fi
+
+	ln -s "$src_dir" "$dest_dir"
+	echo "Linked: ~/.claude/$dir_name/"
 }
 
 install_tmux_plugin_manager() {
@@ -139,6 +166,10 @@ install_btop_themes() {
 sync_dotfiles() {
 	# Symlink dotfiles from home/ directory to ~
 	symlink_dotfiles
+
+	# Symlink Claude Code directories
+	symlink_claude_dir "hooks"
+	symlink_claude_dir "commands"
 
 	# Install tmux plugin manager if needed
 	install_tmux_plugin_manager
