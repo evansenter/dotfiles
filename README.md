@@ -16,6 +16,7 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 
 | Command | Description |
 |---------|-------------|
+| `/im-lost` | Show current workflow position and context |
 | `/status-report` | Repo status with recent work, open PRs/issues, and recommendations |
 | `/pr-feedback` | Process PR review feedback with categorization and opinions |
 | `/watch-ci` | Monitor CI in background with notification when complete |

@@ -1,0 +1,83 @@
+# I'm Lost
+
+Show current workflow position and context when you've lost track of where you are.
+
+## Instructions
+
+Gather state and present a concise orientation summary.
+
+### 1. Gather State
+
+Run these commands in parallel:
+
+```bash
+# Current branch
+git branch --show-current
+
+# Uncommitted changes
+git status --short
+
+# Recent commits on this branch (vs main)
+git log main..HEAD --oneline 2>/dev/null || git log -3 --oneline
+
+# Check for open PR on current branch
+gh pr view --json number,title,state,statusCheckRollup,reviewDecision,comments 2>/dev/null
+
+# Check active todos
+# (Read from conversation context)
+```
+
+### 2. Determine Workflow Position
+
+Based on gathered state, identify the current step:
+
+| State | Workflow Step |
+|-------|---------------|
+| On main, no changes | 1-2: Orient/Pick work |
+| On branch, uncommitted changes | 3: Develop |
+| On branch, committed, no PR | 4-6: Self-review/Iterate/Create PR |
+| PR open, CI running | 7: Monitor CI |
+| PR open, CI passed, has comments | 8: Process feedback |
+| PR open, CI passed, no comments | Ready to merge (discuss first) |
+| PR open, CI failed | Fix CI failures |
+
+### 3. Output Format
+
+Present in this format:
+
+```markdown
+## Where You Are
+
+**Branch:** [branch-name]
+**Status:** [uncommitted changes summary or "clean"]
+**PR:** [#N - title (CI status, N comments)] or "none"
+
+### Workflow Position
+
+1. ○ Orient - `/status-report`
+2. ○ Pick work
+3. ○ Develop
+4. ○ Self-review - `/pr-feedback --local`
+5. ○ Iterate
+6. ○ Create PR - `/commit-commands:commit-push-pr`
+7. ○ Monitor CI - `/watch-ci`
+8. ○ Process feedback - `/pr-feedback --remote`
+
+← YOU ARE HERE: [Step N - brief explanation of why]
+
+### Context
+
+[2-3 sentences summarizing recent work based on branch name, commits, and PR description]
+
+### Suggested Next Action
+
+[One concrete action to take, with the command to run if applicable]
+```
+
+### 4. Guidelines
+
+- Keep output concise - this is for quick orientation
+- Use ● for current step, ○ for others
+- If on main with no changes, suggest running `/status-report` to find work
+- If stuck between steps, pick the earlier one
+- Reference active todos if any exist in the conversation

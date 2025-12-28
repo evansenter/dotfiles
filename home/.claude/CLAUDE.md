@@ -106,6 +106,7 @@ Configured hooks (in `~/.claude/hooks/`):
 
 Available slash commands (in `~/.claude/commands/`):
 
+- `/im-lost` - Show current workflow position and context when you've lost track
 - `/status-report` - Generate repo status summary with recently completed work, open PRs/issues, and recommendations
 - `/pr-feedback` - Process PR review feedback with categorization and opinion-forming
 - `/pr-followups` - Find unaddressed or deferred comments from merged PRs

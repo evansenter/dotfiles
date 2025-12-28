@@ -59,7 +59,8 @@ Use `AskUserQuestion` to get user decisions on ALL feedback items. The tool supp
       "options": [
         {"label": "Implement", "description": "Fix it now"},
         {"label": "Skip", "description": "Not worth it"},
-        {"label": "Defer", "description": "Create issue for later"}
+        {"label": "Defer", "description": "Create issue for later"},
+        {"label": "Elaborate", "description": "Explain this topic, then re-ask"}
       ],
       "multiSelect": false
     },
@@ -69,7 +70,8 @@ Use `AskUserQuestion` to get user decisions on ALL feedback items. The tool supp
       "options": [
         {"label": "Implement", "description": "Fix it now"},
         {"label": "Skip", "description": "Not worth it"},
-        {"label": "Defer", "description": "Create issue for later"}
+        {"label": "Defer", "description": "Create issue for later"},
+        {"label": "Elaborate", "description": "Explain this topic, then re-ask"}
       ],
       "multiSelect": false
     }
@@ -87,6 +89,7 @@ Based on user's choices:
 - **Implement**: Fix the item immediately
 - **Skip**: Note it was skipped, move on
 - **Defer**: Create a GitHub issue with title summarizing the feedback, body containing the original comment and PR link, and appropriate labels
+- **Elaborate**: Explain the topic in detail (what it means, why it matters, trade-offs), then re-ask the question
 
 ### 6. Push and Re-check
 
