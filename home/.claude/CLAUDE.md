@@ -26,6 +26,25 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 - Design trade-offs with multiple valid approaches
 - Disagreements with reviewer feedback on Critical/Important items
 
+## Allowed Permissions
+
+Configured in `~/.claude/settings.json` for autonomous operation:
+
+**Core:** Edit, Write, Read, WebSearch, EnterPlanMode
+
+**Git CLI:**
+- `git status`, `git diff`, `git log`, `git add`, `git commit`
+- `git fetch`, `git branch`, `git remote`, `git mv`, `git checkout`, `git stash`
+
+**GitHub CLI:**
+- PRs: `gh pr view/list/checks/merge/create/edit/review`
+- Issues: `gh issue list/view/close/create/edit`
+
+**GitHub MCP Server:**
+- PRs: `get_pull_request`, `list_pull_requests`, `get_pull_request_status`, `get_pull_request_files`, `get_pull_request_comments`, `get_pull_request_reviews`, `create_pull_request`, `merge_pull_request`, `update_pull_request_branch`, `create_pull_request_review`
+- Issues: `get_issue`, `list_issues`, `create_issue`, `update_issue`, `add_issue_comment`, `search_issues`
+- Other: `list_commits`, `create_branch`, `get_file_contents`, `search_code`
+
 ## Quality Gates
 
 - Always run linter, formatter, and all tests before pushing.
