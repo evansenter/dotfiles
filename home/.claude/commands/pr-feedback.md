@@ -12,6 +12,7 @@ Process and respond to PR review feedback with critical thinking.
 - **Default**: Run both local analysis AND fetch remote comments in parallel
 - `--local`: Only run local analysis (via `/pr-review-toolkit:review-pr`)
 - `--remote`: Only fetch remote comments from external reviewers
+- Flags are mutually exclusive; if both are specified, defaults to running both (same as no flags)
 
 ## Instructions
 
