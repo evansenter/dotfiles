@@ -163,6 +163,27 @@ install_btop_themes() {
 	done
 }
 
+install_claude_mcp_servers() {
+	if ! command -v claude >/dev/null 2>&1; then
+		echo "Skipping MCP servers (claude not installed)"
+		return 0
+	fi
+
+	# Check if GitHub MCP server already configured
+	if claude mcp list 2>/dev/null | grep -q "github"; then
+		return 0
+	fi
+
+	echo "Installing Claude Code MCP servers..."
+	claude mcp add github -s user -e 'GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_TOKEN}' -- npx -y @modelcontextprotocol/server-github
+
+	# Warn if GITHUB_TOKEN is not set
+	if [[ -z "$GITHUB_TOKEN" ]]; then
+		echo "  Warning: GITHUB_TOKEN not set. Add to ~/.extra:"
+		echo "    export GITHUB_TOKEN=\"ghp_your_token_here\""
+	fi
+}
+
 sync_dotfiles() {
 	# Symlink dotfiles from home/ directory to ~
 	symlink_dotfiles
@@ -170,6 +191,9 @@ sync_dotfiles() {
 	# Symlink Claude Code directories
 	symlink_claude_dir "hooks"
 	symlink_claude_dir "commands"
+
+	# Install Claude Code MCP servers
+	install_claude_mcp_servers
 
 	# Install tmux plugin manager if needed
 	install_tmux_plugin_manager
