@@ -14,9 +14,16 @@ PR_NUMBER=$(gh pr view --json number -q .number 2>/dev/null || echo "")
 # Function to check if CI is running or just completed
 check_ci_status() {
     if [ -n "$PR_NUMBER" ]; then
-        # Get the most recent check run status
-        STATUS=$(gh pr checks "$PR_NUMBER" --json state -q '.[0].state' 2>/dev/null || echo "")
-        echo "$STATUS"
+        # Get check run statuses via API and aggregate: failure > pending > success
+        HEAD_SHA=$(git rev-parse HEAD 2>/dev/null)
+        STATUSES=$(gh api "repos/{owner}/{repo}/commits/$HEAD_SHA/check-runs" --jq '.check_runs[] | .status + ":" + (.conclusion // "")' 2>/dev/null || echo "")
+        if echo "$STATUSES" | grep -q ":failure"; then
+            echo "failure"
+        elif echo "$STATUSES" | grep -q "^in_progress\|^queued"; then
+            echo "pending"
+        elif [ -n "$STATUSES" ]; then
+            echo "success"
+        fi
     fi
 }
 
