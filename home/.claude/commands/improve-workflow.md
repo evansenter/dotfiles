@@ -8,9 +8,15 @@ Consider:
 - Tool configurations I might be underutilizing
 
 References:
-- https://github.com/anthropics/claude-plugins-official/tree/main/plugins/ralph-wiggum
 - Claude Code docs
+- https://github.com/anthropics/claude-plugins-official
 
 $ARGUMENTS
 
-Output: Be specific about what each suggestion enables and the setup required.
+## Output
+
+Be specific about what each suggestion enables and the setup required.
+
+## Follow-up
+
+For any global workflow improvements (changes to ~/.claude/ config, new commands, hooks, etc.), create an issue on `evansenter/dotfiles` to track the improvement. Use appropriate labels if available.

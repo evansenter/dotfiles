@@ -1,6 +1,4 @@
-Audit this codebase for AI-generated code anti-patterns and Evergreen principle violations (ref: https://github.com/google-deepmind/evergreen-spec).
-
-Context: This repo was primarily written by AI assistants.
+Audit this codebase for common code anti-patterns and Evergreen principle violations (ref: https://github.com/google-deepmind/evergreen-spec).
 
 Look for:
 - Inconsistent naming conventions (especially helpers/utilities)

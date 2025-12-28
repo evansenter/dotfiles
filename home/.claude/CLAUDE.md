@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 ## Decision-Making
 
 - Proactively suggest improvements when you notice opportunities.
-- Feel free to use git and gh directly. Ask before pushing or closing PRs.
+- Feel free to use git and gh directly. Ask before merging or closing PRs.
 
 ### Autonomous Decisions (no need to ask)
 
@@ -13,15 +13,17 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 - Running tests, linters, formatters
 - Creating branches, checking out, stashing
 - Staging and committing changes
+- Pushing to remote (as part of PR workflow)
 - Fetching PR/issue information
-- Creating, merging, and editing PRs
+- Creating and editing PRs
 - Creating, closing, and editing issues
 - Re-running flaky CI (once per failure)
 - Web searches for documentation/research
+- After completing implementation work: summarize changes and run `/pr-feedback --local`
 
 ### Requires Discussion
 
-- Pushing to remote
+- Merging PRs
 - Closing PRs
 - Design trade-offs with multiple valid approaches
 - Disagreements with reviewer feedback on Critical/Important items
@@ -35,6 +37,7 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 **Git CLI:**
 - `git status`, `git diff`, `git log`, `git add`, `git commit`
 - `git fetch`, `git branch`, `git remote`, `git mv`, `git checkout`, `git stash`
+- `git push`, `git rebase`
 
 **GitHub CLI:**
 - PRs: `gh pr view/list/checks/merge/create/edit/review`
@@ -47,20 +50,31 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 
 ## Quality Gates
 
-- Always run linter, formatter, and all tests before pushing.
+- Run quality gates appropriate to the project (linter, formatter, tests) before pushing.
 
 ## PR Workflow
 
-- Before creating a PR with significant changes, check that CLAUDE.md and README.md are updated to reflect the changes.
-- Before creating a PR, run `/pr-review-toolkit:review-pr` to locally check the quality of your changes.
-- After pushing a PR, watch CI with `gh pr checks <PR#> --watch --interval 5`, then fetch comments with `gh pr view <PR#> --comments`.
+### Development Flow
+
+1. **Orient**: Run `/status-report` to see recent work, open issues, and recommendations
+2. **Pick work**: Choose an issue or task to work on
+3. **Develop**: Make changes, run tests/linters as needed
+4. **Self-review**: After completing work, summarize what was done and run `/pr-feedback --local`
+5. **Iterate**: Address feedback, repeat step 4 until clean
+6. **Create PR**: Use `/commit-commands:commit-push-pr` (preferred) for streamlined commit-push-PR flow
+7. **Monitor CI**: Run `/watch-ci <PR#>` to track in background with notification
+8. **Process feedback**: When CI passes, run `/pr-feedback --remote` to handle reviewer comments
+
+### Pre-PR Checklist
+
+- Check that CLAUDE.md and README.md are updated for significant changes
+- Run `/pr-feedback --local` to catch issues before pushing
 
 ### Handling PR Feedback
 
-After CI completes and there's reviewer feedback, automatically run `/pr-feedback` to process it:
+After CI completes and there's reviewer feedback, run `/pr-feedback --remote` to process it:
 
-1. **Run analysis** - by default, runs both local (`/pr-review-toolkit:review-pr`) and remote review in parallel
-   - Use `--local` for only local analysis, `--remote` for only external reviewer comments
+1. **Fetch comments** from the PR
 2. **Categorize** feedback as Critical, Important, or Suggestion
 3. **Form opinions** - assess whether each item is valid given your context on the work
 4. **Present grouped output** organized by action:
@@ -84,17 +98,13 @@ After CI completes and there's reviewer feedback, automatically run `/pr-feedbac
 
 ## CI Handling
 
-- If integration tests fail with LLM-related flakiness (status mismatch, unexpected response format), auto-rerun failed jobs once with `gh run rerun <run-id> --failed`
-- If tests fail twice, investigate the root cause
+- If CI fails due to flakiness, auto-rerun failed jobs once with `gh run rerun <run-id> --failed`
+- If CI fails twice, investigate the root cause
 
 ## Hooks
 
 Configured hooks (in `~/.claude/hooks/`):
 
-- **stop-hook.sh** - Gathers git/PR context when Claude stops. A prompt hook evaluates whether to continue working based on:
-  - CI pending/running → continue and monitor
-  - Unprocessed PR feedback → continue and address
-  - Recent push needing CI → continue and watch
 - **notify.sh** - Cross-platform notifications (macOS: osascript, Linux: notify-send)
 
 ## Custom Commands
@@ -108,3 +118,5 @@ Available slash commands (in `~/.claude/commands/`):
 - `/audit-tests` - Find redundant or stale tests
 - `/audit-issues` - Categorize open issues as current or needing updates
 - `/improve-workflow` - Suggest Claude Code features and config improvements
+- `/watch-ci` - Monitor CI in background with notification when complete
+- `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (preferred for new PRs)
