@@ -1,0 +1,28 @@
+{
+  "enabledPlugins": {
+    "feature-dev@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "clangd-lsp@claude-plugins-official": true,
+    "swift-lsp@claude-plugins-official": true
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/stop-hook.sh"
+          },
+          {
+            "type": "prompt",
+            "prompt": "The stop-hook gathered this context: {{output}}. Based on CLAUDE.md workflow guidance, decide if there's obvious follow-up work. Continue if: (1) CI is pending/running, (2) there are unprocessed PR comments (feedback_count > 0), (3) a recent push needs CI monitoring. Return {\"decision\": \"block\", \"reason\": \"...\"} to continue working, or {\"decision\": \"approve\"} to stop."
+          }
+        ]
+      }
+    ]
+  }
+}
