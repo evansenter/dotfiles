@@ -35,6 +35,9 @@ setopt PUSHD_SILENT      # don't print directory stack
 setopt INTERACTIVE_COMMENTS  # allow comments in interactive shells
 setopt NO_BEEP              # disable beep
 
+# Make / act as a word delimiter (for Ctrl+W, Alt+B, Alt+F, etc.)
+WORDCHARS=${WORDCHARS/\//}
+
 # ==============================================================================
 # Key Bindings
 # ==============================================================================
