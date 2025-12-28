@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 
 ### Autonomous Decisions (no need to ask)
 
-- Reading any file in the project (don't ask, just read it)
+- Reading, creating, editing, or deleting files in the project (don't ask, just do it)
 - Running tests, linters, formatters
 - Creating branches
 - Staging and committing changes
