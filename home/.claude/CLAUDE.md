@@ -37,12 +37,16 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 
 After CI completes and there's reviewer feedback, automatically run `/pr-feedback` to process it:
 
-1. **Categorize** feedback as Critical, Important, or Suggestion
-2. **Form opinions** - assess whether each item is valid given your context on the work
-3. **Present table** with: #, Severity, Feedback, Opinion, Action (Implement/Discuss/Skip)
-4. **Implement immediately**: Critical/Important items you agree with
-5. **Stop and discuss**: Critical/Important items you disagree with or are uncertain about
-6. **Skip**: Suggestions you disagree with (note in summary)
+1. **Run analysis** - by default, runs both local (`/pr-review-toolkit:review-pr`) and remote review in parallel
+   - Use `--local` for only local analysis, `--remote` for only external reviewer comments
+2. **Categorize** feedback as Critical, Important, or Suggestion
+3. **Form opinions** - assess whether each item is valid given your context on the work
+4. **Present grouped output** organized by action:
+   - **Implement**: Items to fix immediately
+   - **Discuss**: Items needing user input
+   - **Skip**: Items to note but not implement
+5. **Implement immediately**: Critical/Important items you agree with
+6. **Stop and discuss**: Critical/Important items you disagree with or are uncertain about
 
 **Key principle**: You have context on the work's purpose that automated reviewers lack. Honest disagreement is more valuable than blind compliance. If feedback misses the point or adds unnecessary complexity, flag it for discussion.
 
