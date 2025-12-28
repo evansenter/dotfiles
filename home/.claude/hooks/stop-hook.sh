@@ -5,6 +5,13 @@
 # if there's obvious follow-up work (e.g., CI running, pending feedback).
 #
 # Degrades gracefully if tools are missing or commands fail.
+# Requires: git, gh, jq
+
+# Check for required tools
+if ! command -v jq >/dev/null 2>&1; then
+    echo '{"context": {"error": "jq not installed"}}' >&2
+    exit 0
+fi
 
 # Gather git context (fallback to empty strings on failure)
 RECENT_PUSH=$(git log --oneline -1 --since="5 minutes ago" 2>/dev/null | head -1 || echo "")
@@ -18,7 +25,8 @@ check_ci_status() {
         return
     fi
 
-    HEAD_SHA=$(git rev-parse HEAD 2>/dev/null || echo "")
+    # Get head SHA from PR to avoid race condition with local git
+    HEAD_SHA=$(gh pr view --json headRefOid -q .headRefOid 2>/dev/null || echo "")
     if [ -z "$HEAD_SHA" ]; then
         echo ""
         return
@@ -29,7 +37,7 @@ check_ci_status() {
 
     if echo "$STATUSES" | grep -q ":failure"; then
         echo "failure"
-    elif echo "$STATUSES" | grep -q "^in_progress\|^queued"; then
+    elif echo "$STATUSES" | grep -Eq "^(in_progress|queued)"; then
         echo "pending"
     elif [ -n "$STATUSES" ]; then
         echo "success"
