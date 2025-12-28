@@ -51,6 +51,7 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 ## Quality Gates
 
 - Run quality gates appropriate to the project (linter, formatter, tests) before pushing.
+- Significant user-facing features should include examples demonstrating usage - this ensures the codepath doesn't go stale.
 
 ## PR Workflow
 
@@ -72,25 +73,19 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 
 ### Handling PR Feedback
 
-After CI completes and there's reviewer feedback, run `/pr-feedback --remote` to process it:
+After CI passes, run `/pr-feedback --remote` to fetch and process reviewer comments. Use `--local` for self-checks after implementing fixes (reviewers haven't seen your changes yet).
 
 1. **Fetch comments** from the PR
 2. **Categorize** feedback as Critical, Important, or Suggestion
 3. **Form opinions** - assess whether each item is valid given your context on the work
-4. **Present grouped output** organized by action:
-   - **Implement**: Items to fix immediately
-   - **Discuss**: Items needing user input
-   - **Skip**: Items to note but not implement
-5. **Implement immediately**: Critical/Important items you agree with
-6. **Stop and discuss**: Critical/Important items you disagree with or are uncertain about
+4. **Present ALL items** via AskUserQuestion with your opinion included
+5. **Act on user's choices**:
+   - **Implement**: Fix it immediately
+   - **Skip**: Note it was skipped, move on
+   - **Defer**: Create a GitHub issue for later
+6. **Push and re-check** - run `/pr-feedback --local` to verify changes are clean
 
-**Key principle**: You have context on the work's purpose that automated reviewers lack. Honest disagreement is more valuable than blind compliance. If feedback misses the point or adds unnecessary complexity, flag it for discussion.
-
-### After Feedback Discussion
-
-- Implement items where agreement was reached
-- Skip items agreed to skip
-- Create GitHub issues for out-of-scope work
+**Key principle**: You have context on the work's purpose that automated reviewers lack. Include your opinion in each question to help inform the user's decision.
 
 ## Issue Workflow
 

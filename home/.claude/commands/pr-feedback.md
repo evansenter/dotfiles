@@ -12,11 +12,9 @@ Process and respond to PR review feedback with critical thinking.
 - **Default**: Run both local analysis AND fetch remote comments in parallel
 - `--local`: Only run local analysis (via `/pr-review-toolkit:review-pr`)
 - `--remote`: Only fetch remote comments from external reviewers
-- If both flags are specified, they cancel out and default behavior (both) is used
+- If both `--local` and `--remote` are specified, runs both (same as default)
 
 ## Instructions
-
-When this skill is invoked:
 
 ### 1. Run Analysis
 
@@ -40,88 +38,64 @@ gh api repos/{owner}/{repo}/pulls/$PR_NUM/reviews
 gh api repos/{owner}/{repo}/issues/$PR_NUM/comments
 ```
 
-### 3. Categorize Feedback
+### 3. Categorize and Form Opinions
 
-Classify each piece of feedback:
+For each piece of feedback:
 
-- **Critical**: Security issues, bugs, broken functionality, missing error handling
-- **Important**: Test coverage gaps, API design issues, documentation gaps, code quality
-- **Suggestions**: Style preferences, minor refactors, nice-to-haves, optimizations
+1. **Classify severity**: Critical / Important / Suggestion
+2. **Form opinion**: Agree, Disagree, or Uncertain
+3. **Note reasoning**: Why you think this way given context
 
-### 4. Form Opinions
+### 4. Present All Items via AskUserQuestion
 
-For each item, assess:
-- Does this feedback understand the context and purpose of the change?
-- Is this a genuine improvement or unnecessary complexity?
-- Does implementing this align with project conventions (check CLAUDE.md)?
-- Is the effort proportional to the benefit?
+Use `AskUserQuestion` to get user decisions on ALL feedback items. The tool supports 1-4 questions per call, so batch items in groups of 4 if there are more (prioritize Critical → Important → Suggestion). Act on each batch's decisions before presenting the next group.
 
-### 5. Present Opinion Table
-
-Output findings grouped by action, with continuous numbering across groups:
-
-```markdown
-## PR Feedback Review
-
-### Implement
-
-#### 1. [Critical] `path:123` (Remote)
-> Summary of the feedback
-**Opinion**: Agree - [reason]
-
-#### 2. [Important] `path:456` (Local)
-> Summary of the feedback
-**Opinion**: Agree - [reason]
-
-### Discuss
-
-#### 3. [Important] `path:789` (Remote)
-> Summary of the feedback
-**Opinion**: Disagree - [reason why this needs discussion]
-
-### Skip
-
-#### 4. [Suggestion] `path:012` (Local)
-> Summary of the feedback
-**Opinion**: Trivial / Out of scope / Already addressed
+```json
+{
+  "questions": [
+    {
+      "question": "[Critical] Fix notify.sh JSON interface - Agree, should fix",
+      "header": "#1",
+      "options": [
+        {"label": "Implement", "description": "Fix it now"},
+        {"label": "Skip", "description": "Not worth it"},
+        {"label": "Defer", "description": "Create issue for later"}
+      ],
+      "multiSelect": false
+    },
+    {
+      "question": "[Suggestion] Add error handling for missing PR - Disagree, edge case",
+      "header": "#2",
+      "options": [
+        {"label": "Implement", "description": "Fix it now"},
+        {"label": "Skip", "description": "Not worth it"},
+        {"label": "Defer", "description": "Create issue for later"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
 ```
 
-**Source indicators**: `(Local)` = from pr-review-toolkit, `(Remote)` = from external reviewers
+Include your opinion in the question text so user has context, but let them decide.
 
-Numbers are continuous across groups so items can be referenced easily (e.g., "let's discuss #3").
+Always include a final open-ended question: "Any other comments or questions?" with options like "None, proceed" and "Yes, let me add something".
 
-### 6. Implementation Rules
+### 5. Act on User Decisions
 
-**Implement immediately** (no discussion needed):
-- Critical items you agree with
-- Important items you agree with
-- Suggestions you agree with AND are trivial (<5 lines)
+Based on user's choices:
+- **Implement**: Fix the item immediately
+- **Skip**: Note it was skipped, move on
+- **Defer**: Create a GitHub issue with title summarizing the feedback, body containing the original comment and PR link, and appropriate labels
 
-**Stop and discuss** (wait for user input):
-- Critical items you disagree with or are uncertain about
-- Important items you disagree with or are uncertain about
-- Any feedback that seems to misunderstand the purpose of the change
-
-**Skip** (note in summary but don't implement):
-- Suggestions you disagree with
-- Out-of-scope feedback (create GitHub issue instead)
-- Feedback already addressed
-
-### 7. After Discussion
-
-Once the user provides input on disputed items:
-- Implement items where you reached agreement
-- Skip items the user agrees to skip
-- Create issues for items deferred to future work
-
-### 8. Push and Re-check
+### 6. Push and Re-check
 
 After implementing feedback:
 1. Run project quality gates (linter, formatter, tests as defined in CLAUDE.md)
 2. Commit with message referencing the feedback addressed
 3. Push changes
-4. Re-run `/pr-feedback` to verify no new comments
+4. Re-run `/pr-feedback --local` to verify changes are clean
 
 ## Key Principle
 
-You have context on the work's purpose that automated reviewers lack. If feedback seems to miss the point, add unnecessary complexity, or conflict with project conventions, flag it for discussion rather than blindly implementing. Honest disagreement is more valuable than compliance.
+You have context on the work's purpose that automated reviewers lack. Include your opinion in the question text, but let the user make the final call. Your reasoning helps inform their decision.
