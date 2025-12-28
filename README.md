@@ -10,7 +10,7 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 - **Tmux** - Catppuccin theme, vim-style navigation, session persistence
 - **btop** - Automatic dark/light theme switching via macOS appearance
 - **iTerm2** - Catppuccin color schemes (manual import required)
-- **Claude Code** - Global workflow preferences for all sessions
+- **Claude Code** - Global workflow preferences, custom commands, and hooks
 
 ## Installation
 
@@ -32,9 +32,14 @@ brew install cormacrelf/tap/dark-notify
 ./bootstrap.sh  # Re-run to install LaunchAgent
 ```
 
-**Claude Code preferences** (symlinked to ~/.claude/CLAUDE.md):
+**Claude Code** (commands, hooks, settings symlinked to ~/.claude/):
 ```bash
-./bootstrap.sh  # Symlinks global preferences
+./bootstrap.sh  # Symlinks commands/, hooks/, settings.json, CLAUDE.md
+```
+
+Also installs GitHub MCP server. Set `GITHUB_TOKEN` in `~/.extra`:
+```bash
+export GITHUB_TOKEN="ghp_your_token_here"
 ```
 
 ## Updating
@@ -61,7 +66,11 @@ dotfiles/
 ├── home/           # Synced to ~/ on install
 │   ├── .aliases
 │   ├── .bin/
-│   ├── .claude/    # Claude Code global preferences
+│   ├── .claude/
+│   │   ├── CLAUDE.md      # Global workflow preferences
+│   │   ├── commands/      # Custom slash commands
+│   │   ├── hooks/         # Stop hook, notification hook
+│   │   └── settings.json  # Plugins and hook config
 │   ├── .exports
 │   ├── .gitconfig
 │   ├── .tmux.conf
