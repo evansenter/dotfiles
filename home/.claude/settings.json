@@ -19,7 +19,7 @@
           },
           {
             "type": "prompt",
-            "prompt": "The stop-hook gathered this context: {{output}}. Based on CLAUDE.md workflow guidance, decide if there's obvious follow-up work. Continue if: (1) CI is pending/running, (2) there are unprocessed PR comments (feedback_count > 0), (3) a recent push needs CI monitoring. Return {\"decision\": \"block\", \"reason\": \"...\"} to continue working, or {\"decision\": \"approve\"} to stop."
+            "prompt": "The stop-hook gathered this context: {{output}}. Evaluate if Claude should stop. Return ok=false (with reason) to continue working if: (1) CI is pending/running, (2) there are unprocessed PR comments (feedback_count > 0), (3) a recent push needs CI monitoring. Return ok=true if none of these conditions apply."
           }
         ]
       }
