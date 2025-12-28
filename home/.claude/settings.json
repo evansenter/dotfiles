@@ -9,6 +9,15 @@
     "clangd-lsp@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true
   },
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    }
+  },
   "hooks": {
     "Stop": [
       {
@@ -20,6 +29,16 @@
           {
             "type": "prompt",
             "prompt": "The stop-hook gathered this context: {{output}}. Based on CLAUDE.md workflow guidance, decide if there's obvious follow-up work. Continue if: (1) CI is pending/running, (2) there are unprocessed PR comments (feedback_count > 0), (3) a recent push needs CI monitoring. Return {\"decision\": \"block\", \"reason\": \"...\"} to continue working, or {\"decision\": \"approve\"} to stop."
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/notify.sh"
           }
         ]
       }

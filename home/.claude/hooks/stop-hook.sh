@@ -9,7 +9,7 @@
 
 # Check for required tools
 if ! command -v jq >/dev/null 2>&1; then
-    echo '{"context": {"error": "jq not installed"}}' >&2
+    echo '{"ok": false, "error": "jq not installed"}'
     exit 0
 fi
 
@@ -70,6 +70,7 @@ FEEDBACK_COUNT=$(check_pr_feedback)
 
 # Output context as properly escaped JSON using jq
 # This prevents injection issues from special characters in git output
+# The 'ok' field is required by Claude Code's hook schema
 jq -n \
     --arg recent_push "$RECENT_PUSH" \
     --arg current_branch "$CURRENT_BRANCH" \
@@ -77,6 +78,7 @@ jq -n \
     --arg ci_status "$CI_STATUS" \
     --arg feedback_count "$FEEDBACK_COUNT" \
     '{
+        ok: true,
         context: {
             recent_push: $recent_push,
             current_branch: $current_branch,
