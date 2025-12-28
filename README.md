@@ -12,6 +12,34 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 - **iTerm2** - Catppuccin color schemes (manual import required)
 - **Claude Code** - Global workflow preferences, custom commands, and hooks
 
+### Claude Code Commands
+
+| Command | Description |
+|---------|-------------|
+| `/status-report` | Repo status with recent work, open PRs/issues, and recommendations |
+| `/pr-feedback` | Process PR review feedback with categorization and opinions |
+| `/watch-ci` | Monitor CI in background with notification when complete |
+| `/pr-followups` | Find unaddressed comments from merged PRs |
+| `/audit-codebase` | Check for AI anti-patterns and Evergreen violations |
+| `/audit-tests` | Find redundant or stale tests |
+| `/audit-issues` | Categorize open issues as current or needing updates |
+| `/improve-workflow` | Suggest Claude Code config improvements |
+
+**Usage examples:**
+```bash
+# Check repo status and get recommendations
+/status-report
+
+# Self-review before creating PR
+/pr-feedback --local
+
+# Fetch and process reviewer comments
+/pr-feedback --remote
+
+# Monitor CI with notification
+/watch-ci 123
+```
+
 ## Installation
 
 Clone with submodules and run bootstrap:
