@@ -62,6 +62,16 @@ After CI completes and there's reviewer feedback, automatically run `/pr-feedbac
 - If integration tests fail with LLM-related flakiness (status mismatch, unexpected response format), auto-rerun failed jobs once with `gh run rerun <run-id> --failed`
 - If tests fail twice, investigate the root cause
 
+## Hooks
+
+Configured hooks (in `~/.claude/hooks/`):
+
+- **stop-hook.sh** - Gathers git/PR context when Claude stops. A prompt hook evaluates whether to continue working based on:
+  - CI pending/running → continue and monitor
+  - Unprocessed PR feedback → continue and address
+  - Recent push needing CI → continue and watch
+- **notify.sh** - Cross-platform notifications (macOS: osascript, Linux: notify-send)
+
 ## Custom Commands
 
 Available slash commands (in `~/.claude/commands/`):
