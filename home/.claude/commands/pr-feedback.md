@@ -91,7 +91,7 @@ Once the user provides input on disputed items:
 ### 7. Push and Re-check
 
 After implementing feedback:
-1. Run quality gates: `cargo fmt && cargo clippy && cargo test`
+1. Run project quality gates (linter, formatter, tests as defined in CLAUDE.md)
 2. Commit with message referencing the feedback addressed
 3. Push changes
 4. Re-run `/pr-feedback` to verify no new comments
