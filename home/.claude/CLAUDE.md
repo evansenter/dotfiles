@@ -5,21 +5,24 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 ## Decision-Making
 
 - Proactively suggest improvements when you notice opportunities.
-- Feel free to use git and gh directly. Ask before pushing, merging, or creating/closing PRs.
+- Feel free to use git and gh directly. Ask before pushing or closing PRs.
 
 ### Autonomous Decisions (no need to ask)
 
 - Reading, creating, editing, or deleting files in the project (don't ask, just do it)
 - Running tests, linters, formatters
-- Creating branches
+- Creating branches, checking out, stashing
 - Staging and committing changes
 - Fetching PR/issue information
+- Creating, merging, and editing PRs
+- Creating, closing, and editing issues
 - Re-running flaky CI (once per failure)
+- Web searches for documentation/research
 
 ### Requires Discussion
 
 - Pushing to remote
-- Creating/merging/closing PRs
+- Closing PRs
 - Design trade-offs with multiple valid approaches
 - Disagreements with reviewer feedback on Critical/Important items
 
@@ -55,7 +58,6 @@ After CI completes and there's reviewer feedback, automatically run `/pr-feedbac
 - Implement items where agreement was reached
 - Skip items agreed to skip
 - Create GitHub issues for out-of-scope work
-- Never merge a PR without explicitly asking the user for permission first.
 
 ## Issue Workflow
 
