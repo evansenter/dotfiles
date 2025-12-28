@@ -16,6 +16,8 @@
       "Bash(git mv:*)",
       "Bash(git checkout:*)",
       "Bash(git stash:*)",
+      "Bash(git push:*)",
+      "Bash(git rebase:*)",
       "Bash(gh pr view:*)",
       "Bash(gh pr list:*)",
       "Bash(gh pr checks:*)",
@@ -62,20 +64,6 @@
     "swift-lsp@claude-plugins-official": true
   },
   "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/stop-hook.sh"
-          },
-          {
-            "type": "prompt",
-            "prompt": "The stop-hook gathered this context: {{output}}. Evaluate if Claude should stop. Return ok=false (with reason) to continue working if: (1) CI is pending/running, (2) there are unprocessed PR comments (feedback_count > 0), (3) a recent push needs CI monitoring. Return ok=true if none of these conditions apply."
-          }
-        ]
-      }
-    ],
     "Notification": [
       {
         "hooks": [

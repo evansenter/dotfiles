@@ -1,0 +1,32 @@
+# Watch CI
+
+Monitor CI status for a PR in the background and notify when complete.
+
+## Usage
+
+```
+/watch-ci [PR_NUMBER]
+```
+
+If PR_NUMBER is omitted, uses the current branch's PR.
+
+## Instructions
+
+1. Determine the PR number:
+   - If provided as argument, use that
+   - Otherwise, get current PR with `gh pr view --json number -q .number`
+
+2. Run CI check in background with notification:
+   ```bash
+   gh pr checks <PR_NUMBER> --watch --interval 10 && echo '{"title":"CI","message":"CI passed on PR #<PR_NUMBER>"}' | ~/.claude/hooks/notify.sh || echo '{"title":"CI","message":"CI failed on PR #<PR_NUMBER>"}' | ~/.claude/hooks/notify.sh
+   ```
+
+   Use the Bash tool with `run_in_background: true` parameter.
+
+3. Confirm to user that CI is being monitored and they'll receive a notification.
+
+4. Continue with other work - do not block waiting for CI.
+
+5. When CI completes (you receive the background task notification):
+   - If **passed**: Run `/pr-feedback --remote` to process reviewer comments
+   - If **failed**: Investigate the failure and fix
