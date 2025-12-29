@@ -13,6 +13,7 @@ Look for:
 - Poor separation of concerns
 - Dead code or unused exports
 - Duplicated logic that should be consolidated
+- Documentation staleness (CLAUDE.md/README.md out of sync with actual codebase structure)
 
 Review: README, recent commits, open issues, and PRs on GitHub for additional context.
 
