@@ -96,6 +96,11 @@ The `.zshrc` file sources other configuration files in this order:
 - `CLAUDE.md` provides global workflow preferences for all Claude Code sessions
   - Symlinked to `~/.claude/CLAUDE.md` and applies to all projects
   - Supplements repository-level `CLAUDE.md` files at project roots
+- `commands/` contains custom slash commands (e.g., `/status-report`, `/pr-feedback`)
+- `hooks/notify.sh` provides cross-platform desktop notifications
+- `settings.json` configures:
+  - Allowed permissions for autonomous operation (git, gh CLI, GitHub MCP)
+  - Enabled plugins: feature-dev, pr-review-toolkit, code-review, commit-commands, LSP integrations
 
 **iTerm2 Configuration** (preferences/, vendor/iterm-catppuccin/)
 - Color schemes in `vendor/iterm-catppuccin/colors/`

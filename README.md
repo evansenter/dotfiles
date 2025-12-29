@@ -66,7 +66,7 @@ brew install cormacrelf/tap/dark-notify
 ./bootstrap.sh  # Symlinks commands/, hooks/, settings.json, CLAUDE.md
 ```
 
-Also installs GitHub MCP server. Set `GITHUB_TOKEN` in `~/.extra`:
+Also installs GitHub MCP server and enables plugins (feature-dev, pr-review-toolkit, code-review, commit-commands, LSP integrations). Set `GITHUB_TOKEN` in `~/.extra`:
 ```bash
 export GITHUB_TOKEN="ghp_your_token_here"
 ```
