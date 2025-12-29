@@ -62,6 +62,52 @@ The `sync_dotfiles` function in `bootstrap.sh`:
 - `hooks/notify.sh` - Cross-platform desktop notifications
 - `settings.json` - Allowed permissions, enabled plugins
 
+### Command File Format
+
+New commands in `home/.claude/commands/` should follow this structure:
+
+```markdown
+---
+argument-hint: [arg1] [optional-arg]
+description: Brief description for autocomplete hints
+---
+
+# Command Name
+
+One-line description of what the command does.
+
+## Usage
+
+\`\`\`
+/command-name <required-arg> [optional-arg]
+\`\`\`
+
+- Explain each argument
+- Note defaults for optional args
+
+## Instructions
+
+### 1. First Step
+
+\`\`\`bash
+# Commands to run
+\`\`\`
+
+### 2. Next Step
+
+Detailed instructions...
+
+### N. Output
+
+Describe expected output format.
+```
+
+**Guidelines:**
+- Use `$1`, `$2` for positional args parsed in instructions
+- Use `$ARGUMENTS` only for freeform context (not when parsing positional args)
+- Include bash snippets for commands Claude should run
+- End with output format specification
+
 **iTerm2 Configuration** - `preferences/`, `vendor/iterm-catppuccin/`
 - Manual import required: Preferences → Profiles → Colors → Color Presets → Import
 - Enable "Use different colors for light mode and dark mode"
