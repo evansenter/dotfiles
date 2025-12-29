@@ -62,10 +62,16 @@ Before presenting interactive questions, output ALL feedback items ordered by se
 > Fix JSON interface to handle missing fields
 **Opinion**: Agree - breaking change needs fix
 
-#### #2. [Suggestion] `utils.ts:89` (Local)
+#### #2. [Important] `bootstrap.sh:42` (Local)
+> Validate input before processing
+**Opinion**: Agree - defensive programming
+
+#### #3. [Suggestion] `utils.ts:89` (Remote)
 > Add error handling for missing PR
 **Opinion**: Disagree - edge case, unlikely to occur
 ```
+
+**Important**: Items MUST be numbered in severity order - all Critical items first, then Important, then Suggestion. The `#N` numbering follows this order.
 
 **Source indicators**: `(Local)` = from pr-review-toolkit, `(Remote)` = from external reviewers
 

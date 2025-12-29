@@ -18,6 +18,7 @@ zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path ~/.zsh/cache
 
 # History
+HISTFILE=~/.zsh_history
 HISTSIZE=32768
 SAVEHIST=32768
 setopt APPEND_HISTORY

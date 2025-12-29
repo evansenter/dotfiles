@@ -2,6 +2,9 @@
 # Environment Variables
 # ==============================================================================
 
+# Variables expected in ~/.extra (not tracked):
+#   GITHUB_TOKEN - Required for Claude Code GitHub MCP server
+
 # PATH configuration
 if [ -d "$HOME/.local/bin" ]; then
     export PATH="$HOME/.local/bin:$PATH"

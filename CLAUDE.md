@@ -84,6 +84,7 @@ The `.zshrc` file sources other configuration files in this order:
 - Incremental, case-smart search with highlighting
 - No swap/backup files
 - Line numbers and always-visible status line
+- Uses Catppuccin mocha (dark) theme only; light mode switching not implemented
 
 **Dark Mode Theme Switching** (home/.bin/toggle-btop-theme)
 - Automatically switches btop theme based on macOS appearance
