@@ -24,7 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 
 ### Requires Discussion
 
-- Merging PRs
+- Merging PRs (GitHub PR merges via `gh pr merge`, not local `git merge`)
 - Closing PRs
 - Design trade-offs with multiple valid approaches
 - Disagreements with reviewer feedback on Critical/Important items
