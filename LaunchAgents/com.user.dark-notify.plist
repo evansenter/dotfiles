@@ -8,7 +8,7 @@
     <true/>
     <key>ProgramArguments</key>
     <array>
-        <string>/opt/homebrew/bin/dark-notify</string>
+        <string>__HOMEBREW_PREFIX__/bin/dark-notify</string>
         <string>-c</string>
         <string>__HOME__/.bin/toggle-btop-theme</string>
     </array>

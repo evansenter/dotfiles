@@ -20,12 +20,14 @@ git status --short
 # Recent commits on this branch (vs main)
 git log main..HEAD --oneline 2>/dev/null || git log -3 --oneline
 
-# Check for open PR on current branch
-gh pr view --json number,title,state,statusCheckRollup,reviewDecision,comments 2>/dev/null
+# Check for open PR on current branch (includes linked issue)
+gh pr view --json number,title,state,statusCheckRollup,reviewDecision,comments,body 2>/dev/null
 
 # Check active todos
 # (Read from conversation context)
 ```
+
+Parse the PR body for issue references (e.g., "Fixes #123", "Closes #45", or issue URLs). If found, fetch the linked issue for additional context.
 
 ### 2. Determine Workflow Position
 
@@ -51,6 +53,7 @@ Present in this format:
 **Branch:** [branch-name]
 **Status:** [uncommitted changes summary or "clean"]
 **PR:** [#N - title (CI status, N comments)] or "none"
+**Issue:** [#N - title] or "none"
 
 ### Workflow Position
 
@@ -67,11 +70,11 @@ Present in this format:
 
 ### Context
 
-[2-3 sentences summarizing recent work based on branch name, commits, and PR description]
+[2-3 sentences summarizing recent work based on branch name, commits, PR description, and linked issue if any. Reference the issue number when describing what problem is being solved.]
 
 ### Suggested Next Action
 
-[One concrete action to take, with the command to run if applicable]
+[One concrete action to take, with the command to run if applicable. If working on an issue, frame the action in terms of completing that issue.]
 ```
 
 ### 4. Guidelines
@@ -81,3 +84,4 @@ Present in this format:
 - If on main with no changes, suggest running `/status-report` to find work
 - If stuck between steps, pick the earlier one
 - Reference active todos if any exist in the conversation
+- If working on an issue, always mention the issue number in Context and Suggested Next Action

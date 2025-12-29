@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # ==============================================================================
 # Bootstrap Script - Install Dotfiles
@@ -96,8 +97,14 @@ install_launch_agents() {
 	# Install dark-notify LaunchAgent (only if dark-notify is installed)
 	if command -v dark-notify >/dev/null 2>&1; then
 		local plist="com.user.dark-notify.plist"
+		local homebrew_prefix
+		if [[ "$(uname -m)" == "arm64" ]]; then
+			homebrew_prefix="/opt/homebrew"
+		else
+			homebrew_prefix="/usr/local"
+		fi
 		local new_plist_content
-		new_plist_content=$(sed "s|__HOME__|$HOME|g" "LaunchAgents/$plist")
+		new_plist_content=$(sed -e "s|__HOME__|$HOME|g" -e "s|__HOMEBREW_PREFIX__|$homebrew_prefix|g" "LaunchAgents/$plist")
 		local dest_plist="$launch_agents_dir/$plist"
 
 		# Only update and reload if plist content changed
@@ -205,7 +212,7 @@ sync_dotfiles() {
 	install_launch_agents
 
 	# Reload zsh configuration
-	if [[ -n "$ZSH_VERSION" ]]; then
+	if [[ -n "${ZSH_VERSION:-}" ]]; then
 		source ~/.zshrc 2>/dev/null || echo "Restart your terminal or run: source ~/.zshrc"
 	fi
 }
