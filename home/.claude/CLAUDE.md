@@ -124,6 +124,7 @@ Available slash commands (in `~/.claude/commands/`):
 - `/audit-codebase` - Check for AI-generated anti-patterns and Evergreen violations
 - `/audit-tests` - Find redundant or stale tests
 - `/audit-issues` - Categorize open issues as current or needing updates
+- `/cross-repo` - Gather context from a related repository (CLAUDE.md, PRs, issues)
 - `/improve-workflow` - Suggest workflow improvements, categorized as local (this repo) or global (dotfiles)
 - `/rfc-response` - Generate structured response to RFC-style issues with assumptions, questions, and requirements
 - `/watch-ci` - Monitor CI in background with notification when complete
