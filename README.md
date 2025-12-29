@@ -98,7 +98,7 @@ dotfiles/
 │   ├── .claude/
 │   │   ├── CLAUDE.md      # Global workflow preferences
 │   │   ├── commands/      # Custom slash commands
-│   │   ├── hooks/         # Stop hook, notification hook
+│   │   ├── hooks/         # Notification hook
 │   │   └── settings.json  # Plugins and hook config
 │   ├── .exports
 │   ├── .gitconfig
