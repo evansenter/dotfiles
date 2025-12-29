@@ -37,7 +37,7 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 
 **Git CLI:**
 - `git status`, `git diff`, `git log`, `git add`, `git commit`
-- `git fetch`, `git branch`, `git remote`, `git mv`, `git checkout`, `git stash`
+- `git fetch`, `git branch`, `git remote`, `git mv`, `git checkout`, `git stash`, `git worktree`
 - `git push`, `git rebase`, `git pull`, `git merge`
 
 **GitHub CLI:**
