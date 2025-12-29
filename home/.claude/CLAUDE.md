@@ -69,7 +69,7 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 1. **Orient**: Run `/status-report` to see recent work, open issues, and recommendations
 2. **Pick work**: Choose an issue or task to work on
 3. **Develop**: Make changes, run tests/linters as needed
-4. **Self-review**: After completing work, summarize what was done and run `/pr-feedback --local`
+4. **Self-review**: After completing work, summarize what was done and run `/pr-feedback --local` before pushing
 5. **Iterate**: Address feedback, repeat step 4 until clean
 6. **Create PR**: Use `/commit-commands:commit-push-pr` (preferred) for streamlined commit-push-PR flow
 7. **Monitor CI**: Run `/watch-ci <PR#>` to track in background with notification
