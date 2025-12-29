@@ -27,9 +27,9 @@ Examples:
 
 2. **Fetch repo guidance:**
    ```bash
-   # Try CLAUDE.md first, fall back to README
-   gh api "repos/$REPO/contents/CLAUDE.md" --jq '.content' 2>/dev/null | base64 -d || \
-   gh api "repos/$REPO/contents/README.md" --jq '.content' 2>/dev/null | base64 -d || \
+   # Try CLAUDE.md first, fall back to README (use raw content API for cross-platform compatibility)
+   gh api -H "Accept: application/vnd.github.raw" "repos/$REPO/contents/CLAUDE.md" 2>/dev/null || \
+   gh api -H "Accept: application/vnd.github.raw" "repos/$REPO/contents/README.md" 2>/dev/null || \
    echo "No CLAUDE.md or README found"
    ```
 
@@ -46,10 +46,12 @@ Examples:
 5. **If focus-area provided**, search for relevant files:
    ```bash
    if [[ -n "$FOCUS" ]]; then
-     gh api "repos/$REPO/git/trees/main?recursive=1" --jq '.tree[].path' | grep -i "$FOCUS" | head -10
+     # Detect default branch (don't assume main)
+     DEFAULT_BRANCH=$(gh api "repos/$REPO" --jq '.default_branch')
+     gh api "repos/$REPO/git/trees/$DEFAULT_BRANCH?recursive=1" --jq '.tree[].path' | grep -i "$FOCUS" | head -10
    fi
    ```
-   Then fetch key files for context using `gh api repos/$REPO/contents/<path>`.
+   Then fetch key files for context using `gh api -H "Accept: application/vnd.github.raw" "repos/$REPO/contents/<path>"`.
 
 6. **Present summary:**
 
