@@ -32,11 +32,16 @@ Process and respond to PR review feedback with critical thinking.
 # Get PR number if not provided
 PR_NUM="${1:-$(gh pr view --json number -q .number 2>/dev/null)}"
 
+# Get owner/repo from current directory
+REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+
 # Fetch all review comments
-gh api repos/{owner}/{repo}/pulls/$PR_NUM/comments
-gh api repos/{owner}/{repo}/pulls/$PR_NUM/reviews
-gh api repos/{owner}/{repo}/issues/$PR_NUM/comments
+gh api repos/$REPO/pulls/$PR_NUM/comments
+gh api repos/$REPO/pulls/$PR_NUM/reviews
+gh api repos/$REPO/issues/$PR_NUM/comments
 ```
+
+If no feedback is found, inform the user and exit early.
 
 ### 3. Categorize and Form Opinions
 
@@ -46,18 +51,40 @@ For each piece of feedback:
 2. **Form opinion**: Agree, Disagree, or Uncertain
 3. **Note reasoning**: Why you think this way given context
 
-### 4. Present All Items via AskUserQuestion
+### 4. Display Summary
 
-Use `AskUserQuestion` to get user decisions on ALL feedback items. The tool supports 1-4 questions per call, so batch items in groups of 4 if there are more (prioritize Critical → Important → Suggestion). Act on each batch's decisions before presenting the next group.
+Before presenting interactive questions, output ALL feedback items ordered by severity (Critical → Important → Suggestion):
+
+```markdown
+## PR Feedback Summary
+
+#### #1. [Critical] `notify.sh:15` (Remote)
+> Fix JSON interface to handle missing fields
+**Opinion**: Agree - breaking change needs fix
+
+#### #2. [Suggestion] `utils.ts:89` (Local)
+> Add error handling for missing PR
+**Opinion**: Disagree - edge case, unlikely to occur
+```
+
+**Source indicators**: `(Local)` = from pr-review-toolkit, `(Remote)` = from external reviewers
+
+Numbers match the `#N` headers in the AskUserQuestion step.
+
+### 5. Present All Items via AskUserQuestion
+
+Present ONE question for EACH item in the PR Feedback Summary, plus the final open-ended question. Do not skip items you think should be skipped—the user makes the final call on every item.
+
+The tool supports 1-4 questions per call, so batch items in groups of up to 4 (prioritize Critical → Important → Suggestion). Collect all responses before acting.
 
 ```json
 {
   "questions": [
     {
-      "question": "[Critical] Fix notify.sh JSON interface - Agree, should fix",
-      "header": "#1",
+      "question": "[Critical] Fix notify.sh JSON interface - Agree, breaking change",
+      "header": "#1 JSON fix",
       "options": [
-        {"label": "Implement", "description": "Fix it now"},
+        {"label": "Implement (Recommended)", "description": "Fix it now"},
         {"label": "Skip", "description": "Not worth it"},
         {"label": "Defer", "description": "Create issue for later"},
         {"label": "Elaborate", "description": "Explain this topic, then re-ask"}
@@ -66,10 +93,10 @@ Use `AskUserQuestion` to get user decisions on ALL feedback items. The tool supp
     },
     {
       "question": "[Suggestion] Add error handling for missing PR - Disagree, edge case",
-      "header": "#2",
+      "header": "#2 err hand",
       "options": [
         {"label": "Implement", "description": "Fix it now"},
-        {"label": "Skip", "description": "Not worth it"},
+        {"label": "Skip (Recommended)", "description": "Not worth it"},
         {"label": "Defer", "description": "Create issue for later"},
         {"label": "Elaborate", "description": "Explain this topic, then re-ask"}
       ],
@@ -79,11 +106,13 @@ Use `AskUserQuestion` to get user decisions on ALL feedback items. The tool supp
 }
 ```
 
-Include your opinion in the question text so user has context, but let them decide.
+Keep options in consistent order (Implement / Skip / Defer / Elaborate) and add "(Recommended)" to your recommended option. Include your opinion in the question text for context.
 
 Always include a final open-ended question: "Any other comments or questions?" with options like "None, proceed" and "Yes, let me add something".
 
-### 5. Act on User Decisions
+**Important**: Complete ALL questions before taking action. If the user selects "Elaborate" on any item or provides open-ended input that needs discussion, address that first—do not proceed to implementation. Once discussion is complete, re-present all items via AskUserQuestion to confirm final selections before implementing.
+
+### 6. Act on User Decisions
 
 Based on user's choices:
 - **Implement**: Fix the item immediately
@@ -91,7 +120,7 @@ Based on user's choices:
 - **Defer**: Create a GitHub issue with title summarizing the feedback, body containing the original comment and PR link, and appropriate labels
 - **Elaborate**: Explain the topic in detail (what it means, why it matters, trade-offs), then re-ask the question
 
-### 6. Push and Re-check
+### 7. Push and Re-check
 
 After implementing feedback:
 1. Run project quality gates (linter, formatter, tests as defined in CLAUDE.md)
