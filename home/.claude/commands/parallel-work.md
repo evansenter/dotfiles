@@ -216,34 +216,43 @@ pwd
 # Get branch name
 git -C "$WORKTREE_DIR/<name>" branch --show-current
 
-# Get dirty status (count of changed files)
-git -C "$WORKTREE_DIR/<name>" status --short | wc -l
-
 # Get last commit time
 git -C "$WORKTREE_DIR/<name>" log -1 --format="%cr"
+
+# Check for context file
+cat "$WORKTREE_DIR/<name>/.parallel-context.md" 2>/dev/null
 ```
 
-#### 3. Cross-Reference with PRs
+#### 3. Determine Purpose
+
+For each worktree, determine its purpose using this priority:
+1. **Context file**: Read `.parallel-context.md` and extract the Task section (first line after `## Task`)
+2. **PR title**: If no context file, use the PR title from the matched PR
+3. **Last commit**: If no PR, use the last commit message subject
+
+Truncate purpose to ~50 chars for table display.
+
+#### 4. Cross-Reference with PRs
 
 Match worktree branches to open PRs by `headRefName`. Extract:
 - PR number and state
 - CI status from `statusCheckRollup`
 
-#### 4. Output Format
+#### 5. Output Format
 
 ```markdown
 ## Active Worktrees
 
-| Branch | PR | CI | Status | Last Activity |
-|--------|----|----|--------|---------------|
-| feature-auth | #42 Open | passing | clean | 2 hours ago |
-| fix-parsing | #45 Open | running | 1 modified | 30 min ago |
-| refactor-api | - | - | clean | 3 days ago |
+| Branch | Purpose | PR | CI | Last Activity |
+|--------|---------|----|----|---------------|
+| feature-auth | Add user authentication flow | #42 | passing | 2 hours ago |
+| fix-parsing | Fix JSON parsing edge case | #45 | running | 30 min ago |
+| refactor-api | Refactor API endpoints | - | - | 3 days ago |
 
 ### Legend
-- **PR**: Pull request number and state, or `-` if none
+- **Purpose**: From .parallel-context.md, PR title, or last commit
+- **PR**: Pull request number, or `-` if none
 - **CI**: passing/failing/running/pending, or `-` if no PR
-- **Status**: clean or N modified files
 - **Last Activity**: Time since last commit
 
 ### Quick Actions
