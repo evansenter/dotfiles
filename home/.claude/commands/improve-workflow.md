@@ -1,3 +1,8 @@
+---
+argument-hint: [focus-area]
+description: Suggest workflow improvements based on recent usage
+---
+
 Based on our recent work together, suggest Claude Code features and configurations that would improve autonomy and reduce back-and-forth.
 
 Consider:
@@ -37,7 +42,18 @@ Before making suggestions, read the global Claude configuration to filter out st
 
 ```bash
 cat ~/.claude/CLAUDE.md
+cat ~/.claude/settings.json
+ls ~/.claude/commands/
 ```
+
+Then read existing commands to understand current patterns:
+
+```bash
+# List all command files
+ls ~/.claude/commands/
+```
+
+Read each command file individually using the Read tool to understand patterns and find improvement opportunities.
 
 Skip any suggestion that:
 - Proposes a workflow already documented in the global CLAUDE.md

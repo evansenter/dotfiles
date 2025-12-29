@@ -1,3 +1,8 @@
+---
+argument-hint: [--days N]
+description: Find unaddressed or deferred PR comments
+---
+
 Review all merged PRs and their linked closed issues. Cross-reference against open issues.
 
 Find:

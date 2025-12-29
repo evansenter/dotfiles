@@ -16,6 +16,7 @@
       "Bash(git mv:*)",
       "Bash(git checkout:*)",
       "Bash(git stash:*)",
+      "Bash(git worktree:*)",
       "Bash(git push:*)",
       "Bash(git rebase:*)",
       "Bash(git pull:*)",

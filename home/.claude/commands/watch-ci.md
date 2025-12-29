@@ -1,3 +1,8 @@
+---
+argument-hint: [PR_NUMBER]
+description: Monitor CI in background and notify when complete
+---
+
 # Watch CI
 
 Monitor CI status for a PR in the background and notify when complete.

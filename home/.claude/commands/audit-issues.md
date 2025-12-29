@@ -1,3 +1,8 @@
+---
+argument-hint: [label-filter]
+description: Audit open issues for staleness and relevance
+---
+
 Audit all open issues against the current codebase state.
 
 Categorize into:

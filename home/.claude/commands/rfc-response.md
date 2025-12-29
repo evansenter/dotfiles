@@ -1,3 +1,8 @@
+---
+argument-hint: [issue-number or URL]
+description: Generate structured RFC response with assumptions and requirements
+---
+
 # RFC Response
 
 Generate a structured response to an RFC-style issue.
@@ -58,5 +63,3 @@ fi
 # Fetch issue details
 gh issue view $ISSUE_NUM --json title,body,number
 ```
-
-$ARGUMENTS

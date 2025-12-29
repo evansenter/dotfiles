@@ -1,3 +1,8 @@
+---
+argument-hint: <owner/repo> [focus-area]
+description: Gather context from a related repository
+---
+
 # Cross-Repo Context
 
 Gather context from a related repository.
@@ -77,5 +82,3 @@ Examples:
 ### Relevant Files [if focus-area provided]
 - `path/to/file` - Brief description of what this file does
 ```
-
-$ARGUMENTS

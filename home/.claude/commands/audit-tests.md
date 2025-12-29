@@ -1,3 +1,8 @@
+---
+argument-hint: [focus-area]
+description: Audit test coverage for redundancy, staleness, and gaps
+---
+
 Audit test coverage across the codebase.
 
 Identify:
