@@ -13,6 +13,24 @@ References:
 
 $ARGUMENTS
 
+## Analyze Recent Usage
+
+Review how Claude Code was used recently in this repo to identify improvement opportunities:
+
+```bash
+# Recent commits to see work patterns
+git log --oneline -20
+
+# Check for repetitive patterns in commit messages
+git log --oneline -50 | cut -d' ' -f2- | sort | uniq -c | sort -rn | head -10
+```
+
+Also consider the current conversation:
+- What commands were run repeatedly?
+- Where did friction occur (approvals, back-and-forth, clarifications)?
+- What manual steps could be automated?
+- Were there permissions that blocked autonomous work?
+
 ## Check Global Setup First
 
 Before making suggestions, read the global Claude configuration to filter out stale recommendations:
