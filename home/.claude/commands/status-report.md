@@ -29,12 +29,30 @@ Filter to show:
 ### 2. Work In Flight
 
 ```bash
-# Open PRs
-gh pr list --state open --json number,title,body
+# Active worktrees (in .worktrees/ directory)
+git worktree list --porcelain
+
+# Detect if running in a worktree
+git rev-parse --git-dir
+git rev-parse --git-common-dir
+
+# Open PRs with branch info for cross-referencing
+gh pr list --state open --json number,title,body,headRefName,baseRefName,statusCheckRollup
 
 # Open issues
 gh issue list --state open --json number,title,body,labels
 ```
+
+For each worktree in `.worktrees/`:
+```bash
+# Check dirty status
+git -C <worktree-path> status --short
+```
+
+To detect if running in a worktree (for marking `(current)`):
+- If `git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`, you're in a worktree
+- Compare `pwd` with each worktree path to identify which one is current
+- Mark the matching worktree with `(current)` in the output table
 
 ### 3. Output Format
 
@@ -57,6 +75,21 @@ Present the report in this format:
 | #N    | One-sentence summary of what was resolved |
 
 ### In Flight
+
+**Active Worktrees** (N total) - *only show if worktrees exist in `.worktrees/`*
+| Path | Branch | PR | CI | Status |
+|------|--------|----|----|--------|
+| .worktrees/feature-x (current) | feature-x | #42 | passing | clean |
+| .worktrees/fix-bug | fix-bug | #45 | failing | 2 modified |
+
+*Mark with `(current)` if running from that worktree. Cross-reference branches with PRs.*
+
+**Stacked PRs** - *only show if any PR's baseRefName differs from default branch (use `gh repo view --json defaultBranchRef -q .defaultBranchRef.name` to detect)*
+| PR | Branch | Base | CI |
+|----|--------|------|----|
+| #46 | feature-part-2 | feature-part-1 | pending |
+| #45 | feature-part-1 | main | passing |
+
 **Open PRs** (N total)
 | PR | Summary |
 |----|---------|
@@ -84,5 +117,9 @@ When making recommendations, consider:
 - **Issue patterns**: If many similar issues exist, suggest consolidation
 - **Momentum**: If recent work focused on a feature area, suggest continuing there
 - **Quick wins**: Small issues or PRs that could be resolved easily
+- **Dirty worktrees**: Worktrees with uncommitted changes need attention
+- **Failed CI in worktrees**: Worktrees with failing CI should be fixed
+- **Orphaned worktrees**: Worktrees for merged/closed PRs can be cleaned up with `/parallel-work cleanup`
+- **Stacked PR updates**: If a base PR in a stack was updated, dependent PRs may need rebase
 
 Each recommendation should include a brief reason explaining why it's suggested based on the data gathered.
