@@ -59,14 +59,18 @@ If `BRANCH_NAME` is empty, display usage and exit:
 Usage: /parallel-work start <branch-name> [base-branch]
 ```
 
-#### 2. Check for Existing Worktree
+#### 2. Check for Existing Worktree or Branch
 
 ```bash
 # Check if worktree already exists
 ls "$WORKTREE_DIR/$BRANCH_NAME" 2>/dev/null
+
+# Check if branch already exists in repo
+git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"
 ```
 
-If exists, inform user and suggest using `/parallel-work list`.
+If worktree exists, inform user and suggest using `/parallel-work list`.
+If branch exists (but no worktree), ask if user wants to create worktree for existing branch or choose a different name.
 
 #### 3. Create Worktree Directory and Branch
 
@@ -131,7 +135,7 @@ Use AskUserQuestion to gather task details:
 
 #### 6. Write Context File
 
-Write `.parallel-context.md` to the new worktree:
+Write `.parallel-context.md` to the new worktree. When writing, replace placeholders with actual values and execute the date command to get current timestamp:
 
 ```markdown
 # Parallel Work Context
@@ -142,7 +146,7 @@ Write `.parallel-context.md` to the new worktree:
 ## Branch Info
 - **Branch:** [branch-name]
 - **Base:** [base-branch]
-- **Created:** $(date '+%Y-%m-%d %H:%M')
+- **Created:** [run: date '+%Y-%m-%d %H:%M' and insert result]
 
 ## Related
 [Issue/PR references or "None"]
@@ -310,6 +314,13 @@ git -C "$WORKTREE_DIR/<branch>" status --short
 |--------|--------|-------------|
 | local-experiment | clean | 5 days ago |
 
+### ⚠️ Dirty Worktrees (Uncommitted Changes)
+| Branch | Modified Files |
+|--------|----------------|
+| wip-feature | 3 files |
+
+**Warning**: These worktrees have uncommitted changes that will be lost if removed.
+
 ### Active (Will Not Remove)
 | Branch | PR | Status |
 |--------|-----|--------|
@@ -353,10 +364,21 @@ For each **non-empty** category, use AskUserQuestion to confirm:
         {"label": "No, keep", "description": "Need to review first"}
       ],
       "multiSelect": false
+    },
+    {
+      "question": "⚠️ Remove DIRTY worktrees? This will DELETE uncommitted changes permanently!",
+      "header": "Dirty",
+      "options": [
+        {"label": "No, keep (Recommended)", "description": "Preserve uncommitted work"},
+        {"label": "Yes, delete anyway", "description": "I understand changes will be lost"}
+      ],
+      "multiSelect": false
     }
   ]
 }
 ```
+
+**Note**: Only ask about dirty worktrees if any exist. The "No, keep" option should be recommended by default to prevent accidental data loss.
 
 #### 6. Execute Removal
 

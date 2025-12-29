@@ -84,7 +84,7 @@ Present the report in this format:
 
 *Mark with `(current)` if running from that worktree. Cross-reference branches with PRs.*
 
-**Stacked PRs** - *only show if any PR has baseRefName != main/master*
+**Stacked PRs** - *only show if any PR's baseRefName differs from default branch (use `gh repo view --json defaultBranchRef -q .defaultBranchRef.name` to detect)*
 | PR | Branch | Base | CI |
 |----|--------|------|----|
 | #46 | feature-part-2 | feature-part-1 | pending |
