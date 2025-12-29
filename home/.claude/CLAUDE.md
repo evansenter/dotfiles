@@ -38,16 +38,21 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 **Git CLI:**
 - `git status`, `git diff`, `git log`, `git add`, `git commit`
 - `git fetch`, `git branch`, `git remote`, `git mv`, `git checkout`, `git stash`
-- `git push`, `git rebase`
+- `git push`, `git rebase`, `git pull`, `git merge`
 
 **GitHub CLI:**
 - PRs: `gh pr view/list/checks/merge/create/edit/review`
 - Issues: `gh issue list/view/close/create/edit`
+- CI: `gh run view/list/rerun/watch`
 
 **GitHub MCP Server:**
 - PRs: `get_pull_request`, `list_pull_requests`, `get_pull_request_status`, `get_pull_request_files`, `get_pull_request_comments`, `get_pull_request_reviews`, `create_pull_request`, `merge_pull_request`, `update_pull_request_branch`, `create_pull_request_review`
 - Issues: `get_issue`, `list_issues`, `create_issue`, `update_issue`, `add_issue_comment`, `search_issues`
 - Other: `list_commits`, `create_branch`, `get_file_contents`, `search_code`
+
+**When to use MCP vs gh CLI:**
+- **Prefer MCP** for standard operations (faster, structured data): fetching PR/issue details, creating issues, listing items
+- **Use gh CLI** when MCP doesn't support it: `gh pr checks --watch`, `gh run` commands, `gh api` for arbitrary endpoints
 
 ## Quality Gates
 
@@ -66,6 +71,7 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 6. **Create PR**: Use `/commit-commands:commit-push-pr` (preferred) for streamlined commit-push-PR flow
 7. **Monitor CI**: Run `/watch-ci <PR#>` to track in background with notification
 8. **Process feedback**: When CI passes, run `/pr-feedback --remote` to handle reviewer comments
+9. **Merge & cleanup**: After approval, merge PR and run `/commit-commands:clean_gone` to clean stale branches
 
 ### Pre-PR Checklist
 
@@ -118,3 +124,4 @@ Available slash commands (in `~/.claude/commands/`):
 - `/improve-workflow` - Suggest workflow improvements, categorized as local (this repo) or global (dotfiles)
 - `/watch-ci` - Monitor CI in background with notification when complete
 - `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (preferred for new PRs)
+- `/commit-commands:clean_gone` - Delete local branches whose remote tracking branch is gone
