@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 - Creating, closing, and editing issues
 - Re-running flaky CI (once per failure)
 - Web searches for documentation/research
-- After completing implementation work: summarize changes and run `/pr-feedback --local`
+- After completing implementation work: summarize changes and run `/pr-feedback --local` before pushing
 - After creating a PR: immediately run `/watch-ci <PR#>` to monitor CI
 
 ### Requires Discussion
@@ -44,6 +44,9 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 - PRs: `gh pr view/list/checks/merge/create/edit/review`
 - Issues: `gh issue list/view/close/create/edit`
 - CI: `gh run view/list/rerun/watch`
+
+**Build Tools:**
+- `make`, `cargo check/build/test/clippy/fmt/run/doc`
 
 **GitHub MCP Server:**
 - PRs: `get_pull_request`, `list_pull_requests`, `get_pull_request_status`, `get_pull_request_files`, `get_pull_request_comments`, `get_pull_request_reviews`, `create_pull_request`, `merge_pull_request`, `update_pull_request_branch`, `create_pull_request_review`
@@ -122,6 +125,7 @@ Available slash commands (in `~/.claude/commands/`):
 - `/audit-tests` - Find redundant or stale tests
 - `/audit-issues` - Categorize open issues as current or needing updates
 - `/improve-workflow` - Suggest workflow improvements, categorized as local (this repo) or global (dotfiles)
+- `/rfc-response` - Generate structured response to RFC-style issues with assumptions, questions, and requirements
 - `/watch-ci` - Monitor CI in background with notification when complete
 - `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (preferred for new PRs)
 - `/commit-commands:clean_gone` - Delete local branches whose remote tracking branch is gone
