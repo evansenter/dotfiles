@@ -1,3 +1,7 @@
+---
+description: Show workflow position, feedback staleness, and suggested next action
+---
+
 # I'm Lost
 
 Show current workflow position and context when you've lost track of where you are.

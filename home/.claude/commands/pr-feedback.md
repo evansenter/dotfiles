@@ -1,3 +1,8 @@
+---
+argument-hint: [PR_NUMBER] [--local | --remote]
+description: Process PR review feedback with categorization and opinion-forming
+---
+
 # PR Feedback Review
 
 Process and respond to PR review feedback with critical thinking.

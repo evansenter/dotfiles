@@ -1,3 +1,7 @@
+---
+description: Generate repo status with recent work, open issues, and recommendations
+---
+
 # Status Report
 
 Generate a status report for the current repository.
