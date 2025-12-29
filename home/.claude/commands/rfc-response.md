@@ -1,5 +1,5 @@
 ---
-argument-hint: [issue-number or URL]
+argument-hint: [issue-number or URL] [--post]
 description: Generate structured RFC response with assumptions and requirements
 ---
 
@@ -10,10 +10,11 @@ Generate a structured response to an RFC-style issue.
 ## Usage
 
 ```
-/rfc-response [ISSUE_NUMBER or URL]
+/rfc-response [ISSUE_NUMBER or URL] [--post]
 ```
 
-If no argument provided, uses the current context (e.g., issue being discussed).
+- If no issue argument provided, uses the current context (e.g., issue being discussed)
+- `--post`: Automatically post the response to the issue after generating (skips review)
 
 ## Instructions
 
@@ -52,6 +53,14 @@ Decisions that block progress - be explicit about what's needed and why.
 4. **Argument handling**:
 
 ```bash
+# Check for --post flag
+POST_FLAG=false
+for arg in $ARGUMENTS; do
+  if [[ "$arg" == "--post" ]]; then
+    POST_FLAG=true
+  fi
+done
+
 # Get issue number from argument or current context
 ISSUE_NUM="${1:-$(gh issue view --json number -q .number 2>/dev/null)}"
 
@@ -63,3 +72,7 @@ fi
 # Fetch issue details
 gh issue view $ISSUE_NUM --json title,body,number
 ```
+
+5. **Posting behavior**:
+   - If `--post` flag is present: Post the response to the issue immediately after generating
+   - Otherwise: Show the response and wait for user review before posting

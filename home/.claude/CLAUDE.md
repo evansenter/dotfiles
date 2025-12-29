@@ -24,7 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 
 ### Requires Discussion
 
-- Merging PRs (GitHub PR merges via `gh pr merge`, not local `git merge`)
+- Merging PRs - unless user explicitly approves (e.g., "merge when CI passes")
 - Closing PRs
 - Design trade-offs with multiple valid approaches
 - Disagreements with reviewer feedback on Critical/Important items
@@ -42,11 +42,11 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 
 **GitHub CLI:**
 - PRs: `gh pr view/list/checks/merge/create/edit/review`
-- Issues: `gh issue list/view/close/create/edit`
+- Issues: `gh issue list/view/close/create/edit/comment`
 - CI: `gh run view/list/rerun/watch`
 
 **Build Tools:**
-- `make`, `cargo check/build/test/clippy/fmt/run/doc`
+- `make`, `cargo check/build/test/clippy/fmt/run/doc/add`
 
 **GitHub MCP Server:**
 - PRs: `get_pull_request`, `list_pull_requests`, `get_pull_request_status`, `get_pull_request_files`, `get_pull_request_comments`, `get_pull_request_reviews`, `create_pull_request`, `merge_pull_request`, `update_pull_request_branch`, `create_pull_request_review`
