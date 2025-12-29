@@ -198,14 +198,14 @@ Based on user selection:
 ```bash
 # Create horizontal split, cd to worktree, and start claude
 tmux split-window -h -c "[full-worktree-path]"
-tmux send-keys "claude 'Starting parallel work on $BRANCH_NAME. Read .parallel-context.md for context.'" Enter
+tmux send-keys "claude 'Starting parallel work. Read .parallel-context.md for context.'" Enter
 ```
 
 **For window:**
 ```bash
 # Create new window, cd to worktree, and start claude
-tmux new-window -c "[full-worktree-path]" -n "$BRANCH_NAME"
-tmux send-keys "claude 'Starting parallel work on $BRANCH_NAME. Read .parallel-context.md for context.'" Enter
+tmux new-window -c "[full-worktree-path]" -n "[branch-name]"
+tmux send-keys "claude 'Starting parallel work. Read .parallel-context.md for context.'" Enter
 ```
 
 After launching, output:
