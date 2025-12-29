@@ -13,6 +13,24 @@ References:
 
 $ARGUMENTS
 
+## Analyze Recent Usage
+
+Review how Claude Code was used recently in this repo to identify improvement opportunities:
+
+```bash
+# Recent commits to see work patterns
+git log --oneline -20
+
+# Check for repetitive patterns in commit messages
+git log --oneline -50 | cut -d' ' -f2- | sort | uniq -c | sort -rn | head -10
+```
+
+Also consider the current conversation:
+- What commands were run repeatedly?
+- Where did friction occur (approvals, back-and-forth, clarifications)?
+- What manual steps could be automated?
+- Were there permissions that blocked autonomous work?
+
 ## Check Global Setup First
 
 Before making suggestions, read the global Claude configuration to filter out stale recommendations:
@@ -25,6 +43,20 @@ Skip any suggestion that:
 - Proposes a workflow already documented in the global CLAUDE.md
 - Recommends a command or hook that already exists
 - Suggests a permission that's already configured
+
+## Review Claude File Language
+
+Also review the language and clarity of global Claude files in `~/.claude/`:
+- `CLAUDE.md` - Is the workflow documentation clear and actionable?
+- `commands/*.md` - Are command instructions unambiguous? Do examples help?
+- `settings.json` - Are there permissions that should be added based on documented workflows?
+
+Look for:
+- Inconsistencies between what's documented and what's configured
+- Instructions that could be misinterpreted
+- Missing context that would help Claude follow the workflow correctly
+
+Include any language/clarity improvements in the Global Improvements section.
 
 ## Output
 
