@@ -118,6 +118,7 @@ install_launch_agents() {
 		if [[ ! -f "$dest_plist" ]] || ! cmp -s "$tmp_plist" "$dest_plist"; then
 			echo "Installing LaunchAgent: $plist"
 			mv "$tmp_plist" "$dest_plist"
+			trap - EXIT
 
 			# Reload the agent
 			launchctl bootout "gui/$(id -u)/com.user.dark-notify" 2>/dev/null || true
@@ -127,8 +128,8 @@ install_launch_agents() {
 			"$HOME/.bin/toggle-btop-theme"
 		else
 			rm -f "$tmp_plist"
+			trap - EXIT
 		fi
-		trap - EXIT
 	else
 		echo "Skipping dark-notify LaunchAgent (dark-notify not installed)"
 		echo "  Install with: brew install cormacrelf/tap/dark-notify"
