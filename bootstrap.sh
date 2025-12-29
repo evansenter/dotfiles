@@ -98,7 +98,9 @@ install_launch_agents() {
 	if command -v dark-notify >/dev/null 2>&1; then
 		local plist="com.user.dark-notify.plist"
 		local homebrew_prefix
-		if [[ "$(uname -m)" == "arm64" ]]; then
+		if command -v brew >/dev/null 2>&1; then
+			homebrew_prefix="$(brew --prefix)"
+		elif [[ "$(uname -m)" == "arm64" ]]; then
 			homebrew_prefix="/opt/homebrew"
 		else
 			homebrew_prefix="/usr/local"
