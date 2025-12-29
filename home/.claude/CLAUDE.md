@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 - Re-running flaky CI (once per failure)
 - Web searches for documentation/research
 - After completing implementation work: summarize changes and run `/pr-feedback --local` before pushing
-- After creating a PR: immediately run `/watch-ci <PR#>` to monitor CI
+- **After creating or pushing to a PR: immediately run `/watch-ci <PR#>`** - CI is now running, monitor it
 
 ### Requires Discussion
 
@@ -72,7 +72,7 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 4. **Self-review**: After completing work, summarize what was done and run `/pr-feedback --local` before pushing
 5. **Iterate**: Address feedback, repeat step 4 until clean
 6. **Create PR**: Use `/commit-commands:commit-push-pr` (preferred) for streamlined commit-push-PR flow
-7. **Monitor CI**: Run `/watch-ci <PR#>` to track in background with notification
+7. **Monitor CI**: Run `/watch-ci <PR#>` after PR creation or any push - track in background with notification
 8. **Process feedback**: When CI passes, run `/pr-feedback --remote` to handle reviewer comments
 9. **Merge & cleanup**: After approval, merge PR and run `/commit-commands:clean_gone` to clean stale branches
 
@@ -103,7 +103,7 @@ After CI passes, run `/pr-feedback --remote` to fetch and process reviewer comme
 
 ## CI Handling
 
-- **Always run `/watch-ci <PR#>` immediately after creating a PR** - don't wait for user to ask
+- **Always run `/watch-ci <PR#>` after creating or pushing to a PR** - don't wait for user to ask; CI is running, monitor it
 - If CI fails due to flakiness, auto-rerun failed jobs once with `gh run rerun <run-id> --failed`
 - If CI fails twice, investigate the root cause
 
