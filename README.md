@@ -24,6 +24,7 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 | `/audit-codebase` | Check for AI anti-patterns and Evergreen violations |
 | `/audit-tests` | Find redundant or stale tests |
 | `/audit-issues` | Categorize open issues as current or needing updates |
+| `/cross-repo` | Gather context from a related repository |
 | `/improve-workflow` | Suggest workflow improvements, categorized as local or global |
 | `/rfc-response` | Generate structured response to RFC-style issues |
 
