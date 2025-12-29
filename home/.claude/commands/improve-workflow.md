@@ -44,9 +44,11 @@ ls ~/.claude/commands/
 Then read existing commands to understand current patterns:
 
 ```bash
-# Review each command file for consistency and improvement opportunities
-cat ~/.claude/commands/*.md
+# List all command files
+ls ~/.claude/commands/
 ```
+
+Read each command file individually using the Read tool to understand patterns and find improvement opportunities.
 
 Skip any suggestion that:
 - Proposes a workflow already documented in the global CLAUDE.md
