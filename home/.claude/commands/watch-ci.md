@@ -23,10 +23,12 @@ If PR_NUMBER is omitted, uses the current branch's PR.
 
 2. Run CI check in background with notification:
    ```bash
-   gh pr checks <PR_NUMBER> --watch --interval 10 && echo '{"title":"CI","message":"CI passed on PR #<PR_NUMBER>"}' | ~/.claude/hooks/notify.sh || echo '{"title":"CI","message":"CI failed on PR #<PR_NUMBER>"}' | ~/.claude/hooks/notify.sh
+   gh pr checks <PR_NUMBER> --watch --interval 10 && ~/.claude/hooks/notify.sh "CI" "CI passed on PR #<PR_NUMBER>" || ~/.claude/hooks/notify.sh "CI" "CI failed on PR #<PR_NUMBER>"
    ```
 
    Use the Bash tool with `run_in_background: true` parameter.
+
+   **Note:** Uses CLI arguments instead of pipes for reliability in background processes.
 
 3. Confirm to user that CI is being monitored and they'll receive a notification.
 

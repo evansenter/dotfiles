@@ -78,6 +78,8 @@ Include any language/clarity improvements in the Global Improvements section.
 
 Be specific about what each suggestion enables and the setup required.
 
+**Important**: For each suggestion, include the specific friction or issue encountered during the session that motivates the change. Reference specific commands that failed, approvals that blocked work, or back-and-forth that could have been avoided. This context is essential when creating issues against evansenter/dotfiles.
+
 Group suggestions into two categories:
 
 **Local Improvements** - Specific to the current repository:
@@ -93,4 +95,9 @@ Group suggestions into two categories:
 
 ## Follow-up
 
-When suggesting to create an issue against `evansenter/dotfiles`, **only include Global Improvements**. Local improvements should be tracked in the current repository's issues.
+When suggesting to create an issue against `evansenter/dotfiles`, **only include Global Improvements**. Each improvement MUST include:
+- The specific friction encountered (what went wrong or was inefficient)
+- Session context (what you were trying to do when the friction occurred)
+- The proposed fix with concrete code/config changes
+
+Local improvements should be tracked in the current repository's issues.
