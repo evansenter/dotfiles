@@ -75,13 +75,13 @@ Before presenting interactive questions, output ALL feedback items ordered by se
 
 **Source indicators**: `(Local)` = from pr-review-toolkit, `(Remote)` = from external reviewers
 
-Numbers match the `#N` headers in the AskUserQuestion step.
-
 ### 5. Present All Items via AskUserQuestion
 
 Present ONE question for EACH item in the PR Feedback Summary, plus the final open-ended question. Do not skip items you think should be skipped—the user makes the final call on every item.
 
 The tool supports 1-4 questions per call, so batch items in groups of up to 4 (prioritize Critical → Important → Suggestion). Collect all responses before acting.
+
+**Critical**: The `header` field MUST use the same `#N` number from the summary. If the summary shows items #2, #5, #7, the question headers must be `#2`, `#5`, `#7` (not renumbered as #1, #2, #3). This ensures users can cross-reference the summary.
 
 ```json
 {
@@ -99,7 +99,7 @@ The tool supports 1-4 questions per call, so batch items in groups of up to 4 (p
     },
     {
       "question": "[Suggestion] Add error handling for missing PR - Disagree, edge case",
-      "header": "#2 err hand",
+      "header": "#3 err hand",
       "options": [
         {"label": "Implement", "description": "Fix it now"},
         {"label": "Skip (Recommended)", "description": "Not worth it"},

@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 - Creating, closing, and editing issues
 - Re-running flaky CI (once per failure)
 - Web searches for documentation/research
-- After completing implementation work: summarize changes and run `/pr-feedback --local`
+- After completing implementation work: summarize changes and run `/pr-feedback --local` before pushing
 - After creating a PR: immediately run `/watch-ci <PR#>` to monitor CI
 
 ### Requires Discussion
@@ -45,6 +45,9 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 - Issues: `gh issue list/view/close/create/edit`
 - CI: `gh run view/list/rerun/watch`
 
+**Build Tools:**
+- `make`, `cargo check/build/test/clippy/fmt/run/doc`
+
 **GitHub MCP Server:**
 - PRs: `get_pull_request`, `list_pull_requests`, `get_pull_request_status`, `get_pull_request_files`, `get_pull_request_comments`, `get_pull_request_reviews`, `create_pull_request`, `merge_pull_request`, `update_pull_request_branch`, `create_pull_request_review`
 - Issues: `get_issue`, `list_issues`, `create_issue`, `update_issue`, `add_issue_comment`, `search_issues`
@@ -66,7 +69,7 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 1. **Orient**: Run `/status-report` to see recent work, open issues, and recommendations
 2. **Pick work**: Choose an issue or task to work on
 3. **Develop**: Make changes, run tests/linters as needed
-4. **Self-review**: After completing work, summarize what was done and run `/pr-feedback --local`
+4. **Self-review**: After completing work, summarize what was done and run `/pr-feedback --local` before pushing
 5. **Iterate**: Address feedback, repeat step 4 until clean
 6. **Create PR**: Use `/commit-commands:commit-push-pr` (preferred) for streamlined commit-push-PR flow
 7. **Monitor CI**: Run `/watch-ci <PR#>` to track in background with notification
@@ -122,6 +125,7 @@ Available slash commands (in `~/.claude/commands/`):
 - `/audit-tests` - Find redundant or stale tests
 - `/audit-issues` - Categorize open issues as current or needing updates
 - `/improve-workflow` - Suggest workflow improvements, categorized as local (this repo) or global (dotfiles)
+- `/rfc-response` - Generate structured response to RFC-style issues with assumptions, questions, and requirements
 - `/watch-ci` - Monitor CI in background with notification when complete
 - `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (preferred for new PRs)
 - `/commit-commands:clean_gone` - Delete local branches whose remote tracking branch is gone
