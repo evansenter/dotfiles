@@ -364,44 +364,48 @@ Also check for uncommitted changes in each worktree:
 git -C "$WORKTREE_DIR/<branch>" status --short
 ```
 
-#### 3. Display Summary
+#### 3. Determine Purpose (Same as List)
+
+For each worktree, determine its purpose using this priority:
+1. **Context file**: Read `.parallel-context.md` and extract the Task section (first line after `## Task`)
+2. **PR title**: If no context file, use the PR title from the matched PR
+3. **Last commit**: If no PR, use the last commit message subject
+
+Truncate purpose to ~50 chars for table display.
+
+#### 4. Display Summary
+
+Use the same unified table format as the `list` command, with a Category column to indicate cleanup action:
 
 ```markdown
 ## Worktree Cleanup
 
-### Safe to Remove (PR Merged)
-| Branch | PR | Merged |
-|--------|-----|--------|
-| feature-auth | #42 | 2 days ago |
+| Branch | Purpose | PR | CI | Last Activity | Category |
+|--------|---------|----|----|---------------|----------|
+| feature-auth | Add user authentication flow | #42 | passed | 2 days ago | ✓ Merged |
+| abandoned-feature | Experimental caching layer | #38 | - | 1 week ago | ⚠ Closed |
+| local-experiment | Fix JSON parsing edge case | - | - | 5 days ago | ? No PR |
+| wip-feature | Refactor API endpoints | - | - | 1 hour ago | 🚫 Dirty (3 files) |
+| fix-parsing | Update error messages | #45 | running | 30 min ago | Active |
 
-### Requires Confirmation (PR Closed Without Merge)
-| Branch | PR | Closed |
-|--------|-----|--------|
-| abandoned-feature | #38 | 1 week ago |
-
-### Warning: No PR Found
-| Branch | Status | Last Commit |
-|--------|--------|-------------|
-| local-experiment | clean | 5 days ago |
-
-### ⚠️ Dirty Worktrees (Uncommitted Changes)
-| Branch | Modified Files |
-|--------|----------------|
-| wip-feature | 3 files |
-
-**Warning**: These worktrees have uncommitted changes that will be lost if removed.
-
-### Active (Will Not Remove)
-| Branch | PR | Status |
-|--------|-----|--------|
-| fix-parsing | #45 Open | running |
+### Legend
+- **Purpose**: From .parallel-context.md, PR title, or last commit
+- **PR**: Pull request number, or `-` if none
+- **CI**: passing/failing/running/pending, or `-` if no PR
+- **Last Activity**: Time since last commit
+- **Category**:
+  - `✓ Merged` - Safe to remove, PR was merged
+  - `⚠ Closed` - PR closed without merge (confirm before removing)
+  - `? No PR` - No PR exists (check for uncommitted work)
+  - `🚫 Dirty` - Has uncommitted changes (will be lost if removed)
+  - `Active` - PR still open (will not be removed)
 ```
 
-#### 4. Filter Empty Categories
+#### 5. Filter Empty Categories
 
 Only include categories in the confirmation that have at least one worktree. Skip questions for empty categories entirely.
 
-#### 5. Confirm Removal
+#### 6. Confirm Removal
 
 For each **non-empty** category, use AskUserQuestion to confirm:
 
@@ -450,7 +454,7 @@ For each **non-empty** category, use AskUserQuestion to confirm:
 
 **Note**: Only ask about dirty worktrees if any exist. The "No, keep" option should be recommended by default to prevent accidental data loss.
 
-#### 6. Execute Removal
+#### 7. Execute Removal
 
 For each confirmed removal:
 
@@ -464,7 +468,7 @@ git branch -d "<branch>"
 
 Track whether the branch deletion succeeded or failed to report accurately in the output.
 
-#### 7. Output Results
+#### 8. Output Results
 
 Report actual outcomes for each worktree:
 
