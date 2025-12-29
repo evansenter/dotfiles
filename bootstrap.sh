@@ -98,8 +98,8 @@ install_launch_agents() {
 	if command -v dark-notify >/dev/null 2>&1; then
 		local plist="com.user.dark-notify.plist"
 		local homebrew_prefix
-		if command -v brew >/dev/null 2>&1; then
-			homebrew_prefix="$(brew --prefix)"
+		if command -v brew >/dev/null 2>&1 && homebrew_prefix="$(brew --prefix 2>/dev/null)"; then
+			: # homebrew_prefix set by condition
 		elif [[ "$(uname -m)" == "arm64" ]]; then
 			homebrew_prefix="/opt/homebrew"
 		else
@@ -112,6 +112,7 @@ install_launch_agents() {
 		# Only update and reload if plist content changed
 		local tmp_plist
 		tmp_plist=$(mktemp)
+		trap 'rm -f "$tmp_plist"' EXIT
 		echo "$new_plist_content" > "$tmp_plist"
 
 		if [[ ! -f "$dest_plist" ]] || ! cmp -s "$tmp_plist" "$dest_plist"; then
@@ -127,6 +128,7 @@ install_launch_agents() {
 		else
 			rm -f "$tmp_plist"
 		fi
+		trap - EXIT
 	else
 		echo "Skipping dark-notify LaunchAgent (dark-notify not installed)"
 		echo "  Install with: brew install cormacrelf/tap/dark-notify"
