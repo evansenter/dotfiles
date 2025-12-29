@@ -26,6 +26,20 @@ Skip any suggestion that:
 - Recommends a command or hook that already exists
 - Suggests a permission that's already configured
 
+## Review Claude File Language
+
+When running in the dotfiles repo, also review the language and clarity of files in `home/.claude/`:
+- `CLAUDE.md` - Is the workflow documentation clear and actionable?
+- `commands/*.md` - Are command instructions unambiguous? Do examples help?
+- `settings.json` - Are there permissions that should be added based on documented workflows?
+
+Look for:
+- Inconsistencies between what's documented and what's configured
+- Instructions that could be misinterpreted
+- Missing context that would help Claude follow the workflow correctly
+
+Include any language/clarity improvements in the Global Improvements section.
+
 ## Output
 
 Be specific about what each suggestion enables and the setup required.

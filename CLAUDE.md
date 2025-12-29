@@ -115,3 +115,13 @@ The `.zshrc` file sources other configuration files in this order:
 ## Personal Customizations
 
 Users can create `~/.extra` (not tracked) to add personal settings that override defaults. This file is sourced last in home/.zshrc:71-73.
+
+## After Merging Changes
+
+After merging a PR to this repo, run bootstrap to apply changes to the local system:
+
+```bash
+./bootstrap.sh -f
+```
+
+This ensures symlinks are updated and any new configurations take effect.
