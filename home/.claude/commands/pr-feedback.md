@@ -21,7 +21,23 @@ Process and respond to PR review feedback with critical thinking.
 
 ## Instructions
 
-### 1. Run Analysis
+### 1. Summarize Changes
+
+Before running analysis, briefly summarize what was changed:
+
+```bash
+# Show files changed and line counts
+git diff --stat HEAD~1 2>/dev/null || git diff --stat main...HEAD
+```
+
+Output a 2-3 sentence summary:
+- What was implemented/fixed
+- Key files affected
+- Why these changes were made
+
+This provides context for reviewing the feedback.
+
+### 2. Run Analysis
 
 **Default (both)**: In parallel:
 - Spawn `/pr-review-toolkit:review-pr` skill for local code analysis
@@ -31,7 +47,7 @@ Process and respond to PR review feedback with critical thinking.
 
 **--remote only**: Skip local analysis and proceed directly to fetching remote comments.
 
-### 2. Fetch Review Comments (unless --local)
+### 3. Fetch Review Comments (unless --local)
 
 ```bash
 # Get PR number if not provided
@@ -48,7 +64,7 @@ gh api repos/$REPO/issues/$PR_NUM/comments
 
 If no feedback is found, inform the user and exit early.
 
-### 3. Categorize and Form Opinions
+### 4. Categorize and Form Opinions
 
 For each piece of feedback:
 
@@ -56,7 +72,7 @@ For each piece of feedback:
 2. **Form opinion**: Agree, Disagree, or Uncertain
 3. **Note reasoning**: Why you think this way given context
 
-### 4. Display Summary
+### 5. Display Summary
 
 Before presenting interactive questions, output ALL feedback items ordered by severity (Critical → Important → Suggestion):
 
@@ -80,7 +96,7 @@ Before presenting interactive questions, output ALL feedback items ordered by se
 
 **Source indicators**: `(Local)` = from pr-review-toolkit, `(Remote)` = from external reviewers
 
-### 5. Present All Items via AskUserQuestion
+### 6. Present All Items via AskUserQuestion
 
 Present ONE question for EACH item in the PR Feedback Summary, plus the final open-ended question. Do not skip items you think should be skipped—the user makes the final call on every item.
 
@@ -123,7 +139,7 @@ Always include a final open-ended question: "Any other comments or questions?" w
 
 **Important**: Complete ALL questions before taking action. If the user selects "Elaborate" on any item or provides open-ended input that needs discussion, address that first—do not proceed to implementation. Once discussion is complete, re-present all items via AskUserQuestion to confirm final selections before implementing.
 
-### 6. Act on User Decisions
+### 7. Act on User Decisions
 
 Based on user's choices:
 - **Implement**: Fix the item immediately
@@ -131,13 +147,21 @@ Based on user's choices:
 - **Defer**: Create a GitHub issue with title summarizing the feedback, body containing the original comment and PR link, and appropriate labels
 - **Elaborate**: Explain the topic in detail (what it means, why it matters, trade-offs), then re-ask the question
 
-### 7. Push and Re-check
+### 8. Push and Re-check
 
 After implementing feedback:
 1. Run project quality gates (linter, formatter, tests as defined in CLAUDE.md)
 2. Commit with message referencing the feedback addressed
 3. Push changes
 4. Re-run `/pr-feedback --local` to verify changes are clean
+
+### 9. Suggest Next Step
+
+When review is clean (no critical/important items, or all addressed):
+
+- **If no PR exists**: Suggest `/commit-commands:commit-push-pr` to create one
+- **If PR exists, not yet pushed**: Suggest pushing and running `/watch-ci`
+- **If PR exists, already pushed**: Suggest waiting for CI or running `/pr-feedback --remote` for reviewer comments
 
 ## Key Principle
 
