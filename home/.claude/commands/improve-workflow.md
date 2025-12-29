@@ -37,6 +37,15 @@ Before making suggestions, read the global Claude configuration to filter out st
 
 ```bash
 cat ~/.claude/CLAUDE.md
+cat ~/.claude/settings.json
+ls ~/.claude/commands/
+```
+
+Then read existing commands to understand current patterns:
+
+```bash
+# Review each command file for consistency and improvement opportunities
+cat ~/.claude/commands/*.md
 ```
 
 Skip any suggestion that:
