@@ -165,7 +165,68 @@ Write `.parallel-context.md` to the new worktree. When writing, replace placehol
 **Session Start:** Read this file for context, then begin work.
 ```
 
-#### 7. Output Session Start Instructions
+#### 7. Tmux Integration (if available)
+
+Check if running inside tmux:
+
+```bash
+echo "$TMUX"
+```
+
+If `$TMUX` is set (non-empty), offer to auto-launch a new session:
+
+```json
+{
+  "questions": [
+    {
+      "question": "How would you like to start the new Claude session?",
+      "header": "Launch",
+      "options": [
+        {"label": "New tmux pane (Recommended)", "description": "Split current window, stay in view"},
+        {"label": "New tmux window", "description": "Separate window in this session"},
+        {"label": "Manual", "description": "I'll open it myself"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+Based on user selection:
+
+**For pane:**
+```bash
+# Create horizontal split, cd to worktree, and start claude
+tmux split-window -h -c "[full-worktree-path]"
+tmux send-keys "claude 'Starting parallel work on $BRANCH_NAME. Read .parallel-context.md for context.'" Enter
+```
+
+**For window:**
+```bash
+# Create new window, cd to worktree, and start claude
+tmux new-window -c "[full-worktree-path]" -n "$BRANCH_NAME"
+tmux send-keys "claude 'Starting parallel work on $BRANCH_NAME. Read .parallel-context.md for context.'" Enter
+```
+
+After launching, output:
+```markdown
+## Worktree Created
+
+**Location:** `.worktrees/[branch-name]`
+**Branch:** [branch-name] (based on [base-branch])
+
+✓ Claude session started in new tmux [pane/window].
+
+### Tips
+- Each worktree is an independent working directory
+- Commits go to their respective branches
+- Use `/parallel-work list` from main repo to see all active work
+- When done, create PR and run `/parallel-work cleanup`
+```
+
+#### 8. Manual Instructions (if not in tmux or user chose manual)
+
+If `$TMUX` is not set, or user selected "Manual", output:
 
 ```markdown
 ## Worktree Created

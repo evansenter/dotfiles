@@ -128,6 +128,6 @@ Available slash commands (in `~/.claude/commands/`):
 - `/improve-workflow` - Suggest workflow improvements, categorized as local (this repo) or global (dotfiles)
 - `/rfc-response` - Generate structured response to RFC-style issues with assumptions, questions, and requirements
 - `/watch-ci` - Monitor CI in background with notification when complete
-- `/parallel-work` - Manage git worktrees for parallel PR development (start, list, cleanup)
+- `/parallel-work` - Manage git worktrees for parallel PR development (start with tmux auto-launch, list, cleanup)
 - `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (preferred for new PRs)
 - `/commit-commands:clean_gone` - Delete local branches whose remote tracking branch is gone
