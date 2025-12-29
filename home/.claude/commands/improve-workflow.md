@@ -28,7 +28,7 @@ Skip any suggestion that:
 
 ## Review Claude File Language
 
-When running in the dotfiles repo, also review the language and clarity of files in `home/.claude/`:
+Also review the language and clarity of global Claude files in `~/.claude/`:
 - `CLAUDE.md` - Is the workflow documentation clear and actionable?
 - `commands/*.md` - Are command instructions unambiguous? Do examples help?
 - `settings.json` - Are there permissions that should be added based on documented workflows?
