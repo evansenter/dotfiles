@@ -208,7 +208,17 @@ tmux new-window -c "[full-worktree-path]" -n "[branch-name]"
 tmux send-keys "claude 'Starting parallel work. Read .parallel-context.md for context.'" Enter
 ```
 
-After launching, output:
+After launching, broadcast to the event bus so other sessions know about the new parallel work:
+
+```
+mcp__event-bus__publish_event(
+  event_type: "parallel_work_started",
+  payload: "Started parallel work: <branch-name> - <task-summary>",
+  channel: "repo:<repo_name>"
+)
+```
+
+Then output:
 ```markdown
 ## Worktree Created
 
@@ -226,7 +236,7 @@ After launching, output:
 
 #### 8. Manual Instructions (if not in tmux or user chose manual)
 
-If `$TMUX` is not set, or user selected "Manual", output:
+If `$TMUX` is not set, or user selected "Manual", still broadcast the event (same as step 7), then output:
 
 ```markdown
 ## Worktree Created

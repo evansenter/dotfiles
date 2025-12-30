@@ -53,6 +53,11 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 - Issues: `get_issue`, `list_issues`, `create_issue`, `update_issue`, `add_issue_comment`, `search_issues`
 - Other: `list_commits`, `create_branch`, `get_file_contents`, `search_code`
 
+**Event Bus MCP Server:**
+- `register_session`, `unregister_session`, `list_sessions`
+- `publish_event`, `get_events`
+- `notify`
+
 **When to use MCP vs gh CLI:**
 - **Prefer MCP** for standard operations (faster, structured data): fetching PR/issue details, creating issues, listing items
 - **Use gh CLI** when MCP doesn't support it: `gh pr checks --watch`, `gh run` commands, `gh api` for arbitrary endpoints
@@ -107,6 +112,86 @@ After CI passes, run `/pr-feedback --remote` to fetch and process reviewer comme
 - If CI fails due to flakiness, auto-rerun failed jobs once with `gh run rerun <run-id> --failed`
 - If CI fails twice, investigate the root cause
 
+## Hooks
+
+Configured hooks (in `~/.claude/hooks/`):
+
+- **notify.sh** - Cross-platform notifications (macOS: osascript, Linux: notify-send)
+- **session-start.sh** - Auto-registers session with the event bus on startup
+- **session-end.sh** - Unregisters session from the event bus on exit
+
+## Event Bus
+
+The event bus enables cross-session coordination via the `mcp__event-bus__*` tools.
+
+### Session Lifecycle
+
+Sessions are auto-registered on startup via the SessionStart hook. The hook outputs instructions to register with:
+- `name`: Derived from repo/branch (e.g., `dotfiles/issue-48`)
+- `cwd`: Current working directory
+
+On session end, unregister to clean up.
+
+### Broadcasting Events
+
+Commands broadcast events to coordinate with parallel sessions:
+
+| Command | Event Type | Channel | When |
+|---------|------------|---------|------|
+| `/rfc --create` | `rfc_created` | `repo:<name>` | After creating RFC |
+| `/rfc` | `rfc_responded` | `repo:<name>` | After posting response |
+| `/parallel-work start` | `parallel_work_started` | `repo:<name>` | After creating worktree |
+| `/watch-ci` | `ci_completed` | `repo:<name>` | When CI finishes |
+| `/broadcast` | `message` | varies | Manual messaging |
+
+**Deriving repo name for channels:** Use `gh repo view --json name -q .name` or `basename $(git rev-parse --show-toplevel)`.
+
+### Checking Events
+
+- `/session-status` - Show active sessions and recent events
+- `/status-report` - Includes event bus activity in report
+
+### Direct Messaging
+
+To message a specific session:
+```
+mcp__event-bus__publish_event(
+  event_type: "message",
+  payload: "Your message here",
+  channel: "session:<session-id>"
+)
+```
+
+Use `/broadcast --to <session-name>` for convenience.
+
+### Event Type Conventions
+
+Standard event types for consistency across commands:
+
+| Event Type | Description | Example Payload |
+|------------|-------------|-----------------|
+| `rfc_created` | New RFC issue created | `"RFC created: #48 - Event bus integration"` |
+| `rfc_responded` | Response posted to RFC | `"RFC response posted: #48"` |
+| `parallel_work_started` | New worktree/session started | `"Started parallel work: issue-48 - Implement event bus"` |
+| `ci_completed` | CI finished (pass or fail) | `"CI passed on PR #42"` or `"CI failed on PR #42"` |
+| `message` | Generic message/announcement | `"Auth feature done, you can integrate now"` |
+| `help_needed` | Request for assistance | `"Need review on auth.ts approach"` |
+| `task_completed` | Significant task finished | `"Feature X is done and merged"` |
+
+**Naming conventions:**
+- Use `snake_case` for event types
+- Be specific: `rfc_created` not just `created`
+- Include context in payload: what happened and any relevant identifiers (PR#, issue#)
+
+### Troubleshooting
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| MCP tools unavailable | Event bus server not running | Check LaunchAgent: `launchctl list | grep event-bus` |
+| Registration fails | Server not configured | Verify MCP config in Claude Code settings |
+| Events not received | Wrong channel or not subscribed | Check session is registered; use `list_sessions` |
+| Duplicate sessions | Previous session didn't unregister | Sessions auto-expire after heartbeat timeout |
+
 ## Custom Commands
 
 Available slash commands (in `~/.claude/commands/`):
@@ -123,5 +208,7 @@ Available slash commands (in `~/.claude/commands/`):
 - `/rfc` - Create or respond to RFC-style issues (`--create "Title"` for new, issue number for response)
 - `/watch-ci` - Monitor CI in background with notification when complete
 - `/parallel-work` - Manage git worktrees for parallel PR development (start with tmux auto-launch, list, cleanup)
+- `/session-status` - Show active sessions and recent events from the event bus
+- `/broadcast` - Send message to other Claude Code sessions via event bus
 - `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (preferred for new PRs)
 - `/commit-commands:clean_gone` - Delete local branches whose remote tracking branch is gone

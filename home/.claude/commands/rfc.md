@@ -155,6 +155,15 @@ After receiving user answers:
 gh issue comment $ISSUE_NUM --body "<response>"
 ```
 
+Then broadcast to the event bus:
+```
+mcp__event-bus__publish_event(
+  event_type: "rfc_responded",
+  payload: "RFC response posted: #<issue_number>",
+  channel: "repo:<repo_name>"
+)
+```
+
 **Otherwise:**
 Display the response and ask if user wants to post:
 ```json
@@ -172,6 +181,8 @@ Display the response and ask if user wants to post:
   ]
 }
 ```
+
+If user chooses to post, after posting broadcast the event as shown above.
 
 ---
 
@@ -281,6 +292,18 @@ Display the draft and ask:
 ```
 
 After creating, output the issue URL.
+
+### 5. Broadcast Event
+
+After successfully creating the RFC, broadcast to the event bus so parallel sessions are notified:
+
+```
+mcp__event-bus__publish_event(
+  event_type: "rfc_created",
+  payload: "RFC created: #<issue_number> - <title>",
+  channel: "repo:<repo_name>"
+)
+```
 
 ---
 

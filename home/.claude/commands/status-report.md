@@ -109,7 +109,33 @@ Based on the current state, here are suggested next actions:
 3. **[Action]** - [Brief reasoning why this is recommended]
 ```
 
-### 4. Recommendation Logic
+### 4. Event Bus Activity (Optional)
+
+If registered with the event bus, fetch recent events for context on parallel work:
+
+```
+mcp__event-bus__get_events(since_id=0, limit=10)
+mcp__event-bus__list_sessions()
+```
+
+If there are active sessions or recent events, add a section:
+
+```markdown
+### Parallel Sessions
+
+**Active Sessions:** N
+| Session | Branch | Last Activity |
+|---------|--------|---------------|
+| dotfiles/issue-48 | issue-48 | 5 min ago |
+
+**Recent Events:**
+- [10 min ago] parallel_work_started: Started parallel work on issue-48
+- [30 min ago] ci_completed: CI passed on PR #42
+```
+
+If not registered with event bus, skip this section.
+
+### 5. Recommendation Logic
 
 When making recommendations, consider:
 - **Stale PRs**: Open PRs that may need attention (review, merge, or close)
