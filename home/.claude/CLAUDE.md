@@ -219,3 +219,40 @@ Available slash commands (in `~/.claude/commands/`):
 - `/broadcast` - Send message to other Claude Code sessions via event bus
 - `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (preferred for new PRs)
 - `/commit-commands:clean_gone` - Delete local branches whose remote tracking branch is gone
+
+## Contrib Utilities
+
+Scripts in `~/.claude/contrib/` for workflow analysis and automation:
+
+### parse-session-logs.sh
+
+Analyzes Claude Code session metrics from `~/.claude/projects/**/*.jsonl` for evidence-based workflow improvements.
+
+**Note:** Session logs are stored as `.jsonl` files in `~/.claude/projects/`. Availability may depend on Claude Code's retention policies.
+
+**Usage:**
+```bash
+~/.claude/contrib/parse-session-logs.sh [OPTIONS]
+
+OPTIONS:
+  --project       Analyze current project only (default)
+  --global        Analyze all projects
+  --days N        Look back N days (default: 7)
+  --verbose, -v   Show detailed output
+```
+
+**Output:**
+- Tool frequency (Bash, Read, Edit, MCP tools, Skills)
+- Top commands (git, gh, cargo, etc.)
+- Common tool sequences (workflow patterns)
+- Data-driven improvement suggestions
+
+**Example:**
+```bash
+# Analyze dotfiles project from last 7 days
+cd ~/Documents/projects/dotfiles
+~/.claude/contrib/parse-session-logs.sh --project
+
+# Global analysis across all projects, last 30 days
+~/.claude/contrib/parse-session-logs.sh --global --days 30
+```

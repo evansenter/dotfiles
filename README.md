@@ -43,6 +43,22 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 /watch-ci 123
 ```
 
+### Contrib Utilities
+
+**Session Metrics Parser** (`~/.claude/contrib/parse-session-logs.sh`)
+
+Analyzes Claude Code session logs from `~/.claude/projects/**/*.jsonl` for evidence-based workflow improvements.
+
+```bash
+# Analyze current project (last 7 days)
+~/.claude/contrib/parse-session-logs.sh --project
+
+# Global analysis (all projects, last 30 days)
+~/.claude/contrib/parse-session-logs.sh --global --days 30
+```
+
+Analyzes structured session data from `~/.claude/projects/**/*.jsonl`.
+
 ## Installation
 
 Clone with submodules and run bootstrap:
