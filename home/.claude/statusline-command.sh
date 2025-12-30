@@ -10,11 +10,12 @@ if [[ -z "$input" ]]; then
     exit 1
 fi
 
-read -r cwd current size < <(
+read -r cwd current size model_id < <(
     echo "$input" | jq -r '[
         .workspace.current_dir,
         (.context_window.current_usage | .input_tokens + .cache_creation_input_tokens + .cache_read_input_tokens // 0),
-        (.context_window.context_window_size // 0)
+        (.context_window.context_window_size // 0),
+        (.model.id // "")
     ] | @tsv'
 )
 
@@ -41,9 +42,15 @@ if [[ "$size" =~ ^[0-9]+$ ]] && [[ "$current" =~ ^[0-9]+$ ]] && [ "$size" -gt 0 
     context_display=" ${GRAY}${pct}%${RESET}"
 fi
 
-# Build status line: directory time git_status context
-printf "%s%s%s %s%s%s%s%s %s→%s" \
+# Model display from input JSON
+if [[ -n "$model_id" ]]; then
+    model_display="${GRAY}${model_id}${RESET}"
+else
+    model_display="${GRAY}(unknown model)${RESET}"
+fi
+
+# Build status line: directory model git_status context
+printf "%s%s%s %s%s%s" \
     "$CYAN" "$cwd" "$RESET" \
-    "$GRAY" "$(date +%T)" "$RESET" \
-    "$git_status" "$context_display" \
-    "$GREEN" "$RESET"
+    "$model_display" \
+    "$git_status" "$context_display"
