@@ -79,7 +79,7 @@ Before presenting interactive questions, output ALL feedback items ordered by se
 ```markdown
 ## PR Feedback Summary
 
-#### #1. [Critical] `notify.sh:15` (Remote)
+#### #1. [Critical] `config.json:15` (Remote)
 > Fix JSON interface to handle missing fields
 **Opinion**: Agree - breaking change needs fix
 
@@ -108,7 +108,7 @@ The tool supports 1-4 questions per call, so batch items in groups of up to 4 (p
 {
   "questions": [
     {
-      "question": "[Critical] Fix notify.sh JSON interface - Agree, breaking change",
+      "question": "[Critical] Fix config.json interface - Agree, breaking change",
       "header": "#1 JSON fix",
       "options": [
         {"label": "Implement (Recommended)", "description": "Fix it now"},
