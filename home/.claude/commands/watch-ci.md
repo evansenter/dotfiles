@@ -21,19 +21,21 @@ If PR_NUMBER is omitted, uses the current branch's PR.
    - If provided as argument, use that
    - Otherwise, get current PR with `gh pr view --json number -q .number`
 
-2. Run CI check in background with notification:
+2. Run CI check in background:
    ```bash
-   gh pr checks <PR_NUMBER> --watch --interval 10 && ~/.claude/hooks/notify.sh "CI" "CI passed on PR #<PR_NUMBER>" || ~/.claude/hooks/notify.sh "CI" "CI failed on PR #<PR_NUMBER>"
+   gh pr checks <PR_NUMBER> --watch --interval 10
    ```
 
    Use the Bash tool with `run_in_background: true` parameter.
 
-   **Note:** Uses CLI arguments instead of pipes for reliability in background processes.
+3. When the background task completes, notify the user:
+   - Try `mcp__event-bus__notify(title="CI", message="CI passed/failed on PR #<PR_NUMBER>")`
+   - If event-bus unavailable, skip notification - user will see result when checking task output
 
-3. Confirm to user that CI is being monitored and they'll receive a notification.
+4. Confirm to user that CI is being monitored and they'll receive a notification.
 
-4. Continue with other work - do not block waiting for CI.
+5. Continue with other work - do not block waiting for CI.
 
-5. When CI completes (you receive the background task notification):
+6. When CI completes:
    - If **passed**: Run `/pr-feedback --remote` to process reviewer comments
    - If **failed**: Investigate the failure and fix

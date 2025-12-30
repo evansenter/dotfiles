@@ -107,12 +107,6 @@ After CI passes, run `/pr-feedback --remote` to fetch and process reviewer comme
 - If CI fails due to flakiness, auto-rerun failed jobs once with `gh run rerun <run-id> --failed`
 - If CI fails twice, investigate the root cause
 
-## Hooks
-
-Configured hooks (in `~/.claude/hooks/`):
-
-- **notify.sh** - Cross-platform notifications (macOS: osascript, Linux: notify-send)
-
 ## Custom Commands
 
 Available slash commands (in `~/.claude/commands/`):

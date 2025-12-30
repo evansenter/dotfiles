@@ -59,7 +59,6 @@ The `sync_dotfiles` function in `bootstrap.sh`:
 **Claude Code Configuration** - `home/.claude/`
 - `CLAUDE.md` - Global workflow preferences (symlinked to `~/.claude/CLAUDE.md`)
 - `commands/` - Custom slash commands (`/status-report`, `/pr-feedback`, etc.)
-- `hooks/notify.sh` - Cross-platform desktop notifications
 - `settings.json` - Allowed permissions, enabled plugins
 
 ### Command File Format
