@@ -58,9 +58,12 @@ If `MESSAGE` is empty, prompt for it:
 }
 ```
 
-### 2. Determine Channel
+### 2. Validate and Determine Channel
+
+**Input validation:** If `--to` is specified, validate TARGET contains only safe characters (alphanumeric, `/`, `-`, `_`). Reject if invalid.
 
 - **Default (no flags):** `repo:<current-repo-name>` - broadcasts to all sessions in the same repo
+  - Derive repo name: `gh repo view --json name -q .name` or `basename $(git rev-parse --show-toplevel)`
 - **--to <session>:** `session:<session-id>` - direct message to specific session
 - **--all:** `all` - broadcasts to every session everywhere
 
