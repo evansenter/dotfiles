@@ -28,8 +28,8 @@ RESET=$'\e[0m'
 # Git dirty status indicator
 git_status=""
 if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
-    if ! git -C "$cwd" diff --no-optional-locks --quiet 2>/dev/null || \
-       ! git -C "$cwd" diff --no-optional-locks --cached --quiet 2>/dev/null; then
+    if ! git -C "$cwd" diff --quiet 2>/dev/null || \
+       ! git -C "$cwd" diff --cached --quiet 2>/dev/null; then
         git_status=" ${YELLOW}●${RESET}"
     fi
 fi
