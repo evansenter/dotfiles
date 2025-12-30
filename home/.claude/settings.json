@@ -1,4 +1,5 @@
 {
+  "cleanupPeriodDays": 0,
   "permissions": {
     "allow": [
       "Edit",
@@ -73,18 +74,16 @@
       "mcp__event-bus__publish_event",
       "mcp__event-bus__get_events",
       "mcp__event-bus__unregister_session",
-      "mcp__event-bus__notify"
-    ]
-  },
-  "enabledPlugins": {
-    "feature-dev@claude-plugins-official": true,
-    "pr-review-toolkit@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
-    "rust-analyzer-lsp@claude-plugins-official": true,
-    "pyright-lsp@claude-plugins-official": true,
-    "clangd-lsp@claude-plugins-official": true,
-    "swift-lsp@claude-plugins-official": true
+      "mcp__event-bus__notify",
+      "Bash(RUSTDOCFLAGS=\"-D warnings\" cargo doc:*)",
+      "Skill(pr-review-toolkit:review-pr)",
+      "Skill(commit-commands:commit-push-pr)",
+      "Skill(watch-ci)",
+      "Skill(pr-feedback)",
+      "Bash(rm:*)",
+      "Skill(rfc)"
+    ],
+    "defaultMode": "default"
   },
   "hooks": {
     "Notification": [
@@ -117,5 +116,19 @@
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline-command.sh"
+  },
+  "enabledPlugins": {
+    "feature-dev@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "clangd-lsp@claude-plugins-official": true,
+    "swift-lsp@claude-plugins-official": true
   }
 }
