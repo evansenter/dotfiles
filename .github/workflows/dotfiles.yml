@@ -1,0 +1,69 @@
+name: Dotfiles
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install ShellCheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck on shell scripts
+        run: |
+          # Check standalone shell scripts (with shebangs)
+          # Only fail on errors, not warnings/info (dotfiles have intentional style choices)
+          find . -type f -name "*.sh" \
+            -not -path "./vendor/*" \
+            -not -path "./.git/*" \
+            -print0 | xargs -0 -r shellcheck --severity=error
+
+  syntax-check:
+    name: Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check bash syntax
+        run: |
+          bash -n bootstrap.sh
+          bash -n uninstall.sh
+
+      - name: Check zsh syntax
+        run: |
+          # Install zsh for syntax checking
+          sudo apt-get install -y zsh
+          zsh -n home/.zshrc
+          zsh -n home/.aliases
+          zsh -n home/.exports
+
+  bootstrap-dry-run:
+    name: Bootstrap Dry Run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Verify bootstrap.sh is executable
+        run: test -x bootstrap.sh
+
+      - name: Verify uninstall.sh is executable
+        run: test -x uninstall.sh
+
+      - name: Check for required files
+        run: |
+          # Verify key dotfiles exist
+          test -f home/.zshrc
+          test -f home/.gitconfig
+          test -f home/.vimrc
+          test -f home/.tmux.conf
