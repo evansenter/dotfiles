@@ -182,6 +182,7 @@ Standard event types for consistency across commands:
 - Use `snake_case` for event types
 - Be specific: `rfc_created` not just `created`
 - Include context in payload: what happened and any relevant identifiers (PR#, issue#)
+- Payloads are automatically JSON-escaped by the MCP layer - special characters are safe
 
 ### Troubleshooting
 
@@ -190,7 +191,9 @@ Standard event types for consistency across commands:
 | MCP tools unavailable | Event bus server not running | Check LaunchAgent: `launchctl list | grep event-bus` |
 | Registration fails | Server not configured | Verify MCP config in Claude Code settings |
 | Events not received | Wrong channel or not subscribed | Check session is registered; use `list_sessions` |
-| Duplicate sessions | Previous session didn't unregister | Sessions auto-expire after heartbeat timeout |
+| Stale/zombie sessions | Previous session didn't unregister | Auto-expire after 5 min; use `list_sessions` to check |
+
+**Manual cleanup:** Sessions auto-expire 5 minutes after last heartbeat. The `get_events` call refreshes the heartbeat. To see stale sessions, run `list_sessions` - expired ones won't appear.
 
 ## Custom Commands
 
