@@ -20,14 +20,13 @@ jobs:
 
       - name: Run ShellCheck on shell scripts
         run: |
-          # Find all shell scripts and check them
-          find . -type f \( -name "*.sh" -o -name ".zshrc" -o -name ".bashrc" -o -name ".aliases" -o -name ".exports" \) \
+          # Check standalone shell scripts (with shebangs)
+          # Exclude SC2155 (declare/assign separately) - common in dotfiles
+          # Exclude SC1090 (can't follow source) - expected for dotfiles
+          find . -type f -name "*.sh" \
             -not -path "./vendor/*" \
             -not -path "./.git/*" \
-            -print0 | xargs -0 -r shellcheck --severity=warning || true
-
-          # Always check critical scripts strictly
-          shellcheck bootstrap.sh uninstall.sh
+            -print0 | xargs -0 -r shellcheck --exclude=SC2155,SC1090
 
   syntax-check:
     name: Syntax Check
