@@ -134,7 +134,7 @@ On session end, unregister to clean up.
 
 ### Broadcasting Events
 
-Commands broadcast events to coordinate with parallel sessions:
+Commands broadcast events to coordinate with parallel sessions. **Broadcasts are best-effort** - if the event bus is unavailable, commands should still complete successfully; the broadcast simply won't happen.
 
 | Command | Event Type | Channel | When |
 |---------|------------|---------|------|
@@ -194,6 +194,10 @@ Standard event types for consistency across commands:
 | Stale/zombie sessions | Previous session didn't unregister | Auto-expire after 5 min; use `list_sessions` to check |
 
 **Manual cleanup:** Sessions auto-expire 5 minutes after last heartbeat. The `get_events` call refreshes the heartbeat. To see stale sessions, run `list_sessions` - expired ones won't appear.
+
+**Availability detection:** Use `list_sessions()` as a lightweight health check before relying on event bus features. If it fails, gracefully skip event-bus-dependent functionality.
+
+**Additional documentation:** Read the MCP resource `event-bus://guide` for more patterns and best practices.
 
 ## Custom Commands
 
