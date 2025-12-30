@@ -10,11 +10,12 @@ if [[ -z "$input" ]]; then
     exit 1
 fi
 
-read -r cwd current size < <(
+read -r cwd current size model_id < <(
     echo "$input" | jq -r '[
         .workspace.current_dir,
         (.context_window.current_usage | .input_tokens + .cache_creation_input_tokens + .cache_read_input_tokens // 0),
-        (.context_window.context_window_size // 0)
+        (.context_window.context_window_size // 0),
+        (.model.id // "")
     ] | @tsv'
 )
 
@@ -41,13 +42,11 @@ if [[ "$size" =~ ^[0-9]+$ ]] && [[ "$current" =~ ^[0-9]+$ ]] && [ "$size" -gt 0 
     context_display=" ${GRAY}${pct}%${RESET}"
 fi
 
-# Model name from settings.json
-model_display=""
-if [[ -f ~/.claude/settings.json ]]; then
-    model_name=$(jq -r '.model // empty' ~/.claude/settings.json 2>/dev/null)
-    if [[ -n "$model_name" ]]; then
-        model_display="${GRAY}${model_name}${RESET}"
-    fi
+# Model display from input JSON
+if [[ -n "$model_id" ]]; then
+    model_display="${GRAY}${model_id}${RESET}"
+else
+    model_display="${GRAY}(unknown model)${RESET}"
 fi
 
 # Build status line: directory model git_status context
