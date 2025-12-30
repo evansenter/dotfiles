@@ -36,6 +36,14 @@ If PR_NUMBER is omitted, uses the current branch's PR.
 
 5. Continue with other work - do not block waiting for CI.
 
-6. When CI completes:
+6. When CI completes (you receive the background task notification):
+   - Broadcast the result to the event bus so parallel sessions are notified:
+     ```
+     mcp__event-bus__publish_event(
+       event_type: "ci_completed",
+       payload: "CI <passed/failed> on PR #<PR_NUMBER>",
+       channel: "repo:<repo_name>"
+     )
+     ```
    - If **passed**: Run `/pr-feedback --remote` to process reviewer comments
    - If **failed**: Investigate the failure and fix

@@ -67,7 +67,13 @@
       "mcp__github__create_pull_request_review",
       "mcp__github__get_file_contents",
       "mcp__github__search_code",
-      "EnterPlanMode"
+      "EnterPlanMode",
+      "mcp__event-bus__register_session",
+      "mcp__event-bus__list_sessions",
+      "mcp__event-bus__publish_event",
+      "mcp__event-bus__get_events",
+      "mcp__event-bus__unregister_session",
+      "mcp__event-bus__notify"
     ]
   },
   "enabledPlugins": {
@@ -79,5 +85,37 @@
     "pyright-lsp@claude-plugins-official": true,
     "clangd-lsp@claude-plugins-official": true,
     "swift-lsp@claude-plugins-official": true
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/notify.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/session-start.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/session-end.sh"
+          }
+        ]
+      }
+    ]
   }
 }
