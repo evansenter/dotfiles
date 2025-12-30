@@ -41,9 +41,19 @@ if [[ "$size" =~ ^[0-9]+$ ]] && [[ "$current" =~ ^[0-9]+$ ]] && [ "$size" -gt 0 
     context_display=" ${GRAY}${pct}%${RESET}"
 fi
 
-# Build status line: directory time git_status context
-printf "%s%s%s %s%s%s%s%s %s→%s" \
+# Model name from settings.json (extract short name: opus, sonnet, haiku)
+model_display=""
+if [[ -f ~/.claude/settings.json ]]; then
+    model_id=$(jq -r '.model // empty' ~/.claude/settings.json 2>/dev/null)
+    if [[ -n "$model_id" ]]; then
+        # Extract model family (opus, sonnet, haiku) from model ID like "claude-opus-4-5-20251101"
+        model_name=$(echo "$model_id" | sed -E 's/claude-([a-z]+).*/\1/')
+        model_display="${GRAY}${model_name}${RESET}"
+    fi
+fi
+
+# Build status line: directory model git_status context
+printf "%s%s%s %s%s%s" \
     "$CYAN" "$cwd" "$RESET" \
-    "$GRAY" "$(date +%T)" "$RESET" \
-    "$git_status" "$context_display" \
-    "$GREEN" "$RESET"
+    "$model_display" \
+    "$git_status" "$context_display"
