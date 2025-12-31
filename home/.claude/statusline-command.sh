@@ -41,12 +41,16 @@ pr_display=""
 if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     # Check for associated PR (use timeout on Linux, skip on macOS)
     if command -v timeout &>/dev/null; then
-        pr_number=$(cd "$cwd" && timeout 2 gh pr view --json number -q .number 2>/dev/null)
+        pr_info=$(cd "$cwd" && timeout 2 gh pr view --json number,url -q '[.number, .url] | @tsv' 2>/dev/null)
     else
-        pr_number=$(cd "$cwd" && gh pr view --json number -q .number 2>/dev/null)
+        pr_info=$(cd "$cwd" && gh pr view --json number,url -q '[.number, .url] | @tsv' 2>/dev/null)
     fi
-    if [[ -n "$pr_number" ]]; then
-        pr_display=" ${GREEN}#${pr_number}${RESET}"
+    if [[ -n "$pr_info" ]]; then
+        read -r pr_number pr_url <<< "$pr_info"
+        # OSC 8 hyperlink format for clickable links in modern terminals
+        link_start=$'\e]8;;'"${pr_url}"$'\e\\'
+        link_end=$'\e]8;;\e\\'
+        pr_display=" ${GREEN}${link_start}#${pr_number}${link_end}${RESET}"
     fi
 fi
 
