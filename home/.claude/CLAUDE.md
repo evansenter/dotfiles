@@ -49,6 +49,9 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 **Build Tools:**
 - `make`, `cargo check/build/test/clippy/fmt/run/doc/add`
 
+**Utilities:**
+- `rm`, `tmux`, `date`, `source`, `sed`
+
 **GitHub MCP Server:**
 - PRs: `get_pull_request`, `list_pull_requests`, `get_pull_request_status`, `get_pull_request_files`, `get_pull_request_comments`, `get_pull_request_reviews`, `create_pull_request`, `merge_pull_request`, `update_pull_request_branch`, `create_pull_request_review`
 - Issues: `get_issue`, `list_issues`, `create_issue`, `update_issue`, `add_issue_comment`, `search_issues`
