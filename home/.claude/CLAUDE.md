@@ -71,8 +71,10 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 
 ### Development Flow
 
+Use `/work <issue-number>` to start workflow-aware task execution with explicit checkpoints. This wraps the full development flow:
+
 1. **Orient**: Run `/status-report` to see recent work, open issues, and recommendations
-2. **Pick work**: Choose an issue or task to work on
+2. **Start work**: Run `/work <issue-number>` to create a tracked work plan with checkpoints
 3. **Develop**: Make changes, run tests/linters as needed
 4. **Self-review**: After completing work, summarize what was done and run `/pr local` before pushing
 5. **Iterate**: Address feedback, repeat step 4 until clean
@@ -80,6 +82,8 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 7. **Monitor CI**: Run `/watch-ci <PR#>` after PR creation or any push - track in background with notification
 8. **Process feedback**: When CI passes, run `/pr remote` to handle reviewer comments
 9. **Merge & cleanup**: After approval, merge PR and run `/commit-commands:clean_gone` to clean stale branches
+
+**Tip**: Use `/work resume` to continue after context loss - picks up from current todo state.
 
 ### Pre-PR Checklist
 
@@ -203,6 +207,7 @@ Standard event types for consistency across commands:
 
 Available slash commands (in `~/.claude/commands/`):
 
+- `/work` - Workflow-aware task execution with checkpoints (`<issue-number>`, `resume`)
 - `/im-lost` - Show current workflow position and context when you've lost track
 - `/status-report` - Generate repo status summary with recently completed work, open PRs/issues, and recommendations
 - `/pr` - Create PRs or review feedback (`create`, `local`, `remote`)
