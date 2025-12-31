@@ -106,8 +106,8 @@ trap 'rm -f "$TOOL_CALLS" "$PROJECT_STATS"' EXIT
 # Process log files (handle spaces in paths)
 while IFS= read -r log_file; do
   [[ -z "$log_file" ]] && continue
-  # Extract project name from log path
-  project_name=$(echo "$log_file" | sed "s|$LOG_DIR/||" | cut -d'/' -f1 | sed 's/-/\//g')
+  # Extract project name from log path (keep encoded form - decoding is lossy for paths with dashes)
+  project_name=$(echo "$log_file" | sed "s|$LOG_DIR/||" | cut -d'/' -f1 | sed 's/^-//')
   call_count=$(extract_tool_calls "$log_file" | tee -a "$TOOL_CALLS" | wc -l | tr -d ' ')
   if [[ $call_count -gt 0 ]]; then
     echo "$call_count $project_name" >> "$PROJECT_STATS"
@@ -225,7 +225,8 @@ analyze_missing_permissions() {
     [[ -z "$cmd" ]] && continue
     # Check if command matches any allowed pattern
     if ! echo "$allowed_patterns" | grep -qx "$cmd"; then
-      local count=$(awk -F'\t' -v cmd="$cmd" '$2 == "Bash" && $3 ~ "^"cmd' "$TOOL_CALLS" | wc -l | tr -d ' ')
+      # Use index() for prefix matching (avoids regex escaping issues)
+      local count=$(awk -F'\t' -v cmd="$cmd" '$2 == "Bash" && index($3, cmd) == 1' "$TOOL_CALLS" | wc -l | tr -d ' ')
       if [[ $count -ge 3 ]]; then
         echo -e "  ${YELLOW}$cmd${RESET}: $count calls"
         found_missing=1
