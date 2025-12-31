@@ -164,7 +164,13 @@ Always include a final open-ended question for any additional comments.
 
 - **Implement**: Fix the item immediately
 - **Skip**: Note it was skipped, move on
-- **Defer**: Use `/rfc --create` to create an RFC issue, or create a simpler issue if appropriate
+- **Defer**: Use `/rfc --create` to create an RFC issue, or create a simpler issue with:
+  - A priority label based on severity/impact:
+    - `priority:high` - Blocks other work, critical bug
+    - `priority:medium` - Important but not urgent
+    - `priority:low` - Nice to have, backlog
+  - Any relevant type labels (bug, enhancement, etc.)
+  - **Note**: Run `gh label list` to check existing repo labels. Prefer existing labels, but suggest new ones if appropriate and notify the user before creating them.
 - **Elaborate**: Explain the topic, then re-ask
 
 #### 8. Re-check
@@ -276,7 +282,13 @@ Always include a final open-ended question for any additional comments.
 
 - **Implement**: Fix the item immediately
 - **Skip**: Note it was skipped, move on
-- **Defer**: Use `/rfc --create` to create an RFC issue, or create a simpler issue if appropriate
+- **Defer**: Use `/rfc --create` to create an RFC issue, or create a simpler issue with:
+  - A priority label based on severity/impact:
+    - `priority:high` - Blocks other work, critical bug
+    - `priority:medium` - Important but not urgent
+    - `priority:low` - Nice to have, backlog
+  - Any relevant type labels (bug, enhancement, etc.)
+  - **Note**: Run `gh label list` to check existing repo labels. Prefer existing labels, but suggest new ones if appropriate and notify the user before creating them.
 - **Elaborate**: Explain the topic, then re-ask
 
 #### 7. Push and Re-check
