@@ -55,7 +55,7 @@ if [[ -n "$transcript_path" ]] && [[ -r "$transcript_path" ]]; then
 
     if [[ -n "$last_user_msg" ]]; then
         # Truncate to ~10 words, lowercase, add ellipsis if truncated
-        truncated=$(echo "$last_user_msg" | awk '{
+        truncated=$(printf '%s\n' "$last_user_msg" | awk '{
             gsub(/\n/, " ")
             words = ""
             for (i=1; i<=NF && i<=10; i++) {
