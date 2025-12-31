@@ -80,6 +80,10 @@ Determine input type:
 - If `ARG` contains `github.com`: Issue URL - extract number with:
   ```bash
   ISSUE_NUMBER=$(echo "$ARG" | grep -oE '[0-9]+$')
+  if [[ -z "$ISSUE_NUMBER" ]]; then
+    echo "Could not extract issue number from URL: $ARG"
+    exit 1
+  fi
   ```
 - Otherwise: Ad-hoc description
 
