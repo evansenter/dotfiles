@@ -45,6 +45,8 @@ fi
 cat <<EOF
 <event-bus-registration>
 Register with event bus: mcp__event-bus__register_session(name: "$SESSION_NAME", cwd: "$CWD"$CLIENT_ID_ARG)
+After registration, persist the session_id for statusline display:
+  mkdir -p ~/.claude && echo "SESSION_ID_HERE" > ~/.claude/.event-bus-session-name
 </event-bus-registration>
 EOF
 
