@@ -162,7 +162,7 @@ Write `.parallel-context.md` to the new worktree. When writing, replace placehol
 [Special instructions or "Follow standard workflow"]
 
 ---
-**Session Start:** Read this file for context, then begin work.
+**Session Start:** ultrathink: Read this file for context, then begin work.
 ```
 
 #### 7. Tmux Integration (if available)

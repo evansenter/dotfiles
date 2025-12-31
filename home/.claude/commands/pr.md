@@ -89,7 +89,7 @@ Skill(pr-review-toolkit:review-pr)
 
 #### 4. Categorize and Form Opinions
 
-For each issue found:
+ultrathink: For each issue found:
 1. **Classify severity**: Critical / Important / Suggestion
 2. **Form opinion**: Agree, Disagree, or Uncertain
 3. **Note reasoning**: Why you think this way given context
@@ -201,7 +201,7 @@ If no feedback found, inform user and exit early.
 
 #### 3. Categorize and Form Opinions
 
-For each piece of feedback:
+ultrathink: For each piece of feedback:
 1. **Classify severity**: Critical / Important / Suggestion
 2. **Form opinion**: Agree, Disagree, or Uncertain
 3. **Note reasoning**: Why you think this way given context
