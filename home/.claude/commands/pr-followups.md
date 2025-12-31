@@ -1,9 +1,8 @@
 ---
-argument-hint: [--days N]
 description: Find unaddressed or deferred PR comments
 ---
 
-Review all merged PRs and their linked closed issues. Cross-reference against open issues.
+Review recently merged PRs and their linked closed issues. Cross-reference against open issues.
 
 Find:
 - Unaddressed review comments that warrant tracking
@@ -16,7 +15,5 @@ Categorize findings as:
 - **Already Tracked**: Covered by existing open issues
 
 For stale suggestions on closed PRs/issues, draft comments noting they've been reviewed and deemed no longer applicable.
-
-$ARGUMENTS
 
 Output: Present for my review before creating issues or adding comments.

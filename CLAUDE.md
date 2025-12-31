@@ -58,7 +58,7 @@ The `sync_dotfiles` function in `bootstrap.sh`:
 
 **Claude Code Configuration** - `home/.claude/`
 - `CLAUDE.md` - Global workflow preferences (symlinked to `~/.claude/CLAUDE.md`)
-- `commands/` - Custom slash commands (`/status-report`, `/pr-feedback`, etc.)
+- `commands/` - Custom slash commands (`/status-report`, `/pr`, etc.)
 - `settings.json` - Allowed permissions, enabled plugins
 
 ### Command File Format

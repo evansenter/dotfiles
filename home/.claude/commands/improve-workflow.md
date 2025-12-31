@@ -20,7 +20,17 @@ $ARGUMENTS
 
 ## Analyze Recent Usage
 
-Review how Claude Code was used recently in this repo to identify improvement opportunities:
+### Data-Driven Analysis
+
+If available, run the session metrics parser for quantitative insights:
+
+```bash
+~/.claude/contrib/parse-session-logs.sh --project --days 7
+```
+
+This shows tool frequency, common command sequences, and patterns that could inform improvements.
+
+### Git History Analysis
 
 ```bash
 # Recent commits to see work patterns
@@ -29,6 +39,8 @@ git log --oneline -20
 # Check for repetitive patterns in commit messages
 git log --oneline -50 | cut -d' ' -f2- | sort | uniq -c | sort -rn | head -10
 ```
+
+### Conversation Analysis
 
 Also consider the current conversation:
 - What commands were run repeatedly?

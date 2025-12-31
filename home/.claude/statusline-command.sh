@@ -50,7 +50,8 @@ else
 fi
 
 # Build status line: directory model git_status context
+dir_name="${cwd##*/}"
 printf "%s%s%s %s%s%s" \
-    "$CYAN" "$cwd" "$RESET" \
+    "$CYAN" "$dir_name" "$RESET" \
     "$model_display" \
     "$git_status" "$context_display"

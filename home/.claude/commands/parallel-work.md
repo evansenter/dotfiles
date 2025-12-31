@@ -328,7 +328,7 @@ Match worktree branches to open PRs by `headRefName`. Extract:
 
 ### Quick Actions
 - **Open worktree:** `cd .worktrees/<branch>`
-- **Create PR:** In worktree, run `/commit-commands:commit-push-pr`
+- **Create PR:** In worktree, run `/pr create`
 - **Cleanup merged:** `/parallel-work cleanup`
 ```
 

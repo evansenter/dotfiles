@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 - Creating, closing, and editing issues
 - Re-running flaky CI (once per failure)
 - Web searches for documentation/research
-- After completing implementation work: summarize changes and run `/pr-feedback --local` before pushing
+- After completing implementation work: summarize changes and run `/pr local` before pushing
 - **After creating or pushing to a PR: immediately run `/watch-ci <PR#>`** - CI is now running, monitor it
 
 ### Requires Discussion
@@ -74,21 +74,21 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 1. **Orient**: Run `/status-report` to see recent work, open issues, and recommendations
 2. **Pick work**: Choose an issue or task to work on
 3. **Develop**: Make changes, run tests/linters as needed
-4. **Self-review**: After completing work, summarize what was done and run `/pr-feedback --local` before pushing
+4. **Self-review**: After completing work, summarize what was done and run `/pr local` before pushing
 5. **Iterate**: Address feedback, repeat step 4 until clean
-6. **Create PR**: Use `/commit-commands:commit-push-pr` (preferred) for streamlined commit-push-PR flow
+6. **Create PR**: Use `/pr create` for streamlined commit-push-PR flow
 7. **Monitor CI**: Run `/watch-ci <PR#>` after PR creation or any push - track in background with notification
-8. **Process feedback**: When CI passes, run `/pr-feedback --remote` to handle reviewer comments
+8. **Process feedback**: When CI passes, run `/pr remote` to handle reviewer comments
 9. **Merge & cleanup**: After approval, merge PR and run `/commit-commands:clean_gone` to clean stale branches
 
 ### Pre-PR Checklist
 
 - Check that CLAUDE.md and README.md are updated for significant changes
-- Run `/pr-feedback --local` to catch issues before pushing
+- Run `/pr local` to catch issues before pushing
 
 ### Handling PR Feedback
 
-After CI passes, run `/pr-feedback --remote` to fetch and process reviewer comments. Use `--local` for self-checks after implementing fixes (reviewers haven't seen your changes yet).
+After CI passes, run `/pr remote` to fetch and process reviewer comments. Use `/pr local` for self-checks after implementing fixes (reviewers haven't seen your changes yet).
 
 1. **Fetch comments** from the PR
 2. **Categorize** feedback as Critical, Important, or Suggestion
@@ -98,7 +98,7 @@ After CI passes, run `/pr-feedback --remote` to fetch and process reviewer comme
    - **Implement**: Fix it immediately
    - **Skip**: Note it was skipped, move on
    - **Defer**: Create a GitHub issue for later
-6. **Push and re-check** - run `/pr-feedback --local` to verify changes are clean
+6. **Push and re-check** - run `/pr local` to verify changes are clean
 
 **Key principle**: You have context on the work's purpose that automated reviewers lack. Include your opinion in each question to help inform the user's decision.
 
@@ -205,7 +205,7 @@ Available slash commands (in `~/.claude/commands/`):
 
 - `/im-lost` - Show current workflow position and context when you've lost track
 - `/status-report` - Generate repo status summary with recently completed work, open PRs/issues, and recommendations
-- `/pr-feedback` - Process PR review feedback with categorization and opinion-forming
+- `/pr` - Create PRs or review feedback (`create`, `local`, `remote`)
 - `/pr-followups` - Find unaddressed or deferred comments from merged PRs
 - `/audit-codebase` - Check for AI-generated anti-patterns and Evergreen violations
 - `/audit-tests` - Find redundant or stale tests
@@ -217,7 +217,7 @@ Available slash commands (in `~/.claude/commands/`):
 - `/parallel-work` - Manage git worktrees for parallel PR development (start with tmux auto-launch, list, cleanup)
 - `/session-status` - Show active sessions and recent events from the event bus
 - `/broadcast` - Send message to other Claude Code sessions via event bus
-- `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (preferred for new PRs)
+- `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (or use `/pr create`)
 - `/commit-commands:clean_gone` - Delete local branches whose remote tracking branch is gone
 
 ## Contrib Utilities

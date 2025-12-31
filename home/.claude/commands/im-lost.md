@@ -33,28 +33,6 @@ gh pr view --json number,title,state,statusCheckRollup,reviewDecision,comments,b
 
 Parse the PR body for issue references (e.g., "Fixes #123", "Closes #45", or issue URLs). If found, fetch the linked issue for additional context.
 
-### 1b. Track Feedback Staleness
-
-Check conversation history for the most recent `/pr-feedback` invocations:
-
-1. **Local feedback**: When was `/pr-feedback --local` (or default) last run?
-2. **Remote feedback**: When was `/pr-feedback --remote` (or default) last run?
-
-For each, determine staleness by comparing to current state:
-
-```bash
-# Count commits since last feedback check (use conversation context for commit SHA)
-git log <last-feedback-sha>..HEAD --oneline | wc -l
-
-# Check for uncommitted changes
-git status --short
-```
-
-**Staleness indicators**:
-- **Current**: No new commits or changes since last run
-- **Stale**: 1+ commits since last run, or uncommitted changes exist
-- **Unknown**: No record of running feedback this session
-
 ### 2. Determine Workflow Position
 
 Based on gathered state, identify the current step:
@@ -81,25 +59,16 @@ Present in this format:
 **PR:** [#N - title (CI status, N comments)] or "none"
 **Issue:** [#N - title] or "none"
 
-### Feedback Status
-
-| Type | Last Run | Status |
-|------|----------|--------|
-| Local (`/pr-feedback --local`) | [commit SHA or "never"] | [Current/Stale/Unknown] |
-| Remote (`/pr-feedback --remote`) | [commit SHA or "never"] | [Current/Stale/Unknown] |
-
-[If stale, note: "N commits since last review" or "uncommitted changes exist"]
-
 ### Workflow Position
 
 1. ○ Orient - `/status-report`
 2. ○ Pick work
 3. ○ Develop
-4. ○ Self-review - `/pr-feedback --local`
+4. ○ Self-review - `/pr local`
 5. ○ Iterate
-6. ○ Create PR - `/commit-commands:commit-push-pr`
+6. ○ Create PR - `/pr create`
 7. ○ Monitor CI - `/watch-ci`
-8. ○ Process feedback - `/pr-feedback --remote`
+8. ○ Process feedback - `/pr remote`
 
 ← YOU ARE HERE: [Step N - brief explanation of why]
 
