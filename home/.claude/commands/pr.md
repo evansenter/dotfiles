@@ -382,6 +382,7 @@ After implementing:
 2. Commit with message referencing feedback addressed
 3. Push changes
 4. Run `/pr local` to verify changes are clean
+5. Run `/watch-ci` to monitor CI for the new push
 
 ## Key Principle
 
