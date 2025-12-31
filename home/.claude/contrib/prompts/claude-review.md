@@ -108,10 +108,14 @@ Evaluate the code for:
 
 ### 6. Output Format
 
-Post your review as a PR comment using `gh pr comment`:
+Post your review as a PR comment using `gh pr comment`.
+
+**Include prompt source** at the top so users know which review configuration was used:
 
 ```bash
 gh pr comment $PR_NUMBER --body "$(cat <<'EOF'
+> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)
+
 ## Code Review
 
 ### Summary
@@ -139,7 +143,9 @@ EOF
 
 If no issues found:
 ```bash
-gh pr comment $PR_NUMBER --body "## Code Review
+gh pr comment $PR_NUMBER --body "> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)
+
+## Code Review
 
 ### Summary
 [1-2 sentences on what this PR does]
