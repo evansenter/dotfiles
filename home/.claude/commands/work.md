@@ -77,7 +77,10 @@ Before starting new work, check if there's already an active `/work` session:
 
 Determine input type:
 - If `ARG` matches `^[0-9]+$`: Issue number
-- If `ARG` contains `github.com`: Issue URL (extract number)
+- If `ARG` contains `github.com`: Issue URL - extract number with:
+  ```bash
+  ISSUE_NUMBER=$(echo "$ARG" | grep -oE '[0-9]+$')
+  ```
 - Otherwise: Ad-hoc description
 
 #### 3. Fetch Issue Details (if applicable)
@@ -90,7 +93,9 @@ mcp__github__get_issue(owner: "<owner>", repo: "<repo>", issue_number: <number>)
 
 Get owner/repo from:
 ```bash
-gh repo view --json owner,name -q '.owner.login + "/" + .name'
+REPO_INFO=$(gh repo view --json owner,name -q '.owner.login + "/" + .name')
+OWNER="${REPO_INFO%%/*}"
+REPO="${REPO_INFO##*/}"
 ```
 
 **Error handling**:
