@@ -96,17 +96,36 @@ Present the report in this format:
 | #N | One-sentence summary of what this PR does |
 
 **Open Issues** (N total)
-| Issue | Summary | Labels |
-|-------|---------|--------|
-| #N    | One-sentence summary of the issue | bug, enhancement |
+
+*Group issues by priority (high → medium → low → unlabeled):*
+
+| Issue | Summary | Priority | Labels |
+|-------|---------|----------|--------|
+| #N    | One-sentence summary | priority:high | bug |
+| #M    | Another issue summary | priority:medium | enhancement |
+| #K    | Low priority issue | priority:low | documentation |
+| #J    | Issue without priority | - | question |
+
+**Label Summary**
+
+| Label | Count |
+|-------|-------|
+| priority:high | N |
+| priority:medium | N |
+| priority:low | N |
+| (no priority) | N |
+| bug | N |
+| enhancement | N |
+
+*Note: Issues missing priority labels should be triaged with `/audit-issues`.*
 
 ### Recommendations
 
 Based on the current state, here are suggested next actions:
 
-1. **[Action]** - [Brief reasoning why this is recommended]
-2. **[Action]** - [Brief reasoning why this is recommended]
-3. **[Action]** - [Brief reasoning why this is recommended]
+1. **Work on #42 (priority:high)** - This high-priority issue has been open for 2 weeks and blocks feature X
+2. **Run `/audit-issues`** - 3 issues are missing priority labels, need triage
+3. **Clean up orphaned worktree** - `.worktrees/old-feature` has merged PR, run `/parallel-work cleanup`
 ```
 
 ### 4. Event Bus Activity (Optional)
@@ -137,15 +156,28 @@ If not registered with event bus, skip this section.
 
 ### 5. Recommendation Logic
 
-When making recommendations, consider:
+When making recommendations, consider and reference specific evidence:
+
+**Priority-based:**
+- **High priority issues**: Issues labeled `priority:high` should be addressed first
+- **Missing priority labels**: Suggest running `/audit-issues` to triage unlabeled issues
+
+**PR health:**
 - **Stale PRs**: Open PRs that may need attention (review, merge, or close)
+- **Failed CI in worktrees**: Worktrees with failing CI should be fixed
+- **Stacked PR updates**: If a base PR in a stack was updated, dependent PRs may need rebase
+
+**Workflow hygiene:**
+- **Dirty worktrees**: Worktrees with uncommitted changes need attention
+- **Orphaned worktrees**: Worktrees for merged/closed PRs can be cleaned up with `/parallel-work cleanup`
 - **Blocked issues**: Issues with "blocked" labels
+
+**Strategic:**
 - **Issue patterns**: If many similar issues exist, suggest consolidation
 - **Momentum**: If recent work focused on a feature area, suggest continuing there
 - **Quick wins**: Small issues or PRs that could be resolved easily
-- **Dirty worktrees**: Worktrees with uncommitted changes need attention
-- **Failed CI in worktrees**: Worktrees with failing CI should be fixed
-- **Orphaned worktrees**: Worktrees for merged/closed PRs can be cleaned up with `/parallel-work cleanup`
-- **Stacked PR updates**: If a base PR in a stack was updated, dependent PRs may need rebase
 
-Each recommendation should include a brief reason explaining why it's suggested based on the data gathered.
+Each recommendation MUST include:
+1. The specific evidence (e.g., "3 issues missing priority labels", "#42 is priority:high")
+2. The concrete action to take
+3. Brief reasoning why this matters
