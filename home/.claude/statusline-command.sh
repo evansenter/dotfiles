@@ -110,12 +110,13 @@ fi
 # Last user message context (truncated to ~10 words)
 user_context=""
 if [[ -n "$transcript_path" ]] && [[ -r "$transcript_path" ]]; then
-    # Get last user message with string content (not tool result)
+    # Get last user message with string content (not tool result or system message)
     # User messages are infrequent (mostly tool results), so scan more lines
     # but still limit for performance on very long sessions
     # Use jq slurp to get the actual last string message, avoiding line-based issues
+    # Filter out continuation summaries which start with "This session is being continued"
     last_user_msg=$(tail -n 500 "$transcript_path" 2>/dev/null | \
-        jq -rs '[.[] | select(.type == "user") | .message.content | select(type == "string")] | last // empty' 2>/dev/null)
+        jq -rs '[.[] | select(.type == "user") | .message.content | select(type == "string") | select(startswith("This session is being continued") | not)] | last // empty' 2>/dev/null)
 
     if [[ -n "$last_user_msg" ]]; then
         # Handle slash commands: extract args or command name
