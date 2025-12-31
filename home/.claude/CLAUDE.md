@@ -268,3 +268,33 @@ cd ~/Documents/projects/dotfiles
 # Global analysis across all projects, last 30 days
 ~/.claude/contrib/parse-session-logs.sh --global --days 30
 ```
+
+### repo-stats.sh
+
+Shows codebase size (LoC) and recent activity across repositories using GitHub API and `scc`.
+
+**Usage:**
+```bash
+~/.claude/contrib/repo-stats.sh [OPTIONS] [repo1 repo2 ...]
+
+OPTIONS:
+  --days N        Look back N days (default: 14)
+  --owner NAME    GitHub owner (default: evansenter)
+  --local-dir DIR Local repos directory (default: ~/Documents/projects)
+```
+
+**Output:**
+- Codebase size per repo (code, comments, blanks, total lines)
+- Recent activity (commits, additions, deletions, net)
+- Combined language breakdown via `scc`
+
+**Requirements:** `gh` CLI, `jq`, `scc` (optional, for accurate LoC)
+
+**Example:**
+```bash
+# Default repos, last 14 days
+~/.claude/contrib/repo-stats.sh
+
+# Custom repos, last 7 days
+~/.claude/contrib/repo-stats.sh --days 7 myrepo otherrepo
+```
