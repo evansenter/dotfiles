@@ -116,7 +116,7 @@ For ad-hoc work, use the provided description.
 
 #### 4. Derive Implementation Tasks
 
-Analyze the issue body or description to identify discrete implementation tasks.
+ultrathink: Analyze the issue body or description to identify discrete implementation tasks.
 
 **Guidelines for task derivation:**
 - Break down into logical, completable units
@@ -173,7 +173,7 @@ Starting work on first task...
 
 #### 7. Begin Implementation
 
-Mark the first task as `in_progress` and start working on it.
+ultrathink: Mark the first task as `in_progress` and start working on it.
 
 ---
 
