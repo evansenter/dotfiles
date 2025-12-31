@@ -173,7 +173,7 @@ Starting work on first task...
 
 #### 7. Begin Implementation
 
-ultrathink: Mark the first task as `in_progress` and start working on it.
+Mark the first task as `in_progress` and start working on it.
 
 ---
 

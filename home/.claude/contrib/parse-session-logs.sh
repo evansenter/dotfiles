@@ -122,9 +122,9 @@ fi
 
 # Show date range and project breakdown
 show_header() {
-  # Get date range from tool calls
-  local oldest=$(awk -F'\t' 'NR==1 {print $1}' "$TOOL_CALLS" | cut -dT -f1)
-  local newest=$(awk -F'\t' 'END {print $1}' "$TOOL_CALLS" | cut -dT -f1)
+  # Get date range from tool calls (sort by timestamp to get accurate range)
+  local oldest=$(awk -F'\t' '{print $1}' "$TOOL_CALLS" | sort | head -1 | cut -dT -f1)
+  local newest=$(awk -F'\t' '{print $1}' "$TOOL_CALLS" | sort | tail -1 | cut -dT -f1)
   local total=$(wc -l < "$TOOL_CALLS" | tr -d ' ')
 
   echo -e "${CYAN}Session Log Analysis${RESET}"
