@@ -198,14 +198,14 @@ Based on user selection:
 ```bash
 # Create horizontal split, cd to worktree, and start claude
 tmux split-window -h -c "[full-worktree-path]"
-tmux send-keys "claude 'Starting parallel work. Read .parallel-context.md for context.'" Enter
+tmux send-keys "claude 'ultrathink: Starting parallel work. Read .parallel-context.md for context.'" Enter
 ```
 
 **For window:**
 ```bash
 # Create new window, cd to worktree, and start claude
 tmux new-window -c "[full-worktree-path]" -n "[branch-name]"
-tmux send-keys "claude 'Starting parallel work. Read .parallel-context.md for context.'" Enter
+tmux send-keys "claude 'ultrathink: Starting parallel work. Read .parallel-context.md for context.'" Enter
 ```
 
 After launching, broadcast to the event bus so other sessions know about the new parallel work:
@@ -250,7 +250,7 @@ Open a new terminal and run:
 
 \`\`\`bash
 cd [full-worktree-path]
-claude "Starting parallel work. Read .parallel-context.md for context from the parent session."
+claude "ultrathink: Starting parallel work. Read .parallel-context.md for context from the parent session."
 \`\`\`
 
 ### Tips

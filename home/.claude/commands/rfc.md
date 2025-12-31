@@ -47,7 +47,7 @@ Read the issue carefully, including any linked PRs, related issues, and existing
 
 ### 2. Analyze and Draft Response
 
-Generate a draft response with this structure:
+ultrathink: Generate a draft response with this structure:
 
 #### Context/Learnings
 What we learned that's relevant to this RFC.
@@ -175,7 +175,7 @@ Analyze the current conversation for:
 
 ### 2. Generate RFC Issue Body
 
-Create an RFC-style issue body:
+ultrathink: Create an RFC-style issue body:
 
 ```markdown
 ## Summary

@@ -3,7 +3,7 @@ argument-hint: [focus-area]
 description: Suggest workflow improvements based on recent usage
 ---
 
-Based on our recent work together, suggest Claude Code features and configurations that would improve autonomy and reduce back-and-forth.
+ultrathink: Based on our recent work together, suggest Claude Code features and configurations that would improve autonomy and reduce back-and-forth.
 
 Consider:
 - MCP servers I should enable

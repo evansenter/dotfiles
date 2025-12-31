@@ -3,7 +3,7 @@ argument-hint: [focus-area]
 description: Audit codebase for anti-patterns and Evergreen violations
 ---
 
-Audit this codebase for common code anti-patterns and Evergreen principle violations (ref: https://github.com/google-deepmind/evergreen-spec).
+ultrathink: Audit this codebase for common code anti-patterns and Evergreen principle violations (ref: https://github.com/google-deepmind/evergreen-spec).
 
 Look for:
 - Inconsistent naming conventions (especially helpers/utilities)
