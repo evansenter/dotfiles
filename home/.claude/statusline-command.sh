@@ -119,15 +119,18 @@ if [[ -n "$transcript_path" ]] && [[ -r "$transcript_path" ]]; then
 
     if [[ -n "$last_user_msg" ]]; then
         # Handle slash commands: extract args or command name
+        cleaned_msg=""
         if [[ "$last_user_msg" == *"<command-args>"* ]]; then
             # Extract content between <command-args> and </command-args>
             cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed -n 's/.*<command-args>\(.*\)<\/command-args>.*/\1/p')
-        elif [[ "$last_user_msg" == *"<command-name>"* ]]; then
-            # No args, extract command name
+        fi
+        # If no args (empty or missing), try command name
+        if [[ -z "$cleaned_msg" ]] && [[ "$last_user_msg" == *"<command-name>"* ]]; then
             cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed -n 's/.*<command-name>\(.*\)<\/command-name>.*/\1/p')
-        else
-            # Plain message - strip any XML tags
-            cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed 's/<[^>]*>//g')
+        fi
+        # If still empty, use plain message (strip XML tags and system preambles)
+        if [[ -z "$cleaned_msg" ]]; then
+            cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed 's/<[^>]*>//g' | sed '/^Caveat:/d' | sed '/^$/d' | tail -1)
         fi
 
         # Truncate to ~10 words, lowercase, add ellipsis if truncated
