@@ -46,22 +46,28 @@ fi
 pr_display=""
 issue_display=""
 if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
-    # Check for associated PR (use timeout on Linux, skip on macOS)
-    if command -v timeout &>/dev/null; then
-        pr_info=$(cd "$cwd" && timeout 2 gh pr view --json number,url -q '[.number, .url] | @tsv' 2>/dev/null)
-    else
-        pr_info=$(cd "$cwd" && gh pr view --json number,url -q '[.number, .url] | @tsv' 2>/dev/null)
-    fi
-    if [[ -n "$pr_info" ]]; then
-        read -r pr_number pr_url <<< "$pr_info"
-        # OSC 8 hyperlink format for clickable links in modern terminals
-        link_start=$'\e]8;;'"${pr_url}"$'\e\\'
-        link_end=$'\e]8;;\e\\'
-        pr_display=" ${GREEN}${link_start}#${pr_number}${link_end}${RESET}"
+    # Get current branch for PR and issue lookups
+    branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
+
+    # Check for associated PRs (supports multiple PRs to different bases)
+    if [[ -n "$branch" ]]; then
+        pr_list=$(cd "$cwd" && gh pr list --head "$branch" --json number,url -q '.[] | [.number, .url] | @tsv' 2>/dev/null)
+        if [[ -n "$pr_list" ]]; then
+            pr_links=""
+            link_end=$'\e]8;;\e\\'
+            while IFS=$'\t' read -r pr_number pr_url; do
+                link_start=$'\e]8;;'"${pr_url}"$'\e\\'
+                if [[ -n "$pr_links" ]]; then
+                    pr_links="${pr_links},${link_start}#${pr_number}${link_end}"
+                else
+                    pr_links="${link_start}#${pr_number}${link_end}"
+                fi
+            done <<< "$pr_list"
+            pr_display=" ${GREEN}${pr_links}${RESET}"
+        fi
     fi
 
     # Check for issue numbers in branch name (e.g., issue-42, fix-123-and-456)
-    branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
     if [[ -n "$branch" ]]; then
         # Extract all numbers from branch name that look like issue refs
         # Matches: issue-42, fix-123, 42-feature, feature-42, issue-42-and-56
