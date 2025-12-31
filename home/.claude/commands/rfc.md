@@ -227,11 +227,29 @@ Use `AskUserQuestion` to resolve any blocking decisions before creating:
 - Validate the proposed solution direction
 - Get input on open questions
 
-### 4. Create or Present
+### 4. Determine Labels
+
+Before creating, fetch available labels and select appropriate ones:
+
+```bash
+gh label list --json name,description
+```
+
+**Required**: Every RFC MUST have exactly one priority label:
+- `priority:high` - Urgent, blocking other work
+- `priority:medium` - Important but not urgent
+- `priority:low` - Nice to have, backlog
+
+**Additional labels**: Based on the RFC content and available repo labels, add relevant labels such as:
+- `enhancement`, `bug`, `documentation` (issue type)
+- `blocked` (if waiting on external factors)
+- Any domain-specific labels from the repo
+
+### 5. Create or Present
 
 **If `--post` flag is present:**
 ```bash
-gh issue create --title "${TITLE}" --body "<generated body>"
+gh issue create --title "${TITLE}" --body "<generated body>" --label "priority:<level>,<other-labels>"
 ```
 
 **Otherwise:**
@@ -254,7 +272,7 @@ Display the draft and ask:
 
 After creating, output the issue URL.
 
-### 5. Broadcast Event
+### 6. Broadcast Event
 
 After successfully creating the RFC, broadcast to the event bus so parallel sessions are notified:
 
