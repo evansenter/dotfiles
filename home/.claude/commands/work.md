@@ -63,13 +63,15 @@ If `ARG` is `resume`:
 
 #### 1. Check for Existing Work Session
 
-Before starting new work, check if there's already an active session:
+Before starting new work, check if there's already an active `/work` session:
 - Read current todo list
-- If non-empty and contains work items, inform user:
+- Look for todos with `CHECKPOINT:` prefix (indicates active `/work` session)
+- If incomplete checkpoints exist, inform user:
   ```
   Active work session exists. Use `/work resume` to continue, or complete current work first.
   ```
 - Exit without creating new todos
+- Note: Other todos without `CHECKPOINT:` prefix don't block new work
 
 #### 2. Parse Input Type
 
@@ -90,6 +92,11 @@ Get owner/repo from:
 ```bash
 gh repo view --json owner,name -q '.owner.login + "/" + .name'
 ```
+
+**Error handling**:
+- If MCP unavailable, fall back to: `gh issue view "${ISSUE_NUMBER}" --json title,body,labels`
+- If issue not found, inform user: `Issue #<number> not found. Check the issue number and try again.`
+- If repo can't be determined, inform user: `Could not determine repository. Ensure you're in a git directory with a GitHub remote.`
 
 Extract from response:
 - Title
@@ -176,7 +183,7 @@ When reaching a checkpoint:
 
 1. Mark checkpoint as `in_progress`
 2. Run `/pr create` to commit changes and create/update PR
-3. Store the PR number for subsequent steps
+3. Note the PR number from output (can retrieve later with `gh pr view --json number -q .number`)
 4. Mark checkpoint as `completed`
 
 #### CHECKPOINT: Monitor CI with /watch-ci
@@ -190,7 +197,10 @@ When reaching a checkpoint:
 1. Mark checkpoint as `in_progress`
 2. Wait for CI to pass (check via `gh pr checks`)
 3. Execute: `/pr remote` to fetch and process reviewer comments
-4. If changes made, loop back to `/pr local` checkpoint
+4. If changes made:
+   - Add new `CHECKPOINT: Run /pr local before pushing` todo (for the iteration)
+   - Add new `CHECKPOINT: Push and re-run CI` todo
+   - Work through these new checkpoints before returning here
 5. When approved or no feedback, mark checkpoint as `completed`
 
 #### CHECKPOINT: Merge when approved
