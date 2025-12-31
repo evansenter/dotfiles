@@ -36,6 +36,12 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     fi
 fi
 
+# Get repo URL for hyperlinks (used by directory, PR, and issues)
+repo_url=""
+if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
+    repo_url=$(cd "$cwd" && gh repo view --json url -q .url 2>/dev/null)
+fi
+
 # Associated PR or Issue indicator
 pr_display=""
 issue_display=""
@@ -54,29 +60,26 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
         pr_display=" ${GREEN}${link_start}#${pr_number}${link_end}${RESET}"
     fi
 
-    # Check for issue number in branch name (e.g., issue-42, fix-123, feature/42)
+    # Check for issue numbers in branch name (e.g., issue-42, fix-123-and-456)
     branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
     if [[ -n "$branch" ]]; then
-        # Extract issue number from branch name patterns
-        if [[ "$branch" =~ (issue|fix|feature|bug|feat)[-/]([0-9]+) ]]; then
-            issue_num="${BASH_REMATCH[2]}"
-        elif [[ "$branch" =~ ^([0-9]+)- ]]; then
-            # Branches starting with number like "42-add-feature"
-            issue_num="${BASH_REMATCH[1]}"
-        elif [[ "$branch" =~ -([0-9]+)$ ]]; then
-            # Branches ending with number like "add-feature-42"
-            issue_num="${BASH_REMATCH[1]}"
-        fi
+        # Extract all numbers from branch name that look like issue refs
+        # Matches: issue-42, fix-123, 42-feature, feature-42, issue-42-and-56
+        issue_nums=$(echo "$branch" | grep -oE '[0-9]+' | sort -u)
 
-        if [[ -n "$issue_num" ]]; then
-            # Get repo info for issue URL
-            repo_url=$(cd "$cwd" && gh repo view --json url -q .url 2>/dev/null)
-            if [[ -n "$repo_url" ]]; then
+        if [[ -n "$issue_nums" ]] && [[ -n "$repo_url" ]]; then
+            issue_links=""
+            link_end=$'\e]8;;\e\\'
+            for issue_num in $issue_nums; do
                 issue_url="${repo_url}/issues/${issue_num}"
                 link_start=$'\e]8;;'"${issue_url}"$'\e\\'
-                link_end=$'\e]8;;\e\\'
-                issue_display=" ${CYAN}${link_start}→#${issue_num}${link_end}${RESET}"
-            fi
+                if [[ -n "$issue_links" ]]; then
+                    issue_links="${issue_links},${link_start}#${issue_num}${link_end}"
+                else
+                    issue_links="${link_start}#${issue_num}${link_end}"
+                fi
+            done
+            issue_display=" ${CYAN}→${issue_links}${RESET}"
         fi
     fi
 fi
@@ -132,9 +135,20 @@ else
     model_display="${GRAY}(unknown model)${RESET}"
 fi
 
-# Build status line: directory model issue pr git_status context user_context
+# Build status line: directory pr issue model git_status context user_context
 dir_name="${cwd##*/}"
-printf "%s%s%s %s%s%s%s%s%s" \
-    "$CYAN" "$dir_name" "$RESET" \
+
+# Make directory a clickable link to repo if available
+if [[ -n "$repo_url" ]]; then
+    link_start=$'\e]8;;'"${repo_url}"$'\e\\'
+    link_end=$'\e]8;;\e\\'
+    dir_display="${CYAN}${link_start}${dir_name}${link_end}${RESET}"
+else
+    dir_display="${CYAN}${dir_name}${RESET}"
+fi
+
+printf "%s%s%s %s%s%s%s" \
+    "$dir_display" \
+    "$pr_display" "$issue_display" \
     "$model_display" \
-    "$issue_display" "$pr_display" "$git_status" "$context_display" "$user_context"
+    "$git_status" "$context_display" "$user_context"
