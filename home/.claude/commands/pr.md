@@ -96,10 +96,28 @@ ultrathink: For each issue found:
 
 #### 5. Display Summary
 
-Output ALL findings ordered by severity (Critical → Important → Suggestion):
+Output ALL findings ordered by severity (Critical → Important → Suggestion). Start with context, then list every finding:
 
 ```markdown
 ## Local Analysis Summary
+
+### What This PR Does
+[2-3 sentences summarizing the changes and their purpose, derived from commits and diff]
+
+### Feedback Themes
+- [Theme 1: e.g., "Error handling gaps in new API endpoints"]
+- [Theme 2: e.g., "Missing input validation"]
+- [Theme 3: if applicable]
+
+### Areas Requiring Human Attention
+- [Any scope creep concerns - changes beyond the stated purpose]
+- [Deviations from codebase patterns/conventions]
+- [Architectural decisions that need validation]
+- [Security-sensitive changes]
+
+---
+
+### Detailed Findings
 
 #### #1. [Critical] `config.json:15`
 > Fix JSON interface to handle missing fields
@@ -214,10 +232,28 @@ ultrathink: For each piece of feedback:
 
 #### 4. Display Summary
 
-Output ALL feedback items ordered by severity (Critical → Important → Suggestion):
+Output ALL feedback items ordered by severity (Critical → Important → Suggestion). Start with context, then list every item:
 
 ```markdown
 ## PR Feedback Summary
+
+### What This PR Does
+[2-3 sentences summarizing the changes and their purpose, derived from PR description and commits]
+
+### Feedback Themes
+- [Theme 1: e.g., "Reviewers concerned about error handling"]
+- [Theme 2: e.g., "Questions about test coverage"]
+- [Theme 3: if applicable]
+
+### Areas Requiring Human Attention
+- [Any scope creep concerns raised by reviewers]
+- [Deviations from codebase patterns/conventions flagged]
+- [Architectural decisions reviewers questioned]
+- [Security concerns raised]
+
+---
+
+### Detailed Findings
 
 #### #1. [Critical] `config.json:15`
 > Fix JSON interface to handle missing fields
