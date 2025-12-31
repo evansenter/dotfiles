@@ -1,9 +1,16 @@
 ---
-argument-hint: [focus-area]
+argument-hint: [--global] [focus-area]
 description: Suggest workflow improvements based on recent usage
 ---
 
 Based on our recent work together, suggest Claude Code features and configurations that would improve autonomy and reduce back-and-forth.
+
+## Arguments
+
+Parse arguments from: $ARGUMENTS
+
+- `--global` - Analyze all projects instead of just the current one
+- `focus-area` - Optional focus area for suggestions (e.g., "permissions", "automation")
 
 Consider:
 - MCP servers I should enable
@@ -16,8 +23,6 @@ References:
 - Claude Code docs
 - https://github.com/anthropics/claude-plugins-official
 
-$ARGUMENTS
-
 ## Analyze Recent Usage
 
 ### Data-Driven Analysis
@@ -25,8 +30,12 @@ $ARGUMENTS
 If available, run the session metrics parser for quantitative insights:
 
 ```bash
-~/.claude/contrib/parse-session-logs.sh --project --days 7
+# Use --global if passed, otherwise --project (default)
+~/.claude/contrib/parse-session-logs.sh --project --days 7   # current project
+~/.claude/contrib/parse-session-logs.sh --global --days 7    # all projects
 ```
+
+Run the appropriate command based on whether `--global` was in the arguments.
 
 This shows tool frequency, common command sequences, and patterns that could inform improvements.
 
