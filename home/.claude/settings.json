@@ -85,6 +85,16 @@
     "defaultMode": "default"
   },
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/prompt-events.sh"
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "hooks": [
