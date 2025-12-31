@@ -31,7 +31,11 @@ gh pr view --json number,title,state,statusCheckRollup,reviewDecision,comments,b
 # (Read from conversation context)
 ```
 
-Parse the PR body for issue references (e.g., "Fixes #123", "Closes #45", or issue URLs). If found, fetch the linked issue for additional context.
+Parse the PR body for issue references (e.g., "Fixes #123", "Closes #45", or issue URLs). If found, fetch the linked issue including labels:
+
+```bash
+gh issue view <issue-number> --json title,labels
+```
 
 ### 2. Determine Workflow Position
 
@@ -58,6 +62,7 @@ Present in this format:
 **Status:** [uncommitted changes summary or "clean"]
 **PR:** [#N - title (CI status, N comments)] or "none"
 **Issue:** [#N - title] or "none"
+**Labels:** priority:high, bug, ... *(or "none" if no linked issue)*
 
 ### Workflow Position
 
@@ -89,3 +94,4 @@ Present in this format:
 - If stuck between steps, pick the earlier one
 - Reference active todos if any exist in the conversation
 - If working on an issue, always mention the issue number in Context and Suggested Next Action
+- Always show all labels from the linked issue (helps surface priority at a glance)
