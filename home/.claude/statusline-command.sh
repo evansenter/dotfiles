@@ -36,8 +36,9 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     fi
 fi
 
-# Associated PR indicator (if branch has an open PR)
+# Associated PR or Issue indicator
 pr_display=""
+issue_display=""
 if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     # Check for associated PR (use timeout on Linux, skip on macOS)
     if command -v timeout &>/dev/null; then
@@ -51,6 +52,32 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
         link_start=$'\e]8;;'"${pr_url}"$'\e\\'
         link_end=$'\e]8;;\e\\'
         pr_display=" ${GREEN}${link_start}#${pr_number}${link_end}${RESET}"
+    fi
+
+    # Check for issue number in branch name (e.g., issue-42, fix-123, feature/42)
+    branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
+    if [[ -n "$branch" ]]; then
+        # Extract issue number from branch name patterns
+        if [[ "$branch" =~ (issue|fix|feature|bug|feat)[-/]([0-9]+) ]]; then
+            issue_num="${BASH_REMATCH[2]}"
+        elif [[ "$branch" =~ ^([0-9]+)- ]]; then
+            # Branches starting with number like "42-add-feature"
+            issue_num="${BASH_REMATCH[1]}"
+        elif [[ "$branch" =~ -([0-9]+)$ ]]; then
+            # Branches ending with number like "add-feature-42"
+            issue_num="${BASH_REMATCH[1]}"
+        fi
+
+        if [[ -n "$issue_num" ]]; then
+            # Get repo info for issue URL
+            repo_url=$(cd "$cwd" && gh repo view --json url -q .url 2>/dev/null)
+            if [[ -n "$repo_url" ]]; then
+                issue_url="${repo_url}/issues/${issue_num}"
+                link_start=$'\e]8;;'"${issue_url}"$'\e\\'
+                link_end=$'\e]8;;\e\\'
+                issue_display=" ${CYAN}${link_start}→#${issue_num}${link_end}${RESET}"
+            fi
+        fi
     fi
 fi
 
@@ -105,9 +132,9 @@ else
     model_display="${GRAY}(unknown model)${RESET}"
 fi
 
-# Build status line: directory model pr git_status context user_context
+# Build status line: directory model issue pr git_status context user_context
 dir_name="${cwd##*/}"
-printf "%s%s%s %s%s%s%s%s" \
+printf "%s%s%s %s%s%s%s%s%s" \
     "$CYAN" "$dir_name" "$RESET" \
     "$model_display" \
-    "$pr_display" "$git_status" "$context_display" "$user_context"
+    "$issue_display" "$pr_display" "$git_status" "$context_display" "$user_context"
