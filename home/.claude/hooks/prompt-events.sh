@@ -31,6 +31,7 @@ if command -v jq &>/dev/null; then
 fi
 
 # Build the command with optional session-id
+# Higher limit (20) than session-start (10) since active sessions benefit from more context
 CMD=(event-bus-cli events
     --track-state "$STATE_FILE"
     --exclude-types session_registered,session_unregistered
