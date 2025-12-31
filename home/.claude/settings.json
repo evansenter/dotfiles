@@ -84,6 +84,10 @@
       "Skill(watch-ci)",
       "Skill(pr)",
       "Bash(rm:*)",
+      "Bash(tmux:*)",
+      "Bash(date:*)",
+      "Bash(source:*)",
+      "Bash(sed:*)",
       "Skill(rfc)"
     ],
     "defaultMode": "default"
