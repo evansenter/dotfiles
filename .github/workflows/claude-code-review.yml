@@ -14,7 +14,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write  # Needed to post comments
-      issues: read
+      issues: write         # Read linked issues, optionally comment if PR incomplete
       id-token: write
 
     steps:
@@ -51,4 +51,4 @@ jobs:
 
             Use the REPO and PR_NUMBER variables provided above.
           # Tools required by the centralized prompt (see contrib/prompts/claude-review.md)
-          claude_args: '--model opus --allowed-tools "Read,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh api:*)"'
+          claude_args: '--model opus --allowed-tools "Read,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh api:*)"'
