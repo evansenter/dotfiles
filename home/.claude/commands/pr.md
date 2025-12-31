@@ -166,7 +166,10 @@ PR_NUM=$(gh pr view --json number -q .number)
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 ```
 
-If either command fails or returns empty, inform user and suggest `/pr create`.
+Handle failures with specific error messages:
+- **Not a git repo**: "Not in a git repository. Navigate to a project directory first."
+- **No remote**: "No GitHub remote found. Push your branch to GitHub first."
+- **No PR exists**: "No PR found for this branch. Run `/pr create` to create one."
 
 #### 2. Fetch Review Comments
 
@@ -265,6 +268,16 @@ After implementing:
 2. Commit with message referencing feedback addressed
 3. Push changes
 4. Run `/pr local` to verify changes are clean
+
+#### 8. Reply to Reviewers (Optional)
+
+If feedback was addressed, consider replying to acknowledge:
+
+```bash
+gh pr comment "${PR_NUM}" --body "Addressed feedback: <summary of changes>"
+```
+
+Or reply to specific review comments via the GitHub UI.
 
 ## Key Principle
 
