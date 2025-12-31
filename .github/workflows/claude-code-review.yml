@@ -24,13 +24,15 @@ jobs:
           fetch-depth: 1
 
       - name: Fetch review prompt
+        id: prompt
         run: |
-          curl -sfL "$PROMPT_URL" > /tmp/review-prompt.md
-          if [ ! -s /tmp/review-prompt.md ]; then
-            echo "Failed to fetch prompt from $PROMPT_URL"
-            exit 1
+          if curl -sfL "$PROMPT_URL" > /tmp/review-prompt.md && [ -s /tmp/review-prompt.md ]; then
+            echo "Fetched review prompt ($(wc -l < /tmp/review-prompt.md) lines)"
+            echo "use_file=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Prompt not available at $PROMPT_URL, using inline fallback"
+            echo "use_file=false" >> "$GITHUB_OUTPUT"
           fi
-          echo "Fetched review prompt ($(wc -l < /tmp/review-prompt.md) lines)"
 
       - name: Run Claude Code Review
         id: claude-review
@@ -41,8 +43,7 @@ jobs:
             REPO: ${{ github.repository }}
             PR_NUMBER: ${{ github.event.pull_request.number }}
 
-            First, read the review instructions from /tmp/review-prompt.md using your Read tool.
-            Then follow those instructions to review this PR.
+            ${{ steps.prompt.outputs.use_file == 'true' && 'First, read the review instructions from /tmp/review-prompt.md using your Read tool. Then follow those instructions to review this PR.' || 'Review this PR for code quality, bugs, security issues, and adherence to project conventions (check CLAUDE.md). Check for previous "Feedback Addressed" comments to avoid re-raising resolved issues. Be strict: REQUEST_CHANGES for any issues found, only APPROVE if genuinely ready to merge. Post your review using gh pr comment.' }}
 
             Use the REPO and PR_NUMBER variables provided above.
           claude_args: '--model opus --allowed-tools "Read,Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh api:*)"'
