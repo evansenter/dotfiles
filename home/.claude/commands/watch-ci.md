@@ -45,5 +45,5 @@ If PR_NUMBER is omitted, uses the current branch's PR.
        channel: "repo:<repo_name>"
      )
      ```
-   - If **passed**: Run `/pr-feedback --remote` to process reviewer comments
+   - If **passed**: Run `/pr remote` to process reviewer comments
    - If **failed**: Investigate the failure and fix

@@ -1,5 +1,5 @@
 ---
-argument-hint: [issue-number or --create "Title"] [--post]
+argument-hint: <issue-number | --create "Title"> [--post]
 description: Create or respond to RFC-style issues with structured analysis
 ---
 
@@ -21,42 +21,15 @@ Create new RFC-style issues or respond to existing ones with structured analysis
 
 ### 0. Parse Arguments
 
-```bash
-# Parse arguments: extract flags and content
-POST_FLAG=false
-CREATE_FLAG=false
-TITLE=""
-ISSUE_ARG=""
+From `$ARGUMENTS`, determine the mode:
 
-# Check for --create flag and extract title
-if [[ "$ARGUMENTS" =~ --create[[:space:]]+\"([^\"]+)\" ]]; then
-  CREATE_FLAG=true
-  TITLE="${BASH_REMATCH[1]}"
-elif [[ "$ARGUMENTS" =~ --create[[:space:]]+\'([^\']+)\' ]]; then
-  CREATE_FLAG=true
-  TITLE="${BASH_REMATCH[1]}"
-elif [[ "$ARGUMENTS" =~ --create ]]; then
-  CREATE_FLAG=true
-  # Title might be unquoted - extract next word
-fi
+- **`--create "Title"`**: Create a new RFC issue with the given title
+- **`<issue-number>` or `<URL>`**: Respond to an existing RFC issue
+- **`--post`**: Auto-post without confirmation (can combine with either mode)
+- **No arguments**: Try to use current issue from context
 
-# Check for --post flag
-if [[ "$ARGUMENTS" =~ --post ]]; then
-  POST_FLAG=true
-fi
-
-# Extract issue number if not creating
-if [[ "$CREATE_FLAG" == false ]]; then
-  for arg in $ARGUMENTS; do
-    if [[ "$arg" != "--post" && -z "$ISSUE_ARG" ]]; then
-      ISSUE_ARG="$arg"
-    fi
-  done
-fi
-```
-
-**If `--create` flag is present:** Jump to [Create New RFC](#create-new-rfc)
-**Otherwise:** Continue to [Respond to Existing RFC](#respond-to-existing-rfc)
+**If `--create` is present**: Jump to [Create New RFC](#create-new-rfc)
+**Otherwise**: Continue to [Respond to Existing RFC](#respond-to-existing-rfc)
 
 ---
 
@@ -64,22 +37,10 @@ fi
 
 ### 1. Fetch the Issue
 
-```bash
-# Get issue number from argument or current context
-if [[ -n "$ISSUE_ARG" ]]; then
-  # If URL provided, extract issue number
-  if [[ "$ISSUE_ARG" =~ github.com/.*/issues/([0-9]+) ]]; then
-    ISSUE_NUM="${BASH_REMATCH[1]}"
-  else
-    ISSUE_NUM="$ISSUE_ARG"
-  fi
-else
-  # No argument - try to get from current context
-  ISSUE_NUM=$(gh issue view --json number -q .number 2>/dev/null)
-fi
+Determine the issue number from the argument (extract from URL if needed) or current context:
 
-# Fetch issue details
-gh issue view $ISSUE_NUM --json title,body,number,comments
+```bash
+gh issue view <ISSUE_NUM> --json title,body,number,comments
 ```
 
 Read the issue carefully, including any linked PRs, related issues, and existing comments.

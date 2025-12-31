@@ -1,6 +1,6 @@
 {
   "model": "claude-opus-4-5-20251101",
-  "cleanupPeriodDays": 0,
+  "cleanupPeriodDays": 365,
   "permissions": {
     "allow": [
       "Edit",
@@ -80,7 +80,7 @@
       "Skill(pr-review-toolkit:review-pr)",
       "Skill(commit-commands:commit-push-pr)",
       "Skill(watch-ci)",
-      "Skill(pr-feedback)",
+      "Skill(pr)",
       "Bash(rm:*)",
       "Skill(rfc)"
     ],

@@ -18,7 +18,7 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 |---------|-------------|
 | `/im-lost` | Show current workflow position and context |
 | `/status-report` | Repo status with recent work, open PRs/issues, and recommendations |
-| `/pr-feedback` | Process PR review feedback with categorization and opinions |
+| `/pr` | Create PRs or review local/remote feedback |
 | `/watch-ci` | Monitor CI in background with notification when complete |
 | `/pr-followups` | Find unaddressed comments from merged PRs |
 | `/audit-codebase` | Check for AI anti-patterns and Evergreen violations |
@@ -26,7 +26,7 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 | `/audit-issues` | Categorize open issues as current or needing updates |
 | `/cross-repo` | Gather context from a related repository |
 | `/improve-workflow` | Suggest workflow improvements, categorized as local or global |
-| `/rfc-response` | Generate structured response to RFC-style issues |
+| `/rfc` | Create or respond to RFC-style issues |
 
 **Usage examples:**
 ```bash
@@ -34,10 +34,13 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 /status-report
 
 # Self-review before creating PR
-/pr-feedback --local
+/pr local
 
 # Fetch and process reviewer comments
-/pr-feedback --remote
+/pr remote
+
+# Create a PR for current work
+/pr create
 
 # Monitor CI with notification
 /watch-ci 123
