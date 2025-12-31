@@ -69,18 +69,89 @@ Invoke the pr-review-toolkit skill:
 Skill(pr-review-toolkit:review-pr)
 ```
 
-#### 3. Process Results
+#### 3. Categorize and Form Opinions
 
 For each issue found:
 1. **Classify severity**: Critical / Important / Suggestion
 2. **Form opinion**: Agree, Disagree, or Uncertain
 3. **Note reasoning**: Why you think this way given context
 
-#### 4. Display and Act
+#### 4. Display Summary
 
-Present findings via AskUserQuestion with options: Implement / Skip / Defer / Elaborate.
+Output ALL findings ordered by severity (Critical → Important → Suggestion):
 
-After implementing fixes, suggest running `/pr local` again to verify changes are clean.
+```markdown
+## Local Analysis Summary
+
+#### #1. [Critical] `config.json:15`
+> Fix JSON interface to handle missing fields
+**Opinion**: Agree - breaking change needs fix
+
+#### #2. [Important] `bootstrap.sh:42`
+> Validate input before processing
+**Opinion**: Agree - defensive programming
+
+#### #3. [Suggestion] `utils.ts:89`
+> Add error handling for edge case
+**Opinion**: Disagree - unlikely to occur
+```
+
+#### 5. Present via AskUserQuestion
+
+Present ONE question for EACH item, batched in groups of up to 4. Include your opinion in the question text.
+
+```json
+{
+  "questions": [
+    {
+      "question": "[Critical] config.json:15 - Fix JSON interface - Agree, breaking change",
+      "header": "#1",
+      "options": [
+        {"label": "Implement (Recommended)", "description": "Fix it now"},
+        {"label": "Skip", "description": "Not worth fixing"},
+        {"label": "Defer", "description": "Create RFC/issue for later"},
+        {"label": "Elaborate", "description": "Explain this topic, then re-ask"}
+      ],
+      "multiSelect": false
+    },
+    {
+      "question": "[Important] bootstrap.sh:42 - Validate input - Agree, defensive programming",
+      "header": "#2",
+      "options": [
+        {"label": "Implement (Recommended)", "description": "Fix it now"},
+        {"label": "Skip", "description": "Not worth fixing"},
+        {"label": "Defer", "description": "Create RFC/issue for later"},
+        {"label": "Elaborate", "description": "Explain this topic, then re-ask"}
+      ],
+      "multiSelect": false
+    },
+    {
+      "question": "[Suggestion] utils.ts:89 - Add error handling - Disagree, unlikely to occur",
+      "header": "#3",
+      "options": [
+        {"label": "Implement", "description": "Fix it now"},
+        {"label": "Skip (Recommended)", "description": "Not worth fixing"},
+        {"label": "Defer", "description": "Create RFC/issue for later"},
+        {"label": "Elaborate", "description": "Explain this topic, then re-ask"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+Always include a final open-ended question for any additional comments.
+
+#### 6. Act on User Decisions
+
+- **Implement**: Fix the item immediately
+- **Skip**: Note it was skipped, move on
+- **Defer**: Use `/rfc --create` to create an RFC issue, or create a simpler issue if appropriate
+- **Elaborate**: Explain the topic, then re-ask
+
+#### 7. Re-check
+
+After implementing fixes, run `/pr local` again to verify changes are clean.
 
 ---
 
@@ -142,12 +213,34 @@ Present ONE question for EACH item, batched in groups of up to 4. Include your o
 {
   "questions": [
     {
-      "question": "[Critical] Fix config.json interface - Agree, breaking change",
+      "question": "[Critical] config.json:15 - Fix JSON interface - Agree, breaking change",
       "header": "#1",
       "options": [
         {"label": "Implement (Recommended)", "description": "Fix it now"},
-        {"label": "Skip", "description": "Not worth it"},
-        {"label": "Defer", "description": "Create issue for later"},
+        {"label": "Skip", "description": "Not worth fixing"},
+        {"label": "Defer", "description": "Create RFC/issue for later"},
+        {"label": "Elaborate", "description": "Explain this topic, then re-ask"}
+      ],
+      "multiSelect": false
+    },
+    {
+      "question": "[Important] bootstrap.sh:42 - Validate input - Agree, defensive programming",
+      "header": "#2",
+      "options": [
+        {"label": "Implement (Recommended)", "description": "Fix it now"},
+        {"label": "Skip", "description": "Not worth fixing"},
+        {"label": "Defer", "description": "Create RFC/issue for later"},
+        {"label": "Elaborate", "description": "Explain this topic, then re-ask"}
+      ],
+      "multiSelect": false
+    },
+    {
+      "question": "[Suggestion] utils.ts:89 - Add error handling - Disagree, unlikely to occur",
+      "header": "#3",
+      "options": [
+        {"label": "Implement", "description": "Fix it now"},
+        {"label": "Skip (Recommended)", "description": "Not worth fixing"},
+        {"label": "Defer", "description": "Create RFC/issue for later"},
         {"label": "Elaborate", "description": "Explain this topic, then re-ask"}
       ],
       "multiSelect": false
@@ -162,7 +255,7 @@ Always include a final open-ended question for any additional comments.
 
 - **Implement**: Fix the item immediately
 - **Skip**: Note it was skipped, move on
-- **Defer**: Create a GitHub issue with the feedback details
+- **Defer**: Use `/rfc --create` to create an RFC issue, or create a simpler issue if appropriate
 - **Elaborate**: Explain the topic, then re-ask
 
 #### 7. Push and Re-check
@@ -171,7 +264,7 @@ After implementing:
 1. Run quality gates (linter, formatter, tests)
 2. Commit with message referencing feedback addressed
 3. Push changes
-4. Suggest running `/pr local` to verify changes are clean
+4. Run `/pr local` to verify changes are clean
 
 ## Key Principle
 
