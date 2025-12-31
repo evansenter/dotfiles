@@ -67,26 +67,36 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
         fi
     fi
 
-    # Check for issue numbers in branch name (e.g., issue-42, fix-123-and-456)
-    if [[ -n "$branch" ]]; then
-        # Extract all numbers from branch name that look like issue refs
-        # Matches: issue-42, fix-123, 42-feature, feature-42, issue-42-and-56
-        issue_nums=$(echo "$branch" | grep -oE '[0-9]+' | sort -u)
+    # Check for linked issues - first from PR body, then from branch name
+    issue_nums=""
 
-        if [[ -n "$issue_nums" ]] && [[ -n "$repo_url" ]]; then
-            issue_links=""
-            link_end=$'\e]8;;\e\\'
-            for issue_num in $issue_nums; do
-                issue_url="${repo_url}/issues/${issue_num}"
-                link_start=$'\e]8;;'"${issue_url}"$'\e\\'
-                if [[ -n "$issue_links" ]]; then
-                    issue_links="${issue_links},${link_start}#${issue_num}${link_end}"
-                else
-                    issue_links="${link_start}#${issue_num}${link_end}"
-                fi
-            done
-            issue_display=" ${CYAN}→${issue_links}${RESET}"
+    # 1. If PR exists, check body for issue refs (Fixes #N, Closes #N, etc.)
+    if [[ -n "$pr_list" ]]; then
+        pr_body=$(cd "$cwd" && gh pr view --json body -q '.body' 2>/dev/null)
+        if [[ -n "$pr_body" ]]; then
+            issue_nums=$(echo "$pr_body" | grep -oiE '(fixes|closes|resolves|addresses) #[0-9]+' | grep -oE '[0-9]+' | sort -u)
         fi
+    fi
+
+    # 2. Fall back to branch name with tight pattern (require issue-related prefix)
+    if [[ -z "$issue_nums" ]] && [[ -n "$branch" ]]; then
+        # Only match: issue-42, fix-42, bug-42, feat-42, feature-42
+        issue_nums=$(echo "$branch" | grep -oE '(issue|fix|bug|feat|feature|closes|resolves)[-/][0-9]+' | grep -oE '[0-9]+' | sort -u)
+    fi
+
+    if [[ -n "$issue_nums" ]] && [[ -n "$repo_url" ]]; then
+        issue_links=""
+        link_end=$'\e]8;;\e\\'
+        for issue_num in $issue_nums; do
+            issue_url="${repo_url}/issues/${issue_num}"
+            link_start=$'\e]8;;'"${issue_url}"$'\e\\'
+            if [[ -n "$issue_links" ]]; then
+                issue_links="${issue_links},${link_start}#${issue_num}${link_end}"
+            else
+                issue_links="${link_start}#${issue_num}${link_end}"
+            fi
+        done
+        issue_display=" ${CYAN}→${issue_links}${RESET}"
     fi
 fi
 
@@ -103,9 +113,9 @@ if [[ -n "$transcript_path" ]] && [[ -r "$transcript_path" ]]; then
     # Get last user message with string content (not tool result)
     # User messages are infrequent (mostly tool results), so scan more lines
     # but still limit for performance on very long sessions
+    # Use jq slurp to get the actual last string message, avoiding line-based issues
     last_user_msg=$(tail -n 500 "$transcript_path" 2>/dev/null | \
-        jq -r 'select(.type == "user") | .message.content | select(type == "string")' 2>/dev/null | \
-        tail -1)
+        jq -rs '[.[] | select(.type == "user") | .message.content | select(type == "string")] | last // empty' 2>/dev/null)
 
     if [[ -n "$last_user_msg" ]]; then
         # Handle slash commands: extract args or command name
