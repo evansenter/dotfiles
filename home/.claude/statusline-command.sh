@@ -39,8 +39,12 @@ fi
 # Associated PR indicator (if branch has an open PR)
 pr_display=""
 if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
-    # Check for associated PR (timeout after 2s to avoid blocking)
-    pr_number=$(cd "$cwd" && timeout 2 gh pr view --json number -q .number 2>/dev/null)
+    # Check for associated PR (use timeout on Linux, skip on macOS)
+    if command -v timeout &>/dev/null; then
+        pr_number=$(cd "$cwd" && timeout 2 gh pr view --json number -q .number 2>/dev/null)
+    else
+        pr_number=$(cd "$cwd" && gh pr view --json number -q .number 2>/dev/null)
+    fi
     if [[ -n "$pr_number" ]]; then
         pr_display=" ${GREEN}#${pr_number}${RESET}"
     fi
