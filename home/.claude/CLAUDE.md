@@ -199,9 +199,9 @@ Standard event types for consistency across commands:
 | MCP tools unavailable | Event bus server not running | Check LaunchAgent: `launchctl list | grep event-bus` |
 | Registration fails | Server not configured | Verify MCP config in Claude Code settings |
 | Events not received | Wrong channel or not subscribed | Check session is registered; use `list_sessions` |
-| Stale/zombie sessions | Previous session didn't unregister | Auto-expire after 5 min; use `list_sessions` to check |
+| Stale/zombie sessions | Previous session didn't unregister | Local sessions cleaned on PID death; remote after 7 days |
 
-**Manual cleanup:** Sessions auto-expire 5 minutes after last heartbeat. The `get_events` call refreshes the heartbeat. To see stale sessions, run `list_sessions` - expired ones won't appear.
+**Session cleanup:** Local sessions with dead PIDs are cleaned immediately via liveness checks. Remote sessions expire after 7 days of inactivity. The `get_events` and `publish_event` calls auto-refresh the heartbeat.
 
 **Availability detection:** Use `list_sessions()` as a lightweight health check before relying on event bus features. If it fails, gracefully skip event-bus-dependent functionality.
 
