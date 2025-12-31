@@ -274,10 +274,6 @@ generate_suggestions() {
   git_status_count=$(awk -F'\t' '$2 == "Bash" && $3 ~ /^git status/' "$TOOL_CALLS" | wc -l | tr -d ' ')
   git_diff_count=$(awk -F'\t' '$2 == "Bash" && $3 ~ /^git diff/' "$TOOL_CALLS" | wc -l | tr -d ' ')
 
-  # Ensure numeric values
-  git_status_count=${git_status_count:-0}
-  git_diff_count=${git_diff_count:-0}
-
   if [[ $git_status_count -gt 5 && $git_diff_count -gt 5 ]]; then
     suggestions+="  ${YELLOW}●${RESET} High-value: You run 'git status' ($git_status_count×) and 'git diff' ($git_diff_count×) frequently\n"
     suggestions+="    → Consider creating a '/git-summary' command that combines both\n\n"
@@ -286,10 +282,6 @@ generate_suggestions() {
   # Check for repeated tool usage (potential friction)
   bash_count=$(awk -F'\t' '$2 == "Bash"' "$TOOL_CALLS" | wc -l | tr -d ' ')
   total_count=$(wc -l < "$TOOL_CALLS" | tr -d ' ')
-
-  # Ensure numeric values
-  bash_count=${bash_count:-0}
-  total_count=${total_count:-1}  # Avoid division by zero
 
   if [[ $total_count -gt 0 ]]; then
     local bash_pct=$((bash_count * 100 / total_count))
