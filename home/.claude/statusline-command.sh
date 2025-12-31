@@ -36,6 +36,70 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     fi
 fi
 
+# Get repo URL for hyperlinks (used by directory, PR, and issues)
+repo_url=""
+if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
+    repo_url=$(cd "$cwd" && gh repo view --json url -q .url 2>/dev/null)
+fi
+
+# Associated PR or Issue indicator
+pr_display=""
+issue_display=""
+if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
+    # Get current branch for PR and issue lookups
+    branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
+
+    # Check for associated PRs (supports multiple PRs to different bases)
+    if [[ -n "$branch" ]]; then
+        pr_list=$(cd "$cwd" && gh pr list --head "$branch" --json number,url -q '.[] | [.number, .url] | @tsv' 2>/dev/null)
+        if [[ -n "$pr_list" ]]; then
+            pr_links=""
+            link_end=$'\e]8;;\e\\'
+            while IFS=$'\t' read -r pr_number pr_url; do
+                link_start=$'\e]8;;'"${pr_url}"$'\e\\'
+                if [[ -n "$pr_links" ]]; then
+                    pr_links="${pr_links},${link_start}#${pr_number}${link_end}"
+                else
+                    pr_links="${link_start}#${pr_number}${link_end}"
+                fi
+            done <<< "$pr_list"
+            pr_display=" ${GREEN}${pr_links}${RESET}"
+        fi
+    fi
+
+    # Check for linked issues - first from PR body, then from branch name
+    issue_nums=""
+
+    # 1. If PR exists, check body for issue refs (Fixes #N, Closes #N, etc.)
+    if [[ -n "$pr_list" ]]; then
+        pr_body=$(cd "$cwd" && gh pr view --json body -q '.body' 2>/dev/null)
+        if [[ -n "$pr_body" ]]; then
+            issue_nums=$(echo "$pr_body" | grep -oiE '(fixes|closes|resolves|addresses) #[0-9]+' | grep -oE '[0-9]+' | sort -u)
+        fi
+    fi
+
+    # 2. Fall back to branch name with tight pattern (require issue-related prefix)
+    if [[ -z "$issue_nums" ]] && [[ -n "$branch" ]]; then
+        # Only match: issue-42, fix-42, bug-42, feat-42, feature-42
+        issue_nums=$(echo "$branch" | grep -oE '(issue|fix|bug|feat|feature|closes|resolves)[-/][0-9]+' | grep -oE '[0-9]+' | sort -u)
+    fi
+
+    if [[ -n "$issue_nums" ]] && [[ -n "$repo_url" ]]; then
+        issue_links=""
+        link_end=$'\e]8;;\e\\'
+        for issue_num in $issue_nums; do
+            issue_url="${repo_url}/issues/${issue_num}"
+            link_start=$'\e]8;;'"${issue_url}"$'\e\\'
+            if [[ -n "$issue_links" ]]; then
+                issue_links="${issue_links},${link_start}#${issue_num}${link_end}"
+            else
+                issue_links="${link_start}#${issue_num}${link_end}"
+            fi
+        done
+        issue_display=" ${CYAN}→${issue_links}${RESET}"
+    fi
+fi
+
 # Context window percentage
 context_display=""
 if [[ "$size" =~ ^[0-9]+$ ]] && [[ "$current" =~ ^[0-9]+$ ]] && [ "$size" -gt 0 ]; then
@@ -46,16 +110,32 @@ fi
 # Last user message context (truncated to ~10 words)
 user_context=""
 if [[ -n "$transcript_path" ]] && [[ -r "$transcript_path" ]]; then
-    # Get last user message with string content (not tool result)
+    # Get last user message with string content (not tool result or system message)
     # User messages are infrequent (mostly tool results), so scan more lines
     # but still limit for performance on very long sessions
+    # Use jq slurp to get the actual last string message, avoiding line-based issues
+    # Filter out continuation summaries which start with "This session is being continued"
     last_user_msg=$(tail -n 500 "$transcript_path" 2>/dev/null | \
-        jq -r 'select(.type == "user") | .message.content | select(type == "string")' 2>/dev/null | \
-        tail -1)
+        jq -rs '[.[] | select(.type == "user") | .message.content | select(type == "string") | select(startswith("This session is being continued") | not)] | last // empty' 2>/dev/null)
 
     if [[ -n "$last_user_msg" ]]; then
+        # Handle slash commands: extract args or command name
+        cleaned_msg=""
+        if [[ "$last_user_msg" == *"<command-args>"* ]]; then
+            # Extract content between <command-args> and </command-args>
+            cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed -n 's/.*<command-args>\(.*\)<\/command-args>.*/\1/p')
+        fi
+        # If no args (empty or missing), try command name
+        if [[ -z "$cleaned_msg" ]] && [[ "$last_user_msg" == *"<command-name>"* ]]; then
+            cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed -n 's/.*<command-name>\(.*\)<\/command-name>.*/\1/p')
+        fi
+        # If still empty, use plain message (strip XML tags and system preambles)
+        if [[ -z "$cleaned_msg" ]]; then
+            cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed 's/<[^>]*>//g' | sed '/^Caveat:/d' | sed '/^$/d' | tail -1)
+        fi
+
         # Truncate to ~10 words, lowercase, add ellipsis if truncated
-        truncated=$(printf '%s\n' "$last_user_msg" | awk '{
+        truncated=$(printf '%s\n' "$cleaned_msg" | awk '{
             gsub(/\n/, " ")
             words = ""
             for (i=1; i<=NF && i<=10; i++) {
@@ -75,9 +155,20 @@ else
     model_display="${GRAY}(unknown model)${RESET}"
 fi
 
-# Build status line: directory model git_status context user_context
+# Build status line: directory pr issue model git_status context user_context
 dir_name="${cwd##*/}"
+
+# Make directory a clickable link to repo if available
+if [[ -n "$repo_url" ]]; then
+    link_start=$'\e]8;;'"${repo_url}"$'\e\\'
+    link_end=$'\e]8;;\e\\'
+    dir_display="${CYAN}${link_start}${dir_name}${link_end}${RESET}"
+else
+    dir_display="${CYAN}${dir_name}${RESET}"
+fi
+
 printf "%s%s%s %s%s%s%s" \
-    "$CYAN" "$dir_name" "$RESET" \
+    "$dir_display" \
+    "$pr_display" "$issue_display" \
     "$model_display" \
     "$git_status" "$context_display" "$user_context"
