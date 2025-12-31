@@ -158,6 +158,7 @@ Commands broadcast events to coordinate with parallel sessions. **Broadcasts are
 
 - `/session-status` - Show active sessions and recent events
 - `/status-report` - Includes event bus activity in report
+- `/learnings` - Query historical discoveries (gotchas, patterns, flaky tests)
 
 ### Direct Messaging
 
@@ -185,6 +186,10 @@ Standard event types for consistency across commands:
 | `message` | Generic message/announcement | `"Auth feature done, you can integrate now"` |
 | `help_needed` | Request for assistance | `"Need review on auth.ts approach"` |
 | `task_completed` | Significant task finished | `"Feature X is done and merged"` |
+| `gotcha_discovered` | Non-obvious issue found | `"SQLite needs datetime adapters in Python 3.12+"` |
+| `pattern_found` | Useful pattern discovered | `"Use (machine, client_id) as dedup key"` |
+| `test_flaky` | Flaky test identified | `"test_concurrent_writes sometimes fails, safe to retry"` |
+| `workaround_needed` | Temporary fix for known issue | `"Rate limit workaround: batch requests"` |
 
 **Naming conventions:**
 - Use `snake_case` for event types
@@ -226,6 +231,7 @@ Available slash commands (in `~/.claude/commands/`):
 - `/parallel-work` - Manage git worktrees for parallel PR development (start with tmux auto-launch, list, cleanup)
 - `/session-status` - Show active sessions and recent events from the event bus
 - `/broadcast` - Send message to other Claude Code sessions via event bus
+- `/learnings` - Query historical discoveries (gotchas, patterns, flaky tests) from event bus
 - `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (or use `/pr create`)
 - `/commit-commands:clean_gone` - Delete local branches whose remote tracking branch is gone
 
