@@ -58,7 +58,7 @@ Output confirmation:
 **To:** [channel description - "all sessions in dotfiles" / "session dotfiles/issue-48" / "all sessions"]
 **Message:** [message content]
 
-Recipients will see this in their event stream. They can check with `/session-status`.
+Recipients will see this in their event stream. They can check with `/event-bus-status`.
 ```
 
 ### 5. Common Use Cases
