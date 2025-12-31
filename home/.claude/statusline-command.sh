@@ -36,6 +36,16 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     fi
 fi
 
+# Associated PR indicator (if branch has an open PR)
+pr_display=""
+if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
+    # Check for associated PR (timeout after 2s to avoid blocking)
+    pr_number=$(timeout 2 gh pr view --json number -q .number 2>/dev/null)
+    if [[ -n "$pr_number" ]]; then
+        pr_display=" ${GREEN}#${pr_number}${RESET}"
+    fi
+fi
+
 # Context window percentage
 context_display=""
 if [[ "$size" =~ ^[0-9]+$ ]] && [[ "$current" =~ ^[0-9]+$ ]] && [ "$size" -gt 0 ]; then
@@ -87,9 +97,9 @@ else
     model_display="${GRAY}(unknown model)${RESET}"
 fi
 
-# Build status line: directory model git_status context user_context
+# Build status line: directory model pr git_status context user_context
 dir_name="${cwd##*/}"
-printf "%s%s%s %s%s%s%s" \
+printf "%s%s%s %s%s%s%s%s" \
     "$CYAN" "$dir_name" "$RESET" \
     "$model_display" \
-    "$git_status" "$context_display" "$user_context"
+    "$pr_display" "$git_status" "$context_display" "$user_context"
