@@ -106,7 +106,7 @@ trap 'rm -f "$TOOL_CALLS" "$PROJECT_STATS"' EXIT
 # Process log files (handle spaces in paths)
 while IFS= read -r log_file; do
   [[ -z "$log_file" ]] && continue
-  # Extract project name from log path (keep encoded form - decoding is lossy for paths with dashes)
+  # Extract project name from log path (encoded form with leading dash stripped)
   project_name=$(echo "$log_file" | sed "s|$LOG_DIR/||" | cut -d'/' -f1 | sed 's/^-//')
   call_count=$(extract_tool_calls "$log_file" | tee -a "$TOOL_CALLS" | wc -l | tr -d ' ')
   if [[ $call_count -gt 0 ]]; then
@@ -136,7 +136,7 @@ show_header() {
     echo -e "${CYAN}Project Breakdown${RESET}"
     echo ""
     # Aggregate by project and show percentages
-    awk '{sum[$2]+=$1; total+=$1} END {for(p in sum) printf "  %3d (%2d%%)  %s\n", sum[p], (sum[p]*100/total), p}' "$PROJECT_STATS" | \
+    awk '{sum[$2]+=$1; total+=$1} END {for(p in sum) printf "  %3d (%4.1f%%)  %s\n", sum[p], (sum[p]*100.0/total), p}' "$PROJECT_STATS" | \
       sort -rn | head -10
     echo ""
   fi
@@ -212,20 +212,41 @@ analyze_missing_permissions() {
   echo -e "${CYAN}Commands Needing Permission (not in settings.json)${RESET}"
   echo ""
 
-  # Extract allowed Bash patterns from settings
+  # Extract allowed Bash patterns from settings (patterns like "git status", "gh pr view", etc.)
   local allowed_patterns=$(jq -r '.permissions.allow[]? | select(startswith("Bash(")) | sub("^Bash\\("; "") | sub(":\\*\\)$"; "")' "$settings_file" 2>/dev/null | sort -u)
 
-  # Get unique first-word commands from Bash calls
-  local used_commands=$(awk -F'\t' '$2 == "Bash" {print $3}' "$TOOL_CALLS" | awk '{print $1}' | sort -u)
+  # Get unique command prefixes from Bash calls (first two words, or first word if only one)
+  local used_commands=$(awk -F'\t' '$2 == "Bash" {
+    # Extract first two words (or first word if only one)
+    split($3, words, " ")
+    if (words[2] != "") print words[1]" "words[2]
+    else print words[1]
+  }' "$TOOL_CALLS" | sort -u)
 
   # Find commands not covered by allowed patterns
   local found_missing=0
   while IFS= read -r cmd; do
-    # Skip empty
+    # Skip empty or command substitution artifacts
     [[ -z "$cmd" ]] && continue
-    # Check if command matches any allowed pattern
-    if ! echo "$allowed_patterns" | grep -qx "$cmd"; then
-      # Use index() for prefix matching (avoids regex escaping issues)
+    [[ "$cmd" == *'$('* ]] && continue
+    [[ "$cmd" == *'=('* ]] && continue
+
+    # Check if any allowed pattern matches this command prefix
+    # A command is allowed if:
+    # 1. It exactly matches a pattern, OR
+    # 2. The command extends a pattern (cmd starts with pattern), OR
+    # 3. A pattern extends the command (pattern starts with cmd - means specific subcommands are allowed)
+    local is_allowed=0
+    while IFS= read -r pattern; do
+      [[ -z "$pattern" ]] && continue
+      if [[ "$cmd" == "$pattern" ]] || [[ "$cmd" == "$pattern "* ]] || [[ "$pattern" == "$cmd "* ]]; then
+        is_allowed=1
+        break
+      fi
+    done <<< "$allowed_patterns"
+
+    if [[ $is_allowed -eq 0 ]]; then
+      # Count occurrences using prefix match
       local count=$(awk -F'\t' -v cmd="$cmd" '$2 == "Bash" && index($3, cmd) == 1' "$TOOL_CALLS" | wc -l | tr -d ' ')
       if [[ $count -ge 3 ]]; then
         echo -e "  ${YELLOW}$cmd${RESET}: $count calls"
@@ -240,16 +261,14 @@ analyze_missing_permissions() {
   echo ""
 }
 
-# Generate suggestions
+# Generate suggestions (only prints if there are suggestions to show)
 generate_suggestions() {
-  echo -e "${CYAN}Suggested Workflow Improvements${RESET}"
-  echo ""
-
   # Initialize counters with defaults to avoid unbound variable errors
   local git_status_count=0
   local git_diff_count=0
   local bash_count=0
   local total_count=0
+  local suggestions=""
 
   # High-frequency manual git commands
   git_status_count=$(awk -F'\t' '$2 == "Bash" && $3 ~ /^git status/' "$TOOL_CALLS" | wc -l | tr -d ' ')
@@ -260,9 +279,8 @@ generate_suggestions() {
   git_diff_count=${git_diff_count:-0}
 
   if [[ $git_status_count -gt 5 && $git_diff_count -gt 5 ]]; then
-    echo -e "  ${YELLOW}●${RESET} High-value: You run 'git status' ($git_status_count×) and 'git diff' ($git_diff_count×) frequently"
-    echo "    → Consider creating a '/git-summary' command that combines both"
-    echo ""
+    suggestions+="  ${YELLOW}●${RESET} High-value: You run 'git status' ($git_status_count×) and 'git diff' ($git_diff_count×) frequently\n"
+    suggestions+="    → Consider creating a '/git-summary' command that combines both\n\n"
   fi
 
   # Check for repeated tool usage (potential friction)
@@ -277,10 +295,16 @@ generate_suggestions() {
     local bash_pct=$((bash_count * 100 / total_count))
 
     if [[ $bash_pct -gt 80 ]]; then
-      echo -e "  ${YELLOW}●${RESET} Heavy Bash usage: ${bash_pct}% of tool calls are Bash commands"
-      echo "    → Consider which frequent commands could become dedicated tools"
-      echo ""
+      suggestions+="  ${YELLOW}●${RESET} Heavy Bash usage: ${bash_pct}% of tool calls are Bash commands\n"
+      suggestions+="    → Consider which frequent commands could become dedicated tools\n\n"
     fi
+  fi
+
+  # Only print header and suggestions if we have any
+  if [[ -n "$suggestions" ]]; then
+    echo -e "${CYAN}Suggested Workflow Improvements${RESET}"
+    echo ""
+    echo -e "$suggestions"
   fi
 }
 
