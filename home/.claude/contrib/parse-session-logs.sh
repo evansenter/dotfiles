@@ -98,22 +98,53 @@ extract_tool_calls() {
   ' "$log_file" 2>/dev/null || true
 }
 
-# Collect all tool calls
+# Collect all tool calls with project info
 TOOL_CALLS=$(mktemp)
-for log_file in $LOG_FILES; do
-  extract_tool_calls "$log_file" >> "$TOOL_CALLS"
-done
+PROJECT_STATS=$(mktemp)
+trap 'rm -f "$TOOL_CALLS" "$PROJECT_STATS"' EXIT
+
+# Process log files (handle spaces in paths)
+while IFS= read -r log_file; do
+  [[ -z "$log_file" ]] && continue
+  # Extract project name from log path (encoded form with leading dash stripped)
+  project_name=$(echo "$log_file" | sed "s|$LOG_DIR/||" | cut -d'/' -f1 | sed 's/^-//')
+  call_count=$(extract_tool_calls "$log_file" | tee -a "$TOOL_CALLS" | wc -l | tr -d ' ')
+  if [[ $call_count -gt 0 ]]; then
+    echo "$call_count $project_name" >> "$PROJECT_STATS"
+  fi
+done <<< "$LOG_FILES"
 
 # Check if we got any data
 if [[ ! -s "$TOOL_CALLS" ]]; then
   echo "No tool usage found in the last $DAYS days"
-  rm "$TOOL_CALLS"
-  exit 0
+  exit 0  # trap handles cleanup
 fi
+
+# Show date range and project breakdown
+show_header() {
+  # Get date range from tool calls (sort by timestamp to get accurate range)
+  local oldest=$(awk -F'\t' '{print $1}' "$TOOL_CALLS" | sort | head -1 | cut -dT -f1)
+  local newest=$(awk -F'\t' '{print $1}' "$TOOL_CALLS" | sort | tail -1 | cut -dT -f1)
+  local total=$(wc -l < "$TOOL_CALLS" | tr -d ' ')
+
+  echo -e "${CYAN}Session Log Analysis${RESET}"
+  echo -e "${GRAY}Analyzing $total tool calls from $oldest to $newest ($DAYS days, $SCOPE scope)${RESET}"
+  echo ""
+
+  # Project breakdown (only for global scope or if multiple projects)
+  if [[ "$SCOPE" == "global" ]] && [[ -s "$PROJECT_STATS" ]]; then
+    echo -e "${CYAN}Project Breakdown${RESET}"
+    echo ""
+    # Aggregate by project and show percentages
+    awk '{sum[$2]+=$1; total+=$1} END {for(p in sum) printf "  %3d (%4.1f%%)  %s\n", sum[p], (sum[p]*100.0/total), p}' "$PROJECT_STATS" | \
+      sort -rn | head -10
+    echo ""
+  fi
+}
 
 # Analyze frequency
 analyze_frequency() {
-  echo -e "${CYAN}Tool Frequency (last $DAYS days, $SCOPE scope)${RESET}"
+  echo -e "${CYAN}Tool Frequency${RESET}"
   echo ""
 
   # Count by tool name
@@ -173,48 +204,110 @@ analyze_skills() {
   fi
 }
 
-# Generate suggestions
-generate_suggestions() {
-  echo -e "${CYAN}Suggested Workflow Improvements${RESET}"
+# Compare against settings.json for missing permissions
+analyze_missing_permissions() {
+  local settings_file="$HOME/.claude/settings.json"
+  [[ ! -f "$settings_file" ]] && return
+
+  echo -e "${CYAN}Commands Needing Permission (not in settings.json)${RESET}"
   echo ""
 
+  # Extract allowed Bash patterns from settings (patterns like "git status", "gh pr view", etc.)
+  local allowed_patterns=$(jq -r '.permissions.allow[]? | select(startswith("Bash(")) | sub("^Bash\\("; "") | sub(":\\*\\)$"; "")' "$settings_file" 2>/dev/null | sort -u)
+
+  # Get unique command prefixes from Bash calls (first two words, or first word if only one)
+  local used_commands=$(awk -F'\t' '$2 == "Bash" {
+    # Extract first two words (or first word if only one)
+    split($3, words, " ")
+    if (words[2] != "") print words[1]" "words[2]
+    else print words[1]
+  }' "$TOOL_CALLS" | sort -u)
+
+  # Find commands not covered by allowed patterns
+  local found_missing=0
+  while IFS= read -r cmd; do
+    # Skip empty or command substitution artifacts
+    [[ -z "$cmd" ]] && continue
+    [[ "$cmd" == *'$('* ]] && continue
+    [[ "$cmd" == *'=('* ]] && continue
+
+    # Check if any allowed pattern matches this command prefix
+    # A command is allowed if:
+    # 1. It exactly matches a pattern, OR
+    # 2. The command extends a pattern (cmd starts with pattern), OR
+    # 3. A pattern extends the command (pattern starts with cmd - means specific subcommands are allowed)
+    local is_allowed=0
+    while IFS= read -r pattern; do
+      [[ -z "$pattern" ]] && continue
+      if [[ "$cmd" == "$pattern" ]] || [[ "$cmd" == "$pattern "* ]] || [[ "$pattern" == "$cmd "* ]]; then
+        is_allowed=1
+        break
+      fi
+    done <<< "$allowed_patterns"
+
+    if [[ $is_allowed -eq 0 ]]; then
+      # Count occurrences using prefix match
+      local count=$(awk -F'\t' -v cmd="$cmd" '$2 == "Bash" && index($3, cmd) == 1' "$TOOL_CALLS" | wc -l | tr -d ' ')
+      if [[ $count -ge 3 ]]; then
+        echo -e "  ${YELLOW}$cmd${RESET}: $count calls"
+        found_missing=1
+      fi
+    fi
+  done <<< "$used_commands"
+
+  if [[ $found_missing -eq 0 ]]; then
+    echo -e "  ${GREEN}All frequent commands are permitted${RESET}"
+  fi
+  echo ""
+}
+
+# Generate suggestions (only prints if there are suggestions to show)
+generate_suggestions() {
+  # Initialize counters with defaults to avoid unbound variable errors
+  local git_status_count=0
+  local git_diff_count=0
+  local bash_count=0
+  local total_count=0
+  local suggestions=""
+
   # High-frequency manual git commands
-  local git_status_count=$(awk -F'\t' '$2 == "Bash" && $3 ~ /^git status/' "$TOOL_CALLS" | wc -l | tr -d ' ')
-  local git_diff_count=$(awk -F'\t' '$2 == "Bash" && $3 ~ /^git diff/' "$TOOL_CALLS" | wc -l | tr -d ' ')
+  git_status_count=$(awk -F'\t' '$2 == "Bash" && $3 ~ /^git status/' "$TOOL_CALLS" | wc -l | tr -d ' ')
+  git_diff_count=$(awk -F'\t' '$2 == "Bash" && $3 ~ /^git diff/' "$TOOL_CALLS" | wc -l | tr -d ' ')
 
   if [[ $git_status_count -gt 5 && $git_diff_count -gt 5 ]]; then
-    echo -e "  ${YELLOW}●${RESET} High-value: You run 'git status' ($git_status_count×) and 'git diff' ($git_diff_count×) frequently"
-    echo "    → Consider creating a '/git-summary' command that combines both"
-    echo ""
-  fi
-
-  # Common sequences that could be automated
-  local read_edit_count=$(grep "Read → Edit" "$TOOL_CALLS" 2>/dev/null | wc -l | tr -d ' ')
-  if [[ $read_edit_count -gt 3 ]]; then
-    echo -e "  ${YELLOW}●${RESET} Pattern: Read → Edit sequence appears ${read_edit_count}× in your workflow"
-    echo "    → This is expected for file editing, no action needed"
-    echo ""
+    suggestions+="  ${YELLOW}●${RESET} High-value: You run 'git status' ($git_status_count×) and 'git diff' ($git_diff_count×) frequently\n"
+    suggestions+="    → Consider creating a '/git-summary' command that combines both\n\n"
   fi
 
   # Check for repeated tool usage (potential friction)
-  local bash_count=$(awk -F'\t' '$2 == "Bash"' "$TOOL_CALLS" | wc -l | tr -d ' ')
-  local total_count=$(wc -l < "$TOOL_CALLS" | tr -d ' ')
-  local bash_pct=$((bash_count * 100 / total_count))
+  bash_count=$(awk -F'\t' '$2 == "Bash"' "$TOOL_CALLS" | wc -l | tr -d ' ')
+  total_count=$(wc -l < "$TOOL_CALLS" | tr -d ' ')
 
-  if [[ $bash_pct -gt 80 ]]; then
-    echo -e "  ${YELLOW}●${RESET} Heavy Bash usage: ${bash_pct}% of tool calls are Bash commands"
-    echo "    → Consider which frequent commands could become dedicated tools"
+  if [[ $total_count -gt 0 ]]; then
+    local bash_pct=$((bash_count * 100 / total_count))
+
+    if [[ $bash_pct -gt 80 ]]; then
+      suggestions+="  ${YELLOW}●${RESET} Heavy Bash usage: ${bash_pct}% of tool calls are Bash commands\n"
+      suggestions+="    → Consider which frequent commands could become dedicated tools\n\n"
+    fi
+  fi
+
+  # Only print header and suggestions if we have any
+  if [[ -n "$suggestions" ]]; then
+    echo -e "${CYAN}Suggested Workflow Improvements${RESET}"
     echo ""
+    echo -e "$suggestions"
   fi
 }
 
 # Run analysis
 echo ""
+show_header
 analyze_frequency
 analyze_bash_commands
 analyze_sequences
 analyze_skills
+analyze_missing_permissions
 generate_suggestions
 
-# Cleanup
-rm "$TOOL_CALLS"
+# Cleanup handled by EXIT trap

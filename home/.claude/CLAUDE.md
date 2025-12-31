@@ -44,6 +44,7 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 - PRs: `gh pr view/list/checks/merge/create/edit/review`
 - Issues: `gh issue list/view/close/create/edit/comment`
 - CI: `gh run view/list/rerun/watch`
+- Other: `gh api`, `gh repo view`
 
 **Build Tools:**
 - `make`, `cargo check/build/test/clippy/fmt/run/doc/add`
@@ -247,9 +248,12 @@ OPTIONS:
 ```
 
 **Output:**
+- Date range and total tool calls analyzed
+- Project breakdown (global scope) - shows which repos contributed
 - Tool frequency (Bash, Read, Edit, MCP tools, Skills)
 - Top commands (git, gh, cargo, etc.)
 - Common tool sequences (workflow patterns)
+- Commands needing permission (compares usage against settings.json)
 - Data-driven improvement suggestions
 
 **Example:**

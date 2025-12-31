@@ -40,6 +40,8 @@
       "Bash(gh run list:*)",
       "Bash(gh run rerun:*)",
       "Bash(gh run watch:*)",
+      "Bash(gh api:*)",
+      "Bash(gh repo view:*)",
       "Bash(make:*)",
       "Bash(cargo check:*)",
       "Bash(cargo build:*)",

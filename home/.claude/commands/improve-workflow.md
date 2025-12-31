@@ -39,6 +39,8 @@ Run the appropriate command based on whether `--global` was in the arguments.
 
 This shows tool frequency, common command sequences, and patterns that could inform improvements.
 
+**Important**: Session logs are historical and may reflect outdated workflows. Patterns from days ago may have already been addressed by recent changes. The script now shows date ranges and compares against current settings.json - use this to filter stale recommendations.
+
 ### Git History Analysis
 
 ```bash
