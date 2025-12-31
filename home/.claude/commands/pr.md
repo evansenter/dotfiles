@@ -191,7 +191,32 @@ Always include a final open-ended question for any additional comments.
   - **Note**: Run `gh label list` to check existing repo labels. Prefer existing labels, but suggest new ones if appropriate and notify the user before creating them.
 - **Elaborate**: Explain the topic, then re-ask
 
-#### 8. Re-check
+#### 8. Post Feedback Resolution (if PR exists)
+
+If a PR already exists for this branch, post a structured comment summarizing how feedback was addressed. This helps automated reviewers (like claude-review) avoid re-raising resolved issues.
+
+```bash
+PR_NUM=$(gh pr view --json number -q .number 2>/dev/null)
+if [ -n "$PR_NUM" ]; then
+  gh pr comment "$PR_NUM" --body "$(cat <<'EOF'
+## Feedback Addressed (Local Analysis)
+
+### Implemented
+- [Critical/Important/Suggestion] item - how it was fixed
+
+### Skipped
+- [Suggestion] item - reason for skipping
+
+### Deferred
+- [Suggestion] item - tracked in #issue_number
+EOF
+)"
+fi
+```
+
+Only include sections that have items. Skip this step if no PR exists yet.
+
+#### 9. Re-check
 
 After implementing fixes, run `/pr local` again to verify changes are clean.
 
@@ -327,23 +352,36 @@ Always include a final open-ended question for any additional comments.
   - **Note**: Run `gh label list` to check existing repo labels. Prefer existing labels, but suggest new ones if appropriate and notify the user before creating them.
 - **Elaborate**: Explain the topic, then re-ask
 
-#### 7. Push and Re-check
+#### 7. Post Feedback Resolution
+
+Post a structured comment summarizing how all feedback was addressed. This is **required** so automated reviewers (like claude-review) don't re-raise resolved issues on subsequent runs.
+
+```bash
+gh pr comment "${PR_NUM}" --body "$(cat <<'EOF'
+## Feedback Addressed
+
+### Implemented
+- [Critical] `file.rs:42` - Fixed null check issue
+- [Important] `api.rs:89` - Added error handling
+
+### Skipped
+- [Suggestion] `utils.rs:120` - Code style preference, not changing
+
+### Deferred
+- [Suggestion] Refactor auth module - tracked in #123
+EOF
+)"
+```
+
+Only include sections that have items. Every item from the review must appear in exactly one section.
+
+#### 8. Push and Re-check
 
 After implementing:
 1. Run quality gates (linter, formatter, tests)
 2. Commit with message referencing feedback addressed
 3. Push changes
 4. Run `/pr local` to verify changes are clean
-
-#### 8. Reply to Reviewers (Optional)
-
-If feedback was addressed, consider replying to acknowledge:
-
-```bash
-gh pr comment "${PR_NUM}" --body "Addressed feedback: <summary of changes>"
-```
-
-Or reply to specific review comments via the GitHub UI.
 
 ## Key Principle
 

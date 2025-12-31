@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+env:
+  # Centralized prompt - edit in dotfiles repo, all repos pick up changes
+  PROMPT_URL: https://raw.githubusercontent.com/evansenter/dotfiles/main/home/.claude/contrib/prompts/claude-review.md
+
 jobs:
   claude-review:
     runs-on: ubuntu-latest
@@ -19,6 +23,15 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Fetch review prompt
+        run: |
+          curl -sfL "$PROMPT_URL" > /tmp/review-prompt.md
+          if [ ! -s /tmp/review-prompt.md ]; then
+            echo "Failed to fetch prompt from $PROMPT_URL"
+            exit 1
+          fi
+          echo "Fetched review prompt ($(wc -l < /tmp/review-prompt.md) lines)"
+
       - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
@@ -26,16 +39,10 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             REPO: ${{ github.repository }}
-            PR NUMBER: ${{ github.event.pull_request.number }}
+            PR_NUMBER: ${{ github.event.pull_request.number }}
 
-            Please review this pull request and provide feedback on:
-            - Code quality and best practices
-            - Potential bugs or issues
-            - Shell script correctness (shellcheck-style issues)
-            - Security concerns (especially for shell scripts)
+            First, read the review instructions from /tmp/review-prompt.md using your Read tool.
+            Then follow those instructions to review this PR.
 
-            Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
-
-            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
-
-          claude_args: '--model opus --allowed-tools "Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*)"'
+            Use the REPO and PR_NUMBER variables provided above.
+          claude_args: '--model opus --allowed-tools "Read,Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh api:*)"'
