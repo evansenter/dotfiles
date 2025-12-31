@@ -1,5 +1,14 @@
 # Claude Code Review Prompt
 
+<!--
+Required tools (must be in workflow's claude_args --allowed-tools):
+- Read                    - Read prompt file and CLAUDE.md
+- Bash(gh pr view:*)      - Get PR details and comments
+- Bash(gh pr diff:*)      - Get PR diff
+- Bash(gh pr comment:*)   - Post review comments
+- Bash(gh api:*)          - Fetch "Feedback Addressed" comments
+-->
+
 You are reviewing a pull request. Be thorough and constructive.
 
 ## Review Process

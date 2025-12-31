@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: write  # Needed to post comments
       issues: read
       id-token: write
 
@@ -25,13 +25,17 @@ jobs:
 
       - name: Fetch review prompt
         id: prompt
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if curl -sfL "$PROMPT_URL" > /tmp/review-prompt.md && [ -s /tmp/review-prompt.md ]; then
             echo "Fetched review prompt ($(wc -l < /tmp/review-prompt.md) lines)"
             echo "use_file=true" >> "$GITHUB_OUTPUT"
           else
-            echo "Prompt not available at $PROMPT_URL, using inline fallback"
+            echo "::warning::Failed to fetch centralized prompt from $PROMPT_URL - using fallback"
             echo "use_file=false" >> "$GITHUB_OUTPUT"
+            # Post warning comment on PR
+            gh pr comment ${{ github.event.pull_request.number }} --body "⚠️ **Claude Review Warning**: Could not fetch centralized review prompt from \`$PROMPT_URL\`. Using fallback inline prompt. This may result in less thorough reviews."
           fi
 
       - name: Run Claude Code Review
@@ -46,4 +50,5 @@ jobs:
             ${{ steps.prompt.outputs.use_file == 'true' && 'First, read the review instructions from /tmp/review-prompt.md using your Read tool. Then follow those instructions to review this PR.' || 'Review this PR for code quality, bugs, security issues, and adherence to project conventions (check CLAUDE.md). Check for previous "Feedback Addressed" comments to avoid re-raising resolved issues. Be strict: REQUEST_CHANGES for any issues found, only APPROVE if genuinely ready to merge. Post your review using gh pr comment.' }}
 
             Use the REPO and PR_NUMBER variables provided above.
-          claude_args: '--model opus --allowed-tools "Read,Bash(gh issue view:*),Bash(gh search:*),Bash(gh issue list:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr list:*),Bash(gh api:*)"'
+          # Tools required by the centralized prompt (see contrib/prompts/claude-review.md)
+          claude_args: '--model opus --allowed-tools "Read,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh api:*)"'
