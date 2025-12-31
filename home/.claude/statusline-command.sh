@@ -54,8 +54,20 @@ if [[ -n "$transcript_path" ]] && [[ -r "$transcript_path" ]]; then
         tail -1)
 
     if [[ -n "$last_user_msg" ]]; then
+        # Handle slash commands: extract args or command name
+        if [[ "$last_user_msg" == *"<command-args>"* ]]; then
+            # Extract content between <command-args> and </command-args>
+            cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed -n 's/.*<command-args>\(.*\)<\/command-args>.*/\1/p')
+        elif [[ "$last_user_msg" == *"<command-name>"* ]]; then
+            # No args, extract command name
+            cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed -n 's/.*<command-name>\(.*\)<\/command-name>.*/\1/p')
+        else
+            # Plain message - strip any XML tags
+            cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed 's/<[^>]*>//g')
+        fi
+
         # Truncate to ~10 words, lowercase, add ellipsis if truncated
-        truncated=$(printf '%s\n' "$last_user_msg" | awk '{
+        truncated=$(printf '%s\n' "$cleaned_msg" | awk '{
             gsub(/\n/, " ")
             words = ""
             for (i=1; i<=NF && i<=10; i++) {
