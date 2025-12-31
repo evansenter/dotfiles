@@ -35,27 +35,32 @@ If `ARG` is `resume`:
 
 1. **Check for existing todos**:
    - Read the current todo list
-   - If empty, inform user: "No active work session. Start one with `/work <issue-number>` or `/work \"description\"`"
+   - Filter to todos with `[work:*]` prefix pattern (ignore non-work todos)
+   - If no `[work:*]` todos exist, inform user: "No active work session. Start one with `/work <issue-number>` or `/work \"description\"`"
 
-2. **Display current state**:
+2. **Extract issue context**:
+   - Parse the issue number or `adhoc` from the `[work:N]` prefix
+   - For issue-based work, optionally fetch issue title for display
+
+3. **Display current state**:
    ```markdown
-   ## Work Session Status
+   ## Work Session Status: #42 - Add dark mode toggle
 
    **Completed:**
-   - [x] Implement: Add validation function
-   - [x] Implement: Update tests
+   - [x] [work:42] Implement: Add validation function
+   - [x] [work:42] Implement: Update tests
 
    **In Progress:**
-   - [ ] CHECKPOINT: Run /pr local before pushing
+   - [ ] [work:42] Checkpoint: Run /pr local before pushing
 
    **Remaining:**
-   - [ ] CHECKPOINT: Create PR with /pr create
-   - [ ] CHECKPOINT: Monitor CI with /watch-ci
-   - [ ] CHECKPOINT: Process feedback with /pr remote
-   - [ ] CHECKPOINT: Merge when approved
+   - [ ] [work:42] Checkpoint: Create PR with /pr create
+   - [ ] [work:42] Checkpoint: Monitor CI with /watch-ci
+   - [ ] [work:42] Checkpoint: Process feedback with /pr remote
+   - [ ] [work:42] Checkpoint: Merge when approved
    ```
 
-3. **Continue from current task**: Pick up from the first incomplete item.
+4. **Continue from current task**: Pick up from the first incomplete `[work:*]` item.
 
 ---
 
@@ -65,13 +70,14 @@ If `ARG` is `resume`:
 
 Before starting new work, check if there's already an active `/work` session:
 - Read current todo list
-- Look for todos with `CHECKPOINT:` prefix (indicates active `/work` session)
-- If incomplete checkpoints exist, inform user:
+- Look for todos with `[work:*]` prefix pattern (indicates active `/work` session)
+- If incomplete `[work:*]` todos exist, inform user with the existing issue context:
   ```
-  Active work session exists. Use `/work resume` to continue, or complete current work first.
+  Active work session exists for issue #<N>. Use `/work resume` to continue, or complete current work first.
   ```
 - Exit without creating new todos
-- Note: Other todos without `CHECKPOINT:` prefix don't block new work
+- Note: Other todos without `[work:*]` prefix don't block new work (including subagent todos)
+- Note: Multi-session support (concurrent work on different issues) is out of scope; any `[work:*]` todos block new work
 
 #### 2. Parse Input Type
 
@@ -139,34 +145,38 @@ Use TodoWrite to create the full work plan with both implementation tasks AND wo
 ```json
 {
   "todos": [
-    {"content": "Implement: <task 1>", "status": "pending", "activeForm": "Implementing <task 1>"},
-    {"content": "Implement: <task 2>", "status": "pending", "activeForm": "Implementing <task 2>"},
-    {"content": "CHECKPOINT: Run /pr local before pushing", "status": "pending", "activeForm": "Running /pr local before pushing"},
-    {"content": "CHECKPOINT: Create PR with /pr create", "status": "pending", "activeForm": "Creating PR with /pr create"},
-    {"content": "CHECKPOINT: Monitor CI with /watch-ci", "status": "pending", "activeForm": "Monitoring CI with /watch-ci"},
-    {"content": "CHECKPOINT: Process feedback with /pr remote", "status": "pending", "activeForm": "Processing feedback with /pr remote"},
-    {"content": "CHECKPOINT: Merge when approved", "status": "pending", "activeForm": "Merging when approved"}
+    {"content": "[work:${ISSUE}] Implement: <task 1>", "status": "pending", "activeForm": "Implementing <task 1>"},
+    {"content": "[work:${ISSUE}] Implement: <task 2>", "status": "pending", "activeForm": "Implementing <task 2>"},
+    {"content": "[work:${ISSUE}] Checkpoint: Run /pr local before pushing", "status": "pending", "activeForm": "Running /pr local before pushing"},
+    {"content": "[work:${ISSUE}] Checkpoint: Create PR with /pr create", "status": "pending", "activeForm": "Creating PR with /pr create"},
+    {"content": "[work:${ISSUE}] Checkpoint: Monitor CI with /watch-ci", "status": "pending", "activeForm": "Monitoring CI with /watch-ci"},
+    {"content": "[work:${ISSUE}] Checkpoint: Process feedback with /pr remote", "status": "pending", "activeForm": "Processing feedback with /pr remote"},
+    {"content": "[work:${ISSUE}] Checkpoint: Merge when approved", "status": "pending", "activeForm": "Merging when approved"}
   ]
 }
 ```
+
+Where `${ISSUE}` is:
+- The issue number for issue-based work (e.g., `[work:42]`)
+- `adhoc` for ad-hoc work without an issue number (e.g., `[work:adhoc]`)
 
 #### 6. Display Work Plan
 
 Output the full plan for user visibility:
 
 ```markdown
-## Work Plan: <issue title or description>
+## Work Plan: #42 - Add dark mode toggle
 
 **Implementation Tasks:**
-- [ ] Implement: <task 1>
-- [ ] Implement: <task 2>
+- [ ] [work:42] Implement: <task 1>
+- [ ] [work:42] Implement: <task 2>
 
 **Workflow Checkpoints:**
-- [ ] CHECKPOINT: Run /pr local before pushing
-- [ ] CHECKPOINT: Create PR with /pr create
-- [ ] CHECKPOINT: Monitor CI with /watch-ci
-- [ ] CHECKPOINT: Process feedback with /pr remote
-- [ ] CHECKPOINT: Merge when approved
+- [ ] [work:42] Checkpoint: Run /pr local before pushing
+- [ ] [work:42] Checkpoint: Create PR with /pr create
+- [ ] [work:42] Checkpoint: Monitor CI with /watch-ci
+- [ ] [work:42] Checkpoint: Process feedback with /pr remote
+- [ ] [work:42] Checkpoint: Merge when approved
 
 Starting work on first task...
 ```
@@ -181,38 +191,38 @@ Mark the first task as `in_progress` and start working on it.
 
 When reaching a checkpoint:
 
-#### CHECKPOINT: Run /pr local
+#### Checkpoint: Run /pr local
 
 1. Mark checkpoint as `in_progress`
 2. Run `/pr local` to execute local code analysis
 3. If issues found, add new implementation tasks to fix them
 4. When clean, mark checkpoint as `completed`
 
-#### CHECKPOINT: Create PR with /pr create
+#### Checkpoint: Create PR with /pr create
 
 1. Mark checkpoint as `in_progress`
 2. Run `/pr create` to commit changes and create/update PR
 3. Note the PR number from output (can retrieve later with `gh pr view --json number -q .number`)
 4. Mark checkpoint as `completed`
 
-#### CHECKPOINT: Monitor CI with /watch-ci
+#### Checkpoint: Monitor CI with /watch-ci
 
 1. Mark checkpoint as `in_progress`
 2. Execute: `/watch-ci <PR#>` (runs in background)
 3. Mark checkpoint as `completed` (monitoring continues in background)
 
-#### CHECKPOINT: Process feedback with /pr remote
+#### Checkpoint: Process feedback with /pr remote
 
 1. Mark checkpoint as `in_progress`
 2. Wait for CI to pass (check via `gh pr checks`)
 3. Execute: `/pr remote` to fetch and process reviewer comments
 4. If changes made:
-   - Add new `CHECKPOINT: Run /pr local before pushing` todo (for the iteration)
-   - Add new `CHECKPOINT: Push and re-run CI` todo
+   - Add new `[work:${ISSUE}] Checkpoint: Run /pr local before pushing` todo (for the iteration)
+   - Add new `[work:${ISSUE}] Checkpoint: Push and re-run CI` todo
    - Work through these new checkpoints before returning here
 5. When approved or no feedback, mark checkpoint as `completed`
 
-#### CHECKPOINT: Merge when approved
+#### Checkpoint: Merge when approved
 
 1. Mark checkpoint as `in_progress`
 2. Check PR status: `gh pr view --json state,reviewDecision`
@@ -242,7 +252,7 @@ Issue #42 not found. Check the issue number and try again.
 
 **Already have active work:**
 ```
-Active work session exists. Use `/work resume` to continue, or complete/abandon current work first.
+Active work session exists for issue #<N>. Use `/work resume` to continue, or complete/abandon current work first.
 ```
 
 **Checkpoint failed:**
@@ -262,17 +272,17 @@ Active work session exists. Use `/work resume` to continue, or complete/abandon 
 **Labels:** enhancement, UI
 
 ### Implementation Tasks
-1. Add toggle component to settings
-2. Create dark mode CSS variables
-3. Wire up state management
-4. Add tests for toggle behavior
+1. [work:42] Implement: Add toggle component to settings
+2. [work:42] Implement: Create dark mode CSS variables
+3. [work:42] Implement: Wire up state management
+4. [work:42] Implement: Add tests for toggle behavior
 
 ### Workflow Checkpoints
-5. Run /pr local before pushing
-6. Create PR with /pr create
-7. Monitor CI with /watch-ci
-8. Process feedback with /pr remote
-9. Merge when approved
+5. [work:42] Checkpoint: Run /pr local before pushing
+6. [work:42] Checkpoint: Create PR with /pr create
+7. [work:42] Checkpoint: Monitor CI with /watch-ci
+8. [work:42] Checkpoint: Process feedback with /pr remote
+9. [work:42] Checkpoint: Merge when approved
 
 ---
 
@@ -286,19 +296,19 @@ Starting with task 1: Add toggle component to settings...
 **Progress:** 3/9 complete
 
 ### Completed
-- [x] Add toggle component to settings
-- [x] Create dark mode CSS variables
-- [x] Wire up state management
+- [x] [work:42] Implement: Add toggle component to settings
+- [x] [work:42] Implement: Create dark mode CSS variables
+- [x] [work:42] Implement: Wire up state management
 
 ### Current
-- [ ] Add tests for toggle behavior
+- [ ] [work:42] Implement: Add tests for toggle behavior
 
 ### Remaining
-- [ ] Run /pr local before pushing
-- [ ] Create PR with /pr create
-- [ ] Monitor CI with /watch-ci
-- [ ] Process feedback with /pr remote
-- [ ] Merge when approved
+- [ ] [work:42] Checkpoint: Run /pr local before pushing
+- [ ] [work:42] Checkpoint: Create PR with /pr create
+- [ ] [work:42] Checkpoint: Monitor CI with /watch-ci
+- [ ] [work:42] Checkpoint: Process feedback with /pr remote
+- [ ] [work:42] Checkpoint: Merge when approved
 
 ---
 
