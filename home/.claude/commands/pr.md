@@ -45,7 +45,12 @@ Invoke the `/commit-commands:commit-push-pr` skill to commit outstanding changes
 Skill(commit-commands:commit-push-pr)
 ```
 
-After the skill completes, suggest running `/watch-ci` to monitor CI status.
+**Handle edge cases:**
+- **Nothing to commit**: If working tree is clean, inform user: "No changes to commit. Make changes first or run `/pr local` to review existing code."
+- **Skill fails**: Report the error and suggest manual steps
+
+**After success:**
+Run `/watch-ci` to monitor CI status in background.
 
 ---
 
@@ -59,6 +64,10 @@ Run local code analysis using the pr-review-toolkit.
 git diff --stat HEAD~1 2>/dev/null || git diff --stat main...HEAD
 ```
 
+**Handle edge cases:**
+- **No commits yet**: Use `git diff --stat` (unstaged changes) or `git diff --cached --stat` (staged)
+- **No changes at all**: Inform user: "No changes to analyze. Make changes first."
+
 Output a 2-3 sentence summary of what was changed and why.
 
 #### 2. Run Analysis
@@ -69,14 +78,23 @@ Invoke the pr-review-toolkit skill:
 Skill(pr-review-toolkit:review-pr)
 ```
 
-#### 3. Categorize and Form Opinions
+#### 3. Handle Results
+
+**If no issues found:**
+- Inform user: "No issues found. Code looks clean."
+- Suggest next step: "Ready to create PR? Run `/pr create`"
+- Exit early
+
+**If issues found**, continue to categorize:
+
+#### 4. Categorize and Form Opinions
 
 For each issue found:
 1. **Classify severity**: Critical / Important / Suggestion
 2. **Form opinion**: Agree, Disagree, or Uncertain
 3. **Note reasoning**: Why you think this way given context
 
-#### 4. Display Summary
+#### 5. Display Summary
 
 Output ALL findings ordered by severity (Critical → Important → Suggestion):
 
@@ -96,7 +114,7 @@ Output ALL findings ordered by severity (Critical → Important → Suggestion):
 **Opinion**: Disagree - unlikely to occur
 ```
 
-#### 5. Present via AskUserQuestion
+#### 6. Present via AskUserQuestion
 
 Present ONE question for EACH item, batched in groups of up to 4. Include your opinion in the question text.
 
@@ -142,14 +160,14 @@ Present ONE question for EACH item, batched in groups of up to 4. Include your o
 
 Always include a final open-ended question for any additional comments.
 
-#### 6. Act on User Decisions
+#### 7. Act on User Decisions
 
 - **Implement**: Fix the item immediately
 - **Skip**: Note it was skipped, move on
 - **Defer**: Use `/rfc --create` to create an RFC issue, or create a simpler issue if appropriate
 - **Elaborate**: Explain the topic, then re-ask
 
-#### 7. Re-check
+#### 8. Re-check
 
 After implementing fixes, run `/pr local` again to verify changes are clean.
 
