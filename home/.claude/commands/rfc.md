@@ -40,7 +40,7 @@ From `$ARGUMENTS`, determine the mode:
 Determine the issue number from the argument (extract from URL if needed) or current context:
 
 ```bash
-gh issue view <ISSUE_NUM> --json title,body,number,comments
+gh issue view "${ISSUE_NUM}" --json title,body,number,comments
 ```
 
 Read the issue carefully, including any linked PRs, related issues, and existing comments.
@@ -113,7 +113,7 @@ After receiving user answers:
 
 **If `--post` flag is present:**
 ```bash
-gh issue comment $ISSUE_NUM --body "<response>"
+gh issue comment "${ISSUE_NUM}" --body "<response>"
 ```
 
 Then broadcast to the event bus:
@@ -231,7 +231,7 @@ Use `AskUserQuestion` to resolve any blocking decisions before creating:
 
 **If `--post` flag is present:**
 ```bash
-gh issue create --title "$TITLE" --body "<generated body>"
+gh issue create --title "${TITLE}" --body "<generated body>"
 ```
 
 **Otherwise:**

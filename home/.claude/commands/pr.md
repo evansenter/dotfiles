@@ -25,7 +25,15 @@ Parse the subcommand from the first argument:
 SUBCOMMAND="$1"
 ```
 
-If `SUBCOMMAND` is empty or not one of `create`, `local`, `remote`, display usage and exit.
+If `SUBCOMMAND` is empty or not one of `create`, `local`, `remote`:
+
+```bash
+echo "Usage: /pr <create | local | remote>"
+echo "  create - Commit and create/update PR"
+echo "  local  - Run local code analysis"
+echo "  remote - Fetch and process reviewer comments"
+exit 1
+```
 
 ---
 
@@ -83,18 +91,18 @@ Fetch and process feedback from GitHub reviewers.
 #### 1. Get PR Info
 
 ```bash
-PR_NUM=$(gh pr view --json number -q .number 2>/dev/null)
+PR_NUM=$(gh pr view --json number -q .number)
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 ```
 
-If no PR exists, inform user and suggest `/pr create`.
+If either command fails or returns empty, inform user and suggest `/pr create`.
 
 #### 2. Fetch Review Comments
 
 ```bash
-gh api repos/$REPO/pulls/$PR_NUM/comments
-gh api repos/$REPO/pulls/$PR_NUM/reviews
-gh api repos/$REPO/issues/$PR_NUM/comments
+gh api "repos/${REPO}/pulls/${PR_NUM}/comments"
+gh api "repos/${REPO}/pulls/${PR_NUM}/reviews"
+gh api "repos/${REPO}/issues/${PR_NUM}/comments"
 ```
 
 If no feedback found, inform user and exit early.
