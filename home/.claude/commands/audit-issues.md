@@ -53,6 +53,10 @@ Base priority on:
 - Whether it blocks other work (check comments for mentions)
 - Age and activity level
 
+**Flag for priority review** if:
+- **Missing**: Issue has no `priority:*` label at all
+- **Misaligned**: Current priority doesn't match the issue content (e.g., critical bug marked low, trivial enhancement marked high)
+
 ### 5. Present Triage Table
 
 Display issues grouped by category in table format:
@@ -73,9 +77,35 @@ Display issues grouped by category in table format:
 
 For each issue, include a brief note explaining the categorization based on your analysis.
 
-### 6. Tag Summary View
+### 6. Priority Review Section
 
-After the triage tables, show tag statistics:
+After the triage tables, show issues needing priority attention:
+
+```
+## Priority Review Needed
+
+### Missing Priority Label
+
+| # | Summary | Current Labels | Suggested Priority | Rationale |
+|---|---------|----------------|-------------------|-----------|
+| 58 | Add webhook support | enhancement | priority:medium | Useful feature, not blocking |
+
+### Priority May Be Misaligned
+
+| # | Summary | Current Priority | Suggested Priority | Rationale |
+|---|---------|-----------------|-------------------|-----------|
+| 43 | Data loss on crash | priority:low | priority:high | Critical bug affecting data integrity |
+| 51 | Update copyright year | priority:high | priority:low | Trivial change, not user-impacting |
+```
+
+For each flagged issue, explain:
+- **Why** the current priority (or lack thereof) seems wrong
+- **What** priority you recommend based on the issue content
+- **Evidence** from the issue body/comments supporting your assessment
+
+### 7. Tag Summary View
+
+After the priority review, show tag statistics:
 
 ```
 ## Tag Summary
@@ -85,11 +115,14 @@ After the triage tables, show tag statistics:
 | priority:high | 3 |
 | priority:medium | 5 |
 | priority:low | 2 |
+| (no priority) | 2 |
 | bug | 4 |
 | enhancement | 6 |
 ```
 
-### 7. Recommendations
+Note: Include a "(no priority)" row if any issues are missing priority labels.
+
+### 8. Recommendations
 
 For each issue, provide specific recommendations with rationale:
 
@@ -115,7 +148,8 @@ $ARGUMENTS
 ## Output
 
 Present the full triage for review before making any changes. After approval:
-1. Apply suggested priority labels
-2. Close stale issues with explanation (reference the evidence)
-3. Create any new labels needed
-4. Update issue bodies/comments if details are stale
+1. Add missing priority labels to flagged issues
+2. Update misaligned priority labels (remove old, add new)
+3. Close stale issues with explanation (reference the evidence)
+4. Create any new labels needed
+5. Update issue bodies/comments if details are stale
