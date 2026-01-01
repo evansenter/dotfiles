@@ -41,22 +41,12 @@ EVENT_BUS_CLI="${HOME}/.local/bin/event-bus-cli"
 if [[ -n "$session_id" ]]; then
     if [[ -x "$EVENT_BUS_CLI" ]]; then
         # Query event bus for session matching this client_id
-        # Use timeout on Linux (GNU coreutils), run directly on macOS
-        # Output format is 3 lines per session:
-        #   bright-tiger  dotfiles/main
-        #     repo: dotfiles, machine: Evans-Personal-Pro.local
-        #     age: 225s, client_id: a376d472-3afc-4917-aefc-a179a2ffb52d
-        if command -v timeout &>/dev/null; then
-            session_name=$(timeout 1 "$EVENT_BUS_CLI" sessions 2>/dev/null | \
-                grep -B2 "client_id: ${session_id}" | \
-                head -1 | \
-                awk '{print $1}')
-        else
-            session_name=$("$EVENT_BUS_CLI" sessions 2>/dev/null | \
-                grep -B2 "client_id: ${session_id}" | \
-                head -1 | \
-                awk '{print $1}')
-        fi
+        # Command is fast (~100ms) so no timeout needed
+        # Output format: "  session-name  repo/branch" then details on following lines
+        session_name=$("$EVENT_BUS_CLI" sessions 2>/dev/null | \
+            grep -B2 "client_id: ${session_id}" | \
+            head -1 | \
+            awk '{print $1}')
         if [[ -n "$session_name" ]]; then
             session_display="${MAGENTA}[${session_name}]${RESET} "
         else
