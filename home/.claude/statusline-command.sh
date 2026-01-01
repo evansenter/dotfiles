@@ -30,7 +30,29 @@ CYAN=$'\e[36m'
 GRAY=$'\e[90m'
 YELLOW=$'\e[33m'
 GREEN=$'\e[32m'
+MAGENTA=$'\e[35m'
 RESET=$'\e[0m'
+
+# Event bus session name (persisted by session-start hook)
+# Uses session-specific file keyed by transcript_path hash for multi-session support
+session_display=""
+if [[ -n "$transcript_path" ]]; then
+    # Compute same hash as session-start.sh (works on macOS and Linux)
+    if command -v md5 &>/dev/null; then
+        session_key=$(echo -n "$transcript_path" | md5 | cut -c1-12)
+    elif command -v md5sum &>/dev/null; then
+        session_key=$(echo -n "$transcript_path" | md5sum | cut -c1-12)
+    else
+        session_key=$(basename "$transcript_path" .jsonl)
+    fi
+    session_file="$HOME/.claude/.event-bus-sessions/$session_key"
+    if [[ -r "$session_file" ]]; then
+        session_name=$(cat "$session_file" 2>/dev/null | tr -d '[:space:]')
+        if [[ -n "$session_name" ]]; then
+            session_display="${MAGENTA}[${session_name}]${RESET} "
+        fi
+    fi
+fi
 
 # Git dirty status indicator
 git_status=""
@@ -184,7 +206,8 @@ fi
 LINK_RESET=$'\e]8;;\e\\'
 
 # Build the complete statusline
-output=$(printf "%s%s%s %s%s%s%s%s" \
+output=$(printf "%s%s%s%s %s%s%s%s%s" \
+    "$session_display" \
     "$dir_display" \
     "$pr_display" "$issue_display" \
     "$model_display" \
