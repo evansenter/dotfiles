@@ -7,22 +7,34 @@ on:
     branches: ["main"]
 
 jobs:
-  check:
-    name: Quality Gates
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Install dependencies
-        run: sudo apt-get install -y shellcheck zsh
+      - name: Install shellcheck
+        run: sudo apt-get install -y shellcheck
 
-      - name: Run quality gates
-        run: make check
+      - name: Run shellcheck
+        run: make lint
 
-  bootstrap-dry-run:
-    name: Bootstrap Dry Run
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install zsh
+        run: sudo apt-get install -y zsh
+
+      - name: Run syntax checks
+        run: make test
+
+  bootstrap:
+    name: Bootstrap
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
