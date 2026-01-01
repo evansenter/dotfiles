@@ -6,6 +6,14 @@ description: Show event bus overview with active sessions, recent activity, and 
 
 Comprehensive overseer view of cross-session coordination via the event bus.
 
+## Usage
+
+```
+/event-bus-status
+```
+
+No arguments required. Shows current session state and recent activity.
+
 ## Instructions
 
 ### 1. Get Current Session Info
