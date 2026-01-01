@@ -23,19 +23,24 @@ Note your own session ID from the initial registration or check with:
 mcp__event-bus__list_sessions()
 ```
 
-### 2. List Active Sessions
+### 2. List Active Sessions and Channels
 
 ```
 mcp__event-bus__list_sessions()
+mcp__event-bus__list_channels()
 ```
 
-This returns all active sessions with:
+`list_sessions()` returns all active sessions with:
 - `session_id`: Unique identifier (e.g., "tender-bear")
 - `name`: Session name (usually repo/branch, e.g., "dotfiles/issue-48")
 - `cwd`: Working directory
 - `machine`: Machine identifier
 - `repo`: Repository name
 - `last_heartbeat`: Last activity timestamp
+
+`list_channels()` returns active channels with:
+- `channel`: Channel name (e.g., "all", "repo:dotfiles", "machine:laptop")
+- `subscribers`: Number of sessions subscribed
 
 ### 3. Fetch Recent Events
 
@@ -100,6 +105,15 @@ Check for:
 | Session | Branch | Activity |
 |---------|--------|----------|
 | polite-heron | issue-93 | 15 min ago |
+
+### Active Channels
+
+| Channel | Subscribers |
+|---------|-------------|
+| all | 3 |
+| repo:dotfiles | 2 |
+| repo:gemicro | 1 |
+| machine:laptop | 2 |
 
 ### Recent Activity (last hour)
 

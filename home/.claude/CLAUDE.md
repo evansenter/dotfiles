@@ -236,6 +236,10 @@ Standard event types for consistency across commands:
 | `pattern_found` | Useful pattern discovered | `"Use (machine, client_id) as dedup key"` |
 | `test_flaky` | Flaky test identified | `"test_concurrent_writes sometimes fails, safe to retry"` |
 | `workaround_needed` | Temporary fix for known issue | `"Rate limit workaround: batch requests"` |
+| `task_started` | Work begun on issue/task | `"Started work on #42 - Add dark mode"` |
+| `feedback_addressed` | PR feedback processed | `"Addressed feedback on PR #108: 2 implemented, 1 skipped"` |
+| `error_broadcast` | Repeated failures or rate limits | `"API rate limited - wait 10min"` |
+| `blocker_found` | Blocking issue discovered | `"Main branch CI broken"` |
 
 **Naming conventions:**
 - Use `snake_case` for event types
@@ -254,10 +258,18 @@ Beyond command-triggered events, proactively publish when you discover something
 | Identify flaky test | `test_flaky` | `"test_concurrent_writes sometimes fails, safe to retry"` |
 | Use temporary workaround | `workaround_needed` | `"Rate limit workaround: batch requests"` |
 | Complete significant task | `task_completed` | `"Auth refactor done, safe to integrate"` |
+| Hit repeated failures | `error_broadcast` | `"API rate limited - wait 10min before retrying"` |
+| Discover blocking issue | `blocker_found` | `"Main branch broken - CI failing on unrelated commit"` |
 
 **Channel choice for learnings:** Use `repo:<name>` for repo-specific discoveries, `machine:<host>` for environment issues.
 
-**When NOT to publish:** Don't emit events for routine work. Reserve for discoveries that would save another session time or prevent them from hitting the same issue.
+**When to broadcast errors:**
+- **Rate limits**: Warn others before they hit the same limit
+- **Service outages**: CI, GitHub API, external services down
+- **Main branch broken**: Tests failing on main, blocking all PRs
+- **Repeated flaky failures**: Same test failing across sessions
+
+**When NOT to publish:** Don't emit events for routine work or one-off errors. Reserve for discoveries that would save another session time or prevent them from hitting the same issue.
 
 ### Troubleshooting
 

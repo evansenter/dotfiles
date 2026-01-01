@@ -1,7 +1,7 @@
-.PHONY: check lint test clean install uninstall
+.PHONY: check lint test test-hooks clean install uninstall
 
-# Run all quality gates (lint, syntax check)
-check: lint test
+# Run all quality gates (lint, syntax check, hook tests)
+check: lint test test-hooks
 
 # Run shellcheck on all shell scripts (matches CI)
 lint:
@@ -21,6 +21,11 @@ test:
 	@zsh -n home/.aliases
 	@zsh -n home/.exports
 	@echo "All syntax checks passed"
+
+# Run hook tests (graceful degradation, error handling)
+test-hooks:
+	@echo "Running hook tests..."
+	@./tests/test-hooks.sh
 
 # Clean generated files
 clean:
