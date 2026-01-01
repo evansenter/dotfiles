@@ -375,7 +375,21 @@ EOF
 
 Only include sections that have items. Every item from the review must appear in exactly one section.
 
-#### 8. Push and Re-check
+#### 8. Broadcast Feedback Addressed
+
+Publish an event to notify other sessions that feedback has been processed:
+
+```
+mcp__event-bus__publish_event(
+  event_type: "feedback_addressed",
+  payload: "Addressed reviewer feedback on PR #<pr_number>: <N> implemented, <M> skipped, <K> deferred",
+  channel: "repo:<repo_name>"
+)
+```
+
+Get repo name with: `gh repo view --json name -q .name`
+
+#### 9. Push and Re-check
 
 After implementing:
 1. Run quality gates (linter, formatter, tests)
