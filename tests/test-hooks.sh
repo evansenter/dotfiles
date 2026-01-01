@@ -21,12 +21,12 @@ RESET=$'\e[0m'
 
 # Test helper functions
 pass() {
-    ((TESTS_PASSED++))
+    ((++TESTS_PASSED))
     echo "${GREEN}✓${RESET} $1"
 }
 
 fail() {
-    ((TESTS_FAILED++))
+    ((++TESTS_FAILED))
     echo "${RED}✗${RESET} $1"
     if [[ -n "${2:-}" ]]; then
         echo "  Error: $2"
@@ -36,7 +36,7 @@ fail() {
 run_test() {
     local name="$1"
     local cmd="$2"
-    ((TESTS_RUN++))
+    ((++TESTS_RUN))
 
     if eval "$cmd" 2>/dev/null; then
         pass "$name"
