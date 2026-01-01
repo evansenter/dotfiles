@@ -126,8 +126,9 @@ After CI passes, run `/pr remote` to fetch and process reviewer comments. Use `/
 Configured hooks (in `~/.claude/hooks/`):
 
 - **notify.sh** - Cross-platform notifications (macOS: osascript, Linux: notify-send)
-- **session-start.sh** - Auto-registers session with the event bus on startup
+- **session-start.sh** - Auto-registers session with the event bus and fetches recent events
 - **session-end.sh** - Unregisters session from the event bus on exit
+- **prompt-events.sh** - Fetches new event bus events on every prompt (UserPromptSubmit hook)
 
 ## Event Bus
 
@@ -140,6 +141,16 @@ Sessions are auto-registered on startup via the SessionStart hook. The hook outp
 - `cwd`: Current working directory
 
 On session end, unregister to clean up.
+
+### Automatic Event Synchronization
+
+Events are automatically fetched at two lifecycle points:
+- **Session start**: Catches up on events that occurred since last session
+- **Every prompt**: Checks for new events before processing user input
+
+This enables maximum synchronization between parallel sessions. Events are filtered to exclude `session_registered`/`session_unregistered` noise and use incremental polling via `~/.local/state/claude/last_event_id` state file.
+
+**Performance note**: Event fetching adds ~250-300ms latency (Python CLI startup + HTTP). If this is noticeable, the hooks can be disabled in settings.json.
 
 ### Broadcasting Events
 

@@ -8,6 +8,8 @@ set -euo pipefail
 
 # Check for required dependencies
 if ! command -v jq &>/dev/null; then
+    # Consume stdin to avoid broken pipe
+    cat >/dev/null
     # Graceful degradation: output minimal instruction without parsed fields
     cat <<EOF
 <event-bus-registration>
@@ -45,3 +47,27 @@ cat <<EOF
 Register with event bus: mcp__event-bus__register_session(name: "$SESSION_NAME", cwd: "$CWD"$CLIENT_ID_ARG)
 </event-bus-registration>
 EOF
+
+# Fetch recent events to catch up on what happened since last session
+# Uses event-bus-cli if available, shows up to 10 non-registration events
+if command -v event-bus-cli &>/dev/null; then
+    STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/claude"
+    STATE_FILE="$STATE_DIR/last_event_id"
+    mkdir -p "$STATE_DIR"
+
+    # Get recent events (initializes state file if needed)
+    EVENTS=$(event-bus-cli events \
+        --track-state "$STATE_FILE" \
+        --exclude-types session_registered,session_unregistered \
+        --timeout 200 \
+        --limit 10 \
+        2>/dev/null) || true
+
+    if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]]; then
+        cat <<EVENTS_EOF
+<recent-events>
+$EVENTS
+</recent-events>
+EVENTS_EOF
+    fi
+fi
