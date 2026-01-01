@@ -24,6 +24,22 @@ INPUT=$(cat)
 CWD=$(echo "$INPUT" | jq -r '.cwd // ""')
 [[ -z "$CWD" ]] && CWD="$PWD"
 CLIENT_ID=$(echo "$INPUT" | jq -r '.session_id // ""')
+TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // ""')
+
+# Compute session-specific key from transcript_path for multi-session support
+# Use simple hash that works on both macOS (md5) and Linux (md5sum)
+if [[ -n "$TRANSCRIPT_PATH" ]]; then
+    if command -v md5 &>/dev/null; then
+        SESSION_KEY=$(echo -n "$TRANSCRIPT_PATH" | md5 | cut -c1-12)
+    elif command -v md5sum &>/dev/null; then
+        SESSION_KEY=$(echo -n "$TRANSCRIPT_PATH" | md5sum | cut -c1-12)
+    else
+        # Fallback: use basename of transcript file
+        SESSION_KEY=$(basename "$TRANSCRIPT_PATH" .jsonl)
+    fi
+else
+    SESSION_KEY="default"
+fi
 
 # Derive session name (graceful fallback if git unavailable)
 REPO_NAME=$(basename "$CWD")
@@ -46,7 +62,7 @@ cat <<EOF
 <event-bus-registration>
 Register with event bus: mcp__event-bus__register_session(name: "$SESSION_NAME", cwd: "$CWD"$CLIENT_ID_ARG)
 After registration, persist the session_id for statusline display:
-  mkdir -p ~/.claude && echo "SESSION_ID_HERE" > ~/.claude/.event-bus-session-name
+  mkdir -p ~/.claude/.event-bus-sessions && echo "SESSION_ID_HERE" > ~/.claude/.event-bus-sessions/$SESSION_KEY
 </event-bus-registration>
 EOF
 
