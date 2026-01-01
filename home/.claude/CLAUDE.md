@@ -168,7 +168,7 @@ Commands broadcast events to coordinate with parallel sessions. **Broadcasts are
 
 ### Checking Events
 
-- `/session-status` - Show active sessions and recent events
+- `/event-bus-status` - Show event bus overview with active sessions and coordination insights
 - `/status-report` - Includes event bus activity in report
 - `/learnings` - Query historical discoveries (gotchas, patterns, flaky tests)
 
@@ -241,7 +241,7 @@ Available slash commands (in `~/.claude/commands/`):
 - `/rfc` - Create or respond to RFC-style issues (`--create "Title"` for new, issue number for response)
 - `/watch-ci` - Monitor CI in background with notification when complete
 - `/parallel-work` - Manage git worktrees for parallel PR development (start with tmux auto-launch, list, cleanup)
-- `/session-status` - Show active sessions and recent events from the event bus
+- `/event-bus-status` - Show event bus overview with active sessions and coordination insights
 - `/broadcast` - Send message to other Claude Code sessions via event bus
 - `/learnings` - Query historical discoveries (gotchas, patterns, flaky tests) from event bus
 - `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (or use `/pr create`)
