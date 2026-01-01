@@ -96,7 +96,15 @@ Evaluate the code for:
    - Documentation gaps
    - Test coverage opportunities
 
-### 5. Review Standards
+### 5. Reporting Philosophy
+
+**Report all relevant feedback within the PR's scope.** Identify critical issues, important problems, and suggestions alike. The verdict follows mechanically from your findings - do not suppress findings to achieve a particular verdict.
+
+**REQUEST_CHANGES is the normal outcome for thorough reviews.** Finding suggestions demonstrates engagement with the code, not criticism of it. It's the review process working as intended - a conversation starter, not a condemnation.
+
+**Suggestions are valuable.** They show you engaged deeply with the code and help authors improve. Report them freely. A suggestion is collaboration, not criticism.
+
+### 6. Review Standards
 
 **HARD CONSTRAINT - You MUST follow these rules with NO exceptions:**
 - If there are ANY Critical issues: REQUEST_CHANGES
@@ -110,7 +118,7 @@ Do NOT rationalize approving with suggestions by saying they are "minor" or "opt
 
 **Never LGTM with caveats.** If you have feedback, request changes.
 
-### 6. Verify Before Posting
+### 7. Verify Before Posting
 
 **Before posting your review, perform this check:**
 
@@ -120,7 +128,7 @@ Do NOT rationalize approving with suggestions by saying they are "minor" or "opt
 
 If your draft says "APPROVE" but you listed any issues above, STOP and change the verdict to REQUEST_CHANGES.
 
-### 7. Output Format
+### 8. Output Format
 
 Post your review as a PR comment using `gh pr comment`.
 
