@@ -128,7 +128,82 @@ Based on the current state, here are suggested next actions:
 3. **Clean up orphaned worktree** - `.worktrees/old-feature` has merged PR, run `/parallel-work cleanup`
 ```
 
-### 4. Event Bus Activity (Optional)
+### 4. Session Analytics (Optional)
+
+If the session-analytics MCP server is available, fetch usage data to provide context on work patterns:
+
+**Step 1: Check availability**
+```
+mcp__session-analytics__get_status()
+```
+
+If this fails or returns an error, try CLI fallback:
+```bash
+session-analytics-cli status --json 2>/dev/null
+```
+
+If both fail, skip this section with a note: "Session analytics unavailable".
+
+**Step 2: Fetch signals (if available)**
+```
+mcp__session-analytics__get_session_signals(days=7)
+mcp__session-analytics__get_tool_frequency(days=7)
+mcp__session-analytics__get_permission_gaps(days=7, min_count=5)
+```
+
+**Step 3: Format output**
+
+If session analytics is available, add this section to the report:
+
+```markdown
+### Session Analytics (7 days)
+
+**Overview**
+| Metric | Value |
+|--------|-------|
+| Sessions | 90 |
+| Events | 38,576 |
+| Errors | 287 (0.7%) |
+| DB Size | 34.5 MB |
+
+**Recent Sessions** (top 5 by event count, from current project or all if few)
+| Session | Events | Errors | Duration | Flags |
+|---------|--------|--------|----------|-------|
+| abc123 | 4,407 | 48 (1.1%) | 40.2h | rework, PR |
+| def456 | 3,270 | 23 (0.7%) | 30.4h | rework, PR |
+| ghi789 | 2,322 | 34 (1.5%) | 12.0h | rework, PR |
+
+*Flags: rework=has_rework, PR=has_pr_activity*
+
+**Top Tools** (last 7 days)
+```
+Bash (4,984), Read (1,893), Edit (1,731), TodoWrite (872), Grep (572)
+```
+
+**Top Bash Commands**
+```
+gh (1,682), git (1,376), cargo (265), ls (165), grep (133)
+```
+
+**Permission Gaps** (commands to add to settings.json)
+| Command | Count | Suggestion |
+|---------|-------|------------|
+| ls | 165 | Bash(ls:*) |
+| grep | 133 | Bash(grep:*) |
+| cat | 104 | Bash(cat:*) |
+
+*Run `/improve-workflow` for data-driven permission suggestions.*
+```
+
+**Formatting notes:**
+- Filter session signals to current project if possible (match on project_path containing current repo name)
+- If fewer than 3 sessions match current project, show top sessions across all projects
+- Convert duration_minutes to hours for readability (e.g., 1440 min → 24.0h)
+- Calculate total errors from sum of error_count across sessions
+- Calculate overall error rate from total_errors / total_events
+- For permission gaps, filter to commands that are NOT already in the allowed list (skip gh, git, cargo if already permitted)
+
+### 5. Event Bus Activity (Optional)
 
 If registered with the event bus, fetch recent events for context on parallel work:
 
@@ -154,7 +229,7 @@ If there are active sessions or recent events, add a section:
 
 If not registered with event bus, skip this section.
 
-### 5. Recommendation Logic
+### 6. Recommendation Logic
 
 When making recommendations, consider and reference specific evidence:
 
@@ -176,6 +251,12 @@ When making recommendations, consider and reference specific evidence:
 - **Issue patterns**: If many similar issues exist, suggest consolidation
 - **Momentum**: If recent work focused on a feature area, suggest continuing there
 - **Quick wins**: Small issues or PRs that could be resolved easily
+
+**Session analytics signals** (if available):
+- **High error rate**: Sessions with >5% error rate indicate friction - suggest investigating tools or patterns causing failures
+- **Rework patterns**: Sessions with has_rework=true and high error rates may indicate debugging struggles
+- **Permission gaps**: Commands used >10 times that need manual approval - suggest adding to settings.json via `/improve-workflow`
+- **Tool usage shifts**: Compare current project tools vs. global - note if this project has unusual patterns
 
 Each recommendation MUST include:
 1. The specific evidence (e.g., "3 issues missing priority labels", "#42 is priority:high")
