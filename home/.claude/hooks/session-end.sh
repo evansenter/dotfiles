@@ -31,7 +31,7 @@ fi
 # Unregister by client_id - server looks up session by (machine, client_id)
 OUTPUT=$(event-bus-cli unregister --client-id "$CLIENT_ID" 2>/dev/null) || true
 
-if echo "$OUTPUT" | grep -q '"success": true'; then
+if echo "$OUTPUT" | jq -e '.success == true' >/dev/null 2>&1; then
     SESSION_ID=$(echo "$OUTPUT" | jq -r '.session_id // "unknown"')
     echo "Unregistered from event bus: $SESSION_ID"
 else

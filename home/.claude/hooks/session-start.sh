@@ -49,7 +49,7 @@ else
     exit 0
 fi
 
-# Fetch recent events (most recent first, regardless of cursor)
+# Fetch recent events (newest-first for natural reading order - most relevant at top)
 # Session is auto-subscribed to 4 channels:
 # - "all" - broadcasts to everyone
 # - "repo:<name>" - repo-specific coordination

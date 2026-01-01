@@ -39,11 +39,12 @@ RESET=$'\e[0m'
 session_display=""
 if [[ -n "$session_id" ]] && command -v event-bus-cli &>/dev/null; then
     # Query event bus for session matching this client_id
+    # Use timeout to keep statusline responsive if event bus is slow
     # Output format is 3 lines per session:
     #   bright-tiger  dotfiles/main
     #     repo: dotfiles, machine: Evans-Personal-Pro.local
     #     age: 225s, client_id: a376d472-3afc-4917-aefc-a179a2ffb52d
-    session_name=$(event-bus-cli sessions 2>/dev/null | \
+    session_name=$(timeout 1 event-bus-cli sessions 2>/dev/null | \
         grep -B2 "client_id: ${session_id}" | \
         head -1 | \
         awk '{print $1}')
