@@ -207,13 +207,19 @@ else
     dir_display="${CYAN}${dir_name}${RESET}"
 fi
 
+# Branch display (show if not on default branch)
+branch_display=""
+if [[ -n "$branch" ]] && [[ "$branch" != "main" ]] && [[ "$branch" != "master" ]]; then
+    branch_display=":${MAGENTA}${branch}${RESET}"
+fi
+
 # Final hyperlink reset to ensure no unclosed hyperlinks leak
 LINK_RESET=$'\e]8;;\e\\'
 
 # Build the complete statusline
-output=$(printf "%s%s%s%s %s%s%s%s%s" \
+output=$(printf "%s%s%s%s%s %s%s%s%s%s" \
     "$session_display" \
-    "$dir_display" \
+    "$dir_display" "$branch_display" \
     "$pr_display" "$issue_display" \
     "$model_display" \
     "$git_status" "$context_display" "$user_context" \
