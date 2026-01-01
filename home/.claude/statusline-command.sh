@@ -4,9 +4,14 @@
 # Usage: Called automatically by Claude Code with JSON on stdin
 # Example: echo '{"workspace":{"current_dir":"/path"},"context_window":{"current_usage":{...},"context_window_size":200000}}' | ~/.claude/statusline-command.sh
 
+# Collect all output in a buffer to avoid interleaving with CC status messages
+exec 3>&1  # Save stdout
+exec 1>/dev/null 2>/dev/null  # Silence all output during computation
+
 # Read JSON input from stdin and extract all values in one jq call
-input=$(cat)
+input=$(cat <&0)
 if [[ -z "$input" ]]; then
+    exec 1>&3 3>&-  # Restore stdout
     exit 1
 fi
 
@@ -56,6 +61,9 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
             pr_links=""
             link_end=$'\e]8;;\e\\'
             while IFS=$'\t' read -r pr_number pr_url; do
+                # Skip malformed entries
+                [[ -z "$pr_number" || -z "$pr_url" ]] && continue
+                [[ ! "$pr_number" =~ ^[0-9]+$ ]] && continue
                 link_start=$'\e]8;;'"${pr_url}"$'\e\\'
                 if [[ -n "$pr_links" ]]; then
                     pr_links="${pr_links},${link_start}#${pr_number}${link_end}"
@@ -63,7 +71,8 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
                     pr_links="${link_start}#${pr_number}${link_end}"
                 fi
             done <<< "$pr_list"
-            pr_display=" ${GREEN}${pr_links}${RESET}"
+            # Only set pr_display if we actually built valid links
+            [[ -n "$pr_links" ]] && pr_display=" ${GREEN}${pr_links}${RESET}"
         fi
     fi
 
@@ -88,6 +97,9 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
         issue_links=""
         link_end=$'\e]8;;\e\\'
         for issue_num in $issue_nums; do
+            # Skip malformed entries
+            [[ -z "$issue_num" ]] && continue
+            [[ ! "$issue_num" =~ ^[0-9]+$ ]] && continue
             issue_url="${repo_url}/issues/${issue_num}"
             link_start=$'\e]8;;'"${issue_url}"$'\e\\'
             if [[ -n "$issue_links" ]]; then
@@ -96,7 +108,8 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
                 issue_links="${link_start}#${issue_num}${link_end}"
             fi
         done
-        issue_display=" ${CYAN}→${issue_links}${RESET}"
+        # Only set issue_display if we actually built valid links
+        [[ -n "$issue_links" ]] && issue_display=" ${CYAN}→${issue_links}${RESET}"
     fi
 fi
 
@@ -167,8 +180,20 @@ else
     dir_display="${CYAN}${dir_name}${RESET}"
 fi
 
-printf "%s%s%s %s%s%s%s" \
+# Final hyperlink reset to ensure no unclosed hyperlinks leak
+LINK_RESET=$'\e]8;;\e\\'
+
+# Build the complete statusline
+output=$(printf "%s%s%s %s%s%s%s%s" \
     "$dir_display" \
     "$pr_display" "$issue_display" \
     "$model_display" \
-    "$git_status" "$context_display" "$user_context"
+    "$git_status" "$context_display" "$user_context" \
+    "$LINK_RESET")
+
+# Strip any newlines that might have snuck in (causes display issues in tmux)
+output="${output//$'\n'/}"
+
+# Restore stdout and print atomically
+exec 1>&3 3>&-
+printf "%s" "$output"
