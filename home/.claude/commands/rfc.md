@@ -1,5 +1,5 @@
 ---
-argument-hint: <issue-number | --create "Title"> [--post]
+argument-hint: <issue-number | --create> [--post]
 description: Create or respond to RFC-style issues with structured analysis
 ---
 
@@ -11,7 +11,7 @@ Create new RFC-style issues or respond to existing ones with structured analysis
 
 ```
 /rfc [ISSUE_NUMBER or URL] [--post]    # Respond to existing issue
-/rfc --create "Title" [--post]          # Create new RFC issue
+/rfc --create [--post]                  # Create new RFC issue
 ```
 
 - `--post`: Automatically post/create after generating (skips review)
@@ -23,7 +23,7 @@ Create new RFC-style issues or respond to existing ones with structured analysis
 
 From `$ARGUMENTS`, determine the mode:
 
-- **`--create "Title"`**: Create a new RFC issue with the given title
+- **`--create`**: Create a new RFC issue (title derived after drafting content)
 - **`<issue-number>` or `<URL>`**: Respond to an existing RFC issue
 - **`--post`**: Auto-post without confirmation (can combine with either mode)
 - **No arguments**: Try to use current issue from context
@@ -151,22 +151,6 @@ If user chooses to post, after posting broadcast the event as shown above.
 
 ### 1. Gather Context
 
-If `TITLE` is empty, use AskUserQuestion to get it:
-```json
-{
-  "questions": [
-    {
-      "question": "What's the title for this RFC?",
-      "header": "Title",
-      "options": [
-        {"label": "Enter title", "description": "I'll provide the RFC title"}
-      ],
-      "multiSelect": false
-    }
-  ]
-}
-```
-
 Analyze the current conversation for:
 - **Problem identified**: What issue or improvement was discovered
 - **Relevant code**: Files, functions, patterns discussed
@@ -220,14 +204,41 @@ ultrathink: Create an RFC-style issue body:
 - [ ] ...
 ```
 
-### 3. Resolve Blocking Questions
+### 3. Derive Title
+
+Based on the RFC content you just drafted, generate 2-3 suggested titles that:
+- Start with "RFC: " prefix
+- Capture the core problem or proposed change
+- Are concise (under 60 characters after the prefix)
+
+Use `AskUserQuestion` to let the user choose or customize:
+```json
+{
+  "questions": [
+    {
+      "question": "What should the RFC title be?",
+      "header": "Title",
+      "options": [
+        {"label": "RFC: [derived from Summary]", "description": "Based on the problem summary"},
+        {"label": "RFC: [derived from Problem]", "description": "Based on the motivation"},
+        {"label": "RFC: [alternative]", "description": "Another angle on the issue"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+The user can select a suggested title or provide their own via "Other".
+
+### 4. Resolve Blocking Questions
 
 Use `AskUserQuestion` to resolve any blocking decisions before creating:
 - Confirm the problem statement is accurate
 - Validate the proposed solution direction
 - Get input on open questions
 
-### 4. Determine Labels
+### 5. Determine Labels
 
 Before creating, fetch available labels and select appropriate ones:
 
@@ -245,7 +256,7 @@ gh label list --json name,description
 - `blocked` (if waiting on external factors)
 - Any domain-specific labels from the repo
 
-### 5. Create or Present
+### 6. Create or Present
 
 **If `--post` flag is present:**
 ```bash
@@ -272,7 +283,7 @@ Display the draft and ask:
 
 After creating, output the issue URL.
 
-### 6. Broadcast Event
+### 7. Broadcast Event
 
 After successfully creating the RFC, broadcast to the event bus so parallel sessions are notified:
 

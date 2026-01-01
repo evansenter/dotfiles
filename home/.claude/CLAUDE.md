@@ -238,7 +238,7 @@ Available slash commands (in `~/.claude/commands/`):
 - `/audit-issues` - Categorize open issues as current or needing updates
 - `/cross-repo` - Gather context from a related repository (CLAUDE.md, PRs, issues)
 - `/improve-workflow` - Suggest workflow improvements, categorized as local (this repo) or global (dotfiles)
-- `/rfc` - Create or respond to RFC-style issues (`--create "Title"` for new, issue number for response)
+- `/rfc` - Create or respond to RFC-style issues (`--create` for new, issue number for response)
 - `/watch-ci` - Monitor CI in background with notification when complete
 - `/parallel-work` - Manage git worktrees for parallel PR development (start with tmux auto-launch, list, cleanup)
 - `/event-bus-status` - Show event bus overview with active sessions and coordination insights
