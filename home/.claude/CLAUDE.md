@@ -125,7 +125,6 @@ After CI passes, run `/pr remote` to fetch and process reviewer comments. Use `/
 
 Configured hooks (in `~/.claude/hooks/`):
 
-- **notify.sh** - Cross-platform notifications (macOS: osascript, Linux: notify-send)
 - **session-start.sh** - Auto-registers session with the event bus and fetches recent events
 - **session-end.sh** - Unregisters session from the event bus on exit
 - **prompt-events.sh** - Fetches new event bus events on every prompt (UserPromptSubmit hook)
@@ -141,6 +140,41 @@ Sessions are auto-registered on startup via the SessionStart hook. The hook outp
 - `cwd`: Current working directory
 
 On session end, unregister to clean up.
+
+### Channels
+
+Sessions auto-subscribe to 4 channels based on their attributes:
+
+| Channel | Receives | Use Case |
+|---------|----------|----------|
+| `all` | Everyone everywhere | Rare - major announcements only |
+| `repo:<name>` | Same repository | **Most common** - coordinate parallel work on same codebase |
+| `machine:<host>` | Same machine | Cross-repo local coordination (e.g., "running heavy build") |
+| `session:<id>` | One session | Direct messages, help requests |
+
+**Channel reach:**
+- `repo:` crosses machines but not repos
+- `machine:` crosses repos but not machines
+- `session:` and `all` cross both
+
+**Default is `all`** when publishing - use it freely. We'll tune down noise as needed.
+
+### Discovery
+
+Use these tools to see who's working and find sessions to coordinate with:
+
+```
+list_sessions()  → See all active sessions with their subscribed channels
+list_channels()  → See active channels and subscriber counts
+```
+
+Example: Find a session working on auth to ask a question:
+```
+sessions = list_sessions()
+auth_session = [s for s in sessions if "auth" in s["name"]][0]
+publish_event("help_needed", "How do I call the new auth endpoint?",
+              channel=f"session:{auth_session['session_id']}")
+```
 
 ### Automatic Event Synchronization
 
@@ -208,6 +242,22 @@ Standard event types for consistency across commands:
 - Be specific: `rfc_created` not just `created`
 - Include context in payload: what happened and any relevant identifiers (PR#, issue#)
 - Payloads are automatically JSON-escaped by the MCP layer - special characters are safe
+
+### Proactive Publishing
+
+Beyond command-triggered events, proactively publish when you discover something useful for other sessions:
+
+| When | Event Type | Example |
+|------|------------|---------|
+| Find non-obvious issue | `gotcha_discovered` | `"SQLite needs datetime adapters in Python 3.12+"` |
+| Discover useful pattern | `pattern_found` | `"Use (machine, client_id) as dedup key"` |
+| Identify flaky test | `test_flaky` | `"test_concurrent_writes sometimes fails, safe to retry"` |
+| Use temporary workaround | `workaround_needed` | `"Rate limit workaround: batch requests"` |
+| Complete significant task | `task_completed` | `"Auth refactor done, safe to integrate"` |
+
+**Channel choice for learnings:** Use `repo:<name>` for repo-specific discoveries, `machine:<host>` for environment issues.
+
+**When NOT to publish:** Don't emit events for routine work. Reserve for discoveries that would save another session time or prevent them from hitting the same issue.
 
 ### Troubleshooting
 

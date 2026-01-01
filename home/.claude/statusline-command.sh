@@ -15,13 +15,14 @@ if [[ -z "$input" ]]; then
     exit 1
 fi
 
-read -r cwd current size model_id transcript_path < <(
+read -r cwd current size model_id transcript_path session_id < <(
     echo "$input" | jq -r '[
         .workspace.current_dir,
         (.context_window.current_usage | .input_tokens + .cache_creation_input_tokens + .cache_read_input_tokens // 0),
         (.context_window.context_window_size // 0),
         (.model.id // ""),
-        (.transcript_path // "")
+        (.transcript_path // ""),
+        (.session_id // "")
     ] | @tsv'
 )
 
@@ -33,24 +34,21 @@ GREEN=$'\e[32m'
 MAGENTA=$'\e[35m'
 RESET=$'\e[0m'
 
-# Event bus session name (persisted by session-start hook)
-# Uses session-specific file keyed by transcript_path hash for multi-session support
+# Event bus session name (queried live from event bus by client_id)
+# Uses Claude's session UUID to look up the nice-named event bus session
 session_display=""
-if [[ -n "$transcript_path" ]]; then
-    # Compute same hash as session-start.sh (works on macOS and Linux)
-    if command -v md5 &>/dev/null; then
-        session_key=$(echo -n "$transcript_path" | md5 | cut -c1-12)
-    elif command -v md5sum &>/dev/null; then
-        session_key=$(echo -n "$transcript_path" | md5sum | cut -c1-12)
-    else
-        session_key=$(basename "$transcript_path" .jsonl)
-    fi
-    session_file="$HOME/.claude/.event-bus-sessions/$session_key"
-    if [[ -r "$session_file" ]]; then
-        session_name=$(cat "$session_file" 2>/dev/null | tr -d '[:space:]')
-        if [[ -n "$session_name" ]]; then
-            session_display="${MAGENTA}[${session_name}]${RESET} "
-        fi
+if [[ -n "$session_id" ]] && command -v event-bus-cli &>/dev/null; then
+    # Query event bus for session matching this client_id
+    # Output format is 3 lines per session:
+    #   bright-tiger  dotfiles/main
+    #     repo: dotfiles, machine: Evans-Personal-Pro.local
+    #     age: 225s, client_id: a376d472-3afc-4917-aefc-a179a2ffb52d
+    session_name=$(event-bus-cli sessions 2>/dev/null | \
+        grep -B2 "client_id: ${session_id}" | \
+        head -1 | \
+        awk '{print $1}')
+    if [[ -n "$session_name" ]]; then
+        session_display="${MAGENTA}[${session_name}]${RESET} "
     fi
 fi
 
