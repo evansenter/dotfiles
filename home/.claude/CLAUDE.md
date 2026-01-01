@@ -119,6 +119,7 @@ After CI passes, run `/pr remote` to fetch and process reviewer comments. Use `/
 - **Always run `/watch-ci <PR#>` after creating or pushing to a PR** - don't wait for user to ask; CI is running, monitor it
 - If CI fails due to flakiness, auto-rerun failed jobs once with `gh run rerun <run-id> --failed`
 - If CI fails twice, investigate the root cause
+- **CRITICAL: After CI passes, run `/pr remote` before declaring ready to merge** - automated reviewers post new comments on each CI run
 
 ## Hooks
 
