@@ -86,12 +86,13 @@ test_session_start_graceful_no_jq() {
     # Test with a PATH that definitely doesn't have jq
     # Use env to clear PATH and set minimal one
     local output
+    local exit_code=0
     output=$(echo '{"session_id":"test-123","cwd":"/tmp"}' | \
         env -i PATH="$MINIMAL_PATH" HOME="$HOME" \
-        bash "$HOOKS_DIR/session-start.sh" 2>&1) || true
+        bash "$HOOKS_DIR/session-start.sh" 2>&1) || exit_code=$?
 
     # Check for graceful exit (either explicit skip message or no crash)
-    [[ "$output" == *"skipped"* ]] || [[ "$output" == *"jq not installed"* ]] || [[ $? -eq 0 ]]
+    [[ "$output" == *"skipped"* ]] || [[ "$output" == *"jq not installed"* ]] || [[ $exit_code -eq 0 ]]
 }
 
 test_session_start_graceful_no_cli() {
@@ -120,11 +121,12 @@ test_session_end_syntax() {
 test_session_end_graceful_no_jq() {
     local MINIMAL_PATH="/bin:/usr/bin"
     local output
+    local exit_code=0
     output=$(echo '{"session_id":"test-123"}' | \
         env -i PATH="$MINIMAL_PATH" HOME="$HOME" \
-        bash "$HOOKS_DIR/session-end.sh" 2>&1) || true
+        bash "$HOOKS_DIR/session-end.sh" 2>&1) || exit_code=$?
 
-    [[ "$output" == *"skipped"* ]] || [[ "$output" == *"jq not installed"* ]] || [[ $? -eq 0 ]]
+    [[ "$output" == *"skipped"* ]] || [[ "$output" == *"jq not installed"* ]] || [[ $exit_code -eq 0 ]]
 }
 
 test_session_end_graceful_no_cli() {
