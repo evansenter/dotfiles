@@ -96,39 +96,17 @@ Evaluate the code for:
    - Documentation gaps
    - Test coverage opportunities
 
-### 5. Reporting Philosophy
+### 5. Review Standards
 
-**Report all relevant feedback within the PR's scope.** Identify critical issues, important problems, and suggestions alike. The verdict follows mechanically from your findings - do not suppress findings to achieve a particular verdict.
-
-**REQUEST_CHANGES is the normal outcome for thorough reviews.** Finding suggestions demonstrates engagement with the code, not criticism of it. It's the review process working as intended - a conversation starter, not a condemnation.
-
-**Suggestions are valuable.** They show you engaged deeply with the code and help authors improve. Report them freely. A suggestion is collaboration, not criticism.
-
-### 6. Review Standards
-
-**HARD CONSTRAINT - You MUST follow these rules with NO exceptions:**
+**Be strict about approval:**
 - If there are ANY Critical issues: REQUEST_CHANGES
 - If there are ANY Important issues: REQUEST_CHANGES
-- If there are ANY Suggestions: REQUEST_CHANGES
-- Only APPROVE if you found ZERO issues of any kind
-
-**APPROVE is only valid when all three sections (Critical, Important, Suggestions) are empty or say "None".**
-
-Do NOT rationalize approving with suggestions by saying they are "minor" or "optional". If you wrote it down as feedback, it requires REQUEST_CHANGES. No exceptions. No judgment calls. This is a mechanical rule.
+- If there are ANY Suggestions: REQUEST_CHANGES (do not approve with suggestions)
+- Only APPROVE if the code is genuinely ready to merge with zero issues
 
 **Never LGTM with caveats.** If you have feedback, request changes.
 
-### 7. Verify Before Posting
-
-**Before posting your review, perform this check:**
-
-1. Count your issues: Critical=?, Important=?, Suggestions=?
-2. If ANY count > 0, your verdict MUST be REQUEST_CHANGES
-3. APPROVE is only allowed when Critical=0 AND Important=0 AND Suggestions=0
-
-If your draft says "APPROVE" but you listed any issues above, STOP and change the verdict to REQUEST_CHANGES.
-
-### 8. Output Format
+### 6. Output Format
 
 Post your review as a PR comment using `gh pr comment`.
 
@@ -155,7 +133,6 @@ gh pr comment $PR_NUMBER --body "$(cat <<'EOF'
 - [ ] `file.rs:120` - Description of suggestion
 
 ### Verdict
-<!-- REMEMBER: If ANY items listed above, you MUST say REQUEST_CHANGES. APPROVE only if all sections are empty. -->
 [APPROVE / REQUEST_CHANGES] - [brief reason]
 
 ---
