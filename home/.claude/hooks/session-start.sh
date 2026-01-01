@@ -21,6 +21,7 @@ fi
 INPUT=$(cat)
 CWD=$(echo "$INPUT" | jq -r '.cwd // ""')
 [[ -z "$CWD" ]] && CWD="$PWD"
+CLIENT_ID=$(echo "$INPUT" | jq -r '.session_id // ""')
 
 # Derive session name (graceful fallback if git unavailable)
 REPO_NAME=$(basename "$CWD")
@@ -32,8 +33,15 @@ else
 fi
 
 # Concise output for Claude
+# Include client_id if available (enables session resumption across context reloads)
+if [[ -n "$CLIENT_ID" ]]; then
+    CLIENT_ID_ARG=", client_id: \"$CLIENT_ID\""
+else
+    CLIENT_ID_ARG=""
+fi
+
 cat <<EOF
 <event-bus-registration>
-Register with event bus: mcp__event-bus__register_session(name: "$SESSION_NAME", cwd: "$CWD")
+Register with event bus: mcp__event-bus__register_session(name: "$SESSION_NAME", cwd: "$CWD"$CLIENT_ID_ARG)
 </event-bus-registration>
 EOF
