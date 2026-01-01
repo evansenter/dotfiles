@@ -181,18 +181,29 @@ install_claude_mcp_servers() {
 		return 0
 	fi
 
-	# Check if GitHub MCP server already configured
-	if claude mcp list 2>/dev/null | grep -q "github"; then
-		return 0
+	local mcp_list
+	mcp_list=$(claude mcp list 2>/dev/null || true)
+
+	# Install GitHub MCP server if not configured
+	if ! echo "$mcp_list" | grep -q "github"; then
+		echo "Installing GitHub MCP server..."
+		claude mcp add github -s user -e 'GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_TOKEN}' -- npx -y @modelcontextprotocol/server-github
+
+		if [[ -z "$GITHUB_TOKEN" ]]; then
+			echo "  Warning: GITHUB_TOKEN not set. Add to ~/.extra:"
+			echo "    export GITHUB_TOKEN=\"ghp_your_token_here\""
+		fi
 	fi
 
-	echo "Installing Claude Code MCP servers..."
-	claude mcp add github -s user -e 'GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_TOKEN}' -- npx -y @modelcontextprotocol/server-github
+	# Install Notion MCP server if not configured
+	if ! echo "$mcp_list" | grep -q "notion"; then
+		echo "Installing Notion MCP server..."
+		claude mcp add notion -s user -e 'NOTION_TOKEN=${NOTION_API_KEY}' -- npx -y @notionhq/notion-mcp-server
 
-	# Warn if GITHUB_TOKEN is not set
-	if [[ -z "$GITHUB_TOKEN" ]]; then
-		echo "  Warning: GITHUB_TOKEN not set. Add to ~/.extra:"
-		echo "    export GITHUB_TOKEN=\"ghp_your_token_here\""
+		if [[ -z "$NOTION_API_KEY" ]]; then
+			echo "  Warning: NOTION_API_KEY not set. Add to ~/.extra:"
+			echo "    export NOTION_API_KEY=\"ntn_your_token_here\""
+		fi
 	fi
 }
 

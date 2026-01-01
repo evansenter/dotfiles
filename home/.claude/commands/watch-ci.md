@@ -45,5 +45,7 @@ If PR_NUMBER is omitted, uses the current branch's PR.
        channel: "repo:<repo_name>"
      )
      ```
-   - If **passed**: Run `/pr remote` to process reviewer comments
+   - If **passed**:
+     - **CRITICAL**: Run `/pr remote` to process reviewer comments before declaring ready to merge
+     - Automated reviewers (like claude-review) post new comments on each CI run
    - If **failed**: Investigate the failure and fix

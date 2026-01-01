@@ -53,6 +53,7 @@
       "Bash(cargo doc:*)",
       "Bash(cargo add:*)",
       "mcp__github__*",
+      "mcp__notion__*",
       "mcp__event-bus__*",
       "EnterPlanMode",
       "Bash(RUSTDOCFLAGS=\"-D warnings\" cargo doc:*)",
@@ -84,6 +85,16 @@
     "defaultMode": "default"
   },
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/prompt-events.sh"
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "hooks": [

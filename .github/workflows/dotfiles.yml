@@ -7,62 +7,47 @@ on:
     branches: ["main"]
 
 jobs:
-  shellcheck:
-    name: ShellCheck
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Install ShellCheck
+      - name: Install shellcheck
         run: sudo apt-get install -y shellcheck
 
-      - name: Run ShellCheck on shell scripts
-        run: |
-          # Check standalone shell scripts (with shebangs)
-          # Only fail on errors, not warnings/info (dotfiles have intentional style choices)
-          find . -type f -name "*.sh" \
-            -not -path "./vendor/*" \
-            -not -path "./.git/*" \
-            -print0 | xargs -0 -r shellcheck --severity=error
+      - name: Run shellcheck
+        run: make lint
 
-  syntax-check:
-    name: Syntax Check
+  test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check bash syntax
-        run: |
-          bash -n bootstrap.sh
-          bash -n uninstall.sh
+      - name: Install zsh
+        run: sudo apt-get install -y zsh
 
-      - name: Check zsh syntax
-        run: |
-          # Install zsh for syntax checking
-          sudo apt-get install -y zsh
-          zsh -n home/.zshrc
-          zsh -n home/.aliases
-          zsh -n home/.exports
+      - name: Run syntax checks
+        run: make test
 
-  bootstrap-dry-run:
-    name: Bootstrap Dry Run
+  bootstrap:
+    name: Bootstrap
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Verify bootstrap.sh is executable
-        run: test -x bootstrap.sh
-
-      - name: Verify uninstall.sh is executable
-        run: test -x uninstall.sh
+      - name: Verify scripts are executable
+        run: |
+          test -x bootstrap.sh
+          test -x uninstall.sh
 
       - name: Check for required files
         run: |
-          # Verify key dotfiles exist
           test -f home/.zshrc
           test -f home/.gitconfig
           test -f home/.vimrc
