@@ -1,5 +1,4 @@
 {
-  "model": "opus",
   "cleanupPeriodDays": 365,
   "permissions": {
     "allow": [
@@ -84,6 +83,7 @@
     ],
     "defaultMode": "default"
   },
+  "model": "opus",
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -91,16 +91,6 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/prompt-events.sh"
-          }
-        ]
-      }
-    ],
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/.claude/hooks/notify.sh"
           }
         ]
       }
@@ -133,11 +123,6 @@
   "enabledPlugins": {
     "feature-dev@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": true,
-    "code-review@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
-    "rust-analyzer-lsp@claude-plugins-official": true,
-    "pyright-lsp@claude-plugins-official": true,
-    "clangd-lsp@claude-plugins-official": true,
-    "swift-lsp@claude-plugins-official": true
+    "commit-commands@claude-plugins-official": true
   }
 }

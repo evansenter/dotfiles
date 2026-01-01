@@ -181,7 +181,21 @@ Output the full plan for user visibility:
 Starting work on first task...
 ```
 
-#### 7. Begin Implementation
+#### 7. Broadcast Task Started
+
+Publish an event to notify other sessions that work has started:
+
+```
+mcp__event-bus__publish_event(
+  event_type: "task_started",
+  payload: "Started work on #<issue> - <title>",
+  channel: "repo:<repo_name>"
+)
+```
+
+For ad-hoc work: `"Started work: <description>"`
+
+#### 8. Begin Implementation
 
 Mark the first task as `in_progress` and start working on it.
 
@@ -228,8 +242,16 @@ When reaching a checkpoint:
 2. Check PR status: `gh pr view --json state,reviewDecision`
 3. If approved, ask user: "PR is approved. Merge now?"
 4. If user confirms, merge: `gh pr merge --squash`
-5. Mark checkpoint as `completed`
-6. Suggest cleanup: "Run `/commit-commands:clean_gone` to remove stale branches"
+5. Broadcast task completion:
+   ```
+   mcp__event-bus__publish_event(
+     event_type: "task_completed",
+     payload: "Merged PR #<pr_number> for #<issue> - <title>",
+     channel: "repo:<repo_name>"
+   )
+   ```
+6. Mark checkpoint as `completed`
+7. Suggest cleanup: "Run `/commit-commands:clean_gone` to remove stale branches"
 
 ---
 
