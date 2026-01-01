@@ -8,7 +8,7 @@
 exec 3>&1  # Save stdout
 exec 1>/dev/null 2>/dev/null  # Silence all output during computation
 
-# Read JSON input from stdin and extract all values in one jq call
+# Read JSON input from stdin (<&0 explicit since stdout/stderr are redirected above)
 input=$(cat <&0)
 if [[ -z "$input" ]]; then
     exec 1>&3 3>&-  # Restore stdout
