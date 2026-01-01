@@ -38,19 +38,24 @@ RESET=$'\e[0m'
 # Uses Claude's session UUID to look up the nice-named event bus session
 session_display=""
 EVENT_BUS_CLI="${HOME}/.local/bin/event-bus-cli"
-if [[ -n "$session_id" ]] && [[ -x "$EVENT_BUS_CLI" ]]; then
-    # Query event bus for session matching this client_id
-    # Use timeout to keep statusline responsive if event bus is slow
-    # Output format is 3 lines per session:
-    #   bright-tiger  dotfiles/main
-    #     repo: dotfiles, machine: Evans-Personal-Pro.local
-    #     age: 225s, client_id: a376d472-3afc-4917-aefc-a179a2ffb52d
-    session_name=$(timeout 1 "$EVENT_BUS_CLI" sessions 2>/dev/null | \
-        grep -B2 "client_id: ${session_id}" | \
-        head -1 | \
-        awk '{print $1}')
-    if [[ -n "$session_name" ]]; then
-        session_display="${MAGENTA}[${session_name}]${RESET} "
+if [[ -n "$session_id" ]]; then
+    if [[ -x "$EVENT_BUS_CLI" ]]; then
+        # Query event bus for session matching this client_id
+        # Command is fast (~100ms) so no timeout needed
+        # Output format: "  session-name  repo/branch" then details on following lines
+        session_name=$("$EVENT_BUS_CLI" sessions 2>/dev/null | \
+            grep -B2 "client_id: ${session_id}" | \
+            head -1 | \
+            awk '{print $1}')
+        if [[ -n "$session_name" ]]; then
+            session_display="${MAGENTA}[${session_name}]${RESET} "
+        else
+            # Session not found in event bus - show warning
+            session_display="${YELLOW}[no-session]${RESET} "
+        fi
+    else
+        # event-bus-cli not installed - show warning
+        session_display="${YELLOW}[no-cli]${RESET} "
     fi
 fi
 
