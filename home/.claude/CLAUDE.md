@@ -305,7 +305,6 @@ Available slash commands (in `~/.claude/commands/`):
 - `/status-report` - Generate repo status summary with recently completed work, open PRs/issues, and recommendations
 - `/pr-create` - Commit changes and create/update a PR
 - `/pr-review` - Review code via local analysis or remote reviewer comments (`local`, `remote`)
-- `/pr` - Dispatcher for above (backward compatibility)
 - `/pr-followups` - Find unaddressed or deferred comments from merged PRs
 - `/audit-codebase` - Check for AI-generated anti-patterns and Evergreen violations
 - `/audit-tests` - Find redundant or stale tests

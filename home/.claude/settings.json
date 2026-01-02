@@ -59,7 +59,6 @@
       "Skill(pr-review-toolkit:review-pr)",
       "Skill(commit-commands:commit-push-pr)",
       "Skill(watch-ci)",
-      "Skill(pr)",
       "Bash(rm:*)",
       "Bash(tmux:*)",
       "Bash(date:*)",
