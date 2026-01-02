@@ -11,4 +11,6 @@ Review these events for anything actionable:
 
 If you see a message sent to you (DM to your session, or on your repo:/machine: channel) or something relevant to the user's current work, briefly mention it.
 
-**Proactive action required**: If a new issue or RFC was created in this repo, explicitly ask: "New issue #N created - want to pick it up with `/work N`?"
+**Proactive action required**: If a new issue or RFC was created in this repo:
+- **Regular issue**: "New issue #N created - want to pick it up with `/work N`?"
+- **RFC issue**: "New RFC #N created - want to respond with `/rfc N`?"
