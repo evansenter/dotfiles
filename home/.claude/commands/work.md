@@ -280,10 +280,11 @@ When reaching a checkpoint:
 1. Mark checkpoint as `in_progress`
 2. Wait for CI to pass (check via `gh pr checks`)
 3. Execute: `/pr-review remote` to fetch and process reviewer comments
-4. If changes made:
-   - Add new `[work:${ISSUE}] Checkpoint: Run /pr-review local before pushing` todo (for the iteration)
-   - Add new `[work:${ISSUE}] Checkpoint: Push and re-run CI` todo
-   - Work through these new checkpoints before returning here
+4. If changes made and pushed:
+   - Reset "Monitor CI with /watch-ci" checkpoint to `pending`
+   - Reset this checkpoint ("Process feedback") to `pending`
+   - Run `/watch-ci <PR#>` to monitor the new CI run
+   - Loop back through these checkpoints until no more changes needed
 5. When approved or no feedback, mark checkpoint as `completed`
 
 #### Checkpoint: Merge when approved
