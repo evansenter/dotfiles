@@ -42,7 +42,7 @@ EVENTS=$(event-bus-cli events \
 
 # Output events using shared template
 if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]]; then
-    TEMPLATE_FILE="$HOME/.claude/hooks/prompts/recent-events.md"
+    TEMPLATE_FILE="$HOME/.claude/contrib/prompts/recent-events.md"
     if [[ -f "$TEMPLATE_FILE" ]]; then
         # Read template and substitute {{EVENTS}} with actual events
         TEMPLATE=$(<"$TEMPLATE_FILE")
