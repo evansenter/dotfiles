@@ -1,5 +1,5 @@
 ---
-argument-hint: <issue-number | --create> [--post]
+argument-hint: <issue-number | --create> [--post] [-R owner/repo]
 description: Create or respond to RFC-style issues with structured analysis
 ---
 
