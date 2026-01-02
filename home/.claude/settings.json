@@ -93,7 +93,13 @@
       "Bash(cat:*)",
       "Bash(head:*)",
       "Bash(tail:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(sleep:*)",
+      "Bash(find:*)",
+      "Bash(bash:*)",
+      "Bash(which:*)",
+      "Bash(.venv/bin/python:*)"
     ],
     "defaultMode": "default"
   },
@@ -137,6 +143,7 @@
   "enabledPlugins": {
     "feature-dev@claude-plugins-official": true,
     "pr-review-toolkit@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true
+    "commit-commands@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true
   }
 }

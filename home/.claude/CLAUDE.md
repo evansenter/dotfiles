@@ -158,6 +158,8 @@ Cross-session coordination via `mcp__event-bus__*` tools. Sessions auto-register
 
 **Proactive publishing:** When you discover something useful (gotchas, patterns, flaky tests, blockers), publish it so other sessions benefit.
 
+**Cross-repo coordination:** When creating issues in other repos (e.g., via `/improve-workflow`), broadcast to `repo:<target_repo>` so sessions there can pick up the work.
+
 **Details:** See dotfiles `CLAUDE.md` or read the `event-bus://guide` MCP resource.
 
 ## Session Analytics

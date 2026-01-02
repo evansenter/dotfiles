@@ -31,23 +31,28 @@ fi
 
 # Fetch events using server-side cursor tracking
 # --session-id enables auto-tracking: server saves cursor per session
-# --order asc for chronological order when catching up
-# Higher limit (20) than session-start (10) since active sessions benefit from more context
+# --order desc for most recent first (natural reading order)
 EVENTS=$(event-bus-cli events \
     --session-id "$SESSION_ID" \
-    --order asc \
+    --order desc \
     --exclude-types session_registered,session_unregistered \
     --timeout 200 \
     --limit 20 \
     2>/dev/null) || true
 
-# Only output if there are actual events (not empty or "No events" / "No new events")
+# Output events using shared template
 if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]]; then
-    cat <<EOF
-<event-bus-updates>
-$EVENTS
-</event-bus-updates>
-EOF
+    TEMPLATE_FILE="$HOME/.claude/contrib/prompts/recent-events.md"
+    if [[ -f "$TEMPLATE_FILE" ]]; then
+        # Read template and substitute {{EVENTS}} with actual events
+        TEMPLATE=$(<"$TEMPLATE_FILE")
+        echo "${TEMPLATE//\{\{EVENTS\}\}/$EVENTS}"
+    else
+        # Fallback if template missing
+        echo "<recent-events>"
+        echo "$EVENTS"
+        echo "</recent-events>"
+    fi
 fi
 
 exit 0

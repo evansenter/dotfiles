@@ -60,13 +60,20 @@ EVENTS=$(event-bus-cli events \
     --order desc \
     --exclude-types session_registered,session_unregistered \
     --timeout 200 \
-    --limit 10 \
+    --limit 20 \
     2>/dev/null) || true
 
+# Output events using shared template
 if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]]; then
-    cat <<EVENTS_EOF
-<recent-events>
-$EVENTS
-</recent-events>
-EVENTS_EOF
+    TEMPLATE_FILE="$HOME/.claude/contrib/prompts/recent-events.md"
+    if [[ -f "$TEMPLATE_FILE" ]]; then
+        # Read template and substitute {{EVENTS}} with actual events
+        TEMPLATE=$(<"$TEMPLATE_FILE")
+        echo "${TEMPLATE//\{\{EVENTS\}\}/$EVENTS}"
+    else
+        # Fallback if template missing
+        echo "<recent-events>"
+        echo "$EVENTS"
+        echo "</recent-events>"
+    fi
 fi
