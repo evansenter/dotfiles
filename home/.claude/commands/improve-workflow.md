@@ -198,6 +198,21 @@ Evaluate how analytics and event bus integrate with this central configuration:
 | **Prompt versioning** | Track CLAUDE.md and claude-remote.md changes over time | Understand prompt evolution |
 | **Prompt effectiveness** | Correlate prompt changes with session outcomes | Measure prompt improvements |
 
+### Check Existing Issues First
+
+Before suggesting any infrastructure improvement, check if an issue already exists:
+
+```
+mcp__github__list_issues(owner="evansenter", repo="claude-session-analytics", state="open")
+mcp__github__list_issues(owner="evansenter", repo="claude-event-bus", state="open")
+```
+
+For each potential suggestion:
+1. **If issue exists with same topic**: Don't suggest creating a new one. Instead, note:
+   - Whether the existing issue needs additional context from this session
+   - Whether to add a "+1" comment if the friction was significant
+2. **If no matching issue**: Include in Infrastructure Improvements section
+
 ### Output
 
 When meta-improvements are identified, include them in a separate section:
@@ -207,7 +222,11 @@ When meta-improvements are identified, include them in a separate section:
 - `evansenter/claude-event-bus` - Cross-session coordination
 - `evansenter/dotfiles` - Integration and workflow commands
 
-For each, specify:
+For each NEW suggestion (not already tracked), specify:
 1. What analysis or feature is missing
 2. What friction it would eliminate
 3. Concrete example from the current session
+
+For EXISTING issues that match session friction, note:
+- Issue number and title
+- Whether additional context should be added via comment
