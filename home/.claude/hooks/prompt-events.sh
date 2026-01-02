@@ -31,11 +31,10 @@ fi
 
 # Fetch events using server-side cursor tracking
 # --session-id enables auto-tracking: server saves cursor per session
-# --order asc for chronological order when catching up
-# Higher limit (20) than session-start (10) since active sessions benefit from more context
+# --order desc for most recent first (natural reading order)
 EVENTS=$(event-bus-cli events \
     --session-id "$SESSION_ID" \
-    --order asc \
+    --order desc \
     --exclude-types session_registered,session_unregistered \
     --timeout 200 \
     --limit 20 \

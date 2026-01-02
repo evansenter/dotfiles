@@ -60,7 +60,7 @@ EVENTS=$(event-bus-cli events \
     --order desc \
     --exclude-types session_registered,session_unregistered \
     --timeout 200 \
-    --limit 10 \
+    --limit 20 \
     2>/dev/null) || true
 
 if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]]; then
