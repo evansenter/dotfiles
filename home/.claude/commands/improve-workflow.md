@@ -171,7 +171,14 @@ Evaluate coordination capabilities:
 
 ### Dotfiles Integration
 
-Evaluate how these tools integrate:
+The dotfiles repo is the central hub for Claude Code configuration:
+- **Global CLAUDE.md** - System-wide workflow preferences and instructions
+- **claude-remote.md** - Prompt template for automated code review (claude-review workflow)
+- **Commands** - All custom slash commands
+- **Hooks** - Session lifecycle and event bus integration
+- **Settings** - Permissions, plugins, model configuration
+
+Evaluate how analytics and event bus integrate with this central configuration:
 
 | Gap | Description | Benefit |
 |-----|-------------|---------|
@@ -179,6 +186,8 @@ Evaluate how these tools integrate:
 | **Auto-permission sync** | Periodically check for permission gaps and suggest additions | Proactive maintenance |
 | **Cross-repo patterns** | Fetch related repo configurations for comparison | Learn from other projects |
 | **Workflow templates** | Starter configurations for common project types | Faster onboarding |
+| **Prompt versioning** | Track CLAUDE.md and claude-remote.md changes over time | Understand prompt evolution |
+| **Prompt effectiveness** | Correlate prompt changes with session outcomes | Measure prompt improvements |
 
 ### Output
 

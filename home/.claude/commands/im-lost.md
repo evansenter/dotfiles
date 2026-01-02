@@ -69,11 +69,11 @@ Present in this format:
 1. ○ Orient - `/status-report`
 2. ○ Pick work
 3. ○ Develop
-4. ○ Self-review - `/pr local`
+4. ○ Self-review - `/pr-review local`
 5. ○ Iterate
-6. ○ Create PR - `/pr create`
+6. ○ Create PR - `/pr-create`
 7. ○ Monitor CI - `/watch-ci`
-8. ○ Process feedback - `/pr remote`
+8. ○ Process feedback - `/pr-review remote`
 
 ← YOU ARE HERE: [Step N - brief explanation of why]
 

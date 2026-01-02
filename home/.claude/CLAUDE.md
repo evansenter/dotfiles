@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) for all sessions.
 - Creating, closing, and editing issues
 - Re-running flaky CI (once per failure)
 - Web searches for documentation/research
-- After completing implementation work: summarize changes and run `/pr local` before pushing
+- After completing implementation work: summarize changes and run `/pr-review local` before pushing
 - **After creating or pushing to a PR: immediately run `/watch-ci <PR#>`** - CI is now running, monitor it
 
 ### Requires Discussion
@@ -90,23 +90,23 @@ Use `/work <issue-number>` to start workflow-aware task execution with explicit 
 1. **Orient**: Run `/status-report` to see recent work, open issues, and recommendations
 2. **Start work**: Run `/work <issue-number>` to create a tracked work plan with checkpoints
 3. **Develop**: Make changes, run tests/linters as needed
-4. **Self-review**: After completing work, summarize what was done and run `/pr local` before pushing
+4. **Self-review**: After completing work, summarize what was done and run `/pr-review local` before pushing
 5. **Iterate**: Address feedback, repeat step 4 until clean
-6. **Create PR**: Use `/pr create` for streamlined commit-push-PR flow
+6. **Create PR**: Use `/pr-create` for streamlined commit-push-PR flow
 7. **Monitor CI**: Run `/watch-ci <PR#>` after PR creation or any push - track in background with notification
-8. **Process feedback**: When CI passes, run `/pr remote` to handle reviewer comments
+8. **Process feedback**: When CI passes, run `/pr-review remote` to handle reviewer comments
 9. **Merge & cleanup**: After approval, merge PR and run `/commit-commands:clean_gone` to clean stale branches
 
-**Tip**: Use `/work resume` to continue after context loss - picks up from current todo state.
+**Tip**: Use `/im-lost` to see your current workflow position if you lose context.
 
 ### Pre-PR Checklist
 
 - Check that CLAUDE.md and README.md are updated for significant changes
-- Run `/pr local` to catch issues before pushing
+- Run `/pr-review local` to catch issues before pushing
 
 ### Handling PR Feedback
 
-After CI passes, run `/pr remote` to fetch and process reviewer comments. Use `/pr local` for self-checks after implementing fixes (reviewers haven't seen your changes yet).
+After CI passes, run `/pr-review remote` to fetch and process reviewer comments. Use `/pr-review local` for self-checks after implementing fixes (reviewers haven't seen your changes yet).
 
 1. **Fetch comments** from the PR
 2. **Categorize** feedback as Critical, Important, or Suggestion
@@ -116,7 +116,7 @@ After CI passes, run `/pr remote` to fetch and process reviewer comments. Use `/
    - **Implement**: Fix it immediately
    - **Skip**: Note it was skipped, move on
    - **Defer**: Create a GitHub issue for later
-6. **Push and re-check** - run `/pr local` to verify changes are clean
+6. **Push and re-check** - run `/pr-review local` to verify changes are clean
 
 **Key principle**: You have context on the work's purpose that automated reviewers lack. Include your opinion in each question to help inform the user's decision.
 
@@ -129,7 +129,7 @@ After CI passes, run `/pr remote` to fetch and process reviewer comments. Use `/
 - **Always run `/watch-ci <PR#>` after creating or pushing to a PR** - don't wait for user to ask; CI is running, monitor it
 - If CI fails due to flakiness, auto-rerun failed jobs once with `gh run rerun <run-id> --failed`
 - If CI fails twice, investigate the root cause
-- **CRITICAL: After CI passes, run `/pr remote` before declaring ready to merge** - automated reviewers post new comments on each CI run
+- **CRITICAL: After CI passes, run `/pr-review remote` before declaring ready to merge** - automated reviewers post new comments on each CI run
 
 ## Hooks
 
@@ -300,10 +300,12 @@ Beyond command-triggered events, proactively publish when you discover something
 
 Available slash commands (in `~/.claude/commands/`):
 
-- `/work` - Workflow-aware task execution with checkpoints (`<issue-number>`, `resume`)
+- `/work` - Workflow-aware task execution with checkpoints (`<issue-number>`, `URL`, `"description"`)
 - `/im-lost` - Show current workflow position and context when you've lost track
 - `/status-report` - Generate repo status summary with recently completed work, open PRs/issues, and recommendations
-- `/pr` - Create PRs or review feedback (`create`, `local`, `remote`)
+- `/pr-create` - Commit changes and create/update a PR
+- `/pr-review` - Review code via local analysis or remote reviewer comments (`local`, `remote`)
+- `/pr` - Dispatcher for above (backward compatibility)
 - `/pr-followups` - Find unaddressed or deferred comments from merged PRs
 - `/audit-codebase` - Check for AI-generated anti-patterns and Evergreen violations
 - `/audit-tests` - Find redundant or stale tests
@@ -316,7 +318,7 @@ Available slash commands (in `~/.claude/commands/`):
 - `/event-bus-status` - Show event bus overview with active sessions and coordination insights
 - `/broadcast` - Send message to other Claude Code sessions via event bus
 - `/learnings` - Query historical discoveries (gotchas, patterns, flaky tests) from event bus
-- `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (or use `/pr create`)
+- `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (or use `/pr-create`)
 - `/commit-commands:clean_gone` - Delete local branches whose remote tracking branch is gone
 
 ## Contrib Utilities
