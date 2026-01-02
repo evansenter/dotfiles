@@ -40,13 +40,19 @@ EVENTS=$(event-bus-cli events \
     --limit 20 \
     2>/dev/null) || true
 
-# Only output if there are actual events (not empty or "No events" / "No new events")
+# Output events using shared template
 if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]]; then
-    cat <<EOF
-<event-bus-updates>
-$EVENTS
-</event-bus-updates>
-EOF
+    TEMPLATE_FILE="$HOME/.claude/hooks/prompts/recent-events.md"
+    if [[ -f "$TEMPLATE_FILE" ]]; then
+        # Read template and substitute {{EVENTS}} with actual events
+        TEMPLATE=$(<"$TEMPLATE_FILE")
+        echo "${TEMPLATE//\{\{EVENTS\}\}/$EVENTS}"
+    else
+        # Fallback if template missing
+        echo "<recent-events>"
+        echo "$EVENTS"
+        echo "</recent-events>"
+    fi
 fi
 
 exit 0
