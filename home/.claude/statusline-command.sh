@@ -32,11 +32,11 @@ GRAY=$'\e[90m'
 YELLOW=$'\e[33m'
 GREEN=$'\e[32m'
 MAGENTA=$'\e[35m'
+BLUE=$'\e[34m'
 RESET=$'\e[0m'
 
 # Event bus session name (cached per session_id to avoid repeated queries)
 # Uses Claude's session UUID to look up the nice-named event bus session
-session_display=""
 EVENT_BUS_CLI="${HOME}/.local/bin/event-bus-cli"
 if [[ -n "$session_id" ]]; then
     if [[ -x "$EVENT_BUS_CLI" ]]; then
@@ -64,15 +64,13 @@ if [[ -n "$session_id" ]]; then
             echo "$session_name" > "$cache_file" 2>/dev/null
         fi
 
-        if [[ -n "$session_name" ]]; then
-            session_display="${MAGENTA}[${session_name}]${RESET} "
-        else
+        if [[ -z "$session_name" ]]; then
             # Session not found in event bus - show warning
-            session_display="${YELLOW}[no-session]${RESET} "
+            session_warning="no-session"
         fi
     else
         # event-bus-cli not installed - show warning
-        session_display="${YELLOW}[no-cli]${RESET} "
+        session_warning="no-cli"
     fi
 fi
 
@@ -89,6 +87,34 @@ fi
 repo_url=""
 if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     repo_url=$(cd "$cwd" && gh repo view --json url -q .url 2>/dev/null)
+fi
+
+# Build combined [repo/session] display
+dir_name="${cwd##*/}"
+link_end=$'\e]8;;\e\\'
+
+# Build repo part (cyan, with link if available)
+if [[ -n "$repo_url" ]]; then
+    link_start=$'\e]8;;'"${repo_url}"$'\e\\'
+    repo_part="${CYAN}${link_start}${dir_name}${link_end}${RESET}"
+else
+    repo_part="${CYAN}${dir_name}${RESET}"
+fi
+
+# Build session part (magenta, or yellow warning)
+if [[ -n "$session_name" ]]; then
+    session_part="${MAGENTA}${session_name}${RESET}"
+elif [[ -n "$session_warning" ]]; then
+    session_part="${YELLOW}${session_warning}${RESET}"
+else
+    session_part=""
+fi
+
+# Combine into [repo/session] display
+if [[ -n "$session_part" ]]; then
+    repo_session_display="[${repo_part}/${session_part}]"
+else
+    repo_session_display="[${repo_part}]"
 fi
 
 # Associated PR or Issue indicator
@@ -212,31 +238,18 @@ else
     model_display="${GRAY}(unknown model)${RESET}"
 fi
 
-# Build status line: directory pr issue model git_status context user_context
-dir_name="${cwd##*/}"
-
-# Make directory a clickable link to repo if available
-if [[ -n "$repo_url" ]]; then
-    link_start=$'\e]8;;'"${repo_url}"$'\e\\'
-    link_end=$'\e]8;;\e\\'
-    dir_display="${CYAN}${link_start}${dir_name}${link_end}${RESET}"
-else
-    dir_display="${CYAN}${dir_name}${RESET}"
-fi
-
 # Branch display (show if not on default branch)
 branch_display=""
 if [[ -n "$branch" ]] && [[ "$branch" != "main" ]] && [[ "$branch" != "master" ]]; then
-    branch_display=":${MAGENTA}${branch}${RESET}"
+    branch_display=":${BLUE}${branch}${RESET}"
 fi
 
 # Final hyperlink reset to ensure no unclosed hyperlinks leak
 LINK_RESET=$'\e]8;;\e\\'
 
 # Build the complete statusline
-output=$(printf "%s%s%s%s%s %s%s%s%s%s" \
-    "$session_display" \
-    "$dir_display" "$branch_display" \
+output=$(printf "%s%s%s%s %s%s%s%s%s" \
+    "$repo_session_display" "$branch_display" \
     "$pr_display" "$issue_display" \
     "$model_display" \
     "$git_status" "$context_display" "$user_context" \
