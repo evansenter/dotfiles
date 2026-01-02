@@ -137,3 +137,68 @@ When suggesting to create an issue against `evansenter/dotfiles`, **only include
 - The proposed fix with concrete code/config changes
 
 Local improvements should be tracked in the current repository's issues.
+
+## Meta-Improvements
+
+Beyond workflow improvements, identify gaps in the underlying infrastructure that limit analysis capabilities. These become feature requests for the respective repositories.
+
+### Session Analytics (evansenter/claude-session-analytics)
+
+Evaluate what additional insights would be valuable:
+
+| Gap | Description | Benefit |
+|-----|-------------|---------|
+| **Stale recommendation filtering** | Auto-compare gaps against current settings.json | Avoid suggesting already-configured permissions |
+| **Session outcome tracking** | Classify sessions as success/failure/abandoned based on signals | Understand which workflows lead to completion |
+| **Rework detection** | Identify when same files are edited multiple times in sequence | Surface friction points needing automation |
+| **Issue/PR correlation** | Link sessions to GitHub outcomes (merged PRs, closed issues) | Measure session effectiveness |
+| **Learning extraction** | Auto-identify gotchas and patterns from session history | Build institutional knowledge |
+| **Session comparison** | Diff two sessions to see workflow evolution | Track improvement over time |
+| **Time-between-steps analysis** | Measure latency between tool calls | Identify slow operations |
+
+### Event Bus (evansenter/claude-event-bus)
+
+Evaluate coordination capabilities:
+
+| Gap | Description | Benefit |
+|-----|-------------|---------|
+| **Learning persistence** | Store gotchas/patterns permanently beyond event TTL | Build long-term knowledge base |
+| **Event search** | Query historical events by type, content, date range | Find past discoveries on demand |
+| **Conflict detection** | Alert when sessions modify same files | Prevent merge conflicts |
+| **Activity visualization** | Dashboard showing who's working on what | Situational awareness |
+| **Channel statistics** | Track which channels are most active | Understand coordination patterns |
+| **Event TTL customization** | Configure retention per event type | Keep learnings longer than noise |
+
+### Dotfiles Integration
+
+The dotfiles repo is the central hub for Claude Code configuration:
+- **Global CLAUDE.md** - System-wide workflow preferences and instructions
+- **claude-remote.md** - Prompt template for automated code review (claude-review workflow)
+- **Commands** - All custom slash commands
+- **Hooks** - Session lifecycle and event bus integration
+- **Settings** - Permissions, plugins, model configuration
+
+Evaluate how analytics and event bus integrate with this central configuration:
+
+| Gap | Description | Benefit |
+|-----|-------------|---------|
+| **Combined status view** | Single command showing analytics + event bus status | Reduce context switching |
+| **Auto-permission sync** | Periodically check for permission gaps and suggest additions | Proactive maintenance |
+| **Cross-repo patterns** | Fetch related repo configurations for comparison | Learn from other projects |
+| **Workflow templates** | Starter configurations for common project types | Faster onboarding |
+| **Prompt versioning** | Track CLAUDE.md and claude-remote.md changes over time | Understand prompt evolution |
+| **Prompt effectiveness** | Correlate prompt changes with session outcomes | Measure prompt improvements |
+
+### Output
+
+When meta-improvements are identified, include them in a separate section:
+
+**Infrastructure Improvements** - Feature requests for supporting tools:
+- `evansenter/claude-session-analytics` - Analytics and insight generation
+- `evansenter/claude-event-bus` - Cross-session coordination
+- `evansenter/dotfiles` - Integration and workflow commands
+
+For each, specify:
+1. What analysis or feature is missing
+2. What friction it would eliminate
+3. Concrete example from the current session

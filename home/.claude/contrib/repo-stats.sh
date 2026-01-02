@@ -81,9 +81,9 @@ for repo in $REPOS; do
     # Count tests (use subshell to avoid pipefail issues with grep returning 1 on no match)
     test_count="-"
     if [[ -d "$local_path" ]]; then
-        # Rust: count #[test] annotations
+        # Rust: count #[test] annotations recursively (handles workspaces with multiple crates)
         if [[ -f "$local_path/Cargo.toml" ]]; then
-            test_count=$(grep -r '#\[test\]' "$local_path/src" "$local_path/tests" 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
+            test_count=$(grep -r '#\[test\]' "$local_path" --include="*.rs" 2>/dev/null | grep -v '/target/' | wc -l | tr -d ' ') || test_count="0"
         # Python: count test_* functions and Test* classes
         elif [[ -f "$local_path/setup.py" ]] || [[ -f "$local_path/pyproject.toml" ]] || [[ -f "$local_path/requirements.txt" ]]; then
             test_count=$(grep -rE '^\s*(def test_|class Test)' "$local_path" --include="*.py" 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
@@ -92,7 +92,12 @@ for repo in $REPOS; do
             test_count=$(grep -rE '^\s*(test|it|describe)\(' "$local_path" --include="*.test.*" --include="*.spec.*" 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
         # Shell: count test files in tests/ or test/ directories
         elif [[ -d "$local_path/tests" ]] || [[ -d "$local_path/test" ]]; then
-            test_count=$(find "$local_path/tests" "$local_path/test" -name "*.sh" -o -name "test_*" 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
+            test_dirs=()
+            [[ -d "$local_path/tests" ]] && test_dirs+=("$local_path/tests")
+            [[ -d "$local_path/test" ]] && test_dirs+=("$local_path/test")
+            if [[ ${#test_dirs[@]} -gt 0 ]]; then
+                test_count=$(find "${test_dirs[@]}" \( -name "*.sh" -o -name "test_*" \) 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
+            fi
         fi
     fi
 

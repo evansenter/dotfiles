@@ -46,6 +46,6 @@ If PR_NUMBER is omitted, uses the current branch's PR.
      )
      ```
    - If **passed**:
-     - **CRITICAL**: Run `/pr remote` to process reviewer comments before declaring ready to merge
+     - **CRITICAL**: Run `/pr-review remote` to process reviewer comments before declaring ready to merge
      - Automated reviewers (like claude-review) post new comments on each CI run
    - If **failed**: Investigate the failure and fix

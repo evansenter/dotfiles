@@ -34,19 +34,34 @@ GREEN=$'\e[32m'
 MAGENTA=$'\e[35m'
 RESET=$'\e[0m'
 
-# Event bus session name (queried live from event bus by client_id)
+# Event bus session name (cached per session_id to avoid repeated queries)
 # Uses Claude's session UUID to look up the nice-named event bus session
 session_display=""
 EVENT_BUS_CLI="${HOME}/.local/bin/event-bus-cli"
 if [[ -n "$session_id" ]]; then
     if [[ -x "$EVENT_BUS_CLI" ]]; then
-        # Query event bus for session matching this client_id
-        # Command is fast (~100ms) so no timeout needed
-        # Output format: "  session-name  repo/branch" then details on following lines
-        session_name=$("$EVENT_BUS_CLI" sessions 2>/dev/null | \
-            grep -B2 "client_id: ${session_id}" | \
-            head -1 | \
-            awk '{print $1}')
+        # Check cache first (session name doesn't change during a session)
+        cache_dir="${TMPDIR:-/tmp}/claude-statusline"
+        cache_file="${cache_dir}/${session_id}"
+
+        # Clean up stale cache files (older than 24 hours)
+        find "$cache_dir" -type f -mtime +1 -delete 2>/dev/null
+
+        if [[ -f "$cache_file" ]]; then
+            session_name=$(cat "$cache_file")
+        else
+            # Query event bus for session matching this client_id
+            # Output format: "  session-name  repo/branch" then details on following lines
+            session_name=$("$EVENT_BUS_CLI" sessions 2>/dev/null | \
+                grep -B2 "client_id: ${session_id}" | \
+                head -1 | \
+                awk '{print $1}')
+
+            # Cache the result (even if empty, to avoid repeated queries)
+            mkdir -p "$cache_dir" 2>/dev/null
+            echo "$session_name" > "$cache_file" 2>/dev/null
+        fi
+
         if [[ -n "$session_name" ]]; then
             session_display="${MAGENTA}[${session_name}]${RESET} "
         else
