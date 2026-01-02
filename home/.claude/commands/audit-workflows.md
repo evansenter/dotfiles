@@ -81,7 +81,7 @@ For each finding, include:
   "questions": [
     {
       "question": "#1 [Critical]: work.md:45 ↔ work.md:120 - Phase 3 requires X but Phase 5 says skip X. Fix: Add condition. (My take: This causes real confusion)",
-      "header": "#1 Critical",
+      "header": "#1",
       "options": [
         {"label": "Implement (Recommended)", "description": "Fix it now"},
         {"label": "Skip", "description": "Not worth fixing"},
@@ -91,7 +91,7 @@ For each finding, include:
     },
     {
       "question": "#2 [Important]: improve-workflow.md:45 - Unclear when to ask friction question. Fix: Add criteria. (My take: Causes inconsistent behavior)",
-      "header": "#2 Important",
+      "header": "#2",
       "options": [
         {"label": "Implement (Recommended)", "description": "Fix it now"},
         {"label": "Skip", "description": "Not worth fixing"},

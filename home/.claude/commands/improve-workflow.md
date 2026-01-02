@@ -3,7 +3,7 @@ argument-hint: [--global] [--days N] [focus-area]
 description: Suggest workflow improvements based on recent usage
 ---
 
-ultrathink: Based on our recent work in this session, suggest Claude Code features and configurations that would improve autonomy and reduce back-and-forth. Focus on friction from the current session first, then supplement with data patterns.
+ultrathink: Based on our recent work, suggest Claude Code features and configurations that would improve autonomy and reduce back-and-forth. Analyze the last day of data but focus primarily on friction from the current work session, then supplement with broader patterns.
 
 ## Arguments
 
