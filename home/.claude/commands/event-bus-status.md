@@ -75,10 +75,10 @@ Calculate time since `last_heartbeat`:
 #### Summarize Recent Activity
 
 Group events by type and count:
-- PRs merged (`pr_merged`)
+- Tasks completed (`task_completed` - includes PR merges)
 - CI results (`ci_completed` - separate pass/fail)
 - RFCs created (`rfc_created`)
-- Work started (`parallel_work_started`)
+- Work started (`task_started`, `parallel_work_started`)
 - Messages (`message`)
 - Help requests (`help_needed`)
 
@@ -121,11 +121,11 @@ Check for:
 
 | Time | Event | Details |
 |------|-------|---------|
-| 5 min ago | PR merged | #32 in claude-event-bus |
+| 5 min ago | Task completed | Merged PR #32 in claude-event-bus |
 | 10 min ago | CI passed | PR #172 in gemicro |
 | 15 min ago | RFC created | #33 - New event types |
 
-**Summary:** N PRs merged, M CI runs (P passed, F failed), K RFCs created
+**Summary:** N tasks completed, M CI runs (P passed, F failed), K RFCs created
 
 ### Coordination Insights
 

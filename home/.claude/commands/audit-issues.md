@@ -1,5 +1,5 @@
 ---
-argument-hint: [label-filter]
+argument-hint:
 description: Audit open issues for staleness and relevance
 ---
 

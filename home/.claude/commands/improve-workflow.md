@@ -1,16 +1,17 @@
 ---
-argument-hint: [--global] [focus-area]
+argument-hint: [--global] [--days N] [focus-area]
 description: Suggest workflow improvements based on recent usage
 ---
 
-ultrathink: Based on our recent work together, suggest Claude Code features and configurations that would improve autonomy and reduce back-and-forth.
+ultrathink: Based on our recent work, suggest Claude Code features and configurations that would improve autonomy and reduce back-and-forth. Analyze the last day of data but focus primarily on friction from the current work session, then supplement with broader patterns.
 
 ## Arguments
 
 Parse arguments from: $ARGUMENTS
 
 - `--global` - Analyze all projects instead of just the current one
-- `focus-area` - Optional focus area for suggestions (e.g., "permissions", "automation")
+- `--days N` - Days to analyze (default: 1 for local session focus)
+- `focus-area` - Optional focus area for suggestions (e.g., "permissions", "automation"). Prioritize there but don't ignore other issues.
 
 ## 1. Gather Data
 
@@ -19,9 +20,9 @@ Parse arguments from: $ARGUMENTS
 Use the session-analytics MCP server for quantitative insights:
 
 ```
-mcp__session-analytics__get_insights(days=7, refresh=false)
-mcp__session-analytics__get_tool_frequency(days=7, expand=true)
-mcp__session-analytics__get_permission_gaps(days=7, min_count=5)
+mcp__session-analytics__get_insights(days=<N>, refresh=false)
+mcp__session-analytics__get_tool_frequency(days=<N>, expand=true)
+mcp__session-analytics__get_permission_gaps(days=<N>, min_count=5)
 ```
 
 If `--global` was passed, omit the `project` parameter.
@@ -79,7 +80,7 @@ For each friction point, note:
 
 ### From User (Optional)
 
-After presenting your observations, ask if the user experienced additional friction:
+Ask if the session involved complex work or if data-driven findings are sparse (<3 items). Otherwise, skip this question.
 
 ```json
 {

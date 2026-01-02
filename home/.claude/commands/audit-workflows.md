@@ -55,32 +55,71 @@ $ARGUMENTS
 
 ## Output
 
-Present findings in priority order:
+### 1. Present Summary
 
-```
-## Critical (Contradictions)
+First, show a brief summary of findings by category:
 
-### Within Workflows
-| File | Line A | Line B | Contradiction | Suggested Fix |
-|------|--------|--------|---------------|---------------|
-| work.md | 45 | 120 | Phase 3 requires X, Phase 5 says skip X | Clarify when to skip with condition |
+```markdown
+## Audit Summary
 
-### Across Workflows
-| Location A | Location B | Contradiction | Suggested Fix |
-|------------|------------|---------------|---------------|
-| work.md:45 | pr-review.md:20 | Conflicting checkpoint order | Align on single source of truth in work.md |
-
-## Important (Ambiguities)
-
-| Location | Issue | Suggested Fix |
-|----------|-------|---------------|
-| work.md:78 | Unclear when to skip phase | Add decision criteria |
-
-## Minor (Staleness/Consistency)
-
-| Location | Issue | Suggested Fix |
-|----------|-------|---------------|
-| CLAUDE.md:120 | References old command name | Update to current name |
+- **Critical:** N contradictions found
+- **Important:** N ambiguities found
+- **Minor:** N staleness/consistency issues found
 ```
 
-After presenting findings, offer to fix issues directly or create GitHub issues for tracking.
+### 2. Process Findings Interactively
+
+Present findings in batches of 1-4 via AskUserQuestion, starting with Critical issues.
+
+For each finding, include:
+- The issue with file:line references
+- Your recommended fix
+- Your opinion on severity/importance
+
+```json
+{
+  "questions": [
+    {
+      "question": "#1 [Critical]: work.md:45 ↔ work.md:120 - Phase 3 requires X but Phase 5 says skip X. Fix: Add condition. (My take: This causes real confusion)",
+      "header": "#1",
+      "options": [
+        {"label": "Implement (Recommended)", "description": "Fix it now"},
+        {"label": "Skip", "description": "Not worth fixing"},
+        {"label": "Defer", "description": "Create issue for later"}
+      ],
+      "multiSelect": false
+    },
+    {
+      "question": "#2 [Important]: improve-workflow.md:45 - Unclear when to ask friction question. Fix: Add criteria. (My take: Causes inconsistent behavior)",
+      "header": "#2",
+      "options": [
+        {"label": "Implement (Recommended)", "description": "Fix it now"},
+        {"label": "Skip", "description": "Not worth fixing"},
+        {"label": "Defer", "description": "Create issue for later"}
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
+
+### 3. Act on Choices
+
+For each finding based on user's choice:
+- **Implement**: Fix it immediately, then continue
+- **Skip**: Note it was skipped, move on
+- **Defer**: Create a GitHub issue with the finding details
+
+### 4. Final Summary
+
+After processing all findings:
+
+```markdown
+## Audit Complete
+
+**Implemented:** N fixes applied
+**Skipped:** N issues
+**Deferred:** N issues created
+
+[List of changes made and issues created]
+```

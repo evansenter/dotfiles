@@ -13,4 +13,6 @@ Identify:
 
 $ARGUMENTS
 
+If a focus-area is provided, prioritize analysis there but don't ignore other significant issues discovered.
+
 Output: A cleanup plan with deletions, consolidations, and a prioritized list of tests to add. Include rough effort estimates.

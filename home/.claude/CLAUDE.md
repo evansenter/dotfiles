@@ -75,7 +75,6 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 **Session Analytics MCP Server:**
 - `get_insights`, `get_tool_frequency`, `get_permission_gaps`
 - `get_session_events`, `get_session_signals`, `get_handoff_context`
-- `analyze_trends`, `analyze_failures`, `classify_sessions`
 
 **When to use MCP vs gh CLI:**
 - **Prefer MCP** for standard operations (faster, structured data): fetching PR/issue details, creating issues, listing items
@@ -160,7 +159,7 @@ Cross-session coordination via `mcp__event-bus__*` tools. Sessions auto-register
 
 **Cross-repo coordination:** When creating issues in other repos (e.g., via `/improve-workflow`), broadcast to `repo:<target_repo>` so sessions there can pick up the work.
 
-**Details:** See dotfiles `CLAUDE.md` or read the `event-bus://guide` MCP resource.
+**Details:** Read the `event-bus://guide` MCP resource.
 
 ## Session Analytics
 
@@ -172,7 +171,7 @@ Workflow insights from Claude Code session logs via `mcp__session-analytics__*` 
 
 **Key tools:** `get_insights`, `get_permission_gaps`, `get_handoff_context`, `analyze_failures`
 
-**Details:** See dotfiles `CLAUDE.md` or read the `session-analytics://guide` MCP resource.
+**Details:** Read the `session-analytics://guide` MCP resource.
 
 ## Custom Commands
 
@@ -187,7 +186,8 @@ Available slash commands (in `~/.claude/commands/`):
 - `/audit-tests` - Find redundant or stale tests
 - `/audit-issues` - Categorize open issues as current or needing updates
 - `/improve-workflow` - Suggest workflow improvements, categorized as local (this repo) or global (dotfiles)
-- `/rfc` - Create or respond to RFC-style issues (`--create` for new, issue number for response)
+- `/rfc-create` - Create RFC-style issues with structured analysis
+- `/rfc-respond` - Respond to RFC-style issues with structured analysis
 - `/watch-ci` - Monitor CI in background with notification when complete
 - `/parallel-work` - Manage git worktrees for parallel PR development (start with tmux auto-launch, list, cleanup)
 - `/event-bus-status` - Show event bus overview with active sessions and coordination insights

@@ -47,7 +47,7 @@ Based on gathered state, identify the current step:
 | On branch, uncommitted changes | 3: Develop |
 | On branch, committed, no PR | 4-6: Self-review/Iterate/Create PR |
 | PR open, CI running | 7: Monitor CI |
-| PR open, CI passed, has comments | 8: Process feedback |
+| PR open, CI passed, has unaddressed comments | 8: Process feedback |
 | PR open, CI passed, no comments | 9: Ready to merge |
 | PR open, CI failed | Fix CI failures |
 | PR merged, on main | 10: Reflect (run /improve-workflow) |
@@ -68,7 +68,7 @@ Present in this format:
 ### Workflow Position
 
 1. ○ Orient - `/status-report`
-2. ○ Pick work
+2. ○ Start work - `/work`
 3. ○ Develop
 4. ○ Self-review - `/pr-review local`
 5. ○ Iterate
