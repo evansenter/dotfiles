@@ -2,13 +2,6 @@
 {{EVENTS}}
 </recent-events>
 
-Review these events for anything actionable:
-- **Issues created in this repo**: Consider picking up with `/work <issue-number>`
-- **CI failures**: May need investigation or rerun
-- **Help requests**: Another session may need assistance
-- **Blockers/gotchas**: Information that affects your current work
-- **Task completions**: Context on what was recently merged
+**Display**: Show a "Recent event bus activity:" section with one-line bullet summaries including approximate time (e.g., "- CI passed on PR #125 (3 min ago)"). Only show events from the last ~10 minutes. Skip individual events already mentioned.
 
-If you see a message sent to you (DM to your session, or on your repo:/machine: channel) or something relevant to the user's current work, briefly mention it.
-
-**Proactive action required**: If a new issue or RFC was created in this repo, explicitly ask: "New issue #N created - want to pick it up with `/work N`?"
+**Act on**: DMs to your session, help requests, CI failures, blockers. If a new issue was created in this repo, ask: "New issue #N created - want to pick it up with `/work N`?"
