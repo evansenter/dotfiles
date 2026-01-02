@@ -44,6 +44,9 @@ if [[ -n "$session_id" ]]; then
         cache_dir="${TMPDIR:-/tmp}/claude-statusline"
         cache_file="${cache_dir}/${session_id}"
 
+        # Clean up stale cache files (older than 24 hours)
+        find "$cache_dir" -type f -mtime +1 -delete 2>/dev/null
+
         if [[ -f "$cache_file" ]]; then
             session_name=$(cat "$cache_file")
         else

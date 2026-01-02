@@ -98,10 +98,12 @@ Check for "Feedback Addressed" comments that indicate previously resolved items:
 gh api "repos/${REPO}/issues/${PR_NUM}/comments" --jq '.[] | select(.body | contains("Feedback Addressed")) | .body'
 ```
 
-Parse these comments to identify items in:
-- **Implemented** - Already fixed, do NOT re-present
-- **Skipped** - Intentionally not fixed, do NOT re-present
-- **Deferred** - Tracked in issue, do NOT re-present
+Parse these comments to identify items in each section:
+- **Implemented** (under `### Implemented`) - Already fixed, do NOT re-present
+- **Skipped** (under `### Skipped`) - Intentionally not fixed, do NOT re-present
+- **Deferred** (under `### Deferred`) - Tracked in issue, do NOT re-present
+
+Items are bullet points starting with `- [` under each header. Extract the description and match against new feedback by file path and issue text.
 
 Only present NEW feedback not covered by previous "Feedback Addressed" comments. This prevents re-raising issues that have already been handled.
 

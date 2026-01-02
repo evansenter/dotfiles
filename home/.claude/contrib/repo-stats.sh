@@ -92,10 +92,12 @@ for repo in $REPOS; do
             test_count=$(grep -rE '^\s*(test|it|describe)\(' "$local_path" --include="*.test.*" --include="*.spec.*" 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
         # Shell: count test files in tests/ or test/ directories
         elif [[ -d "$local_path/tests" ]] || [[ -d "$local_path/test" ]]; then
-            test_dirs=""
-            [[ -d "$local_path/tests" ]] && test_dirs="$local_path/tests"
-            [[ -d "$local_path/test" ]] && test_dirs="$test_dirs $local_path/test"
-            test_count=$(find $test_dirs \( -name "*.sh" -o -name "test_*" \) 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
+            test_dirs=()
+            [[ -d "$local_path/tests" ]] && test_dirs+=("$local_path/tests")
+            [[ -d "$local_path/test" ]] && test_dirs+=("$local_path/test")
+            if [[ ${#test_dirs[@]} -gt 0 ]]; then
+                test_count=$(find "${test_dirs[@]}" \( -name "*.sh" -o -name "test_*" \) 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
+            fi
         fi
     fi
 
