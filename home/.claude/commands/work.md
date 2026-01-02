@@ -1,5 +1,5 @@
 ---
-argument-hint: <issue-number | URL | "description">
+argument-hint: <issue-number | URL | "description" | --attach>
 description: Workflow-aware task execution with checkpoints
 ---
 
