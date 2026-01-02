@@ -37,7 +37,6 @@ RESET=$'\e[0m'
 
 # Event bus session name (cached per session_id to avoid repeated queries)
 # Uses Claude's session UUID to look up the nice-named event bus session
-session_display=""
 EVENT_BUS_CLI="${HOME}/.local/bin/event-bus-cli"
 if [[ -n "$session_id" ]]; then
     if [[ -x "$EVENT_BUS_CLI" ]]; then
