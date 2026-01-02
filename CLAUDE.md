@@ -148,10 +148,14 @@ Sessions auto-subscribe to 4 channels based on their attributes:
 
 | Event Type | Description | Example Payload |
 |------------|-------------|-----------------|
+| `task_started` | Work begun on task | `"Started work on #42 - Add auth"` |
+| `task_completed` | Task finished (includes PR merge) | `"Merged PR #42 - Add auth"` |
 | `rfc_created` | New RFC issue created | `"RFC created: #48 - Event bus integration"` |
 | `rfc_responded` | Response posted to RFC | `"RFC response posted: #48"` |
 | `parallel_work_started` | New worktree/session started | `"Started parallel work: issue-48"` |
 | `ci_completed` | CI finished (pass or fail) | `"CI passed on PR #42"` |
+| `feedback_addressed` | PR feedback processed | `"Addressed feedback on PR #42: 3 implemented, 1 deferred"` |
+| `issue_created` | Issue created (often cross-repo) | `"Created issue #15 in claude-event-bus"` |
 | `message` | Generic message/announcement | `"Auth feature done, you can integrate now"` |
 | `help_needed` | Request for assistance | `"Need review on auth.ts approach"` |
 | `gotcha_discovered` | Non-obvious issue found | `"SQLite needs datetime adapters in Python 3.12+"` |
@@ -175,7 +179,7 @@ Publish discoveries that would save other sessions time:
 |-------|-------|----------|
 | MCP tools unavailable | Server not running | `launchctl list | grep event-bus` |
 | Events not received | Wrong channel | Check `list_sessions()` |
-| Stale sessions | Didn't unregister | Local: cleaned on PID death; Remote: 7 day expiry |
+| Stale sessions | Didn't unregister | Local: cleaned on heartbeat timeout; Remote: 7 day expiry |
 
 **Additional documentation:** Read `event-bus://guide` MCP resource.
 

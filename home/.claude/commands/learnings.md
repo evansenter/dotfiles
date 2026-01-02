@@ -1,5 +1,5 @@
 ---
-argument-hint: [--repo name] [--all] [--type gotcha|pattern|flaky]
+argument-hint: [--repo name] [--all]
 description: Query historical discoveries from event bus
 ---
 
@@ -13,9 +13,6 @@ Query historical discoveries (gotchas, patterns, flaky tests) from the event bus
 /learnings                      # Show learnings for current repo
 /learnings --repo gemicro       # Show learnings for specific repo
 /learnings --all                # Show all learnings across repos
-/learnings --type gotcha        # Filter by type
-/learnings --type pattern
-/learnings --type flaky
 ```
 
 ## Instructions
@@ -25,7 +22,6 @@ Query historical discoveries (gotchas, patterns, flaky tests) from the event bus
 From `$ARGUMENTS`, extract:
 - **--repo**: Specific repo name to filter by
 - **--all**: Show learnings across all repos
-- **--type**: Filter by event type (gotcha, pattern, flaky)
 
 If neither `--repo` nor `--all` is specified, use the current repo.
 
@@ -56,12 +52,6 @@ Filter for learning-related event types:
 - `pattern_found` → Patterns
 - `test_flaky` → Flaky Tests
 - `workaround_needed` → Workarounds
-
-If `--type` is specified, filter to only that type:
-- `gotcha` → `gotcha_discovered`
-- `pattern` → `pattern_found`
-- `flaky` → `test_flaky`
-- `workaround` → `workaround_needed`
 
 ### 5. Output Format
 

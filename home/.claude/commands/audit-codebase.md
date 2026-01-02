@@ -19,4 +19,6 @@ Review: README, recent commits, open issues, and PRs on GitHub for additional co
 
 $ARGUMENTS
 
+If a focus-area is provided, prioritize analysis there but don't ignore other significant issues discovered.
+
 Output: A comprehensive refactoring plan. Breaking changes are acceptable. Organize by priority and effort.

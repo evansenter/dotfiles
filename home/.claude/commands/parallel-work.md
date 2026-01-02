@@ -173,10 +173,10 @@ Write `.parallel-context.md` to the new worktree. When writing, replace placehol
 Check if running inside tmux:
 
 ```bash
-echo "$TMUX"
+tmux list-sessions 2>/dev/null
 ```
 
-If `$TMUX` is set (non-empty), offer to auto-launch a new session:
+If the command succeeds (exit 0), tmux is available. Offer to auto-launch a new session:
 
 ```json
 {
