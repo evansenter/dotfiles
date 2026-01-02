@@ -69,61 +69,79 @@ echo "**Period:** Last $DAYS days (since ${SINCE:0:10})"
 echo "**Owner:** $OWNER"
 echo ""
 
+# Helper function to print a table row
+# Args: column widths..., then "---" for separator or values
+print_row() {
+    local widths=("$@")
+    local values_start=0
+    local is_separator=false
+
+    # Find where values start (after all numeric widths)
+    for i in "${!widths[@]}"; do
+        if [[ ! "${widths[$i]}" =~ ^[0-9]+$ ]]; then
+            values_start=$i
+            break
+        fi
+    done
+
+    local col_widths=("${widths[@]:0:$values_start}")
+    local values=("${widths[@]:$values_start}")
+
+    if [[ "${values[0]}" == "---" ]]; then
+        is_separator=true
+    fi
+
+    printf "│"
+    for i in "${!col_widths[@]}"; do
+        local w="${col_widths[$i]}"
+        if $is_separator; then
+            printf "%s" "$(printf '─%.0s' $(seq 1 $((w + 2))))"
+            if [[ $i -lt $((${#col_widths[@]} - 1)) ]]; then
+                printf "┼"
+            fi
+        else
+            printf " %-${w}s │" "${values[$i]}"
+        fi
+    done
+    if $is_separator; then
+        printf "│"
+    fi
+    printf "\n"
+}
+
 # Print project stats table
 echo "### Project Stats"
 echo ""
-echo "| Repo | Tests | Deps | Open Issues | Open PRs |"
-echo "|------|-------|------|-------------|----------|"
+
+# Column widths for project stats
+pw1=26  # Repo
+pw2=6   # Issues
+pw3=4   # PRs
+
+printf "┌%s┬%s┬%s┐\n" \
+    "$(printf '─%.0s' $(seq 1 $((pw1 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((pw2 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((pw3 + 2))))"
+print_row $pw1 $pw2 $pw3 "Repository" "Issues" "PRs"
+printf "├%s┼%s┼%s┤\n" \
+    "$(printf '─%.0s' $(seq 1 $((pw1 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((pw2 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((pw3 + 2))))"
 
 for repo in $REPOS; do
-    local_path="$LOCAL_DIR/$repo"
-
-    # Count tests (use subshell to avoid pipefail issues with grep returning 1 on no match)
-    test_count="-"
-    if [[ -d "$local_path" ]]; then
-        # Rust: count #[test] annotations recursively (handles workspaces with multiple crates)
-        if [[ -f "$local_path/Cargo.toml" ]]; then
-            test_count=$(grep -r '#\[test\]' "$local_path" --include="*.rs" 2>/dev/null | grep -v '/target/' | wc -l | tr -d ' ') || test_count="0"
-        # Python: count test_* functions and Test* classes
-        elif [[ -f "$local_path/setup.py" ]] || [[ -f "$local_path/pyproject.toml" ]] || [[ -f "$local_path/requirements.txt" ]]; then
-            test_count=$(grep -rE '^\s*(def test_|class Test)' "$local_path" --include="*.py" 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
-        # JS/TS: count test/it/describe blocks
-        elif [[ -f "$local_path/package.json" ]]; then
-            test_count=$(grep -rE '^\s*(test|it|describe)\(' "$local_path" --include="*.test.*" --include="*.spec.*" 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
-        # Shell: count test files in tests/ or test/ directories
-        elif [[ -d "$local_path/tests" ]] || [[ -d "$local_path/test" ]]; then
-            test_dirs=()
-            [[ -d "$local_path/tests" ]] && test_dirs+=("$local_path/tests")
-            [[ -d "$local_path/test" ]] && test_dirs+=("$local_path/test")
-            if [[ ${#test_dirs[@]} -gt 0 ]]; then
-                test_count=$(find "${test_dirs[@]}" \( -name "*.sh" -o -name "test_*" \) 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
-            fi
-        fi
-    fi
-
-    # Count dependencies
-    deps_count="-"
-    if [[ -d "$local_path" ]]; then
-        if [[ -f "$local_path/Cargo.toml" ]]; then
-            # Count [dependencies] and [dev-dependencies]
-            deps_count=$(grep -E '^\[.*dependencies' "$local_path/Cargo.toml" -A 100 | grep -E '^[a-zA-Z]' | grep -v '^\[' | wc -l | tr -d ' ') || deps_count="0"
-        elif [[ -f "$local_path/package.json" ]]; then
-            deps_count=$(jq '[(.dependencies // {}), (.devDependencies // {})] | map(keys) | flatten | length' "$local_path/package.json" 2>/dev/null) || deps_count="-"
-        elif [[ -f "$local_path/requirements.txt" ]]; then
-            deps_count=$(grep -v '^#' "$local_path/requirements.txt" 2>/dev/null | grep -v '^$' | wc -l | tr -d ' ') || deps_count="0"
-        elif [[ -f "$local_path/pyproject.toml" ]]; then
-            deps_count=$(grep -E '^\s*"[^"]+' "$local_path/pyproject.toml" 2>/dev/null | wc -l | tr -d ' ') || deps_count="0"
-        fi
-    fi
-
     # Get open issues and PRs from GitHub
     open_issues=$(gh api "repos/$OWNER/$repo" --jq '.open_issues_count // 0' 2>/dev/null) || open_issues="0"
     open_prs=$(gh api "repos/$OWNER/$repo/pulls?state=open" --jq 'length' 2>/dev/null) || open_prs="0"
     # open_issues includes PRs, so subtract
     open_issues=$((open_issues - open_prs))
 
-    echo "| **$repo** | $test_count | $deps_count | $open_issues | $open_prs |"
+    print_row $pw1 $pw2 $pw3 "$repo" "$open_issues" "$open_prs"
 done
+
+printf "└%s┴%s┴%s┘\n" \
+    "$(printf '─%.0s' $(seq 1 $((pw1 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((pw2 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((pw3 + 2))))"
 
 echo ""
 
@@ -131,18 +149,46 @@ echo ""
 echo "### Codebase Size"
 echo ""
 
-if [[ "$HAS_SCC" == "1" ]]; then
-    echo "| Repo | Language | Code | Comments | Blanks | Total |"
-    echo "|------|----------|------|----------|--------|-------|"
-else
-    echo "| Repo | Language | LoC (est.) |"
-    echo "|------|----------|------------|"
-fi
+# Column widths for codebase size
+cw1=26  # Repo
+cw2=8   # Language
+cw3=8   # Code
+cw4=8   # Comments
+cw5=8   # Blanks
+cw6=8   # Total
 
 total_code=0
 total_comments=0
 total_blanks=0
 total_lines=0
+
+if [[ "$HAS_SCC" == "1" ]]; then
+    printf "┌%s┬%s┬%s┬%s┬%s┬%s┐\n" \
+        "$(printf '─%.0s' $(seq 1 $((cw1 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw2 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw3 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw4 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw5 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw6 + 2))))"
+    print_row $cw1 $cw2 $cw3 $cw4 $cw5 $cw6 "Repository" "Language" "Code" "Comments" "Blanks" "Total"
+    printf "├%s┼%s┼%s┼%s┼%s┼%s┤\n" \
+        "$(printf '─%.0s' $(seq 1 $((cw1 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw2 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw3 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw4 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw5 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw6 + 2))))"
+else
+    printf "┌%s┬%s┬%s┐\n" \
+        "$(printf '─%.0s' $(seq 1 $((cw1 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw2 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw3 + 2))))"
+    print_row $cw1 $cw2 $cw3 "Repository" "Language" "LoC (est.)"
+    printf "├%s┼%s┼%s┤\n" \
+        "$(printf '─%.0s' $(seq 1 $((cw1 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw2 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw3 + 2))))"
+fi
 
 for repo in $REPOS; do
     lang=$(gh api "repos/$OWNER/$repo" --jq '.language // "Unknown"' 2>/dev/null || echo "Unknown")
@@ -161,13 +207,13 @@ for repo in $REPOS; do
         total_blanks=$((total_blanks + blanks))
         total_lines=$((total_lines + lines))
 
-        # Format numbers
+        # Format numbers with commas
         code_fmt=$(printf "%'d" "$code")
         comments_fmt=$(printf "%'d" "$comments")
         blanks_fmt=$(printf "%'d" "$blanks")
         lines_fmt=$(printf "%'d" "$lines")
 
-        echo "| **$repo** | $lang | $code_fmt | $comments_fmt | $blanks_fmt | $lines_fmt |"
+        print_row $cw1 $cw2 $cw3 $cw4 $cw5 $cw6 "$repo" "$lang" "$code_fmt" "$comments_fmt" "$blanks_fmt" "$lines_fmt"
     else
         # Fall back to API estimate
         total_bytes=$(gh api "repos/$OWNER/$repo/languages" --jq 'to_entries | map(.value) | add // 0' 2>/dev/null || echo "0")
@@ -175,36 +221,77 @@ for repo in $REPOS; do
         total_code=$((total_code + loc))
 
         if [[ $loc -ge 1000 ]]; then
-            loc_fmt="$(echo "scale=1; $loc / 1000" | bc)K"
+            loc_fmt="~$(echo "scale=1; $loc / 1000" | bc)K"
         else
-            loc_fmt="$loc"
+            loc_fmt="~$loc"
         fi
 
-        echo "| **$repo** | $lang | ~$loc_fmt |"
+        print_row $cw1 $cw2 $cw3 "$repo" "$lang" "$loc_fmt"
     fi
 done
 
 if [[ "$HAS_SCC" == "1" ]]; then
+    printf "├%s┼%s┼%s┼%s┼%s┼%s┤\n" \
+        "$(printf '─%.0s' $(seq 1 $((cw1 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw2 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw3 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw4 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw5 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw6 + 2))))"
     code_fmt=$(printf "%'d" "$total_code")
     comments_fmt=$(printf "%'d" "$total_comments")
     blanks_fmt=$(printf "%'d" "$total_blanks")
     lines_fmt=$(printf "%'d" "$total_lines")
-    echo "| **Total** | | **$code_fmt** | **$comments_fmt** | **$blanks_fmt** | **$lines_fmt** |"
+    print_row $cw1 $cw2 $cw3 $cw4 $cw5 $cw6 "TOTAL" "" "$code_fmt" "$comments_fmt" "$blanks_fmt" "$lines_fmt"
+    printf "└%s┴%s┴%s┴%s┴%s┴%s┘\n" \
+        "$(printf '─%.0s' $(seq 1 $((cw1 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw2 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw3 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw4 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw5 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw6 + 2))))"
 else
+    printf "├%s┼%s┼%s┤\n" \
+        "$(printf '─%.0s' $(seq 1 $((cw1 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw2 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw3 + 2))))"
     if [[ $total_code -ge 1000 ]]; then
-        total_fmt="$(echo "scale=1; $total_code / 1000" | bc)K"
+        total_fmt="~$(echo "scale=1; $total_code / 1000" | bc)K"
     else
-        total_fmt="$total_code"
+        total_fmt="~$total_code"
     fi
-    echo "| **Total** | | **~$total_fmt** |"
+    print_row $cw1 $cw2 $cw3 "TOTAL" "" "$total_fmt"
+    printf "└%s┴%s┴%s┘\n" \
+        "$(printf '─%.0s' $(seq 1 $((cw1 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw2 + 2))))" \
+        "$(printf '─%.0s' $(seq 1 $((cw3 + 2))))"
 fi
 echo ""
 
 # Print activity table
 echo "### Recent Activity"
 echo ""
-echo "| Repo | Commits | Additions | Deletions | Net |"
-echo "|------|---------|-----------|-----------|-----|"
+
+# Column widths for activity
+aw1=26  # Repo
+aw2=7   # Commits
+aw3=10  # Additions
+aw4=10  # Deletions
+aw5=10  # Net
+
+printf "┌%s┬%s┬%s┬%s┬%s┐\n" \
+    "$(printf '─%.0s' $(seq 1 $((aw1 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw2 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw3 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw4 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw5 + 2))))"
+print_row $aw1 $aw2 $aw3 $aw4 $aw5 "Repository" "Commits" "Additions" "Deletions" "Net"
+printf "├%s┼%s┼%s┼%s┼%s┤\n" \
+    "$(printf '─%.0s' $(seq 1 $((aw1 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw2 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw3 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw4 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw5 + 2))))"
 
 total_commits=0
 total_add=0
@@ -230,12 +317,37 @@ for repo in $REPOS; do
     total_add=$((total_add + add))
     total_del=$((total_del + del))
 
-    printf "| **%s** | %d | +%d | -%d | %+d |\n" "$repo" "$commits" "$add" "$del" "$net"
+    # Format with +/- signs
+    add_fmt="+$add"
+    del_fmt="-$del"
+    if [[ $net -ge 0 ]]; then
+        net_fmt="+$net"
+    else
+        net_fmt="$net"
+    fi
+
+    print_row $aw1 $aw2 $aw3 $aw4 $aw5 "$repo" "$commits" "$add_fmt" "$del_fmt" "$net_fmt"
 done
 
 total_net=$((total_add - total_del))
-printf "| **Total** | **%d** | **+%d** | **-%d** | **%+d** |\n" \
-    "$total_commits" "$total_add" "$total_del" "$total_net"
+printf "├%s┼%s┼%s┼%s┼%s┤\n" \
+    "$(printf '─%.0s' $(seq 1 $((aw1 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw2 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw3 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw4 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw5 + 2))))"
+if [[ $total_net -ge 0 ]]; then
+    total_net_fmt="+$total_net"
+else
+    total_net_fmt="$total_net"
+fi
+print_row $aw1 $aw2 $aw3 $aw4 $aw5 "TOTAL" "$total_commits" "+$total_add" "-$total_del" "$total_net_fmt"
+printf "└%s┴%s┴%s┴%s┴%s┘\n" \
+    "$(printf '─%.0s' $(seq 1 $((aw1 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw2 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw3 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw4 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((aw5 + 2))))"
 
 # Print combined language breakdown if scc available and local repos exist
 if [[ "$HAS_SCC" == "1" ]]; then
