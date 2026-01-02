@@ -5,7 +5,9 @@ description: Workflow-aware task execution with checkpoints
 
 # Work
 
-Execute tasks with explicit workflow checkpoints: develop → `/pr-review local` → `/pr-create` → `/watch-ci` → `/pr-review remote` → merge → reflect.
+Execute tasks with explicit workflow checkpoints: [guided development] → develop → `/pr-review local` → `/pr-create` → `/watch-ci` → `/pr-review remote` → merge → reflect.
+
+Guided development (optional) runs exploration agents, asks clarifying questions, and designs architecture before implementation.
 
 ## Usage
 
@@ -85,21 +87,23 @@ For issues: `mcp__github__get_issue()` or `gh issue view` to get title, body, la
 
 For ad-hoc: Use the provided description.
 
-### 4. Derive Tasks
+### 4. Derive Initial Tasks
 
 ultrathink to break down into 2-6 implementation tasks. Use imperative form.
 
-### 5. Present Plan for Review
+These are preliminary tasks. If user opts into guided development (step 6), these will be refined or replaced based on deeper codebase exploration.
 
-Before creating todos or broadcasting, present the plan to the user:
+### 5. Present Scope for Review
+
+Before creating todos or broadcasting, present the scope to the user:
 
 ```
-## Proposed Work Plan
+## Proposed Work Scope
 
 **Source:** <issue reference OR ad-hoc description>
 **Identifier:** [work:<identifier>]
 
-### Implementation Tasks
+### Initial Tasks (may be refined during guided development)
 1. <task 1>
 2. <task 2>
 ...
@@ -112,7 +116,7 @@ Before creating todos or broadcasting, present the plan to the user:
 - Confirm merge with user (always asks via AskUserQuestion)
 - Reflect with /improve-workflow
 
-Proceed with this plan?
+Proceed?
 ```
 
 **Source formats:**
@@ -120,41 +124,49 @@ Proceed with this plan?
 - Ad-hoc: `"Add dark mode support"` (user's description)
 
 Use `AskUserQuestion` with options:
-- **Start work** - Create todos and begin
-- **Modify plan** - Adjust tasks before starting
+- **Start work** - Proceed to guided development question
+- **Modify scope** - Adjust tasks before starting
 - **Cancel** - Abort without creating todos
 
 Only proceed to step 6 if user approves.
 
 ### 6. Guided Development (Optional)
 
-After user approves the plan, ask if they want guided development:
+After user approves the scope, ask if they want guided development:
 
 Use `AskUserQuestion`:
-- **Yes, explore and architect first (Recommended)** - Launch exploration agents, ask clarifying questions, design architecture with agents, then document plan before implementing
+- **Yes, explore and architect first** - Launch exploration agents, ask clarifying questions, design architecture with agents, then document plan before implementing
 - **No, proceed directly** - Skip to implementation
 
-**When to recommend "Yes":**
-- New features requiring architectural decisions
-- Complex changes touching multiple systems
-- Unfamiliar areas of the codebase
+**Default to "Yes"** - the cost of exploration is usually worth it, especially since issues/RFCs may be stale and designs benefit from fresh review.
 
-**When to recommend "No":**
-- Bug fixes with clear scope
-- Small, well-defined changes
-- Follow-up work where architecture is established
+**Only recommend "No" if ALL of these are true:**
+- You've already read the relevant code in this session
+- The change touches ≤3 files
+- No architectural decisions to make (clear, mechanical change)
+- Requirements are unambiguous (user provided detailed spec or it's obvious)
 
-If user selects **"Yes, explore and architect first"**, proceed through the Guided Development phases below before creating implementation todos.
+**When skipping, justify it to the user:**
+```
+Recommending we skip guided development because:
+- I've already explored [relevant area] earlier in this session
+- This is a focused change to [N files]
+- No architectural decisions needed - [brief reason]
+```
 
-If user selects **"No, proceed directly"**, skip to step 7 "Create Todos".
+If any doubt, use guided development. Catching design issues early saves rework.
+
+If user selects **"Yes"**, proceed through the Guided Development Phases below. The initial tasks from step 4 will be refined or replaced based on what you learn.
+
+If user selects **"No"**, skip to step 7 "Create Todos" using the initial tasks from step 4.
 
 ---
 
-### Guided Development Phases
+#### Guided Development Phases
 
-These phases run when user opts in to guided development. They help build deep codebase understanding and produce a documented architecture plan.
+These phases run when user opts in to guided development. They build deep codebase understanding and produce a documented architecture plan that replaces the initial task breakdown.
 
-#### Phase 1: Codebase Exploration
+##### Phase 1: Codebase Exploration
 
 **Goal**: Understand relevant existing code and patterns
 
@@ -170,7 +182,7 @@ Launch 2-3 code-explorer agents in parallel using the Task tool with `subagent_t
 
 After agents return, read all identified files to build deep understanding.
 
-#### Phase 2: Clarifying Questions
+##### Phase 2: Clarifying Questions
 
 **Goal**: Resolve all ambiguities before designing
 
@@ -186,7 +198,7 @@ Present questions to user in an organized list. Wait for answers before proceedi
 
 If user says "whatever you think is best", provide your recommendation and get explicit confirmation.
 
-#### Phase 3: Architecture Design
+##### Phase 3: Architecture Design
 
 **Goal**: Design multiple approaches with trade-offs
 
@@ -204,7 +216,7 @@ Present to user:
 
 Ask user which approach they prefer.
 
-#### Phase 4: Document Plan
+##### Phase 4: Document Architecture Plan
 
 **Goal**: Create formal plan artifact with chosen architecture
 
@@ -216,11 +228,11 @@ Use `EnterPlanMode` to document:
 
 Use `ExitPlanMode` when plan is complete. User reviews and approves the documented plan.
 
-#### Phase 5: Create Implementation Tasks
+##### Phase 5: Derive Final Tasks
 
-Based on the documented plan, derive specific implementation tasks. Update the initial task list with any refinements discovered during exploration and architecture phases.
+Based on the architecture plan, derive the final implementation tasks. These replace the initial tasks from step 4.
 
-Proceed to step 7 "Create Todos" after completing this phase.
+Proceed to step 7 "Create Todos" with these refined tasks.
 
 ---
 
