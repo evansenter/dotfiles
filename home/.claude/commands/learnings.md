@@ -37,9 +37,17 @@ gh repo view --json name -q .name 2>/dev/null || basename "$(git rev-parse --sho
 
 ### 3. Fetch Events
 
+If filtering by repo (default or `--repo`), use the `channel` parameter for efficient filtering:
+
 ```
-mcp__event-bus__get_events(since_id=0, limit=200)
+# For repo-specific learnings (default)
+mcp__event-bus__get_events(limit=200, order="asc", channel="repo:<repo-name>")
+
+# For all learnings (--all)
+mcp__event-bus__get_events(limit=200, order="asc")
 ```
+
+Use `order="asc"` to get chronological order (oldest first) for better time-based grouping.
 
 ### 4. Filter Events
 
@@ -54,9 +62,6 @@ If `--type` is specified, filter to only that type:
 - `pattern` → `pattern_found`
 - `flaky` → `test_flaky`
 - `workaround` → `workaround_needed`
-
-If not `--all`, filter by repo channel:
-- Channel should contain `repo:<repo-name>`
 
 ### 5. Output Format
 

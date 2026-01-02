@@ -11,11 +11,13 @@ Execute tasks with explicit workflow checkpoints, ensuring the development flow 
 
 ```
 /work <issue-number | URL | "description">
+/work --resume
 ```
 
 - `issue-number`: GitHub issue number to work on (e.g., `42`)
 - `URL`: Full GitHub issue URL
 - `"description"`: Ad-hoc task description in quotes
+- `--resume`: Join an existing PR on the current branch (skip completed checkpoints)
 
 ## Instructions
 
@@ -24,6 +26,87 @@ Parse the input argument:
 ```bash
 ARG="$1"
 ```
+
+---
+
+### Resume Mode
+
+If `ARG` is `--resume`, join an existing PR on the current branch:
+
+#### 1. Detect Current State
+
+```bash
+# Check for existing PR on current branch
+gh pr view --json number,title,state,headRefName 2>/dev/null
+```
+
+If no PR exists:
+```
+No PR found on current branch. Use /work <issue-number> to start new work, or /pr-create to create a PR first.
+```
+
+#### 2. Extract Issue from PR
+
+Parse the PR body for issue references (e.g., "Fixes #123", "Closes #45"):
+```bash
+gh pr view --json body -q '.body' | grep -oE '(Fixes|Closes|Resolves) #[0-9]+' | head -1
+```
+
+If found, extract issue number. Otherwise, use `adhoc` as the issue identifier.
+
+#### 3. Determine Workflow Position
+
+Check what's already done:
+
+| State | Completed Checkpoints |
+|-------|----------------------|
+| PR exists, CI not started | Implementation, pr-review local, pr-create |
+| PR exists, CI running | Above + (watch-ci in progress) |
+| PR exists, CI passed | Above + watch-ci |
+| PR exists, CI passed, has comments | Above + (pr-review remote in progress) |
+| PR exists, approved | Above + pr-review remote |
+
+#### 4. Create Remaining Checkpoints
+
+Only create todos for remaining checkpoints:
+
+```json
+{
+  "todos": [
+    {"content": "[work:${ISSUE}] Checkpoint: Monitor CI with /watch-ci", "status": "pending", "activeForm": "Monitoring CI with /watch-ci"},
+    {"content": "[work:${ISSUE}] Checkpoint: Process feedback with /pr-review remote", "status": "pending", "activeForm": "Processing feedback with /pr-review remote"},
+    {"content": "[work:${ISSUE}] Checkpoint: Merge when approved", "status": "pending", "activeForm": "Merging when approved"},
+    {"content": "[work:${ISSUE}] Checkpoint: Reflect with /improve-workflow", "status": "pending", "activeForm": "Reflecting with /improve-workflow"}
+  ]
+}
+```
+
+Skip any checkpoints that are already complete based on the detected state.
+
+#### 5. Display Resume Plan
+
+```markdown
+## Resuming Work: PR #<N> - <title>
+
+**Linked Issue:** #<issue> or "Ad-hoc work"
+
+**Already Completed:**
+- [x] Implementation
+- [x] Run /pr-review local
+- [x] Create PR with /pr-create
+
+**Remaining Checkpoints:**
+- [ ] [work:${ISSUE}] Checkpoint: Monitor CI with /watch-ci
+- [ ] [work:${ISSUE}] Checkpoint: Process feedback with /pr-review remote
+- [ ] [work:${ISSUE}] Checkpoint: Merge when approved
+- [ ] [work:${ISSUE}] Checkpoint: Reflect with /improve-workflow
+
+Starting with next checkpoint...
+```
+
+#### 6. Continue with Next Checkpoint
+
+Mark the first remaining checkpoint as `in_progress` and proceed.
 
 ---
 
@@ -114,7 +197,8 @@ Use TodoWrite to create the full work plan with both implementation tasks AND wo
     {"content": "[work:${ISSUE}] Checkpoint: Create PR with /pr-create", "status": "pending", "activeForm": "Creating PR with /pr-create"},
     {"content": "[work:${ISSUE}] Checkpoint: Monitor CI with /watch-ci", "status": "pending", "activeForm": "Monitoring CI with /watch-ci"},
     {"content": "[work:${ISSUE}] Checkpoint: Process feedback with /pr-review remote", "status": "pending", "activeForm": "Processing feedback with /pr-review remote"},
-    {"content": "[work:${ISSUE}] Checkpoint: Merge when approved", "status": "pending", "activeForm": "Merging when approved"}
+    {"content": "[work:${ISSUE}] Checkpoint: Merge when approved", "status": "pending", "activeForm": "Merging when approved"},
+    {"content": "[work:${ISSUE}] Checkpoint: Reflect with /improve-workflow", "status": "pending", "activeForm": "Reflecting with /improve-workflow"}
   ]
 }
 ```
@@ -130,6 +214,8 @@ Output the full plan for user visibility:
 ```markdown
 ## Work Plan: #42 - Add dark mode toggle
 
+**Tip:** Run `/learnings` to see discoveries from other sessions that might be relevant.
+
 **Implementation Tasks:**
 - [ ] [work:42] Implement: <task 1>
 - [ ] [work:42] Implement: <task 2>
@@ -140,6 +226,7 @@ Output the full plan for user visibility:
 - [ ] [work:42] Checkpoint: Monitor CI with /watch-ci
 - [ ] [work:42] Checkpoint: Process feedback with /pr-review remote
 - [ ] [work:42] Checkpoint: Merge when approved
+- [ ] [work:42] Checkpoint: Reflect with /improve-workflow
 
 Starting work on first task...
 ```
@@ -216,6 +303,13 @@ When reaching a checkpoint:
 6. Mark checkpoint as `completed`
 7. Suggest cleanup: "Run `/commit-commands:clean_gone` to remove stale branches"
 
+#### Checkpoint: Reflect with /improve-workflow
+
+1. Mark checkpoint as `in_progress`
+2. Run `/improve-workflow` to analyze the completed work cycle
+3. Review friction points and infrastructure gaps identified
+4. Mark checkpoint as `completed`
+
 ---
 
 ### Skipping Checkpoints
@@ -268,6 +362,7 @@ Active work session exists for issue #<N>. Complete current work first, or clear
 7. [work:42] Checkpoint: Monitor CI with /watch-ci
 8. [work:42] Checkpoint: Process feedback with /pr-review remote
 9. [work:42] Checkpoint: Merge when approved
+10. [work:42] Checkpoint: Reflect with /improve-workflow
 
 ---
 

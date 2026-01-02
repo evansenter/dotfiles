@@ -14,37 +14,60 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 
 ### Claude Code Commands
 
+**Workflow orchestration:**
 | Command | Description |
 |---------|-------------|
+| `/work` | Full development flow: issue → code → PR → merge → reflect |
 | `/im-lost` | Show current workflow position and context |
 | `/status-report` | Repo status with recent work, open PRs/issues, and recommendations |
+| `/parallel-work` | Manage git worktrees for parallel PR development |
+
+**PR lifecycle:**
+| Command | Description |
+|---------|-------------|
 | `/pr-create` | Commit changes and create/update a PR |
 | `/pr-review` | Review code via local analysis or remote reviewer comments |
 | `/watch-ci` | Monitor CI in background with notification when complete |
-| `/pr-followups` | Find unaddressed comments from merged PRs |
+
+**Discovery & improvement:**
+| Command | Description |
+|---------|-------------|
+| `/improve-workflow` | Suggest workflow improvements based on session analytics |
+| `/learnings` | Query historical discoveries from other sessions |
+| `/rfc` | Create or respond to RFC-style issues |
+
+**Audits:**
+| Command | Description |
+|---------|-------------|
 | `/audit-codebase` | Check for AI anti-patterns and Evergreen violations |
 | `/audit-tests` | Find redundant or stale tests |
 | `/audit-issues` | Categorize open issues as current or needing updates |
-| `/cross-repo` | Gather context from a related repository |
-| `/improve-workflow` | Suggest workflow improvements, categorized as local or global |
-| `/rfc` | Create or respond to RFC-style issues |
+
+**Cross-session coordination:**
+| Command | Description |
+|---------|-------------|
+| `/event-bus-status` | Overview of active sessions and recent events |
+| `/broadcast` | Send message to other Claude Code sessions |
 
 **Usage examples:**
 ```bash
-# Check repo status and get recommendations
-/status-report
+# Start tracked work on an issue (full workflow)
+/work 42
+
+# Check where you are in the workflow
+/im-lost
 
 # Self-review before creating PR
 /pr-review local
-
-# Fetch and process reviewer comments
-/pr-review remote
 
 # Create a PR for current work
 /pr-create
 
 # Monitor CI with notification
 /watch-ci 123
+
+# See discoveries from other sessions
+/learnings
 ```
 
 ## Installation

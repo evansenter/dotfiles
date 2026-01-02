@@ -1,2 +1,3 @@
-# Session analytics data (local only)
+# Runtime data (local only)
 analytics/
+event-bus/
