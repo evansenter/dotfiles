@@ -61,14 +61,14 @@ Present findings in priority order:
 ## Critical (Contradictions)
 
 ### Within Workflows
-| File | Line A | Line B | Contradiction |
-|------|--------|--------|---------------|
-| work.md | 45 | 120 | Phase 3 requires X, Phase 5 says skip X |
+| File | Line A | Line B | Contradiction | Suggested Fix |
+|------|--------|--------|---------------|---------------|
+| work.md | 45 | 120 | Phase 3 requires X, Phase 5 says skip X | Clarify when to skip with condition |
 
 ### Across Workflows
-| Location A | Location B | Contradiction |
-|------------|------------|---------------|
-| work.md:45 | pr-review.md:20 | Conflicting checkpoint order |
+| Location A | Location B | Contradiction | Suggested Fix |
+|------------|------------|---------------|---------------|
+| work.md:45 | pr-review.md:20 | Conflicting checkpoint order | Align on single source of truth in work.md |
 
 ## Important (Ambiguities)
 
