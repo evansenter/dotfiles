@@ -12,69 +12,38 @@ Parse arguments from: $ARGUMENTS
 - `--global` - Analyze all projects instead of just the current one
 - `focus-area` - Optional focus area for suggestions (e.g., "permissions", "automation")
 
-Consider:
-- MCP servers I should enable
-- CLAUDE.md improvements (global and local)
-- Hooks or automation opportunities
-- Memory/context patterns that would help
-- Tool configurations I might be underutilizing
+## 1. Gather Data
 
-References:
-- Claude Code docs
-- https://github.com/anthropics/claude-plugins-official
-
-## Analyze Recent Usage
-
-### Data-Driven Analysis
+### Session Analytics
 
 Use the session-analytics MCP server for quantitative insights:
 
 ```
-# Get comprehensive insights (tool frequency, sequences, permission gaps, trends)
 mcp__session-analytics__get_insights(days=7, refresh=false)
-
-# Get detailed tool frequency with breakdowns
 mcp__session-analytics__get_tool_frequency(days=7, expand=true)
-
-# Get commands that may need permission configuration
 mcp__session-analytics__get_permission_gaps(days=7, min_count=5)
 ```
 
-If `--global` was passed, omit the `project` parameter. For project-specific analysis, pass the current project path.
+If `--global` was passed, omit the `project` parameter.
 
-**Fallback**: If MCP is unavailable, use the session-analytics CLI:
+**Fallback**: If MCP is unavailable:
 ```bash
-# Check if CLI is available
-if command -v session-analytics-cli &>/dev/null; then
-    session-analytics-cli frequency --days 7
-    session-analytics-cli commands --days 7
-    session-analytics-cli permissions --days 7 --min-count 5
-fi
+session-analytics-cli frequency --days 7
+session-analytics-cli permissions --days 7 --min-count 5
 ```
 
-**Important**: Session logs are historical and may reflect outdated workflows. Patterns from days ago may have already been addressed by recent changes. Cross-reference with current settings.json to filter stale recommendations.
+**Important**: Session logs are historical. Cross-reference with current settings.json to filter stale recommendations.
 
-### Git History Analysis
+### Git History
 
 ```bash
-# Recent commits to see work patterns
 git log --oneline -20
-
-# Check for repetitive patterns in commit messages
 git log --oneline -50 | cut -d' ' -f2- | sort | uniq -c | sort -rn | head -10
 ```
 
-### Conversation Analysis
+### Current Configuration
 
-Also consider the current conversation:
-- What commands were run repeatedly?
-- Where did friction occur (approvals, back-and-forth, clarifications)?
-- What manual steps could be automated?
-- Were there permissions that blocked autonomous work?
-
-## Check Global Setup First
-
-Before making suggestions, read the global Claude configuration to filter out stale recommendations:
+Read existing setup to filter stale recommendations:
 
 ```bash
 cat ~/.claude/CLAUDE.md
@@ -82,61 +51,100 @@ cat ~/.claude/settings.json
 ls ~/.claude/commands/
 ```
 
-Then read existing commands to understand current patterns:
+Read command files to understand current patterns. Skip suggestions for workflows, permissions, or commands that already exist.
 
-```bash
-# List all command files
-ls ~/.claude/commands/
+## 2. Identify Friction
+
+### From Data
+
+Extract from session analytics:
+- Permission gaps (commands used repeatedly without approval)
+- Tool patterns suggesting missing automation
+- Error clusters indicating problematic workflows
+
+### From Reflection
+
+Review the current conversation and identify friction YOU experienced:
+- Commands that required multiple attempts or workarounds
+- Capabilities you wished existed but had to work around
+- Awkward multi-step processes that could be streamlined
+- Information you needed but couldn't easily access
+- Approvals that blocked autonomous work
+
+For each friction point, note:
+1. What you were trying to accomplish
+2. What was awkward or missing
+3. How you worked around it
+4. Suggested improvement
+
+### From User (Optional)
+
+After presenting your observations, ask if the user experienced additional friction:
+
+```json
+{
+  "question": "Did you experience friction that I didn't catch?",
+  "header": "Friction",
+  "options": [
+    {"label": "Yes", "description": "There were other pain points"},
+    {"label": "No", "description": "You covered it"}
+  ],
+  "multiSelect": false
+}
 ```
 
-Read each command file individually using the Read tool to understand patterns and find improvement opportunities.
+## 3. Review Configuration Quality
 
-Skip any suggestion that:
-- Proposes a workflow already documented in the global CLAUDE.md
-- Recommends a command or hook that already exists
-- Suggests a permission that's already configured
+Check Claude files for clarity issues:
+- `~/.claude/CLAUDE.md` - Is documentation clear and actionable?
+- `~/.claude/commands/*.md` - Are instructions unambiguous?
+- `~/.claude/settings.json` - Do permissions match documented workflows?
 
-## Review Claude File Language
+Look for inconsistencies between what's documented and what's configured.
 
-Also review the language and clarity of global Claude files in `~/.claude/`:
-- `CLAUDE.md` - Is the workflow documentation clear and actionable?
-- `commands/*.md` - Are command instructions unambiguous? Do examples help?
-- `settings.json` - Are there permissions that should be added based on documented workflows?
+## 4. Output
 
-Look for:
-- Inconsistencies between what's documented and what's configured
-- Instructions that could be misinterpreted
-- Missing context that would help Claude follow the workflow correctly
+For each suggestion, include the specific friction that motivates the change.
 
-Include any language/clarity improvements in the Global Improvements section.
+### Local Improvements
 
-## Output
-
-Be specific about what each suggestion enables and the setup required.
-
-**Important**: For each suggestion, include the specific friction or issue encountered during the session that motivates the change. Reference specific commands that failed, approvals that blocked work, or back-and-forth that could have been avoided. This context is essential when creating issues against evansenter/dotfiles.
-
-Group suggestions into two categories:
-
-**Local Improvements** - Specific to the current repository:
+Specific to the current repository:
 - Repository-specific CLAUDE.md additions
 - Project-specific hooks or automation
-- Documentation for this codebase
 
-**Global Improvements** - Apply to all Claude Code sessions:
-- New commands or workflow enhancements for `~/.claude/commands/`
-- Permission configuration changes for `~/.claude/settings.json`
+### Global Improvements
+
+Apply to all Claude Code sessions:
+- Commands for `~/.claude/commands/`
+- Permissions for `~/.claude/settings.json`
 - Hook improvements for `~/.claude/hooks/`
-- Global CLAUDE.md workflow documentation updates
+- CLAUDE.md workflow updates
 
-## Follow-up
+### Infrastructure Improvements
 
-When suggesting to create an issue against `evansenter/dotfiles`, **only include Global Improvements**. Each improvement MUST include:
-- The specific friction encountered (what went wrong or was inefficient)
-- Session context (what you were trying to do when the friction occurred)
-- The proposed fix with concrete code/config changes
+Feature requests for supporting tools. Check existing issues first:
 
-**After creating an issue in another repo**, broadcast so sessions there can pick it up:
+```
+mcp__github__list_issues(owner="evansenter", repo="claude-session-analytics", state="open")
+mcp__github__list_issues(owner="evansenter", repo="claude-event-bus", state="open")
+```
+
+For gaps not already tracked, consider whether friction points to missing capabilities in:
+
+- **Session Analytics** (`evansenter/claude-session-analytics`) - Data analysis, pattern detection, outcome tracking
+- **Event Bus** (`evansenter/claude-event-bus`) - Cross-session coordination, learning persistence
+- **Dotfiles** (`evansenter/dotfiles`) - Workflow commands, integration glue
+
+## 5. Follow-up
+
+For Global Improvements, create issues against `evansenter/dotfiles` with:
+- The specific friction encountered
+- Session context
+- Proposed fix with concrete changes
+
+Local improvements should be tracked in the current repository's issues.
+
+After creating an issue in another repo, broadcast so sessions there can pick it up:
 ```
 mcp__event-bus__publish_event(
   event_type: "issue_created",
@@ -144,89 +152,3 @@ mcp__event-bus__publish_event(
   channel: "repo:<target_repo>"
 )
 ```
-
-Local improvements should be tracked in the current repository's issues.
-
-## Meta-Improvements
-
-Beyond workflow improvements, identify gaps in the underlying infrastructure that limit analysis capabilities. These become feature requests for the respective repositories.
-
-### Session Analytics (evansenter/claude-session-analytics)
-
-Evaluate what additional insights would be valuable:
-
-| Gap | Description | Benefit |
-|-----|-------------|---------|
-| **Stale recommendation filtering** | Auto-compare gaps against current settings.json | Avoid suggesting already-configured permissions |
-| **Session outcome tracking** | Classify sessions as success/failure/abandoned based on signals | Understand which workflows lead to completion |
-| **Rework detection** | Identify when same files are edited multiple times in sequence | Surface friction points needing automation |
-| **Issue/PR correlation** | Link sessions to GitHub outcomes (merged PRs, closed issues) | Measure session effectiveness |
-| **Learning extraction** | Auto-identify gotchas and patterns from session history | Build institutional knowledge |
-| **Session comparison** | Diff two sessions to see workflow evolution | Track improvement over time |
-| **Time-between-steps analysis** | Measure latency between tool calls | Identify slow operations |
-
-### Event Bus (evansenter/claude-event-bus)
-
-Evaluate coordination capabilities:
-
-| Gap | Description | Benefit |
-|-----|-------------|---------|
-| **Learning persistence** | Store gotchas/patterns permanently beyond event TTL | Build long-term knowledge base |
-| **Event search** | Query historical events by type, content, date range | Find past discoveries on demand |
-| **Conflict detection** | Alert when sessions modify same files | Prevent merge conflicts |
-| **Activity visualization** | Dashboard showing who's working on what | Situational awareness |
-| **Channel statistics** | Track which channels are most active | Understand coordination patterns |
-| **Event TTL customization** | Configure retention per event type | Keep learnings longer than noise |
-
-### Dotfiles Integration
-
-The dotfiles repo is the central hub for Claude Code configuration:
-- **Global CLAUDE.md** - System-wide workflow preferences and instructions
-- **claude-remote.md** - Prompt template for automated code review (claude-review workflow)
-- **Commands** - All custom slash commands
-- **Hooks** - Session lifecycle and event bus integration
-- **Settings** - Permissions, plugins, model configuration
-
-Evaluate how analytics and event bus integrate with this central configuration:
-
-| Gap | Description | Benefit |
-|-----|-------------|---------|
-| **Combined status view** | Single command showing analytics + event bus status | Reduce context switching |
-| **Auto-permission sync** | Periodically check for permission gaps and suggest additions | Proactive maintenance |
-| **Cross-repo patterns** | Fetch related repo configurations for comparison | Learn from other projects |
-| **Workflow templates** | Starter configurations for common project types | Faster onboarding |
-| **Prompt versioning** | Track CLAUDE.md and claude-remote.md changes over time | Understand prompt evolution |
-| **Prompt effectiveness** | Correlate prompt changes with session outcomes | Measure prompt improvements |
-
-### Check Existing Issues First
-
-Before suggesting any infrastructure improvement, check if an issue already exists:
-
-```
-mcp__github__list_issues(owner="evansenter", repo="claude-session-analytics", state="open")
-mcp__github__list_issues(owner="evansenter", repo="claude-event-bus", state="open")
-```
-
-For each potential suggestion:
-1. **If issue exists with same topic**: Don't suggest creating a new one. Instead, note:
-   - Whether the existing issue needs additional context from this session
-   - Whether to add a "+1" comment if the friction was significant
-2. **If no matching issue**: Include in Infrastructure Improvements section
-
-### Output
-
-When meta-improvements are identified, include them in a separate section:
-
-**Infrastructure Improvements** - Feature requests for supporting tools:
-- `evansenter/claude-session-analytics` - Analytics and insight generation
-- `evansenter/claude-event-bus` - Cross-session coordination
-- `evansenter/dotfiles` - Integration and workflow commands
-
-For each NEW suggestion (not already tracked), specify:
-1. What analysis or feature is missing
-2. What friction it would eliminate
-3. Concrete example from the current session
-
-For EXISTING issues that match session friction, note:
-- Issue number and title
-- Whether additional context should be added via comment
