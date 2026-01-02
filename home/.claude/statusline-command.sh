@@ -18,7 +18,7 @@ fi
 read -r cwd current size model_id transcript_path session_id < <(
     echo "$input" | jq -r '[
         .workspace.current_dir,
-        (.context_window.current_usage | .input_tokens + .cache_creation_input_tokens + .cache_read_input_tokens // 0),
+        ((.context_window.current_usage.input_tokens // 0) + (.context_window.current_usage.cache_creation_input_tokens // 0) + (.context_window.current_usage.cache_read_input_tokens // 0)),
         (.context_window.context_window_size // 0),
         (.model.id // ""),
         (.transcript_path // ""),
@@ -52,7 +52,9 @@ if [[ -n "$session_id" ]]; then
         else
             # Query event bus for session matching this client_id
             # Output format: "  session-name  repo/branch" then details on following lines
+            # Strip ANSI escape codes (event-bus-cli may output colors for inactive sessions)
             session_name=$("$EVENT_BUS_CLI" sessions 2>/dev/null | \
+                sed 's/\x1b\[[0-9;]*m//g' | \
                 grep -B2 "client_id: ${session_id}" | \
                 head -1 | \
                 awk '{print $1}')
