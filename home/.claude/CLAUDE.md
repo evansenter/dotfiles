@@ -50,7 +50,12 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 - `make`, `cargo check/build/test/clippy/fmt/run/doc/add`
 
 **Utilities:**
-- `rm`, `tmux`, `date`, `source`, `sed`
+- `rm`, `tmux`, `date`, `source`, `sed`, `mkdir`
+- `ls`, `cat`, `head`, `tail`, `wc`, `chmod`
+- `uv`, `sqlite3`, `launchctl`, `claude`
+
+**CLI Tools:**
+- `event-bus-cli`, `session-analytics-cli` (and their venv/local paths)
 
 **GitHub MCP Server:**
 - PRs: `get_pull_request`, `list_pull_requests`, `get_pull_request_status`, `get_pull_request_files`, `get_pull_request_comments`, `get_pull_request_reviews`, `create_pull_request`, `merge_pull_request`, `update_pull_request_branch`, `create_pull_request_review`
@@ -61,6 +66,11 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 - `register_session`, `unregister_session`, `list_sessions`
 - `publish_event`, `get_events`
 - `notify`
+
+**Session Analytics MCP Server:**
+- `get_insights`, `get_tool_frequency`, `get_permission_gaps`
+- `get_session_events`, `get_session_signals`, `get_handoff_context`
+- `analyze_trends`, `analyze_failures`, `classify_sessions`
 
 **When to use MCP vs gh CLI:**
 - **Prefer MCP** for standard operations (faster, structured data): fetching PR/issue details, creating issues, listing items

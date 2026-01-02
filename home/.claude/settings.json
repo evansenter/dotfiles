@@ -79,7 +79,22 @@
       "Bash(~/.claude/contrib/*:*)",
       "Bash(./bootstrap.sh:*)",
       "Bash(./uninstall.sh:*)",
-      "Bash(cargo +nightly:*)"
+      "Bash(cargo +nightly:*)",
+      "mcp__session-analytics__*",
+      "Bash(uv:*)",
+      "Bash(event-bus-cli:*)",
+      "Bash(~/.local/bin/event-bus-cli:*)",
+      "Bash(session-analytics-cli:*)",
+      "Bash(.venv/bin/session-analytics-cli:*)",
+      "Bash(sqlite3:*)",
+      "Bash(launchctl:*)",
+      "Bash(claude:*)",
+      "Bash(chmod:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)"
     ],
     "defaultMode": "default"
   },
