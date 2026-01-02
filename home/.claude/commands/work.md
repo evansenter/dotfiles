@@ -89,7 +89,44 @@ For ad-hoc: Use the provided description.
 
 ultrathink to break down into 2-6 implementation tasks. Use imperative form.
 
-### 5. Create Todos
+### 5. Present Plan for Review
+
+Before creating todos or broadcasting, present the plan to the user:
+
+```
+## Proposed Work Plan
+
+**Source:** <issue reference OR ad-hoc description>
+**Identifier:** [work:<identifier>]
+
+### Implementation Tasks
+1. <task 1>
+2. <task 2>
+...
+
+### Checkpoints
+- Run /pr-review local
+- Create PR with /pr-create
+- Monitor CI with /watch-ci
+- Process feedback with /pr-review remote
+- Merge when approved
+- Reflect with /improve-workflow
+
+Proceed with this plan?
+```
+
+**Source formats:**
+- Issue: `#42 - Fix authentication timeout`
+- Ad-hoc: `"Add dark mode support"` (user's description)
+
+Use `AskUserQuestion` with options:
+- **Start work** - Create todos and begin
+- **Modify plan** - Adjust tasks before starting
+- **Cancel** - Abort without creating todos
+
+Only proceed to step 6 if user approves.
+
+### 6. Create Todos
 
 ```
 [work:${ID}] Implement: <task 1>
@@ -102,7 +139,7 @@ ultrathink to break down into 2-6 implementation tasks. Use imperative form.
 [work:${ID}] Checkpoint: Reflect with /improve-workflow
 ```
 
-### 6. Broadcast & Begin
+### 7. Broadcast & Begin
 
 ```
 mcp__event-bus__publish_event(event_type: "task_started", payload: "Started work on...", channel: "repo:<name>")
