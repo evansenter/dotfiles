@@ -69,12 +69,11 @@ echo "**Period:** Last $DAYS days (since ${SINCE:0:10})"
 echo "**Owner:** $OWNER"
 echo ""
 
-# Helper function to print a table row
-# Args: column widths..., then "---" for separator or values
+# Helper function to print a table data row
+# Args: column widths..., then values
 print_row() {
     local widths=("$@")
     local values_start=0
-    local is_separator=false
 
     # Find where values start (after all numeric widths)
     for i in "${!widths[@]}"; do
@@ -87,25 +86,11 @@ print_row() {
     local col_widths=("${widths[@]:0:$values_start}")
     local values=("${widths[@]:$values_start}")
 
-    if [[ "${values[0]}" == "---" ]]; then
-        is_separator=true
-    fi
-
     printf "│"
     for i in "${!col_widths[@]}"; do
         local w="${col_widths[$i]}"
-        if $is_separator; then
-            printf "%s" "$(printf '─%.0s' $(seq 1 $((w + 2))))"
-            if [[ $i -lt $((${#col_widths[@]} - 1)) ]]; then
-                printf "┼"
-            fi
-        else
-            printf " %-${w}s │" "${values[$i]}"
-        fi
+        printf " %-${w}s │" "${values[$i]}"
     done
-    if $is_separator; then
-        printf "│"
-    fi
     printf "\n"
 }
 
