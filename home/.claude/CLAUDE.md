@@ -103,7 +103,7 @@ Use `/work <issue-number>` to start workflow-aware task execution with explicit 
 9. **Merge & cleanup**: After approval, merge PR and run `/commit-commands:clean_gone` to clean stale branches
 10. **Reflect**: `/work` automatically runs `/improve-workflow` after merge to surface friction and infrastructure gaps
 
-**Tip**: Use `/im-lost` to see your current workflow position if you lose context. Active `/work` sessions track progress via `[work:N]` todos. Use `/work --resume` to join an existing PR and pick up from the current checkpoint.
+**Tip**: Use `/im-lost` to see your current workflow position if you lose context. Active `/work` sessions track progress via `[work:N]` todos. Use `/work --attach` to join an existing PR and pick up from the current checkpoint.
 
 ### Pre-PR Checklist
 
@@ -176,7 +176,7 @@ Workflow insights from Claude Code session logs via `mcp__session-analytics__*` 
 
 Available slash commands (in `~/.claude/commands/`):
 
-- `/work` - Workflow-aware task execution with checkpoints (`<issue-number>`, `URL`, `"description"`, `--resume`)
+- `/work` - Workflow-aware task execution with checkpoints (`<issue-number>`, `URL`, `"description"`, `--attach`)
 - `/im-lost` - Show current workflow position and context when you've lost track
 - `/status-report` - Generate repo status summary with recently completed work, open PRs/issues, and recommendations
 - `/pr-create` - Commit changes and create/update a PR

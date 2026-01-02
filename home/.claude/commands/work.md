@@ -11,13 +11,13 @@ Execute tasks with explicit workflow checkpoints, ensuring the development flow 
 
 ```
 /work <issue-number | URL | "description">
-/work --resume
+/work --attach
 ```
 
 - `issue-number`: GitHub issue number to work on (e.g., `42`)
 - `URL`: Full GitHub issue URL
 - `"description"`: Ad-hoc task description in quotes
-- `--resume`: Join an existing PR on the current branch (skip completed checkpoints)
+- `--attach`: Join an existing PR on the current branch (skip completed checkpoints)
 
 ## Instructions
 
@@ -29,9 +29,9 @@ ARG="$1"
 
 ---
 
-### Resume Mode
+### Attach Mode
 
-If `ARG` is `--resume`, join an existing PR on the current branch:
+If `ARG` is `--attach`, join an existing PR on the current branch:
 
 #### 1. Detect Current State
 
