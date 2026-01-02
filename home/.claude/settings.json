@@ -93,7 +93,13 @@
       "Bash(cat:*)",
       "Bash(head:*)",
       "Bash(tail:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(sleep:*)",
+      "Bash(find:*)",
+      "Bash(bash:*)",
+      "Bash(which:*)",
+      "Bash(.venv/bin/python:*)"
     ],
     "defaultMode": "default"
   },

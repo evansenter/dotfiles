@@ -136,6 +136,15 @@ When suggesting to create an issue against `evansenter/dotfiles`, **only include
 - Session context (what you were trying to do when the friction occurred)
 - The proposed fix with concrete code/config changes
 
+**After creating an issue in another repo**, broadcast so sessions there can pick it up:
+```
+mcp__event-bus__publish_event(
+  event_type: "issue_created",
+  payload: "Created issue #<N> in <repo>: <title>",
+  channel: "repo:<target_repo>"
+)
+```
+
 Local improvements should be tracked in the current repository's issues.
 
 ## Meta-Improvements

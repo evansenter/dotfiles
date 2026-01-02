@@ -10,11 +10,12 @@ Create new RFC-style issues or respond to existing ones with structured analysis
 ## Usage
 
 ```
-/rfc [ISSUE_NUMBER or URL] [--post]    # Respond to existing issue
-/rfc --create [--post]                  # Create new RFC issue
+/rfc [ISSUE_NUMBER or URL] [--post]           # Respond to existing issue
+/rfc --create [--post] [-R owner/repo]        # Create new RFC issue
 ```
 
 - `--post`: Automatically post/create after generating (skips review)
+- `-R owner/repo`: Create RFC in a different repository (cross-repo)
 - If no arguments: uses current context (issue being discussed)
 
 ## Instructions
@@ -26,7 +27,16 @@ From `$ARGUMENTS`, determine the mode:
 - **`--create`**: Create a new RFC issue (title derived after drafting content)
 - **`<issue-number>` or `<URL>`**: Respond to an existing RFC issue
 - **`--post`**: Auto-post without confirmation (can combine with either mode)
+- **`-R owner/repo`**: Target a different repository (cross-repo RFC creation)
 - **No arguments**: Try to use current issue from context
+
+Extract target repo if `-R` is present:
+```bash
+TARGET_REPO=""  # Empty means current repo
+if [[ "$ARGUMENTS" =~ -R[[:space:]]+([^[:space:]]+) ]]; then
+  TARGET_REPO="${BASH_REMATCH[1]}"
+fi
+```
 
 **If `--create` is present**: Jump to [Create New RFC](#create-new-rfc)
 **Otherwise**: Continue to [Respond to Existing RFC](#respond-to-existing-rfc)
@@ -260,7 +270,12 @@ gh label list --json name,description
 
 **If `--post` flag is present:**
 ```bash
-gh issue create --title "${TITLE}" --body "<generated body>" --label "priority:<level>,<other-labels>"
+# If TARGET_REPO is set, use -R flag
+if [ -n "$TARGET_REPO" ]; then
+  gh issue create -R "${TARGET_REPO}" --title "${TITLE}" --body "<body>" --label "priority:<level>,<other-labels>"
+else
+  gh issue create --title "${TITLE}" --body "<body>" --label "priority:<level>,<other-labels>"
+fi
 ```
 
 **Otherwise:**
@@ -288,12 +303,17 @@ After creating, output the issue URL.
 After successfully creating the RFC, broadcast to the event bus so parallel sessions are notified:
 
 ```
+# Use TARGET_REPO if set, otherwise current repo
+target_channel = TARGET_REPO if TARGET_REPO else current_repo_name
+
 mcp__event-bus__publish_event(
   event_type: "rfc_created",
-  payload: "RFC created: #<issue_number> - <title>",
-  channel: "repo:<repo_name>"
+  payload: "RFC created: #<issue_number> in <repo> - <title>",
+  channel: "repo:<target_channel>"
 )
 ```
+
+**For cross-repo RFCs**: Broadcasting to the target repo's channel ensures sessions working in that repo are notified and can pick up the RFC.
 
 ---
 
