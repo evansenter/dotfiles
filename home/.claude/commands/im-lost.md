@@ -48,8 +48,9 @@ Based on gathered state, identify the current step:
 | On branch, committed, no PR | 4-6: Self-review/Iterate/Create PR |
 | PR open, CI running | 7: Monitor CI |
 | PR open, CI passed, has comments | 8: Process feedback |
-| PR open, CI passed, no comments | Ready to merge (discuss first) |
+| PR open, CI passed, no comments | 9: Ready to merge |
 | PR open, CI failed | Fix CI failures |
+| PR merged, on main | 10: Reflect (run /improve-workflow) |
 
 ### 3. Output Format
 
@@ -74,6 +75,8 @@ Present in this format:
 6. ○ Create PR - `/pr-create`
 7. ○ Monitor CI - `/watch-ci`
 8. ○ Process feedback - `/pr-review remote`
+9. ○ Merge & cleanup
+10. ○ Reflect - `/improve-workflow`
 
 ← YOU ARE HERE: [Step N - brief explanation of why]
 

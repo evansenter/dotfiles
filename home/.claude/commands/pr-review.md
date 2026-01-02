@@ -155,7 +155,13 @@ Output ALL findings ordered by severity (Critical > Important > Suggestion):
 
 ### 5. Present via AskUserQuestion
 
-Present ONE question for EACH item, batched in groups of up to 4. Include your opinion in the question text.
+Present ONE question for EACH item. Use the same sequential number (`#1`, `#2`, etc.) in both the Detailed Findings header and the `header` field of the question.
+
+**Batching rules:**
+- AskUserQuestion supports max 4 questions per call
+- If ≤4 items: Present all in one call
+- If >4 items: Present first 4, wait for answers, then present next batch (continuing numbering: `#5`, `#6`, etc.)
+- Repeat until all items are processed
 
 ```json
 {
@@ -175,7 +181,7 @@ Present ONE question for EACH item, batched in groups of up to 4. Include your o
 }
 ```
 
-Always include a final open-ended question for any additional comments.
+**Elaborate handling:** If user selects "Elaborate", explain the topic in detail, then present the SAME question again (same number, same options) for them to make a final decision.
 
 ### 6. Act on User Decisions
 

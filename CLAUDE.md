@@ -16,9 +16,20 @@ Minimal dotfiles for zsh, git, vim, and tmux. Primarily macOS with Linux gracefu
 git submodule update --init --remote  # Update theme submodules
 ```
 
+## Quality Gates
+
+```bash
+make check       # Run all quality gates (lint, test, hooks)
+make lint        # Run shellcheck on all .sh files
+make test        # Syntax check bash/zsh scripts
+make test-hooks  # Test hook graceful degradation
+```
+
+CI runs these on PRs: Lint, Test, Hooks, Bootstrap, claude-review.
+
 ## Testing Changes
 
-No formal test suite exists. To validate changes:
+To validate changes beyond CI:
 
 1. **Shell configs** - Open a new terminal tab or `source ~/.zshrc`
 2. **Tmux** - Run `tmux source ~/.tmux.conf` or restart tmux
@@ -58,7 +69,9 @@ The `sync_dotfiles` function in `bootstrap.sh`:
 
 **Claude Code Configuration** - `home/.claude/`
 - `CLAUDE.md` - Global workflow preferences (symlinked to `~/.claude/CLAUDE.md`)
-- `commands/` - Custom slash commands (`/status-report`, `/pr-review`, etc.)
+- `commands/` - Custom slash commands (`/status-report`, `/pr-create`, `/pr-review`, `/work`, etc.)
+- `contrib/` - Helper scripts and MCP server data directories
+- `hooks/` - Session lifecycle hooks (event bus registration, event polling)
 - `settings.json` - Allowed permissions, enabled plugins
 
 ### Command File Format
@@ -115,3 +128,106 @@ Describe expected output format.
 ## After Merging Changes
 
 Run `./bootstrap.sh -f` to apply changes to the local system.
+
+## Event Bus Integration
+
+The event bus enables cross-session coordination via the `mcp__event-bus__*` tools.
+
+### Channels
+
+Sessions auto-subscribe to 4 channels based on their attributes:
+
+| Channel | Receives | Use Case |
+|---------|----------|----------|
+| `all` | Everyone everywhere | Rare - major announcements only |
+| `repo:<name>` | Same repository | **Most common** - coordinate parallel work on same codebase |
+| `machine:<host>` | Same machine | Cross-repo local coordination (e.g., "running heavy build") |
+| `session:<id>` | One session | Direct messages, help requests |
+
+### Event Type Conventions
+
+| Event Type | Description | Example Payload |
+|------------|-------------|-----------------|
+| `rfc_created` | New RFC issue created | `"RFC created: #48 - Event bus integration"` |
+| `rfc_responded` | Response posted to RFC | `"RFC response posted: #48"` |
+| `parallel_work_started` | New worktree/session started | `"Started parallel work: issue-48"` |
+| `ci_completed` | CI finished (pass or fail) | `"CI passed on PR #42"` |
+| `message` | Generic message/announcement | `"Auth feature done, you can integrate now"` |
+| `help_needed` | Request for assistance | `"Need review on auth.ts approach"` |
+| `gotcha_discovered` | Non-obvious issue found | `"SQLite needs datetime adapters in Python 3.12+"` |
+| `pattern_found` | Useful pattern discovered | `"Use (machine, client_id) as dedup key"` |
+| `test_flaky` | Flaky test identified | `"test_concurrent_writes sometimes fails"` |
+| `error_broadcast` | Rate limits or service outages | `"API rate limited - wait 10min"` |
+| `blocker_found` | Blocking issue discovered | `"Main branch CI broken"` |
+
+### Proactive Publishing
+
+Publish discoveries that would save other sessions time:
+- **gotcha_discovered** - Non-obvious issues
+- **pattern_found** - Useful patterns
+- **test_flaky** - Flaky tests (safe to retry)
+- **error_broadcast** - Rate limits, service outages
+- **blocker_found** - Main branch broken, blocking issues
+
+### Troubleshooting
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| MCP tools unavailable | Server not running | `launchctl list | grep event-bus` |
+| Events not received | Wrong channel | Check `list_sessions()` |
+| Stale sessions | Didn't unregister | Local: cleaned on PID death; Remote: 7 day expiry |
+
+**Additional documentation:** Read `event-bus://guide` MCP resource.
+
+## Session Analytics
+
+The session-analytics MCP server provides workflow insights from Claude Code session logs.
+
+### Key Tools
+
+| Tool | Purpose |
+|------|---------|
+| `get_insights` | Comprehensive analysis (tool frequency, sequences, permission gaps, trends) |
+| `get_tool_frequency` | Detailed tool usage with breakdowns by command/skill/agent |
+| `get_permission_gaps` | Commands that may need adding to settings.json |
+| `get_handoff_context` | Recent activity summary for session continuity |
+| `analyze_failures` | Error patterns and rework detection |
+
+### Usage
+
+Primarily used by `/improve-workflow` and `/status-report`. Direct usage:
+
+```
+mcp__session-analytics__get_insights(days=7, refresh=false)
+mcp__session-analytics__get_permission_gaps(days=7, min_count=5)
+```
+
+**Data source:** Session logs in `~/.claude/projects/**/*.jsonl`.
+
+**Additional documentation:** Read `session-analytics://guide` MCP resource.
+
+## Contrib Utilities
+
+Scripts in `home/.claude/contrib/` for workflow analysis:
+
+### repo-stats.sh
+
+Shows project stats, codebase size, and recent activity across repositories.
+
+```bash
+~/.claude/contrib/repo-stats.sh [OPTIONS] [repo1 repo2 ...]
+
+OPTIONS:
+  --days N        Look back N days (default: 14)
+  --owner NAME    GitHub owner (default: evansenter)
+  --local-dir DIR Local repos directory (default: ~/Documents/projects)
+```
+
+**Output:**
+- Project stats (test counts, dependency counts, open issues/PRs)
+- Codebase size per repo (code, comments, blanks, total lines)
+- Recent activity (commits, additions, deletions, net)
+
+**Test detection:** Rust (`#[test]`), Python (`def test_`/`class Test`), JS/TS (test/it/describe), Shell (tests/).
+
+**Requirements:** `gh` CLI, `jq`, `scc` (optional)

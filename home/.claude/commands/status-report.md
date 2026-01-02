@@ -208,7 +208,7 @@ gh (1,682), git (1,376), cargo (265), ls (165), grep (133)
 If registered with the event bus, fetch recent events for context on parallel work:
 
 ```
-mcp__event-bus__get_events(since_id=0, limit=10)
+mcp__event-bus__get_events(limit=10)
 mcp__event-bus__list_sessions()
 ```
 

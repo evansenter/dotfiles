@@ -45,8 +45,10 @@ mcp__event-bus__list_channels()
 ### 3. Fetch Recent Events
 
 ```
-mcp__event-bus__get_events(since_id=0, limit=50)
+mcp__event-bus__get_events(limit=50)
 ```
+
+Events are returned newest-first by default, which is ideal for showing recent activity.
 
 This returns recent events with:
 - `event_type`: Type of event (e.g., `rfc_created`, `ci_completed`)

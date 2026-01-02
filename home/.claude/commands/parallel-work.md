@@ -162,7 +162,10 @@ Write `.parallel-context.md` to the new worktree. When writing, replace placehol
 [Special instructions or "Follow standard workflow"]
 
 ---
-**Session Start:** Read this file for context, then begin work.
+**Session Start:** Read this file for context, then:
+- If working on a specific issue, run `/work <issue-number>` for workflow tracking
+- Run `/learnings` to see discoveries from other sessions
+- Otherwise, proceed with development
 ```
 
 #### 7. Tmux Integration (if available)
