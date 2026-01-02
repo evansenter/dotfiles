@@ -78,6 +78,7 @@
       "Bash(~/.claude/contrib/*:*)",
       "Bash(./bootstrap.sh:*)",
       "Bash(./uninstall.sh:*)",
+      "Bash(./tests/*.sh:*)",
       "Bash(cargo +nightly:*)",
       "mcp__session-analytics__*",
       "Bash(uv:*)",

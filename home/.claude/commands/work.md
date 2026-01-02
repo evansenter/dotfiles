@@ -109,7 +109,7 @@ Before creating todos or broadcasting, present the plan to the user:
 - Create PR with /pr-create
 - Monitor CI with /watch-ci
 - Process feedback with /pr-review remote
-- Merge when approved
+- Confirm merge with user (always asks via AskUserQuestion)
 - Reflect with /improve-workflow
 
 Proceed with this plan?
@@ -135,7 +135,7 @@ Only proceed to step 6 if user approves.
 [work:${ID}] Create PR with /pr-create
 [work:${ID}] Monitor CI with /watch-ci
 [work:${ID}] Process feedback with /pr-review remote
-[work:${ID}] Merge when approved
+[work:${ID}] Confirm merge with user
 [work:${ID}] Reflect with /improve-workflow
 ```
 
@@ -182,14 +182,17 @@ Mark first task `in_progress` and begin.
    - Loop back
 5. When no more changes → mark `completed`
 
-### Merge when approved
+### Confirm merge with user
 
 1. Mark `in_progress`
-2. Ask user: "Merge now?"
-3. If confirmed: `gh pr merge --squash`
-4. Broadcast `task_completed`
-5. Mark `completed`
-6. Suggest: `/commit-commands:clean_gone`
+2. **REQUIRED**: Use `AskUserQuestion` to confirm merge:
+   - Options: "Merge now", "Wait" (do not proceed without explicit approval)
+   - Never auto-merge, even if CI passes and PR is approved
+3. If user selects "Merge now": `gh pr merge --squash`
+4. If user selects "Wait": Keep checkpoint `in_progress`, inform user they can resume later
+5. Broadcast `task_completed`
+6. Mark `completed`
+7. Suggest: `/commit-commands:clean_gone`
 
 ### Reflect with /improve-workflow
 
