@@ -129,14 +129,14 @@ Only proceed to step 6 if user approves.
 ### 6. Create Todos
 
 ```
-[work:${ID}] Implement: <task 1>
-[work:${ID}] Implement: <task 2>
-[work:${ID}] Checkpoint: Run /pr-review local
-[work:${ID}] Checkpoint: Create PR with /pr-create
-[work:${ID}] Checkpoint: Monitor CI with /watch-ci
-[work:${ID}] Checkpoint: Process feedback with /pr-review remote
-[work:${ID}] Checkpoint: Merge when approved
-[work:${ID}] Checkpoint: Reflect with /improve-workflow
+[work:${ID}] <task 1>
+[work:${ID}] <task 2>
+[work:${ID}] Run /pr-review local
+[work:${ID}] Create PR with /pr-create
+[work:${ID}] Monitor CI with /watch-ci
+[work:${ID}] Process feedback with /pr-review remote
+[work:${ID}] Merge when approved
+[work:${ID}] Reflect with /improve-workflow
 ```
 
 ### 7. Broadcast & Begin
