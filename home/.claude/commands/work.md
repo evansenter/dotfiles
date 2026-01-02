@@ -69,6 +69,10 @@ Look for incomplete `[work:*]` todos. If found:
 Active work session exists. Complete current work first, or clear todos to start fresh.
 ```
 
+**Notes:**
+- Other todos without `[work:*]` prefix don't block (including subagent todos)
+- Multi-session support is out of scope; any `[work:*]` todos block new work
+
 ### 2. Parse Input
 
 - Matches `^[0-9]+$` → Issue number → identifier: `issue-<N>`
