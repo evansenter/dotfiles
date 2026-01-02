@@ -52,7 +52,7 @@ Parse the PR body for issue references (e.g., "Fixes #123", "Closes #45"):
 gh pr view --json body -q '.body' | grep -oE '(Fixes|Closes|Resolves) #[0-9]+' | head -1
 ```
 
-If found, extract issue number. Otherwise, use `adhoc` as the issue identifier.
+If found, extract issue number and use `issue-<number>` (e.g., `issue-42`). Otherwise, use `pr-<number>` (e.g., `pr-118`).
 
 #### 3. Determine Workflow Position
 
@@ -88,7 +88,7 @@ Skip any checkpoints that are already complete based on the detected state.
 ```markdown
 ## Resuming Work: PR #<N> - <title>
 
-**Linked Issue:** #<issue> or "Ad-hoc work"
+**Linked Issue:** #<issue> or "PR-based work (no linked issue)"
 
 **Already Completed:**
 - [x] Implementation
@@ -204,7 +204,7 @@ Use TodoWrite to create the full work plan with both implementation tasks AND wo
 ```
 
 Where `${ISSUE}` is:
-- The issue number for issue-based work (e.g., `[work:42]`)
+- `issue-<number>` for issue-based work (e.g., `[work:issue-42]`)
 - `adhoc` for ad-hoc work without an issue number (e.g., `[work:adhoc]`)
 
 #### 6. Display Work Plan
@@ -217,16 +217,16 @@ Output the full plan for user visibility:
 **Tip:** Run `/learnings` to see discoveries from other sessions that might be relevant.
 
 **Implementation Tasks:**
-- [ ] [work:42] Implement: <task 1>
-- [ ] [work:42] Implement: <task 2>
+- [ ] [work:issue-42] Implement: <task 1>
+- [ ] [work:issue-42] Implement: <task 2>
 
 **Workflow Checkpoints:**
-- [ ] [work:42] Checkpoint: Run /pr-review local before pushing
-- [ ] [work:42] Checkpoint: Create PR with /pr-create
-- [ ] [work:42] Checkpoint: Monitor CI with /watch-ci
-- [ ] [work:42] Checkpoint: Process feedback with /pr-review remote
-- [ ] [work:42] Checkpoint: Merge when approved
-- [ ] [work:42] Checkpoint: Reflect with /improve-workflow
+- [ ] [work:issue-42] Checkpoint: Run /pr-review local before pushing
+- [ ] [work:issue-42] Checkpoint: Create PR with /pr-create
+- [ ] [work:issue-42] Checkpoint: Monitor CI with /watch-ci
+- [ ] [work:issue-42] Checkpoint: Process feedback with /pr-review remote
+- [ ] [work:issue-42] Checkpoint: Merge when approved
+- [ ] [work:issue-42] Checkpoint: Reflect with /improve-workflow
 
 Starting work on first task...
 ```
@@ -351,18 +351,18 @@ Active work session exists for issue #<N>. Complete current work first, or clear
 **Labels:** enhancement, UI
 
 ### Implementation Tasks
-1. [work:42] Implement: Add toggle component to settings
-2. [work:42] Implement: Create dark mode CSS variables
-3. [work:42] Implement: Wire up state management
-4. [work:42] Implement: Add tests for toggle behavior
+1. [work:issue-42] Implement: Add toggle component to settings
+2. [work:issue-42] Implement: Create dark mode CSS variables
+3. [work:issue-42] Implement: Wire up state management
+4. [work:issue-42] Implement: Add tests for toggle behavior
 
 ### Workflow Checkpoints
-5. [work:42] Checkpoint: Run /pr-review local before pushing
-6. [work:42] Checkpoint: Create PR with /pr-create
-7. [work:42] Checkpoint: Monitor CI with /watch-ci
-8. [work:42] Checkpoint: Process feedback with /pr-review remote
-9. [work:42] Checkpoint: Merge when approved
-10. [work:42] Checkpoint: Reflect with /improve-workflow
+5. [work:issue-42] Checkpoint: Run /pr-review local before pushing
+6. [work:issue-42] Checkpoint: Create PR with /pr-create
+7. [work:issue-42] Checkpoint: Monitor CI with /watch-ci
+8. [work:issue-42] Checkpoint: Process feedback with /pr-review remote
+9. [work:issue-42] Checkpoint: Merge when approved
+10. [work:issue-42] Checkpoint: Reflect with /improve-workflow
 
 ---
 
