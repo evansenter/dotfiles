@@ -126,7 +126,105 @@ Use `AskUserQuestion` with options:
 
 Only proceed to step 6 if user approves.
 
-### 6. Create Todos
+### 6. Guided Development (Optional)
+
+After user approves the plan, ask if they want guided development:
+
+Use `AskUserQuestion`:
+- **Yes, explore and architect first (Recommended)** - Launch exploration agents, ask clarifying questions, design architecture with agents, then document plan before implementing
+- **No, proceed directly** - Skip to implementation
+
+**When to recommend "Yes":**
+- New features requiring architectural decisions
+- Complex changes touching multiple systems
+- Unfamiliar areas of the codebase
+
+**When to recommend "No":**
+- Bug fixes with clear scope
+- Small, well-defined changes
+- Follow-up work where architecture is established
+
+If user selects **"Yes, explore and architect first"**, proceed through the Guided Development phases below before creating implementation todos.
+
+If user selects **"No, proceed directly"**, skip to step 7 "Create Todos".
+
+---
+
+### Guided Development Phases
+
+These phases run when user opts in to guided development. They help build deep codebase understanding and produce a documented architecture plan.
+
+#### Phase 1: Codebase Exploration
+
+**Goal**: Understand relevant existing code and patterns
+
+Launch 2-3 code-explorer agents in parallel using the Task tool with `subagent_type="feature-dev:code-explorer"`. Each agent should:
+- Target a different aspect: similar features, architecture/abstractions, integration points
+- Trace through code comprehensively
+- Return 5-10 key files to read
+
+**Example prompts:**
+- "Find features similar to [feature] and trace their implementation"
+- "Map the architecture and abstractions for [feature area]"
+- "Identify integration points and dependencies for [feature]"
+
+After agents return, read all identified files to build deep understanding.
+
+#### Phase 2: Clarifying Questions
+
+**Goal**: Resolve all ambiguities before designing
+
+**CRITICAL**: Do not skip this phase.
+
+Review exploration findings + issue details. Identify:
+- Edge cases and error handling
+- Integration points and dependencies
+- Scope boundaries and backward compatibility
+- Performance requirements
+
+Present questions to user in an organized list. Wait for answers before proceeding.
+
+If user says "whatever you think is best", provide your recommendation and get explicit confirmation.
+
+#### Phase 3: Architecture Design
+
+**Goal**: Design multiple approaches with trade-offs
+
+Launch 2-3 code-architect agents in parallel using the Task tool with `subagent_type="feature-dev:code-architect"`. Each agent should focus on a different approach:
+- **Minimal changes**: Smallest change, maximum reuse
+- **Clean architecture**: Maintainability, elegant abstractions
+- **Pragmatic balance**: Speed + quality
+
+Review all approaches and form your opinion on which fits best.
+
+Present to user:
+- Brief summary of each approach
+- Trade-offs comparison table
+- Your recommendation with reasoning
+
+Ask user which approach they prefer.
+
+#### Phase 4: Document Plan
+
+**Goal**: Create formal plan artifact with chosen architecture
+
+Use `EnterPlanMode` to document:
+- Key files to modify/create
+- Implementation sequence
+- Decisions made from clarifying questions
+- Chosen architecture approach
+
+Use `ExitPlanMode` when plan is complete. User reviews and approves the documented plan.
+
+#### Phase 5: Create Implementation Tasks
+
+Based on the documented plan, derive specific implementation tasks. Update the initial task list with any refinements discovered during exploration and architecture phases.
+
+Proceed to step 7 "Create Todos" after completing this phase.
+
+---
+
+### 7. Create Todos
 
 ```
 [work:${ID}] <task 1>
@@ -139,7 +237,7 @@ Only proceed to step 6 if user approves.
 [work:${ID}] Reflect with /improve-workflow
 ```
 
-### 7. Broadcast & Begin
+### 8. Broadcast & Begin
 
 ```
 mcp__event-bus__publish_event(event_type: "task_started", payload: "Started work on...", channel: "repo:<name>")
