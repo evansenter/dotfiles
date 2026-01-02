@@ -58,7 +58,7 @@ if [[ -n "$session_id" ]]; then
                 awk '{print $1}')
 
             # Cache the result (even if empty, to avoid repeated queries)
-            mkdir -p "$cache_dir" 2>/dev/null
+            mkdir -p "$cache_dir" && chmod 700 "$cache_dir" 2>/dev/null
             echo "$session_name" > "$cache_file" 2>/dev/null
         fi
 
