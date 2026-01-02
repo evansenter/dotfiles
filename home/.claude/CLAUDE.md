@@ -313,42 +313,6 @@ Available slash commands (in `~/.claude/commands/`):
 
 Scripts in `~/.claude/contrib/` for workflow analysis and automation:
 
-### parse-session-logs.sh
-
-Analyzes Claude Code session metrics from `~/.claude/projects/**/*.jsonl` for evidence-based workflow improvements.
-
-**Note:** Session logs are stored as `.jsonl` files in `~/.claude/projects/`. Availability may depend on Claude Code's retention policies.
-
-**Usage:**
-```bash
-~/.claude/contrib/parse-session-logs.sh [OPTIONS]
-
-OPTIONS:
-  --project       Analyze current project only (default)
-  --global        Analyze all projects
-  --days N        Look back N days (default: 7)
-  --verbose, -v   Show detailed output
-```
-
-**Output:**
-- Date range and total tool calls analyzed
-- Project breakdown (global scope) - shows which repos contributed
-- Tool frequency (Bash, Read, Edit, MCP tools, Skills)
-- Top commands (git, gh, cargo, etc.)
-- Common tool sequences (workflow patterns)
-- Commands needing permission (compares usage against settings.json)
-- Data-driven improvement suggestions
-
-**Example:**
-```bash
-# Analyze dotfiles project from last 7 days
-cd ~/Documents/projects/dotfiles
-~/.claude/contrib/parse-session-logs.sh --project
-
-# Global analysis across all projects, last 30 days
-~/.claude/contrib/parse-session-logs.sh --global --days 30
-```
-
 ### repo-stats.sh
 
 Shows codebase size (LoC) and recent activity across repositories using GitHub API and `scc`.
