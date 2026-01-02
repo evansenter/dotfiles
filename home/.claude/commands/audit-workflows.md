@@ -14,11 +14,17 @@ Analyze all `.md` files in:
 
 ## Check For
 
-### Contradictions
-- Same action described differently in different places
-- Conflicting instructions (e.g., "always do X" vs "skip X when...")
-- Phase ordering inconsistencies across related commands
-- Checkpoint definitions that conflict (e.g., /work vs /pr-review)
+### Contradictions Within a Workflow
+- Instructions that conflict with each other in the same file
+- Phase ordering that loops or is impossible to follow
+- Conditions that can never be satisfied or are always true
+- Steps that undo previous steps without explanation
+
+### Contradictions Across Workflows
+- Same action described differently in different commands
+- Conflicting instructions between related commands (e.g., /work says "always X", /pr-review says "skip X")
+- Phase ordering inconsistencies across command groups
+- Checkpoint definitions that conflict (e.g., /work vs /pr-review ownership of a step)
 
 ### Ambiguities
 - Vague instructions that could be interpreted multiple ways
@@ -54,6 +60,12 @@ Present findings in priority order:
 ```
 ## Critical (Contradictions)
 
+### Within Workflows
+| File | Line A | Line B | Contradiction |
+|------|--------|--------|---------------|
+| work.md | 45 | 120 | Phase 3 requires X, Phase 5 says skip X |
+
+### Across Workflows
 | Location A | Location B | Contradiction |
 |------------|------------|---------------|
 | work.md:45 | pr-review.md:20 | Conflicting checkpoint order |
