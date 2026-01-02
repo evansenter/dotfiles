@@ -69,6 +69,59 @@ echo "**Period:** Last $DAYS days (since ${SINCE:0:10})"
 echo "**Owner:** $OWNER"
 echo ""
 
+# Print project stats table
+echo "### Project Stats"
+echo ""
+echo "| Repo | Tests | Deps | Open Issues | Open PRs |"
+echo "|------|-------|------|-------------|----------|"
+
+for repo in $REPOS; do
+    local_path="$LOCAL_DIR/$repo"
+
+    # Count tests (use subshell to avoid pipefail issues with grep returning 1 on no match)
+    test_count="-"
+    if [[ -d "$local_path" ]]; then
+        # Rust: count #[test] annotations
+        if [[ -f "$local_path/Cargo.toml" ]]; then
+            test_count=$(grep -r '#\[test\]' "$local_path/src" "$local_path/tests" 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
+        # Python: count test_* functions and Test* classes
+        elif [[ -f "$local_path/setup.py" ]] || [[ -f "$local_path/pyproject.toml" ]] || [[ -f "$local_path/requirements.txt" ]]; then
+            test_count=$(grep -rE '^\s*(def test_|class Test)' "$local_path" --include="*.py" 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
+        # JS/TS: count test/it/describe blocks
+        elif [[ -f "$local_path/package.json" ]]; then
+            test_count=$(grep -rE '^\s*(test|it|describe)\(' "$local_path" --include="*.test.*" --include="*.spec.*" 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
+        # Shell: count test files in tests/ or test/ directories
+        elif [[ -d "$local_path/tests" ]] || [[ -d "$local_path/test" ]]; then
+            test_count=$(find "$local_path/tests" "$local_path/test" -name "*.sh" -o -name "test_*" 2>/dev/null | wc -l | tr -d ' ') || test_count="0"
+        fi
+    fi
+
+    # Count dependencies
+    deps_count="-"
+    if [[ -d "$local_path" ]]; then
+        if [[ -f "$local_path/Cargo.toml" ]]; then
+            # Count [dependencies] and [dev-dependencies]
+            deps_count=$(grep -E '^\[.*dependencies' "$local_path/Cargo.toml" -A 100 | grep -E '^[a-zA-Z]' | grep -v '^\[' | wc -l | tr -d ' ') || deps_count="0"
+        elif [[ -f "$local_path/package.json" ]]; then
+            deps_count=$(jq '[(.dependencies // {}), (.devDependencies // {})] | map(keys) | flatten | length' "$local_path/package.json" 2>/dev/null) || deps_count="-"
+        elif [[ -f "$local_path/requirements.txt" ]]; then
+            deps_count=$(grep -v '^#' "$local_path/requirements.txt" 2>/dev/null | grep -v '^$' | wc -l | tr -d ' ') || deps_count="0"
+        elif [[ -f "$local_path/pyproject.toml" ]]; then
+            deps_count=$(grep -E '^\s*"[^"]+' "$local_path/pyproject.toml" 2>/dev/null | wc -l | tr -d ' ') || deps_count="0"
+        fi
+    fi
+
+    # Get open issues and PRs from GitHub
+    open_issues=$(gh api "repos/$OWNER/$repo" --jq '.open_issues_count // 0' 2>/dev/null) || open_issues="0"
+    open_prs=$(gh api "repos/$OWNER/$repo/pulls?state=open" --jq 'length' 2>/dev/null) || open_prs="0"
+    # open_issues includes PRs, so subtract
+    open_issues=$((open_issues - open_prs))
+
+    echo "| **$repo** | $test_count | $deps_count | $open_issues | $open_prs |"
+done
+
+echo ""
+
 # Print codebase sizes table
 echo "### Codebase Size"
 echo ""

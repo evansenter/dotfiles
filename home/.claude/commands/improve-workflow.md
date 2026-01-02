@@ -27,19 +27,32 @@ References:
 
 ### Data-Driven Analysis
 
-If available, run the session metrics parser for quantitative insights:
+Use the session-analytics MCP server for quantitative insights:
 
-```bash
-# Use --global if passed, otherwise --project (default)
-~/.claude/contrib/parse-session-logs.sh --project --days 7   # current project
-~/.claude/contrib/parse-session-logs.sh --global --days 7    # all projects
+```
+# Get comprehensive insights (tool frequency, sequences, permission gaps, trends)
+mcp__session-analytics__get_insights(days=7, refresh=false)
+
+# Get detailed tool frequency with breakdowns
+mcp__session-analytics__get_tool_frequency(days=7, expand=true)
+
+# Get commands that may need permission configuration
+mcp__session-analytics__get_permission_gaps(days=7, min_count=5)
 ```
 
-Run the appropriate command based on whether `--global` was in the arguments.
+If `--global` was passed, omit the `project` parameter. For project-specific analysis, pass the current project path.
 
-This shows tool frequency, common command sequences, and patterns that could inform improvements.
+**Fallback**: If MCP is unavailable, use the session-analytics CLI:
+```bash
+# Check if CLI is available
+if command -v session-analytics-cli &>/dev/null; then
+    session-analytics-cli frequency --days 7
+    session-analytics-cli commands --days 7
+    session-analytics-cli permissions --days 7 --min-count 5
+fi
+```
 
-**Important**: Session logs are historical and may reflect outdated workflows. Patterns from days ago may have already been addressed by recent changes. The script now shows date ranges and compares against current settings.json - use this to filter stale recommendations.
+**Important**: Session logs are historical and may reflect outdated workflows. Patterns from days ago may have already been addressed by recent changes. Cross-reference with current settings.json to filter stale recommendations.
 
 ### Git History Analysis
 
