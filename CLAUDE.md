@@ -165,6 +165,13 @@ User-defined agents work differently from the Task tool's built-in `subagent_typ
 
 Run `./bootstrap.sh -f` to apply changes to the local system.
 
+## Documentation Standards
+
+After editing CLAUDE.md, README.md, commands, or agents, review the changed files for:
+- **Clarity** - Is the intent clear? Would a new reader understand it?
+- **Consistency** - Does it match the style of surrounding content?
+- **Length** - Is it appropriately concise? Commands should be actionable, not verbose.
+
 ## Event Bus Integration
 
 The event bus enables cross-session coordination via the `mcp__event-bus__*` tools.

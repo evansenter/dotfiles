@@ -74,7 +74,28 @@ Before raising any issue, check if it was already addressed in a "Feedback Addre
 
 **Do NOT re-raise issues that appear in Implemented, Skipped, or Deferred sections.**
 
-### 4. Review Criteria
+### 4. Analyze Test and Example Coverage
+
+Before reviewing code quality, analyze coverage gaps:
+
+**Test coverage:**
+1. Identify new/changed code in the diff
+2. Check if corresponding test files exist
+3. Flag gaps:
+   - New public functions/methods without tests → Important
+   - New code paths (branches, error handling) without tests → Important
+   - Missing edge case tests → Suggestion
+
+**Example coverage:**
+1. Identify user-facing features in the diff
+2. Check if examples exist demonstrating usage
+3. Flag gaps:
+   - New user-facing feature without any example → Important
+   - Existing example not updated for changed behavior → Suggestion
+
+Be specific: "`parse_config()` has no tests", "New CLI flag `--verbose` has no example"
+
+### 5. Review Criteria
 
 Evaluate the code for:
 
@@ -89,14 +110,15 @@ Evaluate the code for:
    - Missing error handling
    - Performance problems
    - Violation of project conventions (check CLAUDE.md)
+   - **Missing tests or examples for new public APIs/features**
 
 3. **Suggestions** (nice to have)
    - Code clarity improvements
    - Minor style inconsistencies
    - Documentation gaps
-   - Test coverage opportunities
+   - Additional test/example coverage opportunities
 
-### 5. Reporting Philosophy
+### 6. Reporting Philosophy
 
 **Report all relevant feedback within the PR's scope.** Identify critical issues, important problems, and suggestions alike. The verdict follows mechanically from your findings - do not suppress findings to achieve a particular verdict.
 
@@ -104,7 +126,7 @@ Evaluate the code for:
 
 **Suggestions are valuable.** They show you engaged deeply with the code and help authors improve. Report them freely. A suggestion is collaboration, not criticism.
 
-### 6. Review Standards
+### 7. Review Standards
 
 **HARD CONSTRAINT - You MUST follow these rules with NO exceptions:**
 - If there are ANY Critical issues: REQUEST_CHANGES
@@ -118,7 +140,7 @@ Do NOT rationalize approving with suggestions by saying they are "minor" or "opt
 
 **Never LGTM with caveats.** If you have feedback, request changes.
 
-### 7. Verify Before Posting
+### 8. Verify Before Posting
 
 **Before posting your review, perform this check:**
 
@@ -128,7 +150,7 @@ Do NOT rationalize approving with suggestions by saying they are "minor" or "opt
 
 If your draft says "APPROVE" but you listed any issues above, STOP and change the verdict to REQUEST_CHANGES.
 
-### 8. Output Format
+### 9. Output Format
 
 Post your review as a PR comment using `gh pr comment`.
 

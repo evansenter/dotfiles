@@ -83,7 +83,8 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 ## Quality Gates
 
 - Run quality gates appropriate to the project (linter, formatter, tests) before pushing.
-- Significant user-facing features should include examples demonstrating usage - this ensures the codepath doesn't go stale.
+- **Test and example coverage** - New/changed code should have corresponding tests. User-facing features should have examples. Flag gaps in both.
+- **Example validation** - Run examples with debug logging (e.g., `LOUD_WIRE=1`) and review output for semantic issues. Check per-project CLAUDE.md for debug flags.
 
 ## PR Workflow
 
