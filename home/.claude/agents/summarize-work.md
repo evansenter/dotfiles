@@ -101,25 +101,20 @@ Files with High risk or High complexity should always be flagged regardless of s
 
 These files warrant careful review due to risk, complexity, or impact:
 
-| Priority | File | Risk | Reason |
-|----------|------|------|--------|
-| 1 | `src/auth/handler.ts` | High | Security-sensitive authentication logic |
-| 2 | `src/api/endpoints.ts` | High | Public API changes affecting clients |
-| 3 | `src/core/processor.ts` | Medium | Complex state machine modifications |
+#### #1. [High] `src/auth/handler.ts`
+> Security-sensitive authentication logic with token validation changes
+**Purpose**: Refactored token validation to support refresh tokens
+**Review focus**: Input validation, token handling, error cases - check lines 42-78
 
-### Review Guidance
+#### #2. [High] `src/api/endpoints.ts`
+> Public API changes affecting external clients
+**Purpose**: Added new /auth/refresh endpoint and updated response format
+**Review focus**: Backward compatibility, response format matches spec, error responses
 
-For each high-priority file, specific things to look for:
-
-#### `src/auth/handler.ts` (Priority 1)
-- [ ] Input validation on line X
-- [ ] Token handling at line Y
-- [ ] Error cases properly handled
-
-#### `src/api/endpoints.ts` (Priority 2)
-- [ ] Backward compatibility maintained
-- [ ] Response format matches spec
-- [ ] Error responses are consistent
+#### #3. [Medium] `src/core/processor.ts`
+> Complex state machine with new transition logic
+**Purpose**: Added pending state for async token refresh
+**Review focus**: State transition correctness, edge cases around timeout
 
 ### Potential Concerns
 
