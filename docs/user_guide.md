@@ -27,6 +27,9 @@ Over 14 days in December 2025, I transformed a dormant dotfiles repository (last
 1. **dotfiles** (6K Shell) - Meta-orchestration hub
    - Started: Traditional zsh/tmux configs from 2011
    - Now: 18 custom commands, 3 lifecycle hooks, statusline integration, user-defined agents
+
+   **Why it matters**: This is the control plane for AI-augmented development. Instead of typing ad-hoc instructions to Claude Code, you define reusable workflows that encode your preferences, quality gates, and coordination patterns. The investment compounds—every workflow improvement benefits all future sessions across all repositories.
+
    - **Key features**:
      - `/work` - Full workflow orchestration with checkpoints and auto-reflection
      - `/pr-review local|remote` - Batch code review with AskUserQuestion decisions
@@ -43,6 +46,9 @@ Over 14 days in December 2025, I transformed a dormant dotfiles repository (last
 2. **rust-genai** (33K Rust) - Gemini Interactions API SDK
    - Started: From scratch, exploring Gemini API in Rust
    - Now: Full Gemini Interactions API (3.0+) implementation with streaming, tool use, vision
+
+   **Why it matters**: Google's Gemini models offer competitive performance at lower cost, but the official SDKs lag behind the API. This library provides first-class Rust support for the Interactions API (3.0+), enabling high-performance agentic applications with proper streaming, tool use, and vision—features that are awkward or missing in alternatives.
+
    - **Key features**:
      - Gemini Interactions API - Native Rust SDK for Google's latest API surface
      - Streaming responses - `ChatResponseStream` with typed events (content, tool calls, usage)
@@ -59,6 +65,9 @@ Over 14 days in December 2025, I transformed a dormant dotfiles repository (last
 3. **gemicro** (30K Rust) - MCP server framework
    - Started: Exploration of Gemini-specific features
    - Now: Full MCP implementation (async + sync) with request batching, session management
+
+   **Why it matters**: MCP (Model Context Protocol) is the emerging standard for tool integration, but building agents that use MCP servers is complex. gemicro provides the missing layer: `AgentRunner` for multi-turn execution, `Trajectory` for debugging and evaluation, and soon push notification support that bypasses MCP's request/response limitation entirely.
+
    - **Key features**:
      - `AgentRunner` - Multi-turn agent execution with phases and tool orchestration
      - `Trajectory` - Recording/replay of agent runs for debugging and evaluation
@@ -75,6 +84,9 @@ Over 14 days in December 2025, I transformed a dormant dotfiles repository (last
 4. **claude-event-bus** (6K Python) - Cross-session coordination
    - Started: From scratch Dec 30
    - Now: SQLite-backed pub/sub system, CLI + MCP server, channels, session lifecycle
+
+   **Why it matters**: Running multiple Claude Code sessions in parallel is powerful, but they're blind to each other by default. The event bus enables coordination: Session A announces "auth feature done," Session B receives it and integrates. Discoveries, blockers, and CI results propagate automatically. This turns isolated sessions into a collaborating swarm.
+
    - **Key features**:
      - Channel-based pub/sub - 4 channel types (all/repo/machine/session) for targeted messaging
      - Session lifecycle - Register/unregister with heartbeat-based cleanup (30s timeout)
@@ -91,6 +103,9 @@ Over 14 days in December 2025, I transformed a dormant dotfiles repository (last
 5. **claude-session-analytics** (11K Python) - Workflow insights
    - Started: From scratch Dec 31
    - Now: JSONL log parsing, tool sequences, failure analysis, permission gap detection
+
+   **Why it matters**: Claude Code generates detailed session logs, but they're write-only by default. This tool mines those logs for actionable insights: which commands need auto-approval, which tool sequences indicate friction, which sessions have high error rates. The `/improve-workflow` command uses this data to suggest concrete improvements—making the system self-optimizing.
+
    - **Key features**:
      - Tool frequency analysis - Usage counts with breakdowns by Bash command, Skill, Task agent type
      - Tool sequence mining - Find common patterns (e.g., "Read → Edit" happens 847 times)
