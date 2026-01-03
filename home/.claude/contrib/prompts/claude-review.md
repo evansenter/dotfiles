@@ -74,22 +74,26 @@ Before raising any issue, check if it was already addressed in a "Feedback Addre
 
 **Do NOT re-raise issues that appear in Implemented, Skipped, or Deferred sections.**
 
-### 4. Analyze Test Coverage
+### 4. Analyze Test and Example Coverage
 
-Before reviewing code quality, analyze test coverage gaps:
+Before reviewing code quality, analyze coverage gaps:
 
-1. **Identify changed/new code**: Look at the diff for new functions, methods, or significant logic changes
-2. **Find corresponding tests**: Check if test files exist for the changed modules
-3. **Assess coverage gaps**:
-   - New public functions/methods without any tests → Important
+**Test coverage:**
+1. Identify new/changed code in the diff
+2. Check if corresponding test files exist
+3. Flag gaps:
+   - New public functions/methods without tests → Important
    - New code paths (branches, error handling) without tests → Important
    - Missing edge case tests → Suggestion
-   - Existing code with test coverage opportunities → Suggestion
 
-When flagging test coverage issues, be specific about what's missing:
-- "New `parse_config()` function has no tests"
-- "Error handling path on line 45 is not tested"
-- "Edge case: empty input not covered"
+**Example coverage:**
+1. Identify user-facing features in the diff
+2. Check if examples exist demonstrating usage
+3. Flag gaps:
+   - New user-facing feature without any example → Important
+   - Existing example not updated for changed behavior → Suggestion
+
+Be specific: "`parse_config()` has no tests", "New CLI flag `--verbose` has no example"
 
 ### 5. Review Criteria
 
@@ -106,14 +110,13 @@ Evaluate the code for:
    - Missing error handling
    - Performance problems
    - Violation of project conventions (check CLAUDE.md)
-   - **Missing tests for new public functions/methods**
-   - **Untested new code paths (branches, error handling)**
+   - **Missing tests or examples for new public APIs/features**
 
 3. **Suggestions** (nice to have)
    - Code clarity improvements
    - Minor style inconsistencies
    - Documentation gaps
-   - Test coverage opportunities (edge cases, existing code)
+   - Additional test/example coverage opportunities
 
 ### 6. Reporting Philosophy
 

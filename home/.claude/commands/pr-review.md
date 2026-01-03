@@ -57,40 +57,39 @@ Output a 2-3 sentence summary of what was changed and why.
 Skill(pr-review-toolkit:review-pr)
 ```
 
-#### 3a. Check Test Coverage Gaps
+#### 3a. Check Test and Example Coverage Gaps
 
-Analyze the diff to identify test coverage gaps:
+Analyze the diff for coverage gaps:
 
-1. **Find changed files**: Look at the diff for new/modified source files
-2. **Identify new public functions/methods**: Check for new public APIs without tests
-3. **Check for test file changes**: If source changed but no corresponding test file, flag it
+**Test coverage:**
+1. Find new/modified source files
+2. Check for corresponding test files/functions
+3. Flag: new public APIs without tests (Important), missing edge cases (Suggestion)
 
-**Categorize gaps as:**
-- **Important**: New public function/method with no tests at all
-- **Suggestion**: Missing edge case tests, additional coverage opportunities
+**Example coverage:**
+1. Identify user-facing features (new commands, flags, public APIs)
+2. Check if examples exist demonstrating usage
+3. Flag: new user-facing feature without example (Important)
 
-Include test coverage feedback in the overall findings.
+Include coverage feedback in the overall findings.
 
 #### 4a. Run Examples with Debug Output (if applicable)
 
 For significant changes that affect core functionality:
 
 1. **Check for examples**: Look for `examples/` directory or example files
-2. **Check CLAUDE.md for debug flags**: Look for project-specific debug environment variables (e.g., `LOUD_WIRE=1`, `DEBUG=1`, `RUST_LOG=debug`)
-3. **Run examples with debug logging**:
+2. **If no examples but user-facing changes**: Flag as Important gap (covered in 3a)
+3. **Check CLAUDE.md for debug flags**: Look for project-specific debug env vars (e.g., `LOUD_WIRE=1`, `DEBUG=1`, `RUST_LOG=debug`)
+4. **Run examples with debug logging**:
    ```bash
-   # Example for Rust projects with LOUD_WIRE
    LOUD_WIRE=1 cargo run --example <example_name> 2>&1 | tee /tmp/<project>-debug-$(date +%s).log
    ```
-4. **Review output**: Scan for errors, warnings, unexpected behavior, or semantic issues
-5. **Share log location**: Tell user where to find the full log: `/tmp/<project>-debug-*.log`
+5. **Review output**: Scan for errors, warnings, unexpected behavior
+6. **Share log location**: `/tmp/<project>-debug-*.log`
 
-**Skip if:**
-- No examples exist
-- Changes are documentation-only or config-only
-- No debug flags defined in project CLAUDE.md
+**Skip debug run if:** Documentation-only changes or no debug flags defined.
 
-**If issues found in debug output:** Add them to the findings as Important issues.
+**If issues found:** Add to findings as Important issues.
 
 #### 5a. Summarize Results
 
