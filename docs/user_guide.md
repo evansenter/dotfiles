@@ -27,22 +27,82 @@ Over 14 days in December 2025, I transformed a dormant dotfiles repository (last
 1. **dotfiles** (6K Shell) - Meta-orchestration hub
    - Started: Traditional zsh/tmux configs from 2011
    - Now: 18 custom commands, 3 lifecycle hooks, statusline integration, user-defined agents
+   - **Key features**:
+     - `/work` - Full workflow orchestration with checkpoints and auto-reflection
+     - `/pr-review local|remote` - Batch code review with AskUserQuestion decisions
+     - `/parallel-work` - Git worktree management with tmux auto-launch
+     - `/status-report` - Session-aware orientation with recommendations
+     - `/improve-workflow` - Data-driven suggestions from session analytics
+     - Session hooks - Auto-register/unregister with event bus, poll events on prompt
+     - User-defined agents - Custom autonomous tasks with separate context windows
+     - Statusline - Ambient awareness (repo/branch, session name, context %, model)
+     - Bootstrap system - Idempotent symlinks, MCP server installation, LaunchAgents
+     - Dark mode theme switching for btop via `dark-notify`
+   - **Upcoming**: Worktree-aware merge (#139), required-only CI flag (#137), trajectory integration for multi-session debugging (#57)
 
 2. **rust-genai** (33K Rust) - LLM provider abstraction
    - Started: From scratch, exploring Gemini API in Rust
    - Now: Multi-provider SDK (Anthropic, OpenAI, Gemini, Groq, Ollama) with streaming, tool use, vision
+   - **Key features**:
+     - Unified `Client` API - Same interface across Anthropic, OpenAI, Gemini, Groq, Ollama, Cohere, DeepSeek
+     - Streaming responses - `ChatResponseStream` with typed events (content, tool calls, usage)
+     - Function calling - Full tool use with `tool_choice` (auto/any/none/specific)
+     - Vision support - Multi-modal messages with image URLs and base64
+     - Response caching - Provider-agnostic caching layer for development
+     - Retry logic - Exponential backoff with configurable max retries
+     - Model aliasing - Map logical names to provider-specific model IDs
+     - Usage tracking - Token counts (input, output, cache read/write) per response
+     - `LOUD_WIRE` debug mode - Raw request/response logging for debugging
+     - Comprehensive examples - 30+ examples covering all features
+   - **Upcoming**: 13 open issues including enhanced error handling, additional provider integrations
 
 3. **gemicro** (30K Rust) - MCP server framework
    - Started: Exploration of Gemini-specific features
    - Now: Full MCP implementation (async + sync) with request batching, session management
+   - **Key features**:
+     - `AgentRunner` - Multi-turn agent execution with phases and tool orchestration
+     - `Trajectory` - Recording/replay of agent runs for debugging and evaluation
+     - `TrajectoryDataset` - Batch evaluation across saved trajectories
+     - MCP transports - Both async (`AsyncMcpTransport`) and sync implementations
+     - Request batching - Efficient tool call grouping with deduplication
+     - Session management - MCP session lifecycle with capability negotiation
+     - REPL mode - Interactive agent development with `!save`/`!load`/`!replay`
+     - `HubCoordination` - SSE connection to claude-event-bus for real-time events
+     - Mock clients - `MockLlmClient` for deterministic testing with recorded responses
+     - Structured observability - Integration-ready spans for distributed tracing
+   - **Upcoming**: **Push notification injection via SSE** (#196) - the key to real-time event delivery; HubCoordination already connects to event bus, just needs `execute_with_coordination()` to inject events into agent update stream
 
 4. **claude-event-bus** (6K Python) - Cross-session coordination
    - Started: From scratch Dec 30
    - Now: SQLite-backed pub/sub system, CLI + MCP server, channels, session lifecycle
+   - **Key features**:
+     - Channel-based pub/sub - 4 channel types (all/repo/machine/session) for targeted messaging
+     - Session lifecycle - Register/unregister with heartbeat-based cleanup (30s timeout)
+     - Cursor-based polling - Efficient event retrieval with "since cursor" semantics
+     - MCP server - Full tool suite for Claude Code integration
+     - CLI - `event-bus-cli` for shell scripting and manual testing
+     - SSE endpoint - `/events/stream` for external consumers (gemicro uses this)
+     - macOS notifications - `notify()` tool for user alerts
+     - SQLite storage - Persistent events with FTS5 search capability
+     - Client deduplication - `(machine, client_id)` prevents duplicate registrations
+     - LaunchAgent - Auto-start on macOS login
+   - **Upcoming**: Multi-machine via Tailscale (#3, blocked), SSE for MCP when supported (#10, blocked on MCP spec)
 
 5. **claude-session-analytics** (11K Python) - Workflow insights
    - Started: From scratch Dec 31
    - Now: JSONL log parsing, tool sequences, failure analysis, permission gap detection
+   - **Key features**:
+     - Tool frequency analysis - Usage counts with breakdowns by Bash command, Skill, Task agent type
+     - Tool sequence mining - Find common patterns (e.g., "Read → Edit" happens 847 times)
+     - Permission gap detection - Commands frequently requiring approval that could be auto-allowed
+     - Failure analysis - Error rates, rework detection (same file edited multiple times)
+     - Session classification - Categorize as debugging, development, research, maintenance
+     - Git commit correlation - Link commits to sessions that created them
+     - FTS5 message search - Full-text search across all user messages
+     - Trend analysis - Compare periods to detect workflow changes
+     - Handoff context - Recent activity summary for session continuity
+     - MCP server + CLI - Both `mcp__session-analytics__*` tools and `session-analytics-cli`
+   - **Upcoming**: No open issues - stable and feature-complete for current needs
 
 ## The Core Workflow
 
@@ -443,7 +503,15 @@ The event bus runs locally. If you have Claude Code on two machines:
 - Session state is machine-local
 - No remote database option (yet)
 
-**Workaround**: Use GitHub issues as the coordination layer for cross-machine work.
+**In-progress work**: The infrastructure for multi-machine coordination exists:
+- claude-event-bus [#3](https://github.com/evansenter/claude-event-bus/issues/3): Tailscale support for network binding + auth
+- claude-event-bus [#10](https://github.com/evansenter/claude-event-bus/issues/10): SSE support when MCP adds server-push
+
+However, both are **blocked by the MCP push notification limitation** above. Without push, remote event bus is just more latent polling—low value.
+
+**The path forward**: gemicro [#196](https://github.com/evansenter/gemicro/issues/196) adds `execute_with_coordination()` that injects external events via SSE directly into the agent's update stream, bypassing MCP entirely. This enables real-time coordination without waiting for MCP spec changes.
+
+**Current workaround**: Use GitHub issues as the coordination layer for cross-machine work.
 
 ### Statusline Cache Lag
 
