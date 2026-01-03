@@ -1,7 +1,6 @@
 ---
 name: audit-codebase
 description: Audits codebase for anti-patterns, Evergreen violations, and refactoring opportunities. Use when you need a comprehensive code quality analysis that can run in the background.
-tools: Read, Glob, Grep, Bash, WebFetch, WebSearch
 model: opus
 ---
 
