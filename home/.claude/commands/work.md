@@ -307,8 +307,33 @@ Mark first task `in_progress` and begin.
 ### Reflect with /improve-workflow
 
 1. Mark `in_progress`
-2. Run `/improve-workflow`
-3. Mark `completed`
+2. **Reflect on the work** - Answer these questions:
+
+   **Difficulty**: Rate Easy / Medium / Hard and explain why. What was harder than expected?
+
+   **Friction points**: What slowed you down?
+   - Missing permissions or tooling?
+   - Unclear or poorly documented code?
+   - Inadequate test coverage or examples?
+   - External dependencies or API limitations?
+
+   **User steering**: Where did the user need to correct or redirect you?
+   - Misunderstanding requirements?
+   - Wrong approach or architecture?
+   - Missing context you should have gathered?
+
+   **Suggested improvements**: What would make this easier?
+   - Codebase changes (refactoring, documentation, tests)
+   - Tooling additions (new commands, agents, permissions)
+   - Workflow tweaks (process changes, new checkpoints)
+
+3. **Publish insights** to event bus:
+   - `gotcha_discovered` - Non-obvious issues others should know
+   - `pattern_found` - Useful patterns worth sharing
+   - Include repo context so insights are findable via `/learnings`
+
+4. Run `/improve-workflow` to generate data-driven suggestions
+5. Mark `completed`
 
 ---
 
