@@ -40,21 +40,21 @@ Over 14 days in December 2025, I transformed a dormant dotfiles repository (last
      - Dark mode theme switching for btop via `dark-notify`
    - **Upcoming**: Worktree-aware merge (#139), required-only CI flag (#137), trajectory integration for multi-session debugging (#57)
 
-2. **rust-genai** (33K Rust) - LLM provider abstraction
+2. **rust-genai** (33K Rust) - Gemini Interactions API SDK
    - Started: From scratch, exploring Gemini API in Rust
-   - Now: Multi-provider SDK (Anthropic, OpenAI, Gemini, Groq, Ollama) with streaming, tool use, vision
+   - Now: Full Gemini Interactions API (3.0+) implementation with streaming, tool use, vision
    - **Key features**:
-     - Unified `Client` API - Same interface across Anthropic, OpenAI, Gemini, Groq, Ollama, Cohere, DeepSeek
+     - Gemini Interactions API - Native Rust SDK for Google's latest API surface
      - Streaming responses - `ChatResponseStream` with typed events (content, tool calls, usage)
      - Function calling - Full tool use with `tool_choice` (auto/any/none/specific)
      - Vision support - Multi-modal messages with image URLs and base64
-     - Response caching - Provider-agnostic caching layer for development
+     - Response caching - Caching layer for development and testing
      - Retry logic - Exponential backoff with configurable max retries
-     - Model aliasing - Map logical names to provider-specific model IDs
+     - Model configuration - Gemini model variants with parameter tuning
      - Usage tracking - Token counts (input, output, cache read/write) per response
      - `LOUD_WIRE` debug mode - Raw request/response logging for debugging
      - Comprehensive examples - 30+ examples covering all features
-   - **Upcoming**: 13 open issues including enhanced error handling, additional provider integrations
+   - **Upcoming**: 13 open issues including enhanced error handling, API coverage expansion
 
 3. **gemicro** (30K Rust) - MCP server framework
    - Started: Exploration of Gemini-specific features
