@@ -86,6 +86,17 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 - **Test and example coverage** - New/changed code should have corresponding tests. User-facing features should have examples. Flag gaps in both.
 - **Example validation** - Run examples with debug logging (e.g., `LOUD_WIRE=1`) and review output for semantic issues. Check per-project CLAUDE.md for debug flags.
 
+## Reflection
+
+After completing significant work, reflect on the experience:
+
+- **Difficulty**: How hard was this? What made it harder than expected?
+- **Friction**: What slowed you down? (missing permissions, unclear code, tooling gaps)
+- **User steering**: Where did the user need to meaningfully correct or redirect you?
+- **Improvements**: What would make this easier next time? (codebase changes, new tools, workflow tweaks)
+
+Publish significant insights to the event bus (`gotcha_discovered`, `pattern_found`) so other sessions benefit. The `/work` command captures these reflections formally; apply the mindset to all substantial tasks.
+
 ## PR Workflow
 
 ### Development Flow
