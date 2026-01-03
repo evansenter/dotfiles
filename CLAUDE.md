@@ -70,7 +70,7 @@ The `sync_dotfiles` function in `bootstrap.sh`:
 **Claude Code Configuration** - `home/.claude/`
 - `CLAUDE.md` - Global workflow preferences (symlinked to `~/.claude/CLAUDE.md`)
 - `agents/` - User-defined agents for autonomous task execution
-- `commands/` - Custom slash commands (`/status-report`, `/pr-create`, `/pr-review`, `/work`, etc.)
+- `commands/` - Custom slash commands (`/work`, `/pr-create`, `/pr-review`, `/improve-workflow`, etc.)
 - `contrib/` - Helper scripts and MCP server data directories
 - `hooks/` - Session lifecycle hooks (event bus registration, event polling)
 - `settings.json` - Allowed permissions, enabled plugins
