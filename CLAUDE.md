@@ -50,7 +50,7 @@ To validate changes beyond CI:
 
 The `sync_dotfiles` function in `bootstrap.sh`:
 1. Symlinks all files in `home/` to `~` (idempotent - skips existing correct symlinks)
-2. Symlinks `.claude/hooks/` and `.claude/commands/` directories
+2. Symlinks `.claude/hooks/`, `.claude/commands/`, and `.claude/agents/` directories
 3. Installs Claude Code MCP servers (GitHub)
 4. Installs tmux plugin manager (TPM) - requires manual `prefix + I` to install plugins
 5. Symlinks btop themes from `vendor/btop-catppuccin/`
@@ -69,6 +69,7 @@ The `sync_dotfiles` function in `bootstrap.sh`:
 
 **Claude Code Configuration** - `home/.claude/`
 - `CLAUDE.md` - Global workflow preferences (symlinked to `~/.claude/CLAUDE.md`)
+- `agents/` - User-defined agents for autonomous task execution
 - `commands/` - Custom slash commands (`/status-report`, `/pr-create`, `/pr-review`, `/work`, etc.)
 - `contrib/` - Helper scripts and MCP server data directories
 - `hooks/` - Session lifecycle hooks (event bus registration, event polling)
@@ -119,6 +120,41 @@ Describe expected output format.
 - Use `$ARGUMENTS` only for freeform context (not when parsing positional args)
 - Include bash snippets for commands Claude should run
 - End with output format specification
+
+### Agent File Format
+
+User-defined agents in `home/.claude/agents/` provide autonomous task execution with custom system prompts.
+
+```markdown
+---
+name: agent-name
+description: When/how to use this agent (used for automatic delegation)
+tools: Read, Glob, Grep, Bash, WebFetch, WebSearch
+model: sonnet
+---
+
+Your agent's system prompt goes here. Define the agent's role,
+capabilities, approach, and output format.
+```
+
+**Required fields:**
+- `name` - Unique identifier (lowercase, hyphens)
+- `description` - Natural language for automatic delegation
+
+**Optional fields:**
+- `tools` - Comma-separated list (inherits all if omitted)
+- `model` - `sonnet`, `opus`, `haiku`, or `inherit`
+
+**Invocation (NOT via Task tool):**
+User-defined agents work differently from the Task tool's built-in `subagent_type` values (`general-purpose`, `Explore`, `Plan`, etc.):
+
+| Method | Example |
+|--------|---------|
+| Natural language | "Use the audit-codebase agent to review this" |
+| Automatic delegation | CC delegates based on `description` field |
+| `/agents` command | Interactive agent management |
+
+**Note:** Session restart required after creating new agent files.
 
 **iTerm2 Configuration** - `preferences/`, `vendor/iterm-catppuccin/`
 - Manual import required: Preferences → Profiles → Colors → Color Presets → Import

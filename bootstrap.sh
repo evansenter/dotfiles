@@ -16,7 +16,7 @@ symlink_dotfiles() {
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 	# Find all files in home/ directory and create symlinks
-	# Exclude .claude/hooks/, .claude/commands/, and .claude/contrib/ since we symlink those directories separately
+	# Exclude .claude/hooks/, .claude/commands/, .claude/contrib/, and .claude/agents/ since we symlink those directories separately
 	while IFS= read -r -d '' src_file; do
 		# Get relative path from home/
 		local rel_path="${src_file#$dotfiles_dir/home/}"
@@ -38,7 +38,7 @@ symlink_dotfiles() {
 		# Create symlink
 		ln -s "$src_file" "$dest_file"
 		echo "Linked: ~/$rel_path"
-	done < <(find "$dotfiles_dir/home" -type f -not -name ".DS_Store" -not -path "*/.claude/hooks/*" -not -path "*/.claude/commands/*" -not -path "*/.claude/contrib/*" -print0)
+	done < <(find "$dotfiles_dir/home" -type f -not -name ".DS_Store" -not -path "*/.claude/hooks/*" -not -path "*/.claude/commands/*" -not -path "*/.claude/contrib/*" -not -path "*/.claude/agents/*" -print0)
 }
 
 symlink_claude_dir() {
@@ -215,6 +215,7 @@ sync_dotfiles() {
 	symlink_claude_dir "hooks"
 	symlink_claude_dir "commands"
 	symlink_claude_dir "contrib"
+	symlink_claude_dir "agents"
 
 	# Install Claude Code MCP servers
 	install_claude_mcp_servers
