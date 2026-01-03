@@ -217,15 +217,15 @@ if [[ -n "$transcript_path" ]] && [[ -r "$transcript_path" ]]; then
             cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed 's/<[^>]*>//g' | sed '/^Caveat:/d' | sed '/^$/d' | tail -1)
         fi
 
-        # Truncate to ~10 words, lowercase, add ellipsis if truncated
+        # Truncate to 40 chars, lowercase, add ellipsis if truncated
         truncated=$(printf '%s\n' "$cleaned_msg" | awk '{
             gsub(/\n/, " ")
-            words = ""
-            for (i=1; i<=NF && i<=10; i++) {
-                words = words (i>1 ? " " : "") tolower($i)
+            msg = tolower($0)
+            if (length(msg) > 40) {
+                print substr(msg, 1, 40) "..."
+            } else {
+                print msg
             }
-            if (NF > 10) words = words "..."
-            print words
         }')
         user_context=" ${GRAY}(${truncated})${RESET}"
     fi
@@ -247,16 +247,21 @@ fi
 # Final hyperlink reset to ensure no unclosed hyperlinks leak
 LINK_RESET=$'\e]8;;\e\\'
 
-# Build the complete statusline
-output=$(printf "%s%s%s%s %s%s%s%s%s" \
+# Build the complete statusline (two lines)
+# Line 1: navigation context (repo, session, branch, PRs, issues)
+# Line 2: model info and user context
+# This gives CC room to append its own status on line 2
+line1=$(printf "%s%s%s%s%s" \
     "$repo_session_display" "$branch_display" \
     "$pr_display" "$issue_display" \
+    "$git_status")
+
+line2=$(printf "%s%s%s%s" \
     "$model_display" \
-    "$git_status" "$context_display" "$user_context" \
+    "$context_display" "$user_context" \
     "$LINK_RESET")
 
-# Strip any newlines that might have snuck in (causes display issues in tmux)
-output="${output//$'\n'/}"
+output=$(printf "%s\n%s" "$line1" "$line2")
 
 # Restore stdout and print atomically
 exec 1>&3 3>&-
