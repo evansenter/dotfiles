@@ -52,6 +52,7 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 **Utilities:**
 - `rm`, `tmux`, `date`, `source`, `sed`, `mkdir`
 - `ls`, `cat`, `head`, `tail`, `wc`, `chmod`
+- `timeout`, `cp`, `curl`
 - `uv`, `sqlite3`, `launchctl`, `claude`
 
 **Python:**

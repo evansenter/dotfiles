@@ -101,7 +101,10 @@
       "Bash(find:*)",
       "Bash(bash:*)",
       "Bash(which:*)",
-      "Bash(.venv/bin/python:*)"
+      "Bash(.venv/bin/python:*)",
+      "Bash(timeout:*)",
+      "Bash(cp:*)",
+      "Bash(curl:*)"
     ],
     "defaultMode": "default"
   },
