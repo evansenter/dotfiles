@@ -190,7 +190,7 @@ if [[ "$size" =~ ^[0-9]+$ ]] && [[ "$current" =~ ^[0-9]+$ ]] && [ "$size" -gt 0 
     context_display=" ${GRAY}${pct}%${RESET}"
 fi
 
-# Last user message context (truncated to ~10 words)
+# Last user message context (truncated to 40 chars)
 user_context=""
 if [[ -n "$transcript_path" ]] && [[ -r "$transcript_path" ]]; then
     # Get last user message with string content (not tool result or system message)
