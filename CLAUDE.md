@@ -50,7 +50,7 @@ To validate changes beyond CI:
 
 The `sync_dotfiles` function in `bootstrap.sh`:
 1. Symlinks all files in `home/` to `~` (idempotent - skips existing correct symlinks)
-2. Symlinks `.claude/hooks/`, `.claude/commands/`, and `.claude/agents/` directories
+2. Symlinks `.claude/hooks/`, `.claude/commands/`, `.claude/contrib/`, and `.claude/agents/` directories
 3. Installs Claude Code MCP servers (GitHub)
 4. Installs tmux plugin manager (TPM) - requires manual `prefix + I` to install plugins
 5. Symlinks btop themes from `vendor/btop-catppuccin/`
