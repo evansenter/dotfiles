@@ -156,6 +156,8 @@ ultrathink: For each feedback item:
 2. **Form opinion**: Agree, Disagree, or Uncertain
 3. **Note reasoning**: Why you think this way given context
 
+Do additional research as needed to form and support your opinion.
+
 ### 4. Display Summary
 
 Output ALL findings ordered by severity (Critical > Important > Suggestion):
@@ -191,7 +193,7 @@ Output ALL findings ordered by severity (Critical > Important > Suggestion):
 
 ### 5. Present via AskUserQuestion
 
-Present ONE question for EACH item. Use the same sequential number (`#1`, `#2`, etc.) in both the Detailed Findings header and the `header` field of the question.
+Present ONE question for EACH item. Use the same sequential number (`#1`, `#2`, etc.) in both the Detailed Findings header and the `header` field of the question. Make sure the label you mark as "Recommended" aligns with the opinion you shared in Detailed Findings.
 
 **Batching rules:**
 - AskUserQuestion supports max 4 questions per call
@@ -218,6 +220,8 @@ Present ONE question for EACH item. Use the same sequential number (`#1`, `#2`, 
 ```
 
 **Elaborate handling:** If user selects "Elaborate", explain the topic in detail, then present the SAME question again (same number, same options) for them to make a final decision.
+
+*DO NOT* stop asking questions until you have received answers for all questions, including any elaborations.
 
 ### 6. Act on User Decisions
 
@@ -282,6 +286,7 @@ mcp__event-bus__publish_event(
 3. Push changes
 4. Run `/pr-review local` to verify changes are clean
 5. Run `/watch-ci` to monitor CI for the new push
+6. Reshare the URL for the PR to the user
 
 ---
 

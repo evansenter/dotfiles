@@ -180,12 +180,8 @@ Available slash commands (in `~/.claude/commands/`):
 
 - `/work` - Workflow-aware task execution with checkpoints (`<issue-number>`, `URL`, `"description"`, `--attach`)
 - `/im-lost` - Show current workflow position and context when you've lost track
-- `/status-report` - Generate repo status summary with recently completed work, open PRs/issues, and recommendations
 - `/pr-create` - Commit changes and create/update a PR
 - `/pr-review` - Review code via local analysis or remote reviewer comments (`local`, `remote`)
-- `/audit-codebase` - Check for AI-generated anti-patterns and Evergreen violations
-- `/audit-tests` - Find redundant or stale tests
-- `/audit-issues` - Categorize open issues as current or needing updates
 - `/improve-workflow` - Suggest workflow improvements, categorized as local (this repo) or global (dotfiles)
 - `/rfc-create` - Create RFC-style issues with structured analysis
 - `/rfc-respond` - Respond to RFC-style issues with structured analysis
@@ -196,3 +192,15 @@ Available slash commands (in `~/.claude/commands/`):
 - `/learnings` - Query historical discoveries (gotchas, patterns, flaky tests) from event bus
 - `/commit-commands:commit-push-pr` - Commit, push, and create PR in one step (or use `/pr-create`)
 - `/commit-commands:clean_gone` - Delete local branches whose remote tracking branch is gone
+
+## Agents
+
+User-defined agents (in `~/.claude/agents/`) provide autonomous task execution with separate context windows:
+
+- `audit-codebase` - Check for anti-patterns, Evergreen violations, and refactoring opportunities
+- `audit-tests` - Analyze test coverage for redundancy, staleness, and gaps
+- `audit-issues` - Triage open issues for staleness, relevance, and priority alignment
+- `status-report` - Generate comprehensive repo status with recommendations
+- `summarize-work` - Summarize branch changes and highlight files for review
+
+Agents are invoked via natural language (e.g., "use the audit-codebase agent") or automatic delegation based on task context.
