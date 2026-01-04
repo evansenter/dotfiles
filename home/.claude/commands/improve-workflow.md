@@ -23,7 +23,10 @@ Use the session-analytics MCP server for quantitative insights:
 mcp__session-analytics__get_insights(days=<N>, refresh=false)
 mcp__session-analytics__get_tool_frequency(days=<N>, expand=true)
 mcp__session-analytics__get_permission_gaps(days=<N>, min_count=5)
+mcp__session-analytics__analyze_failures(days=<N>)
 ```
+
+The `analyze_failures` tool provides error patterns, rework detection (same file edited multiple times within a window), and recovery times - useful for identifying problematic workflows.
 
 If `--global` was passed, omit the `project` parameter.
 
@@ -31,6 +34,7 @@ If `--global` was passed, omit the `project` parameter.
 ```bash
 session-analytics-cli frequency --days 7
 session-analytics-cli permissions --days 7 --min-count 5
+session-analytics-cli failures --days 7
 ```
 
 **Important**: Session logs are historical. Cross-reference with current settings.json to filter stale recommendations.
@@ -61,7 +65,8 @@ Read command files to understand current patterns. Skip suggestions for workflow
 Extract from session analytics:
 - Permission gaps (commands used repeatedly without approval)
 - Tool patterns suggesting missing automation
-- Error clusters indicating problematic workflows
+- Error clusters and rework patterns (from `analyze_failures`)
+- Files edited multiple times in quick succession (may indicate unclear requirements or iterative debugging)
 
 ### From Reflection
 

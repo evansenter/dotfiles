@@ -76,6 +76,7 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 **Session Analytics MCP Server:**
 - `get_insights`, `get_tool_frequency`, `get_permission_gaps`
 - `get_session_events`, `get_session_signals`, `get_handoff_context`
+- `get_agent_activity`, `analyze_trends`, `classify_sessions`, `analyze_failures`
 
 **When to use MCP vs gh CLI:**
 - **Prefer MCP** for standard operations (faster, structured data): fetching PR/issue details, creating issues, listing items
@@ -182,6 +183,27 @@ mcp__event-bus__publish_event(event_type="help_needed", payload="<query>", chann
 
 **Details:** Read the `event-bus://guide` MCP resource.
 
+### Handling Event Bus Events
+
+Events arrive via `<recent-events>` tags from the prompt hook. Handle them as follows:
+
+**Display**: Show a brief "Recent event bus activity:" section with one-line bullet summaries. Include channel context (e.g., "[repo:X]") and approximate time. Only show events from the last ~10 minutes. Skip events already discussed.
+
+**Act on** (in priority order):
+1. DMs to your session - respond or acknowledge
+2. `help_needed` events - offer assistance if relevant
+3. CI failures in your repo - investigate if you caused them
+4. `blocker_found` / `error_broadcast` - may affect your work
+5. New issues in this repo - ask: "New issue #N created - want to pick it up with `/work N`?"
+
+**Surface to user** (valuable cross-session learnings):
+- `all` channel messages - general announcements worth noting
+- `gotcha_discovered` - non-obvious issues that may save time
+- `pattern_found` - useful patterns worth knowing
+- `test_flaky` - flaky tests (safe to retry if encountered)
+
+**Ignore**: Routine `task_completed` from other repos unless they mention dependencies you're waiting on.
+
 ## Session Analytics
 
 Workflow insights from Claude Code session logs via `mcp__session-analytics__*` tools.
@@ -190,7 +212,14 @@ Workflow insights from Claude Code session logs via `mcp__session-analytics__*` 
 - `/improve-workflow` - Data-driven workflow improvement suggestions
 - `/status-report` - Includes session analytics in status summaries
 
-**Key tools:** `get_insights`, `get_permission_gaps`, `get_handoff_context`, `analyze_failures`
+**Key tools:**
+- `get_insights` - Comprehensive analysis (frequency, sequences, gaps, trends)
+- `get_permission_gaps` - Commands that may need adding to settings.json
+- `get_handoff_context` - Recent activity summary for session continuity
+- `get_agent_activity` - Agent/subagent token usage and activity breakdown
+- `analyze_trends` - Compare current vs previous period metrics
+- `classify_sessions` - Categorize sessions (debugging, development, research, maintenance)
+- `analyze_failures` - Error patterns, rework detection, recovery times
 
 **Details:** Read the `session-analytics://guide` MCP resource.
 

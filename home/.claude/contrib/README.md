@@ -16,3 +16,30 @@ MCP servers store their data under subdirectories here:
 ## Scripts
 
 - `repo-stats.sh` - Show codebase size (LoC) and recent activity across repositories
+
+## Session Analytics CLI
+
+The `session-analytics-cli` provides command-line access to workflow insights. Key commands:
+
+| Command | Description |
+|---------|-------------|
+| `insights` | Comprehensive analysis (frequency, sequences, gaps, trends) |
+| `frequency` | Tool usage frequency with breakdowns |
+| `permissions` | Commands that may need adding to settings.json |
+| `handoff` | Recent activity summary for session continuity |
+| `agents` | Agent/subagent activity and token usage |
+| `trends` | Compare current vs previous period metrics |
+| `classify` | Classify sessions by activity type (debugging, development, research, maintenance) |
+| `failures` | Error patterns, rework detection, and recovery times |
+
+**Usage:**
+```bash
+session-analytics-cli <command> [--days N] [--project PATH]
+```
+
+**Examples:**
+```bash
+session-analytics-cli frequency --days 7
+session-analytics-cli agents --days 3
+session-analytics-cli failures --days 1
+```
