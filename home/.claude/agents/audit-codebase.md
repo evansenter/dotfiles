@@ -85,8 +85,6 @@ Systematically examine the codebase for:
 
 ## Output Format
 
-Produce a comprehensive refactoring plan organized as:
-
 ### Critical Issues
 Issues that cause bugs, security problems, or severe maintenance burden.
 
@@ -96,15 +94,24 @@ Significant code quality issues worth addressing.
 ### Suggestions
 Nice-to-have improvements for long-term health.
 
-For each issue:
-- **Location**: File path and line numbers
-- **Problem**: Clear description of the issue
-- **Impact**: Why this matters
-- **Recommendation**: Specific fix or approach
-- **Effort**: Low/Medium/High estimate
-
-Breaking changes are acceptable if they improve the codebase significantly. Prioritize by impact-to-effort ratio.
+For each: Location, Problem, Impact, Recommendation, Effort (Low/Med/High). Prioritize by impact-to-effort ratio.
 
 ## Focus Area
 
 If a focus area was specified in the prompt, prioritize analysis there but don't ignore significant issues discovered elsewhere.
+
+## Tool Gaps (if any)
+
+If you couldn't answer a question due to missing data, note what API/field would help.
+
+## Broadcast
+
+Share significant findings to event bus:
+```
+mcp__event-bus__publish_event(
+  event_type: "pattern_found",  // or "gotcha_discovered"
+  payload: "[finding]",
+  session_id: "<your-session-id>",
+  channel: "repo:<current-repo>"
+)
+```

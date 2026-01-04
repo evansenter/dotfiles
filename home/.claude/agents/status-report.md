@@ -39,11 +39,8 @@ mcp__event-bus__get_events(limit=10)
 
 ### Recently Completed
 
-**Pull Requests**
-- #N - Summary (merged X ago)
-
-**Issues**
-- #N - Summary (closed X ago)
+- **PRs**: #N - Summary (merged X ago)
+- **Issues**: #N - Summary (closed X ago)
 
 ### In Flight
 
@@ -53,11 +50,7 @@ mcp__event-bus__get_events(limit=10)
 **Open PRs**
 - #N - Summary (CI passing/failing/pending)
 
-**Open Issues by Priority**
-- priority:high (N): #42, #45
-- priority:medium (N): #51, #58
-- priority:low (N): #72
-- no priority (N): #80, #81
+**Issues by Priority**: high (N), medium (N), low (N), unlabeled (N)
 
 ### Session Analytics (7 days)
 
@@ -88,3 +81,15 @@ mcp__event-bus__get_events(limit=10)
 **Review permission gaps**
 - Evidence: `some-command` used N times without approval
 - Action: `/improve-workflow`
+
+## Broadcast
+
+If critical blockers found, broadcast to event bus:
+```
+mcp__event-bus__publish_event(
+  event_type: "help_needed",
+  payload: "[blocker description]",
+  session_id: "<your-session-id>",
+  channel: "repo:<current-repo>"
+)
+```
