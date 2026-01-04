@@ -100,7 +100,18 @@ Skip only if: already explored this session, ≤3 files, no architectural decisi
 
 ### 8. Broadcast & Begin
 
-Publish `task_started` to event bus. Mark first task `in_progress`.
+Publish `task_started` with your session_id (from startup: "Registered on event bus as: <session_id>"):
+
+```
+mcp__event-bus__publish_event(
+  event_type: "task_started",
+  payload: "Starting work on #<issue> - <title>",
+  session_id: "<your-session-id>",
+  channel: "repo:<repo_name>"
+)
+```
+
+Mark first task `in_progress`.
 
 ---
 
@@ -114,10 +125,21 @@ Publish `task_started` to event bus. Mark first task `in_progress`.
 
 **Process feedback**: Wait for CI, run `/pr-review remote`. If changes pushed, reset CI and feedback checkpoints, loop.
 
-**Confirm merge**: **Always** ask user via AskUserQuestion (Merge now / Wait). Never auto-merge. After merge, broadcast `task_completed`, suggest `/commit-commands:clean_gone`.
+**Confirm merge**: **Always** ask user via AskUserQuestion (Merge now / Wait). Never auto-merge. After merge:
+
+```
+mcp__event-bus__publish_event(
+  event_type: "task_completed",
+  payload: "Merged PR #<N> - <title>",
+  session_id: "<your-session-id>",
+  channel: "repo:<repo_name>"
+)
+```
+
+Suggest `/commit-commands:clean_gone`.
 
 **Reflect**: Answer: What was hard? What caused friction? Where did user redirect? What would help?
-- Publish insights to event bus (`gotcha_discovered`, `pattern_found`)
+- Publish insights to event bus with session_id (e.g., `gotcha_discovered`, `pattern_found`)
 - Run `/improve-workflow`
 
 ---
