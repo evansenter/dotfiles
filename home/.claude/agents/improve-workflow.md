@@ -128,7 +128,7 @@ gh issue create --title "DX: [finding]" --body "[details]" --label "improvement"
 
 ## After All Fixes Processed
 
-Broadcast discoveries to event bus (include your session_id from startup for attribution):
+Broadcast discoveries to event bus. Include your session_id (from startup: "Registered on event bus as: <session_id>") for attribution:
 ```
 mcp__event-bus__publish_event(
   event_type: "improvement_suggested",

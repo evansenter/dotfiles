@@ -95,7 +95,7 @@ Skip only if: already explored this session, ≤3 files, no architectural decisi
 [work:${ID}] Monitor CI with /watch-ci
 [work:${ID}] Process feedback with /pr-review remote
 [work:${ID}] Confirm merge with user
-[work:${ID}] Reflect with /improve-workflow
+[work:${ID}] Reflect with improve-workflow agent
 ```
 
 ### 8. Broadcast & Begin
@@ -140,7 +140,7 @@ Suggest `/commit-commands:clean_gone`.
 
 **Reflect**: Answer: What was hard? What caused friction? Where did user redirect? What would help?
 - Publish insights to event bus with session_id (e.g., `gotcha_discovered`, `pattern_found`)
-- Run `/improve-workflow`
+- Spawn improve-workflow agent: `Task(subagent_type="improve-workflow", prompt="Analyze this session for workflow improvements")`
 
 ---
 
