@@ -48,4 +48,5 @@ if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]
     echo "</recent-events>"
 fi
 
-exit 0
+# Always output session_id so it survives context summarization
+echo "Your event bus session_id: $SESSION_ID"

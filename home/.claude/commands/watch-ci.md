@@ -37,11 +37,13 @@ If PR_NUMBER is omitted, uses the current branch's PR.
 5. Continue with other work - do not block waiting for CI.
 
 6. When CI completes (you receive the background task notification):
-   - Broadcast the result to the event bus so parallel sessions are notified:
+   - Broadcast the result to the event bus so parallel sessions are notified.
+   - Include your session_id (from startup: "Registered on event bus as: <session_id>") for attribution:
      ```
      mcp__event-bus__publish_event(
        event_type: "ci_completed",
-       payload: "CI <passed/failed> on PR #<PR_NUMBER>",
+       payload: "CI <passed/failed> on PR #<PR_NUMBER> - <PR_TITLE>",
+       session_id: "<your-session-id>",
        channel: "repo:<repo_name>"
      )
      ```

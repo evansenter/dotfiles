@@ -36,10 +36,13 @@ If no message provided, ask the user what to send.
 
 ### 3. Send Message
 
+Include your session_id (from startup: "Registered on event bus as: <session_id>") for attribution:
+
 ```
 mcp__event-bus__publish_event(
   event_type: "message",
   payload: "<MESSAGE>",
+  session_id: "<your-session-id>",
   channel: "<determined-channel>"
 )
 ```
