@@ -85,17 +85,30 @@ Files with High risk or High complexity should always be flagged regardless of s
 **Files Changed:** N files (+X/-Y lines)
 **Primary Focus:** [Feature/Bugfix/Refactor/etc.]
 
-### Key Changes
+### What Was Implemented
 
 #### [Category 1: e.g., "Core Feature Implementation"]
-- `path/to/file.ts` - [One-line description of changes]
-- `path/to/other.ts` - [One-line description]
+
+**`path/to/file.ts`**
+> [Brief context about this file's role]
+- [Specific change 1]
+- [Specific change 2]
+
+**`path/to/other.ts`**
+> [Brief context]
+- [Specific change]
 
 #### [Category 2: e.g., "Supporting Changes"]
-- `path/to/helper.ts` - [One-line description]
+
+**`path/to/helper.ts`**
+> [Brief context]
+- [Specific change]
 
 #### [Category 3: e.g., "Tests & Documentation"]
-- `tests/file.test.ts` - [One-line description]
+
+**`tests/file.test.ts`**
+> [Brief context]
+- [Specific change]
 
 ### Files for Focused Review
 
@@ -123,19 +136,13 @@ Issues or areas that may need discussion:
 1. **[Concern title]** - [Brief description and location]
 2. **[Concern title]** - [Brief description and location]
 
-### Not Requiring Deep Review
-
-These files are low-risk and can be reviewed quickly:
-- `README.md` - Documentation updates only
-- `tests/*.test.ts` - New test coverage (review for completeness, not logic)
-- `*.config.js` - Configuration changes
-
 ### Test Coverage
 
 | Category | Status |
 |----------|--------|
 | Unit Tests | Added/Updated/Missing |
 | Integration Tests | Added/Updated/Missing |
+| Examples | Added/Updated/Missing/N/A |
 | Manual Testing | [Notes on what was manually verified] |
 ```
 
