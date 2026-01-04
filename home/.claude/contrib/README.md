@@ -23,8 +23,10 @@ The `session-analytics-cli` provides command-line access to workflow insights. K
 
 | Command | Description |
 |---------|-------------|
+| `insights` | Comprehensive analysis (frequency, sequences, gaps, trends) |
 | `frequency` | Tool usage frequency with breakdowns |
 | `permissions` | Commands that may need adding to settings.json |
+| `handoff` | Recent activity summary for session continuity |
 | `agents` | Agent/subagent activity and token usage |
 | `trends` | Compare current vs previous period metrics |
 | `classify` | Classify sessions by activity type (debugging, development, research, maintenance) |

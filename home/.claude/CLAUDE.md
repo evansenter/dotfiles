@@ -76,6 +76,7 @@ Configured in `~/.claude/settings.json` for autonomous operation:
 **Session Analytics MCP Server:**
 - `get_insights`, `get_tool_frequency`, `get_permission_gaps`
 - `get_session_events`, `get_session_signals`, `get_handoff_context`
+- `get_agent_activity`, `analyze_trends`, `classify_sessions`, `analyze_failures`
 
 **When to use MCP vs gh CLI:**
 - **Prefer MCP** for standard operations (faster, structured data): fetching PR/issue details, creating issues, listing items
