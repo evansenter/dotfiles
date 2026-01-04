@@ -23,4 +23,4 @@
 - `pattern_found` - useful patterns worth knowing
 - `test_flaky` - flaky tests (safe to retry if encountered)
 
-**Ignore**: Routine `task_started`/`task_completed` from other repos unless they mention dependencies you're waiting on.
+**Ignore**: Routine `task_completed` from other repos unless they mention dependencies you're waiting on.
