@@ -125,7 +125,10 @@ Mark first task `in_progress`.
 
 **Process feedback**: Wait for CI, run `/pr-review remote`. If changes pushed, reset CI and feedback checkpoints, loop.
 
-**Confirm merge**: **Always** ask user via AskUserQuestion (Merge now / Wait). Never auto-merge. After merge:
+**Confirm merge**: Spawn summarize-work agent to show what's being merged:
+- `Task(subagent_type="summarize-work", prompt="Summarize work on this PR for merge review")`
+
+**Always** ask user via AskUserQuestion (Merge now / Wait). Never auto-merge. After merge:
 
 ```
 mcp__event-bus__publish_event(
