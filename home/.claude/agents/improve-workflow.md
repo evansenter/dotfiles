@@ -71,12 +71,7 @@ For each finding, ask yourself:
 - **What** would fix it? (Concrete: alias, script, config change, doc update)
 - **How** confident am I? (Can I verify with more data?)
 
-Use additional MCP calls to verify:
-```
-mcp__session-analytics__get_command_frequency(days=7, prefix="git")
-mcp__session-analytics__get_file_activity(days=7, limit=10)
-mcp__session-analytics__search_messages(query="error OR failed OR broken")
-```
+Use additional MCP calls as needed to verify.
 
 ## Phase 4: Output Format
 
@@ -97,13 +92,6 @@ mcp__session-analytics__search_messages(query="error OR failed OR broken")
 - Effort: [trivial | small | medium]
 - Files: [specific files to create/modify]
 
-```bash
-# Example implementation
-```
-
-#### 2. [Next Finding]
-...
-
 ### Summary
 
 | # | Finding | Fix Type | Effort | Implement? |
@@ -111,29 +99,39 @@ mcp__session-analytics__search_messages(query="error OR failed OR broken")
 | 1 | ... | alias | trivial | ▢ |
 | 2 | ... | config | small | ▢ |
 
+### Tool Gaps (if any)
+
+During investigation, note questions you couldn't answer because the MCP lacked data:
+- What did you want to know?
+- What API or field would help?
+
+Example: "Wanted hourly error distribution but only daily aggregates available"
+
 ## Phase 5: Implement with Approval
 
-For each proposed fix, use AskUserQuestion:
-- Question: "Implement fix #N: [description]?"
-- Options: "Implement (Recommended)" / "Skip" / "Defer to issue"
+For each fix, use AskUserQuestion with options: "Implement" / "Skip" / "Defer to issue"
 
-**Implement**: Make the change immediately (create alias, update config, etc.)
-
-**Skip**: Move to next finding
-
-**Defer**: Create GitHub issue with `improvement` label:
-```bash
-gh issue create --title "DX: [finding]" --body "[details]" --label "improvement"
-```
+- **Implement**: Make the change now
+- **Defer**: `gh issue create --title "DX: [finding]" --label "improvement"`
 
 ## After All Fixes Processed
 
-Broadcast discoveries to event bus. Include your session_id (from startup: "Registered on event bus as: <session_id>") for attribution:
+Broadcast discoveries to event bus (session_id from startup: "Registered on event bus as: ..."):
 ```
 mcp__event-bus__publish_event(
   event_type: "improvement_suggested",
-  payload: "[summary of findings and actions taken]",
+  payload: "[summary of findings]",
   session_id: "<your-session-id>",
   channel: "repo:<current-repo>"
+)
+```
+
+If tool gaps found, also broadcast to the MCP repo:
+```
+mcp__event-bus__publish_event(
+  event_type: "improvement_suggested",
+  payload: "session-analytics gap: [description]",
+  session_id: "<your-session-id>",
+  channel: "repo:claude-session-analytics"
 )
 ```

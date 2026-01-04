@@ -64,14 +64,6 @@ Examine the test suite for:
 - Missing context in assertion messages
 - Hard to reproduce failures locally
 
-## Process
-
-1. Discover test files via Glob
-2. Analyze structure and patterns
-3. Cross-reference with source code
-4. Check for coverage reports
-5. Review recent changes without test updates
-
 ## Output Format
 
 ### Summary
@@ -83,33 +75,25 @@ Examine the test suite for:
 | Issues found | N |
 | Quick wins | N |
 
-### Critical
+### Critical / Important / Suggestions
 
-Issues causing false confidence or broken tests.
+For each: **[Category]** - Location, Problem, Recommendation, Effort
 
-**[Category: e.g., Staleness]**
-- **Location**: `path/to/test.py::test_name`
-- **Problem**: Test always passes regardless of implementation
-- **Impact**: False confidence in auth module
-- **Recommendation**: Delete or rewrite with actual assertions
-- **Effort**: Low
+Example:
+**[Staleness]** - `tests/auth.py::test_old` - Always passes, no assertions - Delete or rewrite - Low
 
-### Important
+## Tool Gaps (if any)
 
-Significant issues worth addressing.
+If you couldn't answer a question due to missing data, note what API/field would help.
 
-**[Category: e.g., Coverage Gaps]**
-- **Location**: `src/auth/handler.py`
-- **Problem**: No tests for token refresh error paths
-- **Recommendation**: Add tests for expiry, invalid token, network failure
-- **Effort**: Medium
+## Broadcast
 
-### Suggestions
-
-Nice-to-have improvements.
-
-**[Category: e.g., Redundancy]**
-- **Location**: `tests/test_api.py`
-- **Problem**: 5 tests verify same validation logic
-- **Recommendation**: Consolidate into parameterized test
-- **Effort**: Low
+Share flaky tests or significant patterns:
+```
+mcp__event-bus__publish_event(
+  event_type: "test_flaky",  // or "pattern_found"
+  payload: "[finding]",
+  session_id: "<your-session-id>",
+  channel: "repo:<current-repo>"
+)
+```

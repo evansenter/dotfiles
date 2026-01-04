@@ -54,10 +54,7 @@ Examine each issue for:
 
 ## Process
 
-1. **Fetch issues**: `mcp__github__list_issues(state="open")`
-2. **Deep analysis**: For each issue, read full body and comments via `mcp__github__get_issue`
-3. **Verify against codebase**: Check if referenced files exist, bugs are reproducible, features implemented
-4. **Assess priority**: Every issue should have `priority:high`, `priority:medium`, or `priority:low`
+Fetch all open issues via MCP, read full body + comments, verify against codebase, ensure every issue has a priority label.
 
 ## Output Format
 
@@ -70,47 +67,30 @@ Examine each issue for:
 | Stale | N |
 | Quick wins | N |
 
-### Critical
+### Critical / Important / Suggestions
 
-Issues needing immediate action.
+For each: **[Category]** - Issue, Evidence/Problem, Action
 
-**[Category: Stale]**
-- **Issue**: #42 - Fix auth bug
-- **Evidence**: Fixed in PR #38, verified `src/auth.ts:45`
-- **Action**: Close with comment
-
-**[Category: Misaligned Priority]**
-- **Issue**: #43 - Data loss on crash
-- **Current**: priority:low
-- **Recommended**: priority:high
-- **Rationale**: Critical bug affecting data integrity
-
-### Important
-
-Issues needing attention.
-
-**[Category: Missing Priority]**
-- **Issue**: #58 - Add webhook support
-- **Recommended**: priority:medium
-- **Rationale**: Useful feature, not blocking
-
-**[Category: Needs Update]**
-- **Issue**: #61 - Refactor config loading
-- **Problem**: References old file paths
-- **Action**: Update issue body with current paths
-
-### Suggestions
-
-Low-priority cleanup.
-
-**[Category: Quick Wins]**
-- **Issue**: #72 - Add --verbose flag
-- **Effort**: Low
-- **Action**: Good first issue, consider labeling
+Examples:
+- **[Stale]** - #42 - Fixed in PR #38 - Close with comment
+- **[Missing Priority]** - #58 - No label - Add priority:medium
 
 ## Final Steps
 
-Present triage for user review. After approval:
-1. Add missing priority labels
-2. Close stale issues with explanation
-3. Update issue bodies if details are stale
+Present triage for user review. After approval: add labels, close stale issues, update bodies.
+
+## Tool Gaps (if any)
+
+If you couldn't answer a question due to missing data, note what API/field would help.
+
+## Broadcast
+
+Share significant findings:
+```
+mcp__event-bus__publish_event(
+  event_type: "improvement_suggested",
+  payload: "[triage summary]",
+  session_id: "<your-session-id>",
+  channel: "repo:<current-repo>"
+)
+```
