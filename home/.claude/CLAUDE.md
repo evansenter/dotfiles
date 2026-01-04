@@ -175,6 +175,11 @@ Cross-session coordination via `mcp__event-bus__*` tools. Sessions auto-register
 
 **Cross-repo coordination:** When creating issues in other repos (e.g., via `/improve-workflow`), broadcast to `repo:<target_repo>` so sessions there can pick up the work.
 
+**Asking other sessions:** When the user says "ask `<repo>` XYZ" or "tell `<repo>` XYZ", send a message via event bus:
+```
+mcp__event-bus__publish_event(event_type="help_needed", payload="<query>", channel="repo:<repo>")
+```
+
 **Details:** Read the `event-bus://guide` MCP resource.
 
 ## Session Analytics
