@@ -34,6 +34,7 @@ If `--global` was passed, omit the `project` parameter.
 ```bash
 session-analytics-cli frequency --days 7
 session-analytics-cli permissions --days 7 --min-count 5
+session-analytics-cli failures --days 7
 ```
 
 **Important**: Session logs are historical. Cross-reference with current settings.json to filter stale recommendations.
