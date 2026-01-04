@@ -79,6 +79,21 @@ ultrathink: Create an RFC-style issue body:
 |---|-------------|-------|------------|
 | 1 | ... | Claude/Human | None |
 
+## Test Requirements
+
+[What test coverage is expected? Leave blank if not applicable]
+
+- Unit tests: [specific functions/modules to test]
+- Integration tests: [end-to-end scenarios]
+- Edge cases: [specific edge cases to cover]
+
+## Example Requirements
+
+[What examples should demonstrate this feature? Leave blank if not applicable]
+
+- [Example 1: description]
+- [Example 2: description]
+
 ## Implementation Checklist
 
 - [ ] [First step]

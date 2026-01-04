@@ -110,16 +110,32 @@ For each suggestion, include the specific friction that motivates the change.
 ### Local Improvements
 
 Specific to the current repository:
-- Repository-specific CLAUDE.md additions
-- Project-specific hooks or automation
+
+**[Improvement title]**
+> Friction: [What problem was encountered]
+- [Specific change 1]
+- [Specific change 2]
+**File**: `CLAUDE.md` or project config
 
 ### Global Improvements
 
 Apply to all Claude Code sessions:
-- Commands for `~/.claude/commands/`
-- Permissions for `~/.claude/settings.json`
-- Hook improvements for `~/.claude/hooks/`
-- CLAUDE.md workflow updates
+
+**`Bash(command:*)`** (permission)
+> Friction: Used N times without approval during [task]
+- Add to `~/.claude/settings.json`
+**Evidence**: [Session analytics or direct observation]
+
+**`/new-command`** (command)
+> Friction: [Repeated manual steps that could be automated]
+- Create `~/.claude/commands/new-command.md`
+- [Key functionality to include]
+**Evidence**: [Pattern observed]
+
+**[Hook improvement]** (hook)
+> Friction: [What's missing from current hooks]
+- Update `~/.claude/hooks/[hook].sh`
+**Evidence**: [When this would have helped]
 
 ### Infrastructure Improvements
 
