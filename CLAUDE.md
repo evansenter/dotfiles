@@ -178,14 +178,14 @@ The event bus enables cross-session coordination via the `mcp__event-bus__*` too
 
 ### Channels
 
-Sessions auto-subscribe to 4 channels based on their attributes:
+With the broadcast model, all sessions receive all events. Channels serve as metadata for context and prioritization:
 
-| Channel | Receives | Use Case |
-|---------|----------|----------|
-| `all` | Everyone everywhere | Rare - major announcements only |
-| `repo:<name>` | Same repository | **Most common** - coordinate parallel work on same codebase |
-| `machine:<host>` | Same machine | Cross-repo local coordination (e.g., "running heavy build") |
-| `session:<id>` | One session | Direct messages, help requests |
+| Channel | Context | Priority |
+|---------|---------|----------|
+| `session:<id>` | Direct message to specific session | High (if your session) |
+| `repo:<name>` | Activity in that repository | Medium (if your repo) |
+| `machine:<host>` | Machine-specific activity | Low |
+| `all` | General announcements | Low |
 
 ### Event Type Conventions
 
@@ -221,8 +221,7 @@ Publish discoveries that would save other sessions time:
 | Issue | Cause | Solution |
 |-------|-------|----------|
 | MCP tools unavailable | Server not running | `launchctl list | grep event-bus` |
-| Events not received | Wrong channel | Check `list_sessions()` |
-| Stale sessions | Didn't unregister | Local: cleaned on heartbeat timeout; Remote: 7 day expiry |
+| Stale sessions | Didn't unregister | Cleaned on heartbeat timeout (5 min) |
 
 **Additional documentation:** Read `event-bus://guide` MCP resource.
 
