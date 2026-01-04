@@ -7,7 +7,7 @@
 **Interpret channels**: With the broadcast model, you see ALL events across all repos/sessions. The channel indicates context:
 - `session:<id>` - Direct message (high priority if to your session)
 - `repo:<name>` - Activity in that repository
-- `machine:<name>` - Machine-specific activity
+- `machine:<host>` - Machine-specific activity
 - `all` - General announcements
 
 **Act on** (in priority order):
