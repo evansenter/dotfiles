@@ -4,8 +4,8 @@
 # Input (via stdin): JSON with session_id, transcript_path, cwd
 # Output: Event updates for Claude to see (if any new events)
 #
-# Uses server-side cursor tracking via session_id. The event bus server
-# automatically saves cursor position per session, enabling seamless resume.
+# Uses --resume for incremental polling: only shows events since last prompt.
+# The server tracks cursor position per session, so each prompt only sees NEW events.
 
 set -euo pipefail
 
@@ -18,7 +18,7 @@ if ! command -v event-bus-cli &>/dev/null; then
     exit 0
 fi
 
-# Parse session-id - required for server-side cursor tracking
+# Parse session-id - required for cursor tracking
 SESSION_ID=""
 if command -v jq &>/dev/null; then
     SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // ""')
@@ -29,12 +29,13 @@ if [[ -z "$SESSION_ID" ]]; then
     exit 0
 fi
 
-# Fetch events using server-side cursor tracking
-# --session-id enables auto-tracking: server saves cursor per session
-# --order desc for most recent first (natural reading order)
+# Fetch only NEW events since last prompt using --resume
+# --resume: incremental polling - server tracks cursor, only returns new events
+# --order asc: chronological order (oldest first, new events at end)
 EVENTS=$(event-bus-cli events \
+    --resume \
     --session-id "$SESSION_ID" \
-    --order desc \
+    --order asc \
     --exclude-types session_registered,session_unregistered,ci_watching,task_started,ci_rerun,parallel_work_started \
     --timeout 200 \
     --limit 20 \
