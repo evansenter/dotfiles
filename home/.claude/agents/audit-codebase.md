@@ -39,6 +39,36 @@ Systematically examine the codebase for:
 - Commented-out code blocks
 - TODO/FIXME/HACK comments that should be addressed or tracked
 
+### Configuration & Constants
+- Hardcoded values that should be configurable
+- Magic numbers without named constants
+- Environment-specific logic scattered throughout code
+- Missing or inconsistent configuration validation
+
+### Type Safety & Contracts
+- Missing or weak types (any, unknown, untyped)
+- Unsafe casts or type assertions
+- Implicit contracts that should be explicit
+- Inconsistent nullability handling
+
+### Dependencies & Boundaries
+- Outdated or unnecessary dependencies
+- Missing version pinning where stability matters
+- Improper module boundaries (circular imports, leaky internals)
+- Related code scattered across unrelated modules
+
+### Error Handling
+- Silent failures (empty catch blocks, ignored errors)
+- Inconsistent error propagation patterns
+- Missing error context (stack traces, relevant state)
+- Catch-all blocks that swallow specific errors
+
+### Runtime Concerns
+- Missing timeouts on I/O operations
+- No retry/fallback for unreliable operations
+- Performance antipatterns (N+1 queries, blocking I/O, missing caching)
+- Insufficient logging for debugging production issues
+
 ### Documentation
 - CLAUDE.md out of sync with actual codebase structure
 - README.md missing or outdated

@@ -5,116 +5,58 @@ description: Review code via local analysis or remote reviewer comments
 
 # PR Review
 
-Analyze and process feedback from local code analysis or remote GitHub reviewers.
+Analyze feedback from local analysis or remote GitHub reviewers.
 
 ## Usage
 
 ```
-/pr-review <local | remote>
-```
-
-- `local`: Run local code analysis via pr-review-toolkit (pre-push self-review)
-- `remote`: Fetch and process reviewer comments from GitHub (post-CI)
-
-## Instructions
-
-Parse the mode from the first argument:
-
-```bash
-MODE="$1"
-```
-
-If `MODE` is empty or not one of `local`, `remote`:
-
-```bash
-echo "Usage: /pr-review <local | remote>"
-echo "  local  - Run local code analysis (self-review before pushing)"
-echo "  remote - Fetch and process reviewer comments (after CI passes)"
-exit 1
+/pr-review local   # Self-review before pushing
+/pr-review remote  # Process reviewer comments after CI
 ```
 
 ---
 
-## Phase 1: Gather Feedback
+## Mode: `local`
 
-### Mode: `local`
-
-#### 1a. Summarize Changes
+### 1. Summarize Changes
 
 ```bash
 git diff --stat HEAD~1 2>/dev/null || git diff --stat main...HEAD
 ```
 
-**Handle edge cases:**
-- **No commits yet**: Use `git diff --stat` (unstaged) or `git diff --cached --stat` (staged)
-- **No changes at all**: Inform user: "No changes to analyze. Make changes first."
+Output 2-3 sentence summary.
 
-Output a 2-3 sentence summary of what was changed and why.
-
-#### 2a. Run Analysis
+### 2. Run Analysis
 
 ```
 Skill(pr-review-toolkit:review-pr)
 ```
 
-#### 3a. Check Test and Example Coverage Gaps
+### 3. Check Coverage Gaps
 
-Analyze the diff for coverage gaps:
+- **Tests**: New public APIs without tests? Missing edge cases?
+- **Examples**: New user-facing features without examples?
 
-**Test coverage:**
-1. Find new/modified source files
-2. Check for corresponding test files/functions
-3. Flag: new public APIs without tests (Important), missing edge cases (Suggestion)
+### 4. Run Examples (if applicable)
 
-**Example coverage:**
-1. Identify user-facing features (new commands, flags, public APIs)
-2. Check if examples exist demonstrating usage
-3. Flag: new user-facing feature without example (Important)
+For significant changes, run examples with debug logging (check CLAUDE.md for flags like `LOUD_WIRE=1`). Flag issues found.
 
-Include coverage feedback in the overall findings.
+### 5. If Clean
 
-#### 4a. Run Examples with Debug Output (if applicable)
-
-For significant changes that affect core functionality:
-
-1. **Check for examples**: Look for `examples/` directory or example files
-2. **If no examples but user-facing changes**: Flag as Important gap (covered in 3a)
-3. **Check CLAUDE.md for debug flags**: Look for project-specific debug env vars (e.g., `LOUD_WIRE=1`, `DEBUG=1`, `RUST_LOG=debug`)
-4. **Run examples with debug logging**:
-   ```bash
-   LOUD_WIRE=1 cargo run --example <example_name> 2>&1 | tee /tmp/<project>-debug-$(date +%s).log
-   ```
-5. **Review output**: Scan for errors, warnings, unexpected behavior
-6. **Share log location**: `/tmp/<project>-debug-*.log`
-
-**Skip debug run if:** Documentation-only changes or no debug flags defined.
-
-**If issues found:** Add to findings as Important issues.
-
-#### 5a. Summarize Results
-
-**If no issues found across all checks:**
-- Inform user: "No issues found. Code looks clean."
-- Suggest: "Ready to create PR? Run `/pr-create`"
-- Exit early
+"No issues found. Ready to create PR? Run `/pr-create`"
 
 ---
 
-### Mode: `remote`
+## Mode: `remote`
 
-#### 1b. Get PR Info
+### 1. Get PR Info
 
 ```bash
 PR_NUM=$(gh pr view --json number -q .number)
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 ```
 
-**Handle failures:**
-- **Not a git repo**: "Not in a git repository. Navigate to a project directory first."
-- **No remote**: "No GitHub remote found. Push your branch first."
-- **No PR exists**: "No PR found for this branch. Run `/pr-create` first."
-
-#### 2b. Fetch Review Comments
+### 2. Fetch Comments
 
 ```bash
 gh api "repos/${REPO}/pulls/${PR_NUM}/comments"
@@ -122,174 +64,81 @@ gh api "repos/${REPO}/pulls/${PR_NUM}/reviews"
 gh api "repos/${REPO}/issues/${PR_NUM}/comments"
 ```
 
-**If no feedback found:**
-- Inform user: "No reviewer feedback found. PR is ready for merge or awaiting review."
-- Exit early
+### 3. Filter Resolved Items
 
-#### 3b. Filter Already-Resolved Items
-
-Check for "Feedback Addressed" comments that indicate previously resolved items:
-
-```bash
-gh api "repos/${REPO}/issues/${PR_NUM}/comments" --jq '.[] | select(.body | contains("Feedback Addressed")) | .body'
-```
-
-Parse these comments to identify items in each section:
-- **Implemented** (under `### Implemented`) - Already fixed, do NOT re-present
-- **Skipped** (under `### Skipped`) - Intentionally not fixed, do NOT re-present
-- **Deferred** (under `### Deferred`) - Tracked in issue, do NOT re-present
-
-Items are bullet points starting with `- [` under each header. Extract the description and match against new feedback by file path and issue text.
-
-Only present NEW feedback not covered by previous "Feedback Addressed" comments. This prevents re-raising issues that have already been handled.
+Check for previous "Feedback Addressed" comments. Don't re-present items already marked Implemented/Skipped/Deferred.
 
 ---
 
-## Phase 2: Categorize and Present (Shared)
+## Shared: Categorize and Present
 
-This phase is identical for both modes.
+### 4. Form Opinions
 
-### 3. Categorize and Form Opinions
+ultrathink: For each item:
+- Classify: Critical / Important / Suggestion
+- Form opinion: Agree / Disagree / Uncertain
+- Note reasoning
 
-ultrathink: For each feedback item:
-1. **Classify severity**: Critical / Important / Suggestion
-2. **Form opinion**: Agree, Disagree, or Uncertain
-3. **Note reasoning**: Why you think this way given context
-
-Do additional research as needed to form and support your opinion.
-
-### 4. Display Summary
-
-Output ALL findings ordered by severity (Critical > Important > Suggestion):
+### 5. Display Summary
 
 ```markdown
 ## [Local Analysis / PR Feedback] Summary
 
 ### What This PR Does
-[2-3 sentences summarizing changes and purpose]
+[2-3 sentences]
 
 ### Feedback Themes
-- [Theme 1: e.g., "Error handling gaps"]
-- [Theme 2: e.g., "Missing input validation"]
+- [Theme 1]
+- [Theme 2]
 
 ### Areas Requiring Human Attention
-- [Scope creep concerns]
-- [Deviations from codebase patterns]
-- [Architectural decisions needing validation]
-- [Security-sensitive changes]
-
----
+- [Scope creep, architectural decisions, security]
 
 ### Detailed Findings
 
 #### #1. [Critical] `file.rs:42`
-> Feedback text here
+> Feedback text
 **Opinion**: Agree - reasoning
-
-#### #2. [Important] `api.rs:89`
-> Feedback text here
-**Opinion**: Disagree - reasoning
 ```
 
-### 5. Present via AskUserQuestion
+### 6. Present via AskUserQuestion
 
-Present ONE question for EACH item. Use the same sequential number (`#1`, `#2`, etc.) in both the Detailed Findings header and the `header` field of the question. Make sure the label you mark as "Recommended" aligns with the opinion you shared in Detailed Findings.
+One question per item. Batch max 4 at a time.
 
-**Batching rules:**
-- AskUserQuestion supports max 4 questions per call
-- If ≤4 items: Present all in one call
-- If >4 items: Present first 4, wait for answers, then present next batch (continuing numbering: `#5`, `#6`, etc.)
-- Repeat until all items are processed
+Options: Implement (Recommended if agree) / Skip / Defer / Elaborate
 
-```json
-{
-  "questions": [
-    {
-      "question": "[Critical] file.rs:42 - Issue description - Agree, reasoning",
-      "header": "#1",
-      "options": [
-        {"label": "Implement (Recommended)", "description": "Fix it now"},
-        {"label": "Skip", "description": "Not worth fixing"},
-        {"label": "Defer", "description": "Create issue for later"},
-        {"label": "Elaborate", "description": "Explain this topic, then re-ask"}
-      ],
-      "multiSelect": false
-    }
-  ]
-}
-```
+### 7. Act on Decisions
 
-**Elaborate handling:** If user selects "Elaborate", explain the topic in detail, then present the SAME question again (same number, same options) for them to make a final decision.
-
-*DO NOT* stop asking questions until you have received answers for all questions, including any elaborations.
-
-### 6. Act on User Decisions
-
-- **Implement**: Fix the item immediately
-- **Skip**: Note it was skipped, move on
-- **Defer**: Create a GitHub issue with appropriate labels:
-  - `priority:high` - Blocks other work, critical bug
-  - `priority:medium` - Important but not urgent
-  - `priority:low` - Nice to have, backlog
-  - **Note**: Run `gh label list` first. Prefer existing labels.
-- **Elaborate**: Explain the topic, then re-ask
+- **Implement**: Fix immediately
+- **Skip**: Note and move on
+- **Defer**: Create GitHub issue with priority label
+- **Elaborate**: Explain, then re-ask same question
 
 ---
 
-## Phase 3: Post-Processing
+## Post-Processing
 
-### 7. Post Feedback Resolution Comment
+### 8. Post Resolution Comment
 
-If a PR exists, post a structured comment summarizing how feedback was addressed:
-
-```bash
-PR_NUM=$(gh pr view --json number -q .number 2>/dev/null)
-if [ -n "$PR_NUM" ]; then
-  gh pr comment "$PR_NUM" --body "$(cat <<'EOF'
+```markdown
 ## Feedback Addressed
 
 ### Implemented
-- [Critical/Important] item - how it was fixed
+- [Critical] item - how fixed
 
 ### Skipped
-- [Suggestion] item - reason for skipping
+- [Suggestion] item - reason
 
 ### Deferred
-- [Suggestion] item - tracked in #issue_number
-EOF
-)"
-fi
+- [Suggestion] item - tracked in #N
 ```
 
-Only include sections that have items.
+### 9. Broadcast (remote only)
 
-### 8. Broadcast (remote mode only)
+Publish `feedback_addressed` to event bus.
 
-For `remote` mode, broadcast that feedback was addressed:
+### 10. Final Steps
 
-```
-mcp__event-bus__publish_event(
-  event_type: "feedback_addressed",
-  payload: "Addressed reviewer feedback on PR #<pr_number>: <N> implemented, <M> skipped, <K> deferred",
-  channel: "repo:<repo_name>"
-)
-```
+**Local**: If fixes made, run `/pr-review local` again.
 
-### 9. Final Steps
-
-**For `local` mode:**
-- If fixes were made, run `/pr-review local` again to verify clean
-
-**For `remote` mode:**
-1. Run quality gates (linter, formatter, tests)
-2. Commit with message referencing feedback addressed
-3. Push changes
-4. Run `/pr-review local` to verify changes are clean
-5. Run `/watch-ci` to monitor CI for the new push
-6. Reshare the URL for the PR to the user
-
----
-
-## Key Principle
-
-You have context on the work's purpose that automated reviewers lack. Include your opinion in each question, but let the user make the final call.
+**Remote**: Run quality gates, commit, push, `/pr-review local`, `/watch-ci`.

@@ -26,7 +26,7 @@ Over 14 days in December 2025, I transformed a dormant dotfiles repository (last
 
 1. **dotfiles** (6K Shell) - Meta-orchestration hub
    - Started: Traditional zsh/tmux configs from 2011
-   - Now: 18 custom commands, 3 lifecycle hooks, statusline integration, user-defined agents
+   - Now: 12 custom commands, 6 agents, 3 lifecycle hooks, statusline integration
 
    **Why it matters**: This is the control plane for AI-augmented development. Instead of typing ad-hoc instructions to Claude Code, you define reusable workflows that encode your preferences, quality gates, and coordination patterns. The investment compounds—every workflow improvement benefits all future sessions across all repositories.
 
@@ -41,7 +41,7 @@ Over 14 days in December 2025, I transformed a dormant dotfiles repository (last
      - Statusline - Ambient awareness (repo/branch, session name, context %, model)
      - Bootstrap system - Idempotent symlinks, MCP server installation, LaunchAgents
      - Dark mode theme switching for btop via `dark-notify`
-   - **Upcoming**: Worktree-aware merge (#139), required-only CI flag (#137), trajectory integration for multi-session debugging (#57)
+   - **Upcoming**: Trajectory integration for multi-session debugging (#57)
 
 2. **rust-genai** (33K Rust) - Gemini Interactions API SDK
    - Started: From scratch, exploring Gemini API in Rust
@@ -174,7 +174,7 @@ Stop typing instructions. Define reusable commands.
 
 **Good**: `/work 42`
 
-My `/work` command (329 lines) handles:
+My `/work` command handles:
 - Reading the issue and understanding requirements
 - Creating appropriately-named branches
 - Planning with explicit checkpoints
@@ -297,15 +297,19 @@ For autonomous background tasks, define agents:
 ---
 name: audit-codebase
 description: Audits for anti-patterns and Evergreen violations
-tools: Read, Glob, Grep, Bash, WebFetch, WebSearch
 model: opus
 ---
 
-You are a code auditor. Scan the codebase for:
-1. AI-generated anti-patterns (excessive error handling, over-documentation)
-2. Evergreen violations (hardcoded dates, stale TODOs)
-...
+You are a code auditor. Scan the codebase for...
 ```
+
+Available agents:
+- `audit-codebase` - Code quality, anti-patterns, Evergreen violations
+- `audit-tests` - Test redundancy, staleness, coverage gaps
+- `audit-issues` - Issue triage, priority alignment, staleness
+- `audit-docs` - CLAUDE.md, README, and documentation accuracy
+- `status-report` - Repo status with recent work and recommendations
+- `summarize-work` - Summarize current branch work for PR creation
 
 Agents get their own context window (not affected by main conversation compaction).
 
@@ -454,12 +458,7 @@ mcp__event-bus__publish_event(
 )
 ```
 
-Future sessions (including yours) query these:
-```
-/learnings datetime
-```
-
-The knowledge compounds.
+Future sessions incorporate these discoveries via `/improve-workflow`.
 
 ## Cost Considerations
 
