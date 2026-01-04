@@ -22,11 +22,18 @@ CLIENT_ID=$(echo "$INPUT" | jq -r '.session_id // ""')
 SOURCE=$(echo "$INPUT" | jq -r '.source // "startup"')
 
 # Derive session name (graceful fallback if git unavailable)
-REPO_NAME=$(basename "$CWD")
 if command -v git &>/dev/null && git -C "$CWD" rev-parse --git-dir &>/dev/null; then
+    # Use git-common-dir to get actual repo name (works in worktrees)
+    GIT_COMMON=$(git -C "$CWD" rev-parse --git-common-dir 2>/dev/null || echo "")
+    if [[ -n "$GIT_COMMON" ]]; then
+        REPO_NAME=$(basename "$(dirname "$GIT_COMMON")")
+    else
+        REPO_NAME=$(basename "$CWD")
+    fi
     BRANCH=$(git -C "$CWD" branch --show-current 2>/dev/null || echo "")
     [[ -n "$BRANCH" ]] && SESSION_NAME="${REPO_NAME}/${BRANCH}" || SESSION_NAME="$REPO_NAME"
 else
+    REPO_NAME=$(basename "$CWD")
     SESSION_NAME="$REPO_NAME"
 fi
 

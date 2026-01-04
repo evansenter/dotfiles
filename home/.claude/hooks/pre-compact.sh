@@ -62,10 +62,14 @@ if [[ -n "$GIT_STATUS" ]]; then
     FILES_MODIFIED=$(echo "$GIT_STATUS" | awk '{print $2}' | head -10 | tr '\n' ', ' | sed 's/,$//')
 fi
 
-# Get repo name (prefer git root, fall back to CWD)
-if command -v git &>/dev/null; then
-    GIT_ROOT=$(git -C "$CWD" rev-parse --show-toplevel 2>/dev/null || echo "")
-    REPO_NAME=$(basename "${GIT_ROOT:-$CWD}")
+# Get repo name (use git-common-dir to handle worktrees correctly)
+if command -v git &>/dev/null && git -C "$CWD" rev-parse --git-dir &>/dev/null; then
+    GIT_COMMON=$(git -C "$CWD" rev-parse --git-common-dir 2>/dev/null || echo "")
+    if [[ -n "$GIT_COMMON" ]]; then
+        REPO_NAME=$(basename "$(dirname "$GIT_COMMON")")
+    else
+        REPO_NAME=$(basename "$CWD")
+    fi
 else
     REPO_NAME=$(basename "$CWD")
 fi
