@@ -38,7 +38,8 @@ if command -v git &>/dev/null && git -C "$CWD" rev-parse --git-dir &>/dev/null; 
     BRANCH=$(git -C "$CWD" branch --show-current 2>/dev/null || echo "")
     GIT_STATUS=$(git -C "$CWD" status --porcelain 2>/dev/null | head -20 || echo "")
 
-    # Detect if we're in a worktree
+    # Detect if we're in a worktree (using custom .worktrees/ directory structure)
+    # Note: This matches the repo's worktree layout in .worktrees/<branch-name>/
     GIT_DIR=$(git -C "$CWD" rev-parse --git-dir 2>/dev/null || echo "")
     if [[ "$GIT_DIR" == *".worktrees"* ]]; then
         WORKTREE=$(basename "$(dirname "$GIT_DIR")")
@@ -61,11 +62,12 @@ if [[ -n "$GIT_STATUS" ]]; then
     FILES_MODIFIED=$(echo "$GIT_STATUS" | awk '{print $2}' | head -10 | tr '\n' ', ' | sed 's/,$//')
 fi
 
-# Get repo name
-REPO_NAME=$(basename "$CWD")
-if command -v git &>/dev/null && git -C "$CWD" rev-parse --git-dir &>/dev/null; then
+# Get repo name (prefer git root, fall back to CWD)
+if command -v git &>/dev/null; then
     GIT_ROOT=$(git -C "$CWD" rev-parse --show-toplevel 2>/dev/null || echo "")
-    [[ -n "$GIT_ROOT" ]] && REPO_NAME=$(basename "$GIT_ROOT")
+    REPO_NAME=$(basename "${GIT_ROOT:-$CWD}")
+else
+    REPO_NAME=$(basename "$CWD")
 fi
 
 # Build WIP state payload (compact, readable format for event bus)
