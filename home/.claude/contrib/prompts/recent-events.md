@@ -5,8 +5,8 @@
 **Display**: Show a brief "Recent event bus activity:" section with one-line bullet summaries. Include channel context (e.g., "[repo:X]") and approximate time. Only show events from the last ~10 minutes. Skip events already discussed.
 
 **Interpret channels**: With the broadcast model, you see ALL events across all repos/sessions. The channel indicates context:
-- `repo:<name>` - Activity in that repository
 - `session:<id>` - Direct message (high priority if to your session)
+- `repo:<name>` - Activity in that repository
 - `machine:<name>` - Machine-specific activity
 - `all` - General announcements
 
