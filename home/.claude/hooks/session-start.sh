@@ -19,6 +19,7 @@ fi
 CWD=$(echo "$INPUT" | jq -r '.cwd // ""')
 [[ -z "$CWD" ]] && CWD="$PWD"
 CLIENT_ID=$(echo "$INPUT" | jq -r '.session_id // ""')
+SOURCE=$(echo "$INPUT" | jq -r '.source // "startup"')
 
 # Derive session name (graceful fallback if git unavailable)
 REPO_NAME=$(basename "$CWD")
@@ -68,4 +69,23 @@ if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]
     echo "<recent-events>"
     echo "$EVENTS"
     echo "</recent-events>"
+fi
+
+# If resuming after compaction, fetch and display WIP checkpoint
+if [[ "$SOURCE" == "compact" ]]; then
+    # Fetch the most recent wip_checkpoint event for this session
+    WIP_EVENT=$(event-bus-cli events \
+        --session-id "$SESSION_ID" \
+        --channel "session:${SESSION_ID}" \
+        --limit 1 \
+        --order desc \
+        2>/dev/null | grep -E "wip_checkpoint" | head -1) || true
+
+    if [[ -n "$WIP_EVENT" ]]; then
+        echo ""
+        echo "<wip-checkpoint-restored>"
+        echo "Session resumed after compaction. Previous WIP state:"
+        echo "$WIP_EVENT"
+        echo "</wip-checkpoint-restored>"
+    fi
 fi

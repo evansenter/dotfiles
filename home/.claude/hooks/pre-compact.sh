@@ -1,0 +1,94 @@
+#!/bin/bash
+# Pre-compaction hook: Checkpoints WIP state before context summarization
+#
+# Input (via stdin): JSON with session_id, transcript_path, cwd, trigger
+# Output: Text confirmation (does not affect compaction behavior)
+#
+# Stores WIP state to event bus so it can be restored after compaction.
+
+set -euo pipefail
+
+# Read and parse session info
+INPUT=$(cat)
+
+# Check for required dependencies
+if ! command -v jq &>/dev/null; then
+    echo "WIP checkpoint skipped (jq not installed)"
+    exit 0
+fi
+
+if ! command -v event-bus-cli &>/dev/null; then
+    echo "WIP checkpoint skipped (event-bus-cli not installed)"
+    exit 0
+fi
+
+# Parse input
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // ""')
+CWD=$(echo "$INPUT" | jq -r '.cwd // ""')
+TRIGGER=$(echo "$INPUT" | jq -r '.trigger // "auto"')
+
+[[ -z "$CWD" ]] && CWD="$PWD"
+[[ -z "$SESSION_ID" ]] && { echo "WIP checkpoint skipped (no session_id)"; exit 0; }
+
+# Get git info
+BRANCH=""
+WORKTREE=""
+GIT_STATUS=""
+if command -v git &>/dev/null && git -C "$CWD" rev-parse --git-dir &>/dev/null; then
+    BRANCH=$(git -C "$CWD" branch --show-current 2>/dev/null || echo "")
+    GIT_STATUS=$(git -C "$CWD" status --porcelain 2>/dev/null | head -20 || echo "")
+
+    # Detect if we're in a worktree
+    GIT_DIR=$(git -C "$CWD" rev-parse --git-dir 2>/dev/null || echo "")
+    if [[ "$GIT_DIR" == *".worktrees"* ]]; then
+        WORKTREE=$(basename "$(dirname "$GIT_DIR")")
+    fi
+fi
+
+# Extract work ID from branch name (issue-N, pr-N, or adhoc)
+WORK_ID=""
+if [[ "$BRANCH" =~ ^issue-([0-9]+)$ ]]; then
+    WORK_ID="issue-${BASH_REMATCH[1]}"
+elif [[ "$BRANCH" =~ ^pr-([0-9]+)$ ]]; then
+    WORK_ID="pr-${BASH_REMATCH[1]}"
+elif [[ -n "$BRANCH" ]]; then
+    WORK_ID="branch-${BRANCH}"
+fi
+
+# Get modified files
+FILES_MODIFIED=""
+if [[ -n "$GIT_STATUS" ]]; then
+    FILES_MODIFIED=$(echo "$GIT_STATUS" | awk '{print $2}' | head -10 | tr '\n' ', ' | sed 's/,$//')
+fi
+
+# Get repo name
+REPO_NAME=$(basename "$CWD")
+if command -v git &>/dev/null && git -C "$CWD" rev-parse --git-dir &>/dev/null; then
+    GIT_ROOT=$(git -C "$CWD" rev-parse --show-toplevel 2>/dev/null || echo "")
+    [[ -n "$GIT_ROOT" ]] && REPO_NAME=$(basename "$GIT_ROOT")
+fi
+
+# Build WIP state payload (compact, readable format for event bus)
+CHECKPOINT_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+PAYLOAD="WIP Checkpoint (${TRIGGER})"
+[[ -n "$WORK_ID" ]] && PAYLOAD="${PAYLOAD} | work: ${WORK_ID}"
+[[ -n "$BRANCH" ]] && PAYLOAD="${PAYLOAD} | branch: ${BRANCH}"
+[[ -n "$WORKTREE" ]] && PAYLOAD="${PAYLOAD} | worktree: ${WORKTREE}"
+[[ -n "$FILES_MODIFIED" ]] && PAYLOAD="${PAYLOAD} | modified: ${FILES_MODIFIED}"
+PAYLOAD="${PAYLOAD} | time: ${CHECKPOINT_TIME}"
+
+# Publish to session-specific channel
+RESULT=$(event-bus-cli publish \
+    --type "wip_checkpoint" \
+    --payload "$PAYLOAD" \
+    --session-id "$SESSION_ID" \
+    --channel "session:${SESSION_ID}" \
+    2>/dev/null) || true
+
+if echo "$RESULT" | jq -e '.event_id' >/dev/null 2>&1; then
+    echo "WIP state checkpointed before compaction"
+    [[ -n "$WORK_ID" ]] && echo "  Work: $WORK_ID" || true
+    [[ -n "$FILES_MODIFIED" ]] && echo "  Modified: $FILES_MODIFIED" || true
+else
+    echo "WIP checkpoint failed to publish"
+fi
