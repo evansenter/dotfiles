@@ -183,6 +183,27 @@ mcp__event-bus__publish_event(event_type="help_needed", payload="<query>", chann
 
 **Details:** Read the `event-bus://guide` MCP resource.
 
+### Handling Event Bus Events
+
+Events arrive via `<recent-events>` tags from the prompt hook. Handle them as follows:
+
+**Display**: Show a brief "Recent event bus activity:" section with one-line bullet summaries. Include channel context (e.g., "[repo:X]") and approximate time. Only show events from the last ~10 minutes. Skip events already discussed.
+
+**Act on** (in priority order):
+1. DMs to your session - respond or acknowledge
+2. `help_needed` events - offer assistance if relevant
+3. CI failures in your repo - investigate if you caused them
+4. `blocker_found` / `error_broadcast` - may affect your work
+5. New issues in this repo - ask: "New issue #N created - want to pick it up with `/work N`?"
+
+**Surface to user** (valuable cross-session learnings):
+- `all` channel messages - general announcements worth noting
+- `gotcha_discovered` - non-obvious issues that may save time
+- `pattern_found` - useful patterns worth knowing
+- `test_flaky` - flaky tests (safe to retry if encountered)
+
+**Ignore**: Routine `task_completed` from other repos unless they mention dependencies you're waiting on.
+
 ## Session Analytics
 
 Workflow insights from Claude Code session logs via `mcp__session-analytics__*` tools.

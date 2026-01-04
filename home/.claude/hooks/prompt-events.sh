@@ -41,19 +41,11 @@ EVENTS=$(event-bus-cli events \
     --limit 20 \
     2>/dev/null) || true
 
-# Output events using shared template
+# Output events in XML tags (interpretation guidance is in CLAUDE.md)
 if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]]; then
-    TEMPLATE_FILE="$HOME/.claude/contrib/prompts/recent-events.md"
-    if [[ -f "$TEMPLATE_FILE" ]]; then
-        # Read template and substitute {{EVENTS}} with actual events
-        TEMPLATE=$(<"$TEMPLATE_FILE")
-        echo "${TEMPLATE//\{\{EVENTS\}\}/$EVENTS}"
-    else
-        # Fallback if template missing
-        echo "<recent-events>"
-        echo "$EVENTS"
-        echo "</recent-events>"
-    fi
+    echo "<recent-events>"
+    echo "$EVENTS"
+    echo "</recent-events>"
 fi
 
 exit 0
