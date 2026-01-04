@@ -161,7 +161,10 @@ Configured hooks (in `~/.claude/hooks/`):
 
 Cross-session coordination via `mcp__event-bus__*` tools. Sessions auto-register on startup via hooks.
 
-**Channels:** `all` (broadcast), `repo:<name>` (most common), `machine:<host>`, `session:<id>` (DM)
+**Broadcast model:** All sessions see all events. Channels are metadata for context/priority:
+- `session:<id>` - DMs (high priority if to your session)
+- `repo:<name>` - Repository activity (medium if your repo)
+- `machine:<host>`, `all` - General context (low)
 
 **Key commands:**
 - `/event-bus-status` - Overview of active sessions and recent activity
