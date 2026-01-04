@@ -190,7 +190,14 @@ Workflow insights from Claude Code session logs via `mcp__session-analytics__*` 
 - `/improve-workflow` - Data-driven workflow improvement suggestions
 - `/status-report` - Includes session analytics in status summaries
 
-**Key tools:** `get_insights`, `get_permission_gaps`, `get_handoff_context`, `analyze_failures`
+**Key tools:**
+- `get_insights` - Comprehensive analysis (frequency, sequences, gaps, trends)
+- `get_permission_gaps` - Commands that may need adding to settings.json
+- `get_handoff_context` - Recent activity summary for session continuity
+- `get_agent_activity` - Agent/subagent token usage and activity breakdown
+- `analyze_trends` - Compare current vs previous period metrics
+- `classify_sessions` - Categorize sessions (debugging, development, research, maintenance)
+- `analyze_failures` - Error patterns, rework detection, recovery times
 
 **Details:** Read the `session-analytics://guide` MCP resource.
 
