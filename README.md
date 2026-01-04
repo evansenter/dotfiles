@@ -23,7 +23,6 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 | `/pr-create` | Commit changes and create/update a PR |
 | `/pr-review` | Review code via local analysis or remote reviewer comments |
 | `/watch-ci` | Monitor CI in background with notification when complete |
-| `/improve-workflow` | Suggest workflow improvements based on session analytics |
 | `/rfc-create` | Create RFC-style issues with structured analysis |
 | `/rfc-respond` | Respond to RFC-style issues |
 | `/audit-workflows` | Command contradictions and inconsistencies |
@@ -39,6 +38,7 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 | `audit-tests` | Test redundancy, staleness, coverage gaps |
 | `audit-issues` | Issue triage, priority alignment, staleness |
 | `audit-docs` | CLAUDE.md, README, and documentation quality |
+| `improve-workflow` | Data-driven workflow improvements from session analytics |
 
 **Usage examples:**
 ```bash
@@ -57,7 +57,7 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 # Monitor CI with notification
 /watch-ci 123
 
-# Suggest workflow improvements
+# Data-driven workflow improvements (agent)
 /improve-workflow
 ```
 
