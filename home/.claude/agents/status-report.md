@@ -127,9 +127,20 @@ Bash (N), Read (N), Edit (N), ...
 
 ### Recommendations
 
-1. **Work on #N (priority:high)** - Specific reason with evidence
-2. **Run `/audit-issues`** - N issues missing priority labels
-3. **Clean up worktree** - .worktrees/X has merged PR
+#### #1. Work on #42
+> High priority issue needing immediate attention
+**Reason**: [Evidence from issue content or labels]
+**Action**: Run `/work 42` to start
+
+#### #2. Run `/audit-issues`
+> Issue hygiene needs attention
+**Reason**: N issues missing priority labels
+**Action**: Run audit to triage and label
+
+#### #3. Clean up worktree
+> Stale worktree from merged PR
+**Reason**: `.worktrees/feature-x` has merged PR #38
+**Action**: Run `/parallel-work cleanup`
 ```
 
 ## Recommendation Logic
