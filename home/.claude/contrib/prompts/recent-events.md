@@ -17,4 +17,10 @@
 4. `blocker_found` / `error_broadcast` - may affect your work
 5. New issues in this repo - ask: "New issue #N created - want to pick it up with `/work N`?"
 
+**Surface to user** (valuable cross-session learnings):
+- `all` channel messages - general announcements worth noting
+- `gotcha_discovered` - non-obvious issues that may save time
+- `pattern_found` - useful patterns worth knowing
+- `test_flaky` - flaky tests (safe to retry if encountered)
+
 **Ignore**: Routine `task_started`/`task_completed` from other repos unless they mention dependencies you're waiting on.
