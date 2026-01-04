@@ -5,7 +5,7 @@ description: Manage git worktrees for parallel PR development
 
 # Parallel Work
 
-Manage git worktrees for parallel PR development, enabling multiple Claude sessions to work on different features simultaneously.
+Manage git worktrees for parallel PR development.
 
 ## Usage
 
@@ -15,127 +15,50 @@ Manage git worktrees for parallel PR development, enabling multiple Claude sessi
 /parallel-work cleanup
 ```
 
-### Subcommands
-
-- **start**: Create a new worktree for parallel development
-- **list**: Show all active worktrees with status
-- **cleanup**: Remove worktrees for merged/closed PRs
-
-## Instructions
-
-Parse the subcommand from the first argument:
-
-```bash
-SUBCOMMAND="$1"
-REPO_ROOT=$(git rev-parse --show-toplevel)
-WORKTREE_DIR="$REPO_ROOT/.worktrees"
-```
-
-If `SUBCOMMAND` is empty or not one of `start`, `list`, `cleanup`, display usage and exit:
-
-```
-Usage: /parallel-work <start|list|cleanup> [args]
-
-  start <branch> [base]  - Create new worktree for parallel development
-  list                   - Show active worktrees with PR/CI status
-  cleanup                - Remove worktrees for merged/closed PRs
-```
-
 ---
 
-### Subcommand: `start`
+## Subcommand: `start`
 
 Create a new worktree and branch for parallel development.
 
-#### 1. Parse Arguments
+### 1. Setup
 
 ```bash
 BRANCH_NAME="$2"
 BASE_BRANCH="${3:-main}"
+REPO_ROOT=$(git rev-parse --show-toplevel)
+WORKTREE_DIR="$REPO_ROOT/.worktrees"
 ```
 
-If `BRANCH_NAME` is empty, display usage and exit:
-```
-Usage: /parallel-work start <branch-name> [base-branch]
-```
+Check if worktree or branch already exists. If branch exists without worktree, ask user preference.
 
-#### 2. Check for Existing Worktree or Branch
+### 2. Create Worktree
 
 ```bash
-# Check if worktree already exists
-ls "$WORKTREE_DIR/$BRANCH_NAME" 2>/dev/null
-
-# Check if branch already exists in repo
-git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"
-```
-
-If worktree exists, inform user and suggest using `/parallel-work list`.
-If branch exists (but no worktree), ask if user wants to create worktree for existing branch or choose a different name.
-
-#### 3. Create Worktree Directory and Branch
-
-```bash
-# Create .worktrees directory if needed
 mkdir -p "$WORKTREE_DIR"
-
-# Fetch latest from remote
 git fetch origin "$BASE_BRANCH"
-
-# Create worktree with new branch
 git worktree add -b "$BRANCH_NAME" "$WORKTREE_DIR/$BRANCH_NAME" "origin/$BASE_BRANCH"
 ```
 
-#### 4. Extract Context from Current Conversation
+### 3. Extract Context
 
-Before asking user questions, analyze the current conversation for relevant context to include in the new session:
+Before asking questions, analyze current conversation for:
+- Decisions made, constraints discovered
+- Relevant code locations
+- Related PRs/issues
 
-- **Decisions made**: Any architectural or implementation choices discussed
-- **Constraints discovered**: Limitations, requirements, or gotchas found
-- **Code locations**: Key files, functions, or patterns identified
-- **Dependencies**: Related PRs, issues, or features this work connects to
+Summarize into "Context from Parent Session".
 
-Summarize this into a "Context from Parent Session" section.
+### 4. Gather Task Details
 
-#### 5. Gather Additional Context from User
+Ask user via AskUserQuestion:
+- What task will the new session work on?
+- Related issues/PRs to reference?
+- Special instructions?
 
-Use AskUserQuestion to gather task details:
+### 5. Write Context File
 
-```json
-{
-  "questions": [
-    {
-      "question": "What task will the new session work on?",
-      "header": "Task",
-      "options": [
-        {"label": "Describe task", "description": "I'll provide a task description"}
-      ],
-      "multiSelect": false
-    },
-    {
-      "question": "Any related issues or PRs to reference? (Enter numbers like #123, #456)",
-      "header": "Related",
-      "options": [
-        {"label": "None", "description": "No related issues or PRs"},
-        {"label": "Specify", "description": "I'll provide issue/PR numbers"}
-      ],
-      "multiSelect": false
-    },
-    {
-      "question": "Any special instructions for the new session?",
-      "header": "Instructions",
-      "options": [
-        {"label": "Standard workflow", "description": "Follow normal development flow"},
-        {"label": "Custom", "description": "I'll provide specific instructions"}
-      ],
-      "multiSelect": false
-    }
-  ]
-}
-```
-
-#### 6. Write Context File
-
-Write `.parallel-context.md` to the new worktree. When writing, replace placeholders with actual values and execute the date command to get current timestamp:
+Write `.parallel-context.md` to the new worktree:
 
 ```markdown
 # Parallel Work Context
@@ -146,355 +69,113 @@ Write `.parallel-context.md` to the new worktree. When writing, replace placehol
 ## Branch Info
 - **Branch:** [branch-name]
 - **Base:** [base-branch]
-- **Created:** [run: date '+%Y-%m-%d %H:%M' and insert result]
-
-## Related
-[Issue/PR references or "None"]
+- **Created:** [timestamp]
 
 ## Context from Parent Session
-[Extracted context from step 4]
-- Key decisions: ...
-- Constraints: ...
-- Relevant files: ...
-- Dependencies: ...
-
-## Instructions
-[Special instructions or "Follow standard workflow"]
+[Extracted context]
 
 ---
-**Session Start:** Read this file for context, then:
-- If working on a specific issue, run `/work <issue-number>` for workflow tracking
-- Run `/learnings` to see discoveries from other sessions
-- Otherwise, proceed with development
+**Session Start:** Read this file, then run `/work <issue>` or proceed with development.
 ```
 
-#### 7. Tmux Integration (if available)
+### 6. Launch Session
 
-Check if running inside tmux:
+Check if tmux is available. Ask user:
+- New tmux pane (Recommended)
+- New tmux window
+- Manual
 
+For tmux options:
 ```bash
-tmux list-sessions 2>/dev/null
-```
-
-If the command succeeds (exit 0), tmux is available. Offer to auto-launch a new session:
-
-```json
-{
-  "questions": [
-    {
-      "question": "How would you like to start the new Claude session?",
-      "header": "Launch",
-      "options": [
-        {"label": "New tmux pane (Recommended)", "description": "Split current window, stay in view"},
-        {"label": "New tmux window", "description": "Separate window in this session"},
-        {"label": "Manual", "description": "I'll open it myself"}
-      ],
-      "multiSelect": false
-    }
-  ]
-}
-```
-
-Based on user selection:
-
-**For pane:**
-```bash
-# Create horizontal split, cd to worktree, and start claude
-tmux split-window -h -c "[full-worktree-path]"
+tmux split-window -h -c "[worktree-path]"
 tmux send-keys "claude 'ultrathink: Starting parallel work. Read .parallel-context.md for context.'" Enter
 ```
 
-**For window:**
-```bash
-# Create new window, cd to worktree, and start claude
-tmux new-window -c "[full-worktree-path]" -n "[branch-name]"
-tmux send-keys "claude 'ultrathink: Starting parallel work. Read .parallel-context.md for context.'" Enter
-```
+Broadcast `parallel_work_started` to `repo:<name>`.
 
-After launching, broadcast to the event bus so other sessions know about the new parallel work:
-
-```
-mcp__event-bus__publish_event(
-  event_type: "parallel_work_started",
-  payload: "Started parallel work: <branch-name> - <task-summary>",
-  channel: "repo:<repo_name>"
-)
-```
-
-Then output:
-```markdown
-## Worktree Created
-
-**Location:** `.worktrees/[branch-name]`
-**Branch:** [branch-name] (based on [base-branch])
-
-✓ Claude session started in new tmux [pane/window].
-
-### Tips
-- Each worktree is an independent working directory
-- Commits go to their respective branches
-- Use `/parallel-work list` from main repo to see all active work
-- When done, create PR and run `/parallel-work cleanup`
-```
-
-#### 8. Manual Instructions (if not in tmux or user chose manual)
-
-If `$TMUX` is not set, or user selected "Manual", still broadcast the event (same as step 7), then output:
-
-```markdown
-## Worktree Created
-
-**Location:** `.worktrees/[branch-name]`
-**Branch:** [branch-name] (based on [base-branch])
-
-### Start a New Claude Session
-
-Open a new terminal and run:
-
-\`\`\`bash
-cd [full-worktree-path]
-claude "ultrathink: Starting parallel work. Read .parallel-context.md for context from the parent session."
-\`\`\`
-
-### Tips
-- Each worktree is an independent working directory
-- Commits go to their respective branches
-- Use `/parallel-work list` from main repo to see all active work
-- When done, create PR and run `/parallel-work cleanup`
-```
+Output summary with location, branch, and tips.
 
 ---
 
-### Subcommand: `list`
+## Subcommand: `list`
 
-Show all active worktrees with their status.
+Show all active worktrees with status.
 
-#### 1. Gather Worktree Information
-
-Run these commands in parallel:
+### 1. Gather Info
 
 ```bash
-# Get all worktrees
 git worktree list --porcelain
-
-# Get open PRs with branch and CI status
-gh pr list --state open --json number,headRefName,baseRefName,title,statusCheckRollup
-
-# Get current directory to identify if in a worktree
-pwd
+gh pr list --state open --json number,headRefName,title,statusCheckRollup
 ```
 
-#### 2. For Each Worktree in `.worktrees/`
-
+For each worktree in `.worktrees/`:
 ```bash
-# Get branch name
-git -C "$WORKTREE_DIR/<name>" branch --show-current
-
-# Get last commit time
 git -C "$WORKTREE_DIR/<name>" log -1 --format="%cr"
-
-# Check for context file
 cat "$WORKTREE_DIR/<name>/.parallel-context.md" 2>/dev/null
 ```
 
-#### 3. Determine Purpose
+### 2. Determine Purpose
 
-For each worktree, determine its purpose using this priority:
-1. **Context file**: Read `.parallel-context.md` and extract the Task section (first line after `## Task`)
-2. **PR title**: If no context file, use the PR title from the matched PR
-3. **Last commit**: If no PR, use the last commit message subject
+Priority: `.parallel-context.md` Task → PR title → last commit message
 
-Truncate purpose to ~50 chars for table display.
-
-#### 4. Cross-Reference with PRs
-
-Match worktree branches to open PRs by `headRefName`. Extract:
-- PR number and state
-- CI status from `statusCheckRollup`
-
-#### 5. Output Format
+### 3. Output
 
 ```markdown
 ## Active Worktrees
 
 | Branch | Purpose | PR | CI | Last Activity |
 |--------|---------|----|----|---------------|
-| feature-auth | Add user authentication flow | #42 | passing | 2 hours ago |
-| fix-parsing | Fix JSON parsing edge case | #45 | running | 30 min ago |
-| refactor-api | Refactor API endpoints | - | - | 3 days ago |
-
-### Legend
-- **Purpose**: From .parallel-context.md, PR title, or last commit
-- **PR**: Pull request number, or `-` if none
-- **CI**: passing/failing/running/pending, or `-` if no PR
-- **Last Activity**: Time since last commit
+| feature-auth | Add user authentication | #42 | passing | 2 hours ago |
 
 ### Quick Actions
-- **Open worktree:** `cd .worktrees/<branch>`
-- **Create PR:** In worktree, run `/pr-create`
-- **Cleanup merged:** `/parallel-work cleanup`
-```
-
-If no worktrees exist in `.worktrees/`:
-
-```markdown
-## Active Worktrees
-
-No parallel worktrees found in `.worktrees/`.
-
-### Create One
-\`\`\`
-/parallel-work start <branch-name> [base-branch]
-\`\`\`
+- Open: `cd .worktrees/<branch>`
+- Create PR: `/pr-create`
+- Cleanup: `/parallel-work cleanup`
 ```
 
 ---
 
-### Subcommand: `cleanup`
+## Subcommand: `cleanup`
 
 Remove worktrees for merged or closed PRs.
 
-#### 1. List Worktrees and Check PR Status
+### 1. Categorize Worktrees
+
+For each worktree, check PR status and uncommitted changes:
+
+- **✓ Merged** - Safe to remove
+- **⚠ Closed** - Confirm before removing
+- **? No PR** - Check for uncommitted work
+- **🚫 Dirty** - Has uncommitted changes
+- **Active** - PR still open, don't remove
+
+### 2. Output Summary
+
+Same table format as `list`, with Category column.
+
+### 3. Confirm Removal
+
+Ask per non-empty category:
+- Remove merged? (Yes/No)
+- Remove closed? (Yes/No)
+- Remove no-PR? (Yes/No)
+- Remove dirty? (No recommended/Yes delete anyway)
+
+### 4. Execute
 
 ```bash
-# List all worktrees in .worktrees/
-ls "$WORKTREE_DIR"
-
-# For each branch, check PR status
-gh pr list --head "<branch>" --state all --json number,state,mergedAt,closedAt
-```
-
-#### 2. Categorize Worktrees
-
-Group into categories:
-- **Merged**: PR was merged (safe to remove)
-- **Closed**: PR was closed without merge (confirm)
-- **No PR**: No PR exists (warn - may have uncommitted work)
-- **Open**: PR still open (do not remove)
-
-Also check for uncommitted changes in each worktree:
-```bash
-git -C "$WORKTREE_DIR/<branch>" status --short
-```
-
-#### 3. Determine Purpose (Same as List)
-
-For each worktree, determine its purpose using this priority:
-1. **Context file**: Read `.parallel-context.md` and extract the Task section (first line after `## Task`)
-2. **PR title**: If no context file, use the PR title from the matched PR
-3. **Last commit**: If no PR, use the last commit message subject
-
-Truncate purpose to ~50 chars for table display.
-
-#### 4. Display Summary
-
-Use the same unified table format as the `list` command, with a Category column to indicate cleanup action:
-
-```markdown
-## Worktree Cleanup
-
-| Branch | Purpose | PR | CI | Last Activity | Category |
-|--------|---------|----|----|---------------|----------|
-| feature-auth | Add user authentication flow | #42 | passed | 2 days ago | ✓ Merged |
-| abandoned-feature | Experimental caching layer | #38 | - | 1 week ago | ⚠ Closed |
-| local-experiment | Fix JSON parsing edge case | - | - | 5 days ago | ? No PR |
-| wip-feature | Refactor API endpoints | - | - | 1 hour ago | 🚫 Dirty (3 files) |
-| fix-parsing | Update error messages | #45 | running | 30 min ago | Active |
-
-### Legend
-- **Purpose**: From .parallel-context.md, PR title, or last commit
-- **PR**: Pull request number, or `-` if none
-- **CI**: passing/failing/running/pending, or `-` if no PR
-- **Last Activity**: Time since last commit
-- **Category**:
-  - `✓ Merged` - Safe to remove, PR was merged
-  - `⚠ Closed` - PR closed without merge (confirm before removing)
-  - `? No PR` - No PR exists (check for uncommitted work)
-  - `🚫 Dirty` - Has uncommitted changes (will be lost if removed)
-  - `Active` - PR still open (will not be removed)
-```
-
-#### 5. Filter Empty Categories
-
-Only include categories in the confirmation that have at least one worktree. Skip questions for empty categories entirely.
-
-#### 6. Confirm Removal
-
-For each **non-empty** category, use AskUserQuestion to confirm:
-
-```json
-{
-  "questions": [
-    {
-      "question": "Remove worktrees with merged PRs?",
-      "header": "Merged",
-      "options": [
-        {"label": "Yes, remove all", "description": "Clean up merged branches"},
-        {"label": "No, keep", "description": "Skip this category"}
-      ],
-      "multiSelect": false
-    },
-    {
-      "question": "Remove worktrees with closed (unmerged) PRs?",
-      "header": "Closed",
-      "options": [
-        {"label": "Yes, remove", "description": "PR was closed without merge"},
-        {"label": "No, keep", "description": "May want to reopen"}
-      ],
-      "multiSelect": false
-    },
-    {
-      "question": "Remove worktrees with no PR? (Check for uncommitted work first)",
-      "header": "No PR",
-      "options": [
-        {"label": "Yes, reviewed", "description": "Nothing to keep"},
-        {"label": "No, keep", "description": "Need to review first"}
-      ],
-      "multiSelect": false
-    },
-    {
-      "question": "⚠️ Remove DIRTY worktrees? This will DELETE uncommitted changes permanently!",
-      "header": "Dirty",
-      "options": [
-        {"label": "No, keep (Recommended)", "description": "Preserve uncommitted work"},
-        {"label": "Yes, delete anyway", "description": "I understand changes will be lost"}
-      ],
-      "multiSelect": false
-    }
-  ]
-}
-```
-
-**Note**: Only ask about dirty worktrees if any exist. The "No, keep" option should be recommended by default to prevent accidental data loss.
-
-#### 7. Execute Removal
-
-For each confirmed removal:
-
-```bash
-# Remove worktree
 git worktree remove "$WORKTREE_DIR/<branch>" --force
-
-# Try to delete branch (only succeeds if fully merged)
-git branch -d "<branch>"
+git branch -d "<branch>"  # May fail if not fully merged
 ```
 
-Track whether the branch deletion succeeded or failed to report accurately in the output.
-
-#### 8. Output Results
-
-Report actual outcomes for each worktree:
+### 5. Report Results
 
 ```markdown
 ## Cleanup Complete
 
 **Removed:**
 - `.worktrees/feature-auth` (branch deleted)
-- `.worktrees/abandoned-feature` (branch kept - not fully merged)
 
 **Kept:**
-- `.worktrees/local-experiment` (user choice)
 - `.worktrees/fix-parsing` (PR still open)
-
-Run `/parallel-work list` to see remaining worktrees.
 ```

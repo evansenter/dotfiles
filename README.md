@@ -14,40 +14,31 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 
 ### Claude Code Commands
 
-**Workflow orchestration:**
+**Commands** (user-invokable via `/name`):
 | Command | Description |
 |---------|-------------|
 | `/work` | Full development flow: issue → code → PR → merge → reflect |
-| `/im-lost` | Show current workflow position and context |
-| `/status-report` | Repo status with recent work, open PRs/issues, and recommendations |
 | `/parallel-work` | Manage git worktrees for parallel PR development |
-
-**PR lifecycle:**
-| Command | Description |
-|---------|-------------|
+| `/im-lost` | Show current workflow position and context |
 | `/pr-create` | Commit changes and create/update a PR |
 | `/pr-review` | Review code via local analysis or remote reviewer comments |
 | `/watch-ci` | Monitor CI in background with notification when complete |
-
-**Discovery & improvement:**
-| Command | Description |
-|---------|-------------|
 | `/improve-workflow` | Suggest workflow improvements based on session analytics |
-| `/learnings` | Query historical discoveries from other sessions |
-| `/rfc` | Create or respond to RFC-style issues |
-
-**Audits:**
-| Command | Description |
-|---------|-------------|
-| `/audit-codebase` | Check for AI anti-patterns and Evergreen violations |
-| `/audit-tests` | Find redundant or stale tests |
-| `/audit-issues` | Categorize open issues as current or needing updates |
-
-**Cross-session coordination:**
-| Command | Description |
-|---------|-------------|
+| `/rfc-create` | Create RFC-style issues with structured analysis |
+| `/rfc-respond` | Respond to RFC-style issues |
+| `/audit-workflows` | Command contradictions and inconsistencies |
 | `/event-bus-status` | Overview of active sessions and recent events |
 | `/broadcast` | Send message to other Claude Code sessions |
+
+**Agents** (invoked via Task tool for background/complex work):
+| Agent | Description |
+|-------|-------------|
+| `status-report` | Repo status with recent work, open PRs/issues, and recommendations |
+| `summarize-work` | Summarize current branch work for PR creation |
+| `audit-codebase` | Code quality, anti-patterns, Evergreen violations |
+| `audit-tests` | Test redundancy, staleness, coverage gaps |
+| `audit-issues` | Issue triage, priority alignment, staleness |
+| `audit-docs` | CLAUDE.md, README, and documentation quality |
 
 **Usage examples:**
 ```bash
@@ -66,8 +57,8 @@ Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mod
 # Monitor CI with notification
 /watch-ci 123
 
-# See discoveries from other sessions
-/learnings
+# Suggest workflow improvements
+/improve-workflow
 ```
 
 ## Installation
@@ -127,6 +118,7 @@ dotfiles/
 │   ├── .claude/
 │   │   ├── CLAUDE.md      # Global workflow preferences
 │   │   ├── commands/      # Custom slash commands
+│   │   ├── agents/        # Background task agents
 │   │   ├── hooks/         # Notification hook
 │   │   └── settings.json  # Plugins and hook config
 │   ├── .exports

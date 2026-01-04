@@ -5,7 +5,7 @@ description: Create RFC-style issues with structured analysis
 
 # RFC Create
 
-Create new RFC-style issues with structured analysis, blocking question resolution, and optional auto-posting.
+Create RFC-style issues with structured analysis.
 
 ## Usage
 
@@ -13,199 +13,98 @@ Create new RFC-style issues with structured analysis, blocking question resoluti
 /rfc-create [--post] [-R owner/repo]
 ```
 
-- `--post`: Automatically create after generating (skips review)
-- `-R owner/repo`: Create RFC in a different repository (cross-repo)
+- `--post`: Auto-create without confirmation
+- `-R owner/repo`: Create in different repository
+
+---
 
 ## Instructions
 
-### 1. Parse Arguments
+### 1. Gather Context
 
-From `$ARGUMENTS`, extract:
-- `--post`: Auto-post without confirmation
-- `-R owner/repo`: Target a different repository
+Analyze current conversation for:
+- Problem identified
+- Relevant code/files
+- Decisions already made
+- Discovery context (audit, feature work, bug fix)
 
-```bash
-TARGET_REPO=""  # Empty means current repo
-if [[ "$ARGUMENTS" =~ -R[[:space:]]+([^[:space:]]+) ]]; then
-  TARGET_REPO="${BASH_REMATCH[1]}"
-fi
-```
+### 2. Generate RFC Body
 
-### 2. Gather Context
-
-Analyze the current conversation for:
-- **Problem identified**: What issue or improvement was discovered
-- **Relevant code**: Files, functions, patterns discussed
-- **Decisions made**: Any choices or constraints already established
-- **Context**: How was this discovered (audit, feature work, bug fix)
-
-### 3. Generate RFC Issue Body
-
-ultrathink: Create an RFC-style issue body:
+ultrathink: Create RFC body:
 
 ```markdown
 ## Summary
-
-[One-paragraph description of the problem/improvement]
+[One paragraph]
 
 ## Problem / Motivation
-
-[What friction or issue was encountered that motivates this RFC]
+[What friction was encountered]
 
 ## Context
-
-- **Discovered during**: [audit/feature work/bug fix/etc.]
-- **Relevant files**: [list key files]
-- **Related issues/PRs**: [references if any]
+- **Discovered during**: [context]
+- **Relevant files**: [files]
+- **Related issues/PRs**: [refs]
 
 ## Proposed Solution
-
 [High-level approach]
 
 ## Assumptions
-
 | Assumption | Confidence | Impact if Wrong |
 |------------|------------|-----------------|
-| ... | High/Medium/Low | ... |
 
 ## Open Questions
-
-1. [Question that needs human decision]
-2. [Another question]
+1. [Needs human decision]
 
 ## Actionable Requirements
-
 | # | Requirement | Owner | Blocked By |
 |---|-------------|-------|------------|
-| 1 | ... | Claude/Human | None |
 
 ## Test Requirements
-
-[What test coverage is expected? Leave blank if not applicable]
-
-- Unit tests: [specific functions/modules to test]
-- Integration tests: [end-to-end scenarios]
-- Edge cases: [specific edge cases to cover]
-
-## Example Requirements
-
-[What examples should demonstrate this feature? Leave blank if not applicable]
-
-- [Example 1: description]
-- [Example 2: description]
+- Unit: [functions to test]
+- Integration: [scenarios]
+- Edge cases: [specific cases]
 
 ## Implementation Checklist
-
-- [ ] [First step]
-- [ ] [Next step]
-- [ ] ...
+- [ ] [Step 1]
+- [ ] [Step 2]
 ```
 
-### 4. Derive Title
+### 3. Derive Title
 
-Based on the RFC content you just drafted, generate 2-3 suggested titles that:
-- Start with "RFC: " prefix
-- Capture the core problem or proposed change
-- Are concise (under 60 characters after the prefix)
+Generate 2-3 title options starting with "RFC: ". Ask user to choose via AskUserQuestion.
 
-Use `AskUserQuestion` to let the user choose or customize:
-```json
-{
-  "questions": [
-    {
-      "question": "What should the RFC title be?",
-      "header": "Title",
-      "options": [
-        {"label": "RFC: [derived from Summary]", "description": "Based on the problem summary"},
-        {"label": "RFC: [derived from Problem]", "description": "Based on the motivation"},
-        {"label": "RFC: [alternative]", "description": "Another angle on the issue"}
-      ],
-      "multiSelect": false
-    }
-  ]
-}
-```
+### 4. Resolve Blocking Questions
 
-The user can select a suggested title or provide their own via "Other".
+Ask user to confirm problem statement, validate solution direction, answer open questions.
 
-### 5. Resolve Blocking Questions
-
-Use `AskUserQuestion` to resolve any blocking decisions before creating:
-- Confirm the problem statement is accurate
-- Validate the proposed solution direction
-- Get input on open questions
-
-### 6. Determine Labels
-
-Before creating, fetch available labels and select appropriate ones:
+### 5. Determine Labels
 
 ```bash
-gh label list --json name,description
+gh label list --json name
 ```
 
-**Required**: Every RFC MUST have exactly one priority label:
-- `priority:high` - Urgent, blocking other work
-- `priority:medium` - Important but not urgent
-- `priority:low` - Nice to have, backlog
+Required: exactly one `priority:high/medium/low` label. Add relevant type labels.
 
-**Additional labels**: Based on the RFC content and available repo labels, add relevant labels such as:
-- `enhancement`, `bug`, `documentation` (issue type)
-- `blocked` (if waiting on external factors)
-- Any domain-specific labels from the repo
+### 6. Create or Present
 
-### 7. Create or Present
+**If `--post`**: Create immediately with `gh issue create`.
 
-**If `--post` flag is present:**
-```bash
-# If TARGET_REPO is set, use -R flag
-if [ -n "$TARGET_REPO" ]; then
-  gh issue create -R "${TARGET_REPO}" --title "${TITLE}" --body "<body>" --label "priority:<level>,<other-labels>"
-else
-  gh issue create --title "${TITLE}" --body "<body>" --label "priority:<level>,<other-labels>"
-fi
-```
+**Otherwise**: Display draft, ask "Create this RFC?" via AskUserQuestion.
 
-**Otherwise:**
-Display the draft and ask:
-```json
-{
-  "questions": [
-    {
-      "question": "Create this RFC issue?",
-      "header": "Create",
-      "options": [
-        {"label": "Yes, create it", "description": "Create the issue on GitHub"},
-        {"label": "No, just show me", "description": "Review only, don't create"}
-      ],
-      "multiSelect": false
-    }
-  ]
-}
-```
+Use `-R` flag if cross-repo target specified.
 
-After creating, output the issue URL.
-
-### 8. Broadcast Event
-
-After successfully creating the RFC, broadcast to the event bus so parallel sessions are notified:
+### 7. Broadcast
 
 ```
-# Use TARGET_REPO if set, otherwise current repo
-target_channel = TARGET_REPO if TARGET_REPO else current_repo_name
-
 mcp__event-bus__publish_event(
   event_type: "rfc_created",
-  payload: "RFC created: #<issue_number> in <repo> - <title>",
-  channel: "repo:<target_channel>"
+  payload: "RFC created: #N in <repo> - <title>",
+  channel: "repo:<target>"
 )
 ```
 
-**For cross-repo RFCs**: Broadcasting to the target repo's channel ensures sessions working in that repo are notified and can pick up the RFC.
-
 ## Key Principles
 
-- Reference specific code/PRs where relevant
-- Propose solutions, don't just ask open-ended questions
-- Identify blockers explicitly and resolve them interactively
+- Reference specific code/PRs
+- Propose solutions, don't just ask questions
+- Resolve blockers before creating
 - Separate "needs human decision" from "Claude can proceed"
-- Use AskUserQuestion to get decisions before creating, not after
