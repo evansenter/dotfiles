@@ -36,7 +36,7 @@ EVENTS=$(event-bus-cli events \
     --resume \
     --session-id "$SESSION_ID" \
     --order asc \
-    --exclude-types session_registered,session_unregistered,ci_watching,task_started,ci_rerun,parallel_work_started \
+    --exclude session_registered,session_unregistered,ci_watching,task_started,ci_rerun,parallel_work_started \
     --timeout 200 \
     --limit 20 \
     2>/dev/null) || true
