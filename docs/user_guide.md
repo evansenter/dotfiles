@@ -277,6 +277,18 @@ Session analytics can tell you "821 Bash errors happened" but not "this error ca
 
 The event bus broadcasts all events to all sessions. At Claude Code scale (5-15 sessions), this is fine. At 1000s of sessions, you'd need real pub/sub with subscriptions. The architecture has a ceiling—deliberately accepted for simplicity.
 
+### External API Documentation Drift
+
+Google's Gemini docs are sometimes wrong. `ENUM_WIRE_FORMATS.md` in rust-genai documents empirically-tested serialization (e.g., `ThinkingSummaries` requires `"THINKING_SUMMARIES_AUTO"`, not `"auto"` as docs claim). No automated verification that docs match reality—manual testing is the only ground truth.
+
+### Typestate Complexity Ceiling
+
+Builder states (`FirstTurn`, `Chained`, `StoreDisabled`) prevent API misuse at compile time, but adding new constraints requires combinatorial state explosion. There's a limit to what's expressible without dependent types. Eventually you hit "too many type parameters."
+
+### Offline-Only Evaluation
+
+Agent evaluation via `TrajectoryDataset` + `MockLlmClient` enables replay testing, but no online evaluation—measuring agent quality *during* execution, not just after. You can't score a live agent's decisions mid-run.
+
 ## Getting Started
 
 1. Fork [evansenter/dotfiles](https://github.com/evansenter/dotfiles) and run `./bootstrap.sh`
