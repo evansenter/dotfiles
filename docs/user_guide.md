@@ -12,8 +12,8 @@ AI coding assistants are leverage multipliers. The more you invest in teaching t
 
 ### Repository Activity
 
-| Repository | PRs (open/merged) | Issues (open/closed) | Code | +/- Lines |
-|------------|-------------------|----------------------|------|-----------|
+| Repository | PRs (open/merged) | Issues (open/closed) | LoC | +/- Lines |
+|------------|-------------------|----------------------|-----|-----------|
 | dotfiles | 0/114 | 5/51 | 6K Shell | +6.4K/-3.8K |
 | gemicro | 0/116 | 29/85 | 30K Rust | +17.5K/-3.7K |
 | claude-event-bus | 0/41 | 7/22 | 6K Python | +6.1K/-3.0K |
@@ -29,17 +29,19 @@ _Data available since December 30, 2025 (session log retention)._
 
 | Metric | Value | Source |
 |--------|-------|--------|
-| Sessions | 258 | `session-analytics-cli sessions` |
-| Tool invocations | 33,073 | `session-analytics-cli frequency` |
-| Input tokens | 10.0M | `session-analytics-cli tokens` |
-| Output tokens | 10.9M | `session-analytics-cli tokens` |
-| Cache read | 9.7B | `session-analytics-cli tokens` |
-| Cache creation | 658M | `session-analytics-cli tokens` |
+| Sessions | 258 | `session-analytics-cli sessions --days 17` |
+| Tool invocations | 33,073 | `session-analytics-cli frequency --days 17` |
+| Input tokens | 10.0M | `session-analytics-cli tokens --days 17` |
+| Output tokens | 10.9M | `session-analytics-cli tokens --days 17` |
+| Cache read | 9.7B | `session-analytics-cli tokens --days 17` |
+| Cache creation | 658M | `session-analytics-cli tokens --days 17` |
 | Cache ratio | 15:1 | cache_read / cache_creation |
 
 **Regenerate:** `~/.claude/contrib/repo-stats.sh --days 17 --session-stats`
 
 ### Cost
+
+_Based on session analytics data (Dec 30+)._
 
 | Metric | Value |
 |--------|-------|

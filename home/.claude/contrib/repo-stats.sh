@@ -483,7 +483,7 @@ if [[ "$SESSION_STATS" == "1" ]]; then
 
         # Column widths for session stats
         sw1=20  # Metric
-        sw2=15  # Value
+        sw2=25  # Value (wider to accommodate long sequences)
 
         printf "┌%s┬%s┐\n" \
             "$(printf '─%.0s' $(seq 1 $((sw1 + 2))))" \
