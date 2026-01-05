@@ -36,6 +36,9 @@ setopt PUSHD_SILENT      # don't print directory stack
 setopt INTERACTIVE_COMMENTS  # allow comments in interactive shells
 setopt NO_BEEP              # disable beep
 
+# Disable flow control (Ctrl-S/Ctrl-Q) to free up Ctrl-Q for tmux prefix
+stty -ixon 2>/dev/null
+
 # Make / act as a word delimiter (for Ctrl+W, Alt+B, Alt+F, etc.)
 WORDCHARS=${WORDCHARS/\//}
 
