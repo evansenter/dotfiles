@@ -287,29 +287,29 @@ The orchestration hub. Key capabilities:
 - `tmux-status` hook indicates working/waiting state per pane
 - Event bus surfaces cross-session activity on each prompt
 
-### claude-event-bus (Coordinate)
+### claude-event-bus (Owner)
 
-Cross-session pub/sub with SQLite persistence. Key capabilities:
+MCP server for cross-session Claude Code coordination via polling. Deliberately minimal—a coordination primitive, not a framework. Key capabilities:
 
-**Session Lifecycle** — Sessions announce presence, resume across restarts, and auto-cleanup on death:
-- Human-readable IDs (Docker-style: "brave-tiger") for display, UUIDs for APIs
-- Client deduplication via `(machine, client_id)` enables seamless session resumption
-- Process liveness checking via signals; 24-hour heartbeat timeout
+**Human-as-Router Coordination** — Pragmatic DM pattern that works within MCP constraints:
+- Direct messages (`session:{id}`) trigger macOS notifications to the human
+- Human switches terminals, tells Claude to check the bus
+- Explicitly acknowledges MCP's request/response nature—doesn't try to fake push
 
-**Broadcast-First Pub/Sub** — All sessions see all events; channels are priority metadata, not routing rules:
-- Channel types: `all` (broadcast), `repo:<name>` (most common), `session:<id>` (DMs with notification), `machine:<host>`
-- Cursor-based polling with automatic high-water mark tracking
-- SSE endpoint `/events/stream` for external consumers (gemicro uses this)
+**Broadcast-First Pub/Sub** — Simpler than traditional channel subscriptions:
+- All sessions see all events; channels are priority metadata, not filters
+- No subscription management—sessions implicitly belong to `all`, `repo:`, `machine:`, `session:`
+- Trade-off: simplicity over efficiency (works at Claude Code scale, wouldn't scale to thousands)
 
-**MCP + CLI Parity** — Every operation available from both interfaces:
-- MCP server at `http://localhost:8080/mcp` with 7 tools
-- CLI `event-bus-cli` for hooks, scripts, and manual testing
-- `--track-state FILE` enables stateful polling in shell scripts
+**Cursor-Tracked Session Lifecycle** — Stateful polling with minimal client burden:
+- `(machine, client_id)` dedup key enables session resumption across restarts
+- `resume=True` auto-uses last cursor—no cursor management required
+- Auto-heartbeat on `publish_event()` and `get_events()`; PID liveness checks for faster cleanup
 
-**Observable Logging** — Real-time visibility via colored `tail -f` output:
-- Tool color coding (yellow=writes, blue=reads)
-- Session ID resolution to human-readable names
-- Result summaries (event counts, publishers, timespan)
+**Observable Request Logging** — Every tool call pretty-printed for `tail -f`:
+- ANSI colors: yellow for mutations, blue for reads
+- UUIDs resolved to human-readable display_ids ("brave-tiger" not "b712a0ba...")
+- Publisher attribution with active (cyan) vs inactive (red) session names
 
 ### claude-session-analytics (Insight)
 
