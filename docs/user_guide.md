@@ -265,7 +265,7 @@ The orchestration hub. Key capabilities:
 **Self-Improvement** — The system improves itself:
 - `/improve-workflow` mines session analytics for friction patterns
 - `audit-*` agents run background analysis (codebase, tests, issues, docs)
-- Every friction becomes an issue; issues become automation
+- Every friction becomes an issue; event bus routes to the appropriate repo owner; free agents (with human approval) pick up the work
 
 **Ambient Awareness** — Always know where you are:
 - Statusline shows repo/branch, session name, context %, model
