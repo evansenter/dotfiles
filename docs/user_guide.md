@@ -17,7 +17,7 @@ Five repositories form an integrated system:
 │                 │                 │                 │
 │ - /work         │                 │ - pub/sub       │
 │ - /pr-review    │                 │ - channels      │
-│ - hooks         │                 │ - SSE stream    │
+│ - hooks         │                 │ - poll-based    │
 └────────┬────────┘                 └────────┬────────┘
          │                                   │
          │ commands/agents                   │ real-time events
@@ -207,12 +207,15 @@ The Model Context Protocol is request/response only. Claude can call MCP tools, 
 
 **Real-time coordination:** When Session B publishes an event, Session A won't see it until the next prompt triggers a hook poll. Long tool-use loops run blind to external events.
 
-**Learning propagation:** When one agent discovers something (a gotcha, a pattern, a better approach), that knowledge should flow to other agents automatically. Currently learning propagates via:
-- Events (ephemeral, require polling)
-- GitHub issues (persistent, but manual triage)
-- CLAUDE.md edits (manual, requires human approval)
+**Learning propagation:** When one agent discovers something (a gotcha, a pattern, a better approach), that knowledge should flow to other agents automatically. The flow exists but with latency:
+- `/work` → session activity → session-analytics ingests → `/improve-workflow` queries → CLAUDE.md updated → future sessions inherit
 
-None of these are automatic agent-to-agent learning. The event bus *is* a proper pub/sub system—it could be the solution, but MCP's request/response model prevents push delivery to sessions.
+The gap is **latency**, not absence:
+- End-of-session (not real-time)
+- Human-gated (requires approval)
+- Indirect (goes through CLAUDE.md, not session-to-session)
+
+**Potential improvement:** If session-analytics ingested event-bus data, `gotcha_discovered` events would become queryable. Then `/improve-workflow` could surface: "3 sessions discovered gotchas in auth code this week." Currently event-bus and session-analytics are parallel systems—wiring them together would close the real-time gap with a structured batch process.
 
 **Workaround:** `prompt-events.sh` hook polls on every user prompt. Works for interactive sessions, but doesn't help autonomous agents.
 
@@ -312,34 +315,30 @@ MCP server for cross-session Claude Code coordination via polling. Deliberately 
 - UUIDs resolved to human-readable display_ids ("brave-tiger" not "b712a0ba...")
 - Publisher attribution with active (cyan) vs inactive (red) session names
 
-### claude-session-analytics (Insight)
+### claude-session-analytics (Owner)
 
-Session log mining for workflow optimization. Key capabilities:
+Queryable analytics for Claude Code session logs, designed for LLM consumption. Key capabilities:
 
-**Incremental Ingestion** — Transforms JSONL logs into queryable events without re-processing:
-- File-level state tracking skips unchanged logs
-- Agent tracking (RFC #41) separates main session from Task subagent activity
-- FTS5 full-text search across all user messages
+**Raw Signals Over Interpretation** — Let consuming LLMs decide meaning:
+- `get_session_signals()` returns observables (`error_count: 5`, `has_rework: true`), not conclusions
+- RFC #17: "Don't over-distill—raw data with light structure beats heavily processed summaries"
+- Enables context-aware interpretation—the LLM querying knows *why* it's asking
 
-**Pattern Detection** — Surfaces friction points automatically:
-- Tool sequence mining (e.g., "Read → Edit" happens 847 times)
-- Permission gap detection (commands needing auto-approval)
-- Rework detection (same file edited 3+ times in 10 minutes)
+**Guaranteed Drill-Down Paths** — Every aggregate leads to source:
+- "821 Bash errors" → `analyze_failures()` → `get_session_events(tool='Bash')` → specific commands
+- Self-play tested: can you reach an actionable conclusion using only MCP tools?
+- RFC #49 explicitly closes drill-down gaps
 
-**Session Intelligence** — Classification and relationship discovery:
-- Auto-categorizes sessions: debugging, development, research, maintenance
-- Detects parallel sessions (overlapping time windows)
-- Finds related sessions by shared files, commands, or temporal proximity
+**Incremental Ingestion with Protected History** — Never-destructive data handling:
+- JSONL files are append-only; ingestion tracks file positions
+- Schema migrations via `@migration` decorator are idempotent (check before ALTER)
+- Database is irreplaceable—CLAUDE.md explicitly bans DROP/DELETE on user tables
 
-**Git Correlation** — Links commits to sessions based on timing:
-- Calculates time-to-commit from session start
-- Tracks first commit per session
-- Enables commit→session→events traceability
-
-**Raw Signals over Interpretations** — Per RFC #17, returns observable metrics for LLM interpretation:
-- `get_session_signals()` returns counts and flags, not outcomes
-- Consuming LLM decides meaning (success, abandonment, blocked)
-- Avoids over-distillation that loses context
+**Agent-Aware Token Deduplication** — Hierarchical event tracking (RFC #41):
+- `parent_uuid` links tool_use events to their parent assistant turn
+- Tokens attributed to assistant events only—avoids double-counting across hierarchy
+- `agent_id` + `is_sidechain` distinguish Task subagents from main session
+- Enables "how much work did agents do vs you?" queries (`get_agent_activity()`)
 
 ### gemicro (Owner)
 
