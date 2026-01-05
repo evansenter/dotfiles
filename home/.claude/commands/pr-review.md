@@ -7,6 +7,10 @@ description: Review code via local analysis or remote reviewer comments
 
 Analyze feedback from local analysis or remote GitHub reviewers.
 
+## Key Principle
+
+You have context on the work's purpose that automated reviewers lack. Include your opinion in each question, but let the user make the final call.
+
 ## Usage
 
 ```
@@ -189,8 +193,3 @@ Publish `feedback_addressed` to event bus.
 5. Run `/watch-ci` to monitor CI
 6. Reshare PR URL to user
 
----
-
-## Key Principle
-
-You have context on the work's purpose that automated reviewers lack. Include your opinion in each question, but let the user make the final call.

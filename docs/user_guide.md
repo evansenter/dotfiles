@@ -224,7 +224,7 @@ When you run multiple Claude Code sessions in parallel:
 mcp__event-bus__publish_event(
   event_type="task_completed",
   payload="Auth feature merged - you can integrate now",
-  session_id: "<your-session-id>",
+  session_id="<your-session-id>",
   channel="repo:my-app"
 )
 
@@ -455,7 +455,7 @@ When you learn something non-obvious:
 mcp__event-bus__publish_event(
   event_type="gotcha_discovered",
   payload="SQLite datetime needs explicit adapters in Python 3.12+",
-  session_id: "<your-session-id>",
+  session_id="<your-session-id>",
   channel="repo:claude-session-analytics"
 )
 ```
