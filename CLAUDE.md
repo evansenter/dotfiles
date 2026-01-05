@@ -62,6 +62,8 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 
 **Claude Code** (`home/.claude/`) - Global config, agents, commands, contrib scripts, hooks, settings.
 
+**Hooks** (`home/.claude/hooks/`) - Shell scripts for Claude Code lifecycle events. See `hooks/README.md` for architecture and details. When adding or modifying hooks, update the README.
+
 **iTerm2** (`preferences/`, `vendor/iterm-catppuccin/`) - Manual color preset import required.
 
 ### File Formats
@@ -74,7 +76,8 @@ Run `./bootstrap.sh -f` to apply changes locally.
 
 ## Documentation Standards
 
-When editing CLAUDE.md, README.md, commands, or agents:
+When editing CLAUDE.md, README.md, commands, agents, or hooks:
 - **Clarity** - Would a new reader understand?
 - **Consistency** - Matches surrounding style?
 - **Length** - Appropriately concise?
+- **Hooks** - Update `home/.claude/hooks/README.md` when adding/modifying hooks

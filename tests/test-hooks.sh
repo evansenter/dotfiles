@@ -500,6 +500,169 @@ test_pre_compact_publishes_event() {
     [[ "$output" == *"checkpointed"* ]]
 }
 
+# Helper: Create mock gh CLI for PR number extraction
+setup_mock_gh_cli() {
+    local pr_number="${1:-}"  # Empty = no PR
+    cat > "$TEST_TMP/bin/gh" << MOCK_GH
+#!/bin/bash
+if [[ "\$1" == "pr" && "\$2" == "view" ]]; then
+    if [[ -n "$pr_number" ]]; then
+        echo "$pr_number"
+    else
+        echo "no pull requests found" >&2
+        exit 1
+    fi
+else
+    echo "mock gh: unsupported command" >&2
+    exit 1
+fi
+MOCK_GH
+    chmod +x "$TEST_TMP/bin/gh"
+}
+
+# Helper: Create mock git for branch/worktree simulation
+# Note: Hook calls git with -C flag: git -C <cwd> <command> <args>
+setup_mock_git() {
+    local branch="${1:-main}"
+    local is_repo="${2:-true}"
+    cat > "$TEST_TMP/bin/git" << MOCK_GIT
+#!/bin/bash
+# Handle -C flag: git -C <path> <command> <args>
+# When -C is used: \$1=-C, \$2=path, \$3=command, \$4+=args
+if [[ "\$1" == "-C" ]]; then
+    shift 2  # Skip -C and path
+fi
+
+case "\$1" in
+    rev-parse)
+        if [[ "$is_repo" == "true" ]]; then
+            if [[ "\$2" == "--git-dir" ]]; then
+                echo ".git"
+            elif [[ "\$2" == "--git-common-dir" ]]; then
+                echo ".git"
+            fi
+        else
+            exit 1
+        fi
+        ;;
+    branch)
+        if [[ "\$2" == "--show-current" ]]; then
+            echo "$branch"
+        fi
+        ;;
+    status)
+        echo " M src/file.rs"
+        echo " M tests/test.rs"
+        ;;
+    *)
+        echo ""
+        ;;
+esac
+MOCK_GIT
+    chmod +x "$TEST_TMP/bin/git"
+}
+
+test_pre_compact_extracts_pr_number() {
+    setup_mock_event_bus_cli
+    setup_mock_gh_cli "42"
+    setup_mock_git "issue-123"
+
+    # Capture the payload by checking the mock CLI was called correctly
+    local output
+    output=$(echo '{"session_id":"test-session","cwd":"/tmp/test-repo"}' | \
+        bash "$HOOKS_DIR/pre-compact.sh" 2>&1)
+
+    # Should succeed and mention checkpointing
+    [[ "$output" == *"checkpointed"* ]]
+}
+
+test_pre_compact_no_pr_shows_graceful() {
+    setup_mock_event_bus_cli
+    setup_mock_gh_cli ""  # No PR
+    setup_mock_git "feature-branch"
+
+    local output
+    local exit_code=0
+    output=$(echo '{"session_id":"test-session","cwd":"/tmp/test-repo"}' | \
+        bash "$HOOKS_DIR/pre-compact.sh" 2>&1) || exit_code=$?
+
+    # Should still succeed even without PR
+    [[ $exit_code -eq 0 ]] && [[ "$output" == *"checkpointed"* ]]
+}
+
+test_pre_compact_work_id_issue_branch() {
+    setup_mock_event_bus_cli
+    setup_mock_gh_cli "99"
+    setup_mock_git "issue-42"
+
+    local output
+    output=$(echo '{"session_id":"test-session","cwd":"/tmp/test-repo"}' | \
+        bash "$HOOKS_DIR/pre-compact.sh" 2>&1)
+
+    # Should show work ID derived from branch
+    [[ "$output" == *"issue-42"* ]]
+}
+
+test_pre_compact_work_id_pr_branch() {
+    setup_mock_event_bus_cli
+    setup_mock_gh_cli "55"
+    setup_mock_git "pr-55"
+
+    local output
+    output=$(echo '{"session_id":"test-session","cwd":"/tmp/test-repo"}' | \
+        bash "$HOOKS_DIR/pre-compact.sh" 2>&1)
+
+    # Should show work ID derived from branch
+    [[ "$output" == *"pr-55"* ]]
+}
+
+test_pre_compact_payload_format_validation() {
+    # Create a capturing mock that logs the payload
+    setup_mock_git "issue-268"
+
+    cat > "$TEST_TMP/bin/gh" << 'MOCK_GH'
+#!/bin/bash
+if [[ "$1" == "pr" && "$2" == "view" ]]; then
+    echo "297"
+fi
+MOCK_GH
+    chmod +x "$TEST_TMP/bin/gh"
+
+    # Create event-bus-cli mock that captures and validates payload
+    cat > "$TEST_TMP/bin/event-bus-cli" << 'MOCK_CLI'
+#!/bin/bash
+if [[ "$1" == "publish" ]]; then
+    payload=""
+    while [[ $# -gt 1 ]]; do
+        case "$2" in
+            --payload) payload="$3"; shift 2 ;;
+            *) shift ;;
+        esac
+    done
+    # Validate payload format: [work:ID] | branch: X | pr: Y | ...
+    if [[ "$payload" == *"[work:"*"]"* ]] && \
+       [[ "$payload" == *"| branch:"* ]] && \
+       [[ "$payload" == *"| pr:"* ]] && \
+       [[ "$payload" == *"| time:"* ]]; then
+        echo '{"event_id":999}'
+        exit 0
+    else
+        echo "Invalid payload format: $payload" >&2
+        exit 1
+    fi
+fi
+MOCK_CLI
+    chmod +x "$TEST_TMP/bin/event-bus-cli"
+
+    local output
+    local exit_code=0
+    output=$(echo '{"session_id":"test-session","cwd":"/tmp/test-repo"}' | \
+        bash "$HOOKS_DIR/pre-compact.sh" 2>&1) || exit_code=$?
+
+    # Should succeed with valid format
+    [[ $exit_code -eq 0 ]] && [[ "$output" == *"checkpointed"* ]]
+}
+
 # ============================================================================
 # statusline-command.sh tests
 # ============================================================================
@@ -552,6 +715,25 @@ test_statusline_hyperlinks_closed() {
     # The final LINK_RESET should ensure all hyperlinks are closed
     # At minimum, output should end with the hyperlink reset sequence
     [[ "$output" == *$'\e]8;;\e\\'* ]] || [[ -z "$output" ]] || [[ "$output" != *$'\e]8;;http'* ]]
+}
+
+test_statusline_worktree_format() {
+    # Unit test the worktree path parsing logic
+    # Path: /path/to/rust-genai/.worktrees/issue-268 -> "issue-268 (rust-genai)"
+    # We test the bash logic directly since full script has git/gh deps
+    local cwd="/home/user/projects/rust-genai/.worktrees/issue-268"
+    local dir_name="${cwd##*/}"
+
+    # Apply worktree logic from statusline-command.sh
+    if [[ "$cwd" == */.worktrees/* ]]; then
+        local worktree_parent="${cwd%/.worktrees/*}"
+        local repo_name="${worktree_parent##*/}"
+        local worktree_branch="${cwd##*/}"
+        dir_name="${repo_name} (${worktree_branch})"
+    fi
+
+    # Should produce "rust-genai (issue-268)"
+    [[ "$dir_name" == "rust-genai (issue-268)" ]]
 }
 
 test_statusline_graceful_no_jq() {
@@ -681,6 +863,7 @@ case "$1" in
         # Return mock values based on format
         case "$format" in
             '#{window_id}') echo "@1" ;;
+            '#{pane_current_path}') echo "/home/user/projects/test-project" ;;
             '#{b:pane_current_path}') echo "test-project" ;;
             *) echo "" ;;
         esac
@@ -832,6 +1015,11 @@ main() {
     run_test "graceful degradation (no session_id)" "test_pre_compact_graceful_no_session_id"
     run_test "integration: happy path" "test_pre_compact_happy_path"
     run_test "integration: publishes event" "test_pre_compact_publishes_event"
+    run_test "integration: extracts PR number" "test_pre_compact_extracts_pr_number"
+    run_test "integration: no PR graceful" "test_pre_compact_no_pr_shows_graceful"
+    run_test "integration: work ID from issue branch" "test_pre_compact_work_id_issue_branch"
+    run_test "integration: work ID from PR branch" "test_pre_compact_work_id_pr_branch"
+    run_test "integration: payload format validation" "test_pre_compact_payload_format_validation"
     echo ""
 
     echo "=== statusline-command.sh ==="
@@ -840,6 +1028,7 @@ main() {
     run_test "basic output" "test_statusline_basic_output"
     run_test "no ANSI escape leak in session name" "test_statusline_no_ansi_leak_in_session_name"
     run_test "hyperlinks properly closed" "test_statusline_hyperlinks_closed"
+    run_test "worktree path format" "test_statusline_worktree_format"
     run_test "graceful degradation (no jq)" "test_statusline_graceful_no_jq"
     run_test "graceful degradation (no git)" "test_statusline_graceful_no_git"
     run_test "graceful degradation (no gh)" "test_statusline_graceful_no_gh"

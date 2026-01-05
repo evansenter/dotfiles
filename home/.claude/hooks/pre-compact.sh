@@ -56,10 +56,16 @@ elif [[ -n "$BRANCH" ]]; then
     WORK_ID="branch-${BRANCH}"
 fi
 
-# Get modified files
+# Get modified files (top 3 for brevity)
 FILES_MODIFIED=""
 if [[ -n "$GIT_STATUS" ]]; then
-    FILES_MODIFIED=$(echo "$GIT_STATUS" | awk '{print $2}' | head -10 | tr '\n' ', ' | sed 's/,$//')
+    FILES_MODIFIED=$(echo "$GIT_STATUS" | awk '{print $2}' | head -3 | xargs -I{} basename {} | tr '\n' ', ' | sed 's/,$//')
+fi
+
+# Get PR number if gh CLI available and we're on a feature branch
+PR_NUMBER=""
+if command -v gh &>/dev/null && [[ -n "$BRANCH" && "$BRANCH" != "main" && "$BRANCH" != "master" ]]; then
+    PR_NUMBER=$(gh pr view --json number -q .number 2>/dev/null || echo "")
 fi
 
 # Get repo name (use git-common-dir to handle worktrees correctly)
@@ -75,12 +81,13 @@ else
 fi
 
 # Build WIP state payload (compact, readable format for event bus)
+# Format: [work:ID] | branch | pr | files | time
+# Note: "next" and "decisions" require Claude context - use manual wip_progress events for those
 CHECKPOINT_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-PAYLOAD="WIP Checkpoint (${TRIGGER})"
-[[ -n "$WORK_ID" ]] && PAYLOAD="${PAYLOAD} | work: ${WORK_ID}"
-[[ -n "$BRANCH" ]] && PAYLOAD="${PAYLOAD} | branch: ${BRANCH}"
+PAYLOAD="[work:${WORK_ID:-unknown}] | branch: ${BRANCH:-unknown}"
+[[ -n "$PR_NUMBER" ]] && PAYLOAD="${PAYLOAD} | pr: #${PR_NUMBER}" || PAYLOAD="${PAYLOAD} | pr: none"
 [[ -n "$WORKTREE" ]] && PAYLOAD="${PAYLOAD} | worktree: ${WORKTREE}"
-[[ -n "$FILES_MODIFIED" ]] && PAYLOAD="${PAYLOAD} | modified: ${FILES_MODIFIED}"
+[[ -n "$FILES_MODIFIED" ]] && PAYLOAD="${PAYLOAD} | files: ${FILES_MODIFIED}"
 PAYLOAD="${PAYLOAD} | time: ${CHECKPOINT_TIME}"
 
 # Publish to session-specific channel
