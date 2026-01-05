@@ -729,11 +729,11 @@ test_statusline_worktree_format() {
         local worktree_parent="${cwd%/.worktrees/*}"
         local repo_name="${worktree_parent##*/}"
         local worktree_branch="${cwd##*/}"
-        dir_name="${worktree_branch} (${repo_name})"
+        dir_name="${repo_name} (${worktree_branch})"
     fi
 
-    # Should produce "issue-268 (rust-genai)"
-    [[ "$dir_name" == "issue-268 (rust-genai)" ]]
+    # Should produce "rust-genai (issue-268)"
+    [[ "$dir_name" == "rust-genai (issue-268)" ]]
 }
 
 test_statusline_graceful_no_jq() {

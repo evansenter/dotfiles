@@ -33,7 +33,7 @@ if [[ "$PANE_PATH" == */.worktrees/* ]]; then
     worktree_parent="${PANE_PATH%/.worktrees/*}"
     repo_name="${worktree_parent##*/}"
     worktree_branch="${PANE_PATH##*/}"
-    DIR_NAME="${worktree_branch} (${repo_name})"
+    DIR_NAME="${repo_name} (${worktree_branch})"
 fi
 
 case "$STATE" in

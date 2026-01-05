@@ -99,7 +99,7 @@ if [[ "$cwd" == */.worktrees/* ]]; then
     worktree_parent="${cwd%/.worktrees/*}"
     repo_name="${worktree_parent##*/}"
     worktree_branch="${cwd##*/}"
-    dir_name="${worktree_branch} (${repo_name})"
+    dir_name="${repo_name} (${worktree_branch})"
 fi
 link_end=$'\e]8;;\e\\'
 
