@@ -81,13 +81,17 @@ Write `.parallel-context.md` to the new worktree:
 ### 6. Launch Session
 
 Check if tmux is available. Ask user:
-- New tmux pane (Recommended)
-- New tmux window
+- New tmux window (Recommended)
+- New tmux pane
 - Manual
 
 For tmux options:
 ```bash
+# Window (default):
+tmux new-window -c "[worktree-path]"
+# Pane:
 tmux split-window -h -c "[worktree-path]"
+# Then:
 tmux send-keys "claude 'ultrathink: Starting parallel work. Read .parallel-context.md for context.'" Enter
 ```
 

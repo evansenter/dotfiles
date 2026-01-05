@@ -4,14 +4,14 @@
 # Usage: repo-stats.sh [--days N] [repo1 repo2 ...]
 #
 # Examples:
-#   repo-stats.sh                    # Default repos, last 14 days
+#   repo-stats.sh                    # Default repos, last 30 days
 #   repo-stats.sh --days 7           # Last 7 days
 #   repo-stats.sh myrepo otherrepo   # Custom repos
 
 set -euo pipefail
 
 # Defaults
-DAYS=14
+DAYS=30
 OWNER="evansenter"
 LOCAL_DIR="$HOME/Documents/projects"
 DEFAULT_REPOS="dotfiles gemicro claude-event-bus claude-session-analytics rust-genai"
@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: repo-stats.sh [--days N] [--owner OWNER] [--local-dir DIR] [repo1 repo2 ...]"
             echo ""
             echo "Options:"
-            echo "  --days N        Look back N days (default: 14)"
+            echo "  --days N        Look back N days (default: 30)"
             echo "  --owner NAME    GitHub owner (default: evansenter)"
             echo "  --local-dir DIR Local repos directory (default: ~/Documents/projects)"
             echo ""
@@ -100,33 +100,78 @@ echo ""
 
 # Column widths for project stats
 pw1=26  # Repo
-pw2=6   # Issues
-pw3=4   # PRs
+pw2=12  # Issues (open/closed)
+pw3=12  # PRs (open/closed)
+pw4=8   # Commits
 
-printf "┌%s┬%s┬%s┐\n" \
+printf "┌%s┬%s┬%s┬%s┐\n" \
     "$(printf '─%.0s' $(seq 1 $((pw1 + 2))))" \
     "$(printf '─%.0s' $(seq 1 $((pw2 + 2))))" \
-    "$(printf '─%.0s' $(seq 1 $((pw3 + 2))))"
-print_row $pw1 $pw2 $pw3 "Repository" "Issues" "PRs"
-printf "├%s┼%s┼%s┤\n" \
+    "$(printf '─%.0s' $(seq 1 $((pw3 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((pw4 + 2))))"
+print_row $pw1 $pw2 $pw3 $pw4 "Repository" "Issues" "PRs" "Commits"
+printf "├%s┼%s┼%s┼%s┤\n" \
     "$(printf '─%.0s' $(seq 1 $((pw1 + 2))))" \
     "$(printf '─%.0s' $(seq 1 $((pw2 + 2))))" \
-    "$(printf '─%.0s' $(seq 1 $((pw3 + 2))))"
+    "$(printf '─%.0s' $(seq 1 $((pw3 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((pw4 + 2))))"
+
+# Totals for project stats
+total_open_issues=0
+total_closed_issues=0
+total_open_prs=0
+total_closed_prs=0
+total_proj_commits=0
 
 for repo in $REPOS; do
-    # Get open issues and PRs from GitHub
-    open_issues=$(gh api "repos/$OWNER/$repo" --jq '.open_issues_count // 0' 2>/dev/null) || open_issues="0"
+    # Get open issues (excluding PRs)
+    open_issues_total=$(gh api "repos/$OWNER/$repo" --jq '.open_issues_count // 0' 2>/dev/null) || open_issues_total="0"
     open_prs=$(gh api "repos/$OWNER/$repo/pulls?state=open" --jq 'length' 2>/dev/null) || open_prs="0"
-    # open_issues includes PRs, so subtract
-    open_issues=$((open_issues - open_prs))
+    open_issues=$((open_issues_total - open_prs))
 
-    print_row $pw1 $pw2 $pw3 "$repo" "$open_issues" "$open_prs"
+    # Get closed issues in period (search API filters out PRs with is:issue)
+    closed_issues=$(gh api "search/issues?q=repo:$OWNER/$repo+is:issue+is:closed+closed:>=$SINCE&per_page=1" --jq '.total_count // 0' 2>/dev/null) || closed_issues="0"
+
+    # Get closed PRs in period
+    closed_prs=$(gh api "search/issues?q=repo:$OWNER/$repo+is:pr+is:closed+closed:>=$SINCE&per_page=1" --jq '.total_count // 0' 2>/dev/null) || closed_prs="0"
+
+    # Get commits in period (paginate for full count)
+    commits=0
+    page=1
+    while true; do
+        page_count=$(gh api "repos/$OWNER/$repo/commits?since=$SINCE&per_page=100&page=$page" --jq 'length' 2>/dev/null) || page_count="0"
+        commits=$((commits + page_count))
+        # Stop if we got fewer than 100 (last page)
+        [[ "$page_count" -lt 100 ]] && break
+        page=$((page + 1))
+    done
+
+    # Accumulate totals
+    total_open_issues=$((total_open_issues + open_issues))
+    total_closed_issues=$((total_closed_issues + closed_issues))
+    total_open_prs=$((total_open_prs + open_prs))
+    total_closed_prs=$((total_closed_prs + closed_prs))
+    total_proj_commits=$((total_proj_commits + commits))
+
+    issues_fmt="${open_issues}/${closed_issues}"
+    prs_fmt="${open_prs}/${closed_prs}"
+
+    print_row $pw1 $pw2 $pw3 $pw4 "$repo" "$issues_fmt" "$prs_fmt" "$commits"
 done
 
-printf "└%s┴%s┴%s┘\n" \
+printf "├%s┼%s┼%s┼%s┤\n" \
     "$(printf '─%.0s' $(seq 1 $((pw1 + 2))))" \
     "$(printf '─%.0s' $(seq 1 $((pw2 + 2))))" \
-    "$(printf '─%.0s' $(seq 1 $((pw3 + 2))))"
+    "$(printf '─%.0s' $(seq 1 $((pw3 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((pw4 + 2))))"
+print_row $pw1 $pw2 $pw3 $pw4 "TOTAL" "${total_open_issues}/${total_closed_issues}" "${total_open_prs}/${total_closed_prs}" "$total_proj_commits"
+printf "└%s┴%s┴%s┴%s┘\n" \
+    "$(printf '─%.0s' $(seq 1 $((pw1 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((pw2 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((pw3 + 2))))" \
+    "$(printf '─%.0s' $(seq 1 $((pw4 + 2))))"
+echo ""
+echo "_Format: open/closed (closed in last ${DAYS}d)_"
 
 echo ""
 

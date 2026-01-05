@@ -657,6 +657,137 @@ test_statusline_client_id_lookup() {
 }
 
 # ============================================================================
+# tmux-status.sh tests
+# ============================================================================
+
+# Mock tmux for testing
+setup_mock_tmux() {
+    cat > "$TEST_TMP/bin/tmux" << 'MOCK_TMUX'
+#!/bin/bash
+# Mock tmux for testing tmux-status.sh hook
+
+case "$1" in
+    display-message)
+        # Parse -t and -p flags
+        target=""
+        format=""
+        while [[ $# -gt 1 ]]; do
+            case "$2" in
+                -t) target="$3"; shift 2 ;;
+                -p) shift ;;  # Print flag
+                *) format="$2"; shift ;;
+            esac
+        done
+        # Return mock values based on format
+        case "$format" in
+            '#{window_id}') echo "@1" ;;
+            '#{b:pane_current_path}') echo "test-project" ;;
+            *) echo "" ;;
+        esac
+        ;;
+    set-window-option)
+        # Accept and ignore - just verify we don't crash
+        exit 0
+        ;;
+    rename-window)
+        # Echo the new name to verify it was called correctly
+        # Parse -t flag and name
+        while [[ $# -gt 1 ]]; do
+            case "$2" in
+                -t) shift 2 ;;  # Skip target
+                *) echo "RENAMED: $2"; shift ;;
+            esac
+        done
+        ;;
+    *)
+        echo "Unknown tmux command: $1" >&2
+        exit 1
+        ;;
+esac
+MOCK_TMUX
+    chmod +x "$TEST_TMP/bin/tmux"
+}
+
+test_tmux_status_syntax() {
+    bash -n "$HOOKS_DIR/tmux-status.sh"
+}
+
+test_tmux_status_graceful_no_tmux_env() {
+    # Without TMUX env var, should exit silently
+    local output
+    local exit_code=0
+    output=$(env -u TMUX -u TMUX_PANE bash "$HOOKS_DIR/tmux-status.sh" working 2>&1) || exit_code=$?
+
+    # Should exit cleanly with no output
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+test_tmux_status_graceful_no_pane_id() {
+    # With TMUX but no TMUX_PANE, should exit silently
+    local output
+    local exit_code=0
+    # Use env -i to clear all environment, then set only what we need
+    output=$(env -i PATH="$PATH" HOME="$HOME" TMUX="/tmp/tmux-test" bash "$HOOKS_DIR/tmux-status.sh" working 2>&1) || exit_code=$?
+
+    # Should exit cleanly with no output
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+test_tmux_status_working_state() {
+    setup_mock_tmux
+
+    local output
+    local exit_code=0
+    output=$(echo "" | env TMUX="/tmp/tmux-test" TMUX_PANE="%0" bash "$HOOKS_DIR/tmux-status.sh" working 2>&1) || exit_code=$?
+
+    # Should rename window with hourglass emoji
+    [[ $exit_code -eq 0 ]] && [[ "$output" == *"⏳ test-project"* ]]
+}
+
+test_tmux_status_waiting_state() {
+    setup_mock_tmux
+
+    local output
+    local exit_code=0
+    output=$(echo "" | env TMUX="/tmp/tmux-test" TMUX_PANE="%0" bash "$HOOKS_DIR/tmux-status.sh" waiting 2>&1) || exit_code=$?
+
+    # Should rename window without hourglass emoji
+    [[ $exit_code -eq 0 ]] && [[ "$output" == *"RENAMED: test-project"* ]] && [[ "$output" != *"⏳"* ]]
+}
+
+test_tmux_status_default_waiting() {
+    setup_mock_tmux
+
+    local output
+    local exit_code=0
+    # No state argument = defaults to waiting
+    output=$(echo "" | env TMUX="/tmp/tmux-test" TMUX_PANE="%0" bash "$HOOKS_DIR/tmux-status.sh" 2>&1) || exit_code=$?
+
+    # Should default to waiting state (no hourglass)
+    [[ $exit_code -eq 0 ]] && [[ "$output" == *"RENAMED: test-project"* ]] && [[ "$output" != *"⏳"* ]]
+}
+
+test_tmux_status_consumes_stdin() {
+    setup_mock_tmux
+
+    # Hook should consume stdin without blocking
+    # Use background process with wait to avoid timeout command (not on macOS)
+    local exit_code=0
+    (echo '{"session_id":"test"}' | env -i PATH="$PATH" HOME="$HOME" TMUX="/tmp/tmux-test" TMUX_PANE="%0" bash "$HOOKS_DIR/tmux-status.sh" working >/dev/null 2>&1) &
+    local pid=$!
+    sleep 1
+    if kill -0 "$pid" 2>/dev/null; then
+        # Still running after 1s = stuck on stdin
+        kill "$pid" 2>/dev/null || true
+        exit_code=1
+    else
+        wait "$pid" || exit_code=$?
+    fi
+
+    [[ $exit_code -eq 0 ]]
+}
+
+# ============================================================================
 # Run all tests
 # ============================================================================
 
@@ -717,6 +848,16 @@ main() {
     run_test "graceful degradation (malformed JSON)" "test_statusline_graceful_malformed_json"
     run_test "graceful degradation (null fields)" "test_statusline_graceful_null_fields"
     run_test "integration: client_id lookup" "test_statusline_client_id_lookup"
+    echo ""
+
+    echo "=== tmux-status.sh ==="
+    run_test "syntax check" "test_tmux_status_syntax"
+    run_test "graceful degradation (no TMUX env)" "test_tmux_status_graceful_no_tmux_env"
+    run_test "graceful degradation (no TMUX_PANE)" "test_tmux_status_graceful_no_pane_id"
+    run_test "integration: working state" "test_tmux_status_working_state"
+    run_test "integration: waiting state" "test_tmux_status_waiting_state"
+    run_test "integration: default to waiting" "test_tmux_status_default_waiting"
+    run_test "consumes stdin" "test_tmux_status_consumes_stdin"
     echo ""
 
     # Summary
