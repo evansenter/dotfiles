@@ -24,12 +24,14 @@ Todos use `[work:ID]` prefix:
 
 ## Attach Mode (`--attach`)
 
-Join existing PR on current branch.
+Join existing PR on current branch, restoring WIP context if available.
 
-1. Get PR info: `gh pr view --json number,title,state`
-2. Determine identifier from PR body (`Fixes #N` → `issue-N`, otherwise `pr-N`)
-3. Determine position (what's already done based on PR/CI state)
-4. Create remaining todos only
+1. **Check for WIP checkpoint**: Look for `<wip-checkpoint-restored>` tags from session start
+2. Get PR info: `gh pr view --json number,title,state`
+3. Determine identifier from PR body (`Fixes #N` → `issue-N`, otherwise `pr-N`)
+4. Fetch recent `wip_progress` events for this session: `mcp__event-bus__get_events(channel: "session:<session-id>", limit: 5)`
+5. Determine position (from WIP events, PR state, CI state)
+6. Create remaining todos only, starting from last known position
 
 ---
 
@@ -115,6 +117,26 @@ Mark first task `in_progress`.
 
 ---
 
+## WIP State Checkpointing
+
+To preserve context across session compaction, checkpoint progress to the event bus:
+
+**When to checkpoint:** After completing any significant todo, or before long-running operations.
+
+**How to checkpoint:**
+```
+mcp__event-bus__publish_event(
+  event_type: "wip_progress",
+  payload: "[work:<ID>] Completed: <task>. In progress: <next_task>. Remaining: <count>",
+  session_id: "<your-session-id>",
+  channel: "session:<your-session-id>"
+)
+```
+
+**On session resume after compaction:** Check `<wip-checkpoint-restored>` tags in session start for previous state.
+
+---
+
 ## Checkpoint Handling
 
 **Run /pr-review local**: Run, fix issues if found, loop until clean.
@@ -136,6 +158,16 @@ mcp__event-bus__publish_event(
   payload: "Merged PR #<N> - <title>",
   session_id: "<your-session-id>",
   channel: "repo:<repo_name>"
+)
+```
+
+**Cleanup WIP state** (optional, prevents stale checkpoints):
+```
+mcp__event-bus__publish_event(
+  event_type: "wip_cleared",
+  payload: "[work:<ID>] Work completed - merged PR #<N>",
+  session_id: "<your-session-id>",
+  channel: "session:<your-session-id>"
 )
 ```
 

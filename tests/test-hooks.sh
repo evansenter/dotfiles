@@ -55,12 +55,35 @@ setup_test_env() {
     cat > "$TEST_TMP/bin/jq" << 'EOF'
 #!/bin/bash
 # Mock jq - minimal implementation for testing
+input=$(cat)
 if [[ "$*" == *".session_id"* ]]; then
-    cat | grep -o '"session_id":"[^"]*"' | cut -d'"' -f4 || echo ""
+    echo "$input" | grep -o '"session_id":"[^"]*"' | cut -d'"' -f4 || echo ""
 elif [[ "$*" == *".cwd"* ]]; then
-    cat | grep -o '"cwd":"[^"]*"' | cut -d'"' -f4 || echo ""
+    echo "$input" | grep -o '"cwd":"[^"]*"' | cut -d'"' -f4 || echo ""
+elif [[ "$*" == *".trigger"* ]]; then
+    echo "$input" | grep -o '"trigger":"[^"]*"' | cut -d'"' -f4 || echo "auto"
+elif [[ "$*" == *".source"* ]]; then
+    echo "$input" | grep -o '"source":"[^"]*"' | cut -d'"' -f4 || echo "startup"
+elif [[ "$*" == *"-e"* ]] && [[ "$*" == *".event_id"* ]]; then
+    # For jq -e '.event_id' checks - return success if event_id exists
+    if echo "$input" | grep -q '"event_id"'; then
+        echo "$input" | grep -o '"event_id":[0-9]*' | cut -d':' -f2
+        exit 0
+    else
+        exit 1
+    fi
+elif [[ "$*" == *"-e"* ]] && [[ "$*" == *".success"* ]]; then
+    # For jq -e '.success == true' checks
+    if echo "$input" | grep -q '"success":true'; then
+        exit 0
+    else
+        exit 1
+    fi
+elif [[ "$*" == *"-e"* ]]; then
+    # For other jq -e checks, just pass through
+    echo "$input"
 else
-    cat
+    echo "$input"
 fi
 EOF
     chmod +x "$TEST_TMP/bin/jq"
@@ -155,6 +178,25 @@ case "$1" in
         session_id="${client_id:-test-uuid-1234}"
         # Return success response
         echo '{"success":true,"session_id":"'"$session_id"'","client_id":"'"$client_id"'"}'
+        ;;
+
+    publish)
+        # Parse args for publish command
+        event_type=""
+        payload=""
+        session_id=""
+        channel=""
+        while [[ $# -gt 1 ]]; do
+            case "$2" in
+                --type) event_type="$3"; shift 2 ;;
+                --payload) payload="$3"; shift 2 ;;
+                --session-id) session_id="$3"; shift 2 ;;
+                --channel) channel="$3"; shift 2 ;;
+                *) shift ;;
+            esac
+        done
+        # Return success response with event_id
+        echo '{"event_id":12345,"event_type":"'"$event_type"'","channel":"'"$channel"'"}'
         ;;
 
     sessions)
@@ -397,6 +439,68 @@ test_prompt_events_passes_session_id() {
 }
 
 # ============================================================================
+# pre-compact.sh tests
+# ============================================================================
+
+test_pre_compact_syntax() {
+    bash -n "$HOOKS_DIR/pre-compact.sh"
+}
+
+test_pre_compact_graceful_no_jq() {
+    local MINIMAL_PATH="/bin:/usr/bin"
+    local output
+    local exit_code=0
+    output=$(echo '{"session_id":"test-123","cwd":"/tmp"}' | \
+        env -i PATH="$MINIMAL_PATH" HOME="$HOME" \
+        bash "$HOOKS_DIR/pre-compact.sh" 2>&1) || exit_code=$?
+
+    [[ "$output" == *"skipped"* ]] || [[ "$output" == *"jq not installed"* ]] || [[ $exit_code -eq 0 ]]
+}
+
+test_pre_compact_graceful_no_cli() {
+    local output
+    local exit_code=0
+    output=$(echo '{"session_id":"test-123","cwd":"/tmp"}' | bash "$HOOKS_DIR/pre-compact.sh" 2>&1) || exit_code=$?
+
+    [[ "$output" == *"skipped"* ]] || \
+    [[ "$output" == *"event-bus-cli not installed"* ]] || \
+    [[ "$output" == *"checkpointed"* ]] || \
+    [[ $exit_code -eq 0 ]]
+}
+
+test_pre_compact_graceful_no_session_id() {
+    local output
+    output=$(echo '{}' | bash "$HOOKS_DIR/pre-compact.sh" 2>&1) || true
+
+    [[ "$output" == *"skipped"* ]] || [[ "$output" == *"no session_id"* ]]
+}
+
+# Integration test: pre-compact.sh with mock CLI
+test_pre_compact_happy_path() {
+    setup_mock_event_bus_cli
+
+    local output
+    local exit_code=0
+    output=$(echo '{"session_id":"test-client-uuid","cwd":"/tmp/test-repo","trigger":"manual"}' | \
+        bash "$HOOKS_DIR/pre-compact.sh" 2>&1) || exit_code=$?
+
+    # Should successfully checkpoint and echo confirmation
+    [[ $exit_code -eq 0 ]] && \
+    [[ "$output" == *"WIP state checkpointed"* ]]
+}
+
+test_pre_compact_publishes_event() {
+    setup_mock_event_bus_cli
+
+    local output
+    output=$(echo '{"session_id":"test-session","cwd":"/tmp"}' | \
+        bash "$HOOKS_DIR/pre-compact.sh" 2>&1)
+
+    # Should publish wip_checkpoint event and show confirmation
+    [[ "$output" == *"checkpointed"* ]]
+}
+
+# ============================================================================
 # statusline-command.sh tests
 # ============================================================================
 
@@ -588,6 +692,15 @@ main() {
     run_test "integration: happy path" "test_prompt_events_happy_path"
     run_test "integration: returns events" "test_prompt_events_returns_events"
     run_test "integration: passes session_id" "test_prompt_events_passes_session_id"
+    echo ""
+
+    echo "=== pre-compact.sh ==="
+    run_test "syntax check" "test_pre_compact_syntax"
+    run_test "graceful degradation (no jq)" "test_pre_compact_graceful_no_jq"
+    run_test "graceful degradation (no event-bus-cli)" "test_pre_compact_graceful_no_cli"
+    run_test "graceful degradation (no session_id)" "test_pre_compact_graceful_no_session_id"
+    run_test "integration: happy path" "test_pre_compact_happy_path"
+    run_test "integration: publishes event" "test_pre_compact_publishes_event"
     echo ""
 
     echo "=== statusline-command.sh ==="
