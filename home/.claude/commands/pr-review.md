@@ -48,9 +48,9 @@ Skill(pr-review-toolkit:review-pr)
 
 ### 4. Run Examples (if applicable)
 
-For significant changes, run examples with debug logging (check CLAUDE.md for flags like `LOUD_WIRE=1`). Flag issues found.
+For significant changes, run examples with debug logging (check CLAUDE.md for flags like `LOUD_WIRE=1`). Log output to `/tmp/` and share location with user for optional inspection. Flag issues found.
 
-**Skip if:** Documentation-only changes or no debug flags defined.
+**Skip if:** Documentation-only changes.
 
 ### 5. If Clean
 
@@ -114,7 +114,7 @@ Output ALL findings ordered by severity (Critical > Important > Suggestion):
 - [Theme 2: e.g., "Missing input validation"]
 
 ### Areas Requiring Human Attention
-- [Scope creep, architectural decisions, security]
+- [Scope creep, architectural decisions, security - reference specific files]
 
 ### Detailed Findings
 
@@ -143,7 +143,7 @@ Make sure "Recommended" aligns with your opinion. If you said "Agree", recommend
 
 **Elaborate handling:** Explain the topic in detail, then present the SAME question again (same number) for final decision.
 
-Continue until ALL items have answers.
+Continue until ALL items have answers, including Suggestions.
 
 ### 7. Act on Decisions
 
@@ -160,7 +160,7 @@ Continue until ALL items have answers.
 
 ## Post-Processing
 
-### 8. Post Resolution Comment
+### 8. Post Resolution Comment to PR
 
 ```markdown
 ## Feedback Addressed
@@ -175,7 +175,7 @@ Continue until ALL items have answers.
 - [Suggestion] item - tracked in #N
 ```
 
-Only include sections with items.
+Only include sections with items. Also reply to inline PR comments explaining what was done or answering questions.
 
 ### 9. Broadcast (remote only)
 

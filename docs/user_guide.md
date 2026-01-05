@@ -456,7 +456,7 @@ mcp__event-bus__publish_event(
   event_type="gotcha_discovered",
   payload="SQLite datetime needs explicit adapters in Python 3.12+",
   session_id="<your-session-id>",
-  channel="repo:claude-session-analytics"
+  channel="repo:my-app"
 )
 ```
 
