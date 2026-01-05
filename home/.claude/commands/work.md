@@ -201,21 +201,11 @@ Mark first task `in_progress`.
 
 ## WIP State Checkpointing
 
-To preserve context across session compaction, checkpoint progress to the event bus:
+WIP state is **automatically checkpointed** by the `pre-compact.sh` hook before context compaction.
 
-**When to checkpoint:** After completing any significant todo, or before long-running operations.
+**Auto-captured:** `[work:ID] | branch | pr: #N | files | time`
 
-**How to checkpoint:**
-```
-mcp__event-bus__publish_event(
-  event_type: "wip_progress",
-  payload: "[work:<ID>] Completed: <task>. In progress: <next_task>. Remaining: <count>",
-  session_id: "<your-session-id>",
-  channel: "session:<your-session-id>"
-)
-```
-
-**On session resume after compaction:** Check `<wip-checkpoint-restored>` tags in session start for previous state.
+**On session resume:** Check `<wip-checkpoint-restored>` tags in session start. Combined with the persisted todo list, this provides enough context to continue work.
 
 ---
 

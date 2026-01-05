@@ -37,7 +37,7 @@ High risk or complexity always warrants focused review.
 
 ### Overview
 
-[2-3 sentence summary of what this branch accomplishes]
+[2-3 sentence summary of what this branch accomplishes, followed by sections formatted like below]
 
 ### Changes by Category
 
@@ -52,6 +52,8 @@ High risk or complexity always warrants focused review.
 - `tests/auth.test.ts` - Added refresh token test cases
 
 ### Files for Focused Review
+
+[2-3 sentence summary of where human reviewer should focus, followed by sections formatted like below]
 
 #### Critical
 
@@ -71,6 +73,8 @@ High risk or complexity always warrants focused review.
 - Missing integration test for refresh failure scenario
 
 ### Test Coverage
+
+[2-3 sentence summary of test / example coverage, gaps (include reasoning)]
 
 | Category | Status |
 |----------|--------|
