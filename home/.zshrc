@@ -43,6 +43,9 @@ WORDCHARS=${WORDCHARS/\//}
 # Key Bindings
 # ==============================================================================
 
+# Use emacs keybindings (Ctrl+A, Ctrl+E, Ctrl+W, etc.)
+bindkey -e
+
 # History search with arrow keys (type prefix, then up/down to search)
 autoload -U up-line-or-beginning-search down-line-or-beginning-search
 zle -N up-line-or-beginning-search
