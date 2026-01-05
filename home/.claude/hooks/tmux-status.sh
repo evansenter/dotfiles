@@ -35,7 +35,7 @@ case "$STATE" in
         tmux rename-window -t "$WINDOW_ID" "⏳ $DIR_NAME" 2>/dev/null || true
         ;;
     waiting)
-        # Keep renames disabled while Claude is running
+        # Remove hourglass indicator (rename settings restored on session end)
         tmux rename-window -t "$WINDOW_ID" "$DIR_NAME" 2>/dev/null || true
         ;;
 esac

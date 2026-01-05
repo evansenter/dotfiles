@@ -328,7 +328,15 @@ total_add=0
 total_del=0
 
 for repo in $REPOS; do
-    commits=$(gh api "repos/$OWNER/$repo/commits?since=$SINCE&per_page=100" --jq 'length' 2>/dev/null || echo "0")
+    # Paginate to get full commit count
+    commits=0
+    page=1
+    while true; do
+        page_count=$(gh api "repos/$OWNER/$repo/commits?since=$SINCE&per_page=100&page=$page" --jq 'length' 2>/dev/null) || page_count="0"
+        commits=$((commits + page_count))
+        [[ "$page_count" -lt 100 ]] && break
+        page=$((page + 1))
+    done
 
     if [[ "$commits" -gt 0 ]]; then
         stats=$(gh api "repos/$OWNER/$repo/commits?since=$SINCE&per_page=30" --jq '.[].sha' 2>/dev/null | \
