@@ -15,6 +15,17 @@ if [[ -n "${TMUX:-}" ]] && [[ -n "${TMUX_PANE:-}" ]]; then
     if [[ -n "$WINDOW_ID" ]]; then
         tmux set-window-option -t "$WINDOW_ID" allow-rename off 2>/dev/null || true
         tmux set-window-option -t "$WINDOW_ID" automatic-rename off 2>/dev/null || true
+
+        # Set window name to directory (Claude already set it to "2.0.76" before hook ran)
+        PANE_PATH=$(tmux display-message -t "$TMUX_PANE" -p '#{pane_current_path}' 2>/dev/null) || PANE_PATH="$PWD"
+        DIR_NAME="${PANE_PATH##*/}"
+        if [[ "$PANE_PATH" == */.worktrees/* ]]; then
+            worktree_parent="${PANE_PATH%/.worktrees/*}"
+            repo_name="${worktree_parent##*/}"
+            worktree_branch="${PANE_PATH##*/}"
+            DIR_NAME="${repo_name} (${worktree_branch})"
+        fi
+        tmux rename-window -t "$WINDOW_ID" "$DIR_NAME" 2>/dev/null || true
     fi
 fi
 
