@@ -342,7 +342,12 @@ Session log mining for workflow optimization. Key capabilities:
 
 ### gemicro (Owner)
 
-CLI agent exploration platform for Gemini API via rust-genai. Key capabilities:
+Agent patterns and tool orchestration on top of rust-genai's LLM client. Key capabilities:
+
+**LLM-First Design** — Trust the model; don't over-engineer:
+- Agents are thin wrappers that emit events, not complex state machines
+- Breaking changes welcome—simplicity over backwards compatibility
+- No agent-specific parsing; let the model handle ambiguity
 
 **Soft-Typed Event Extensibility** — Agents define their own events without core changes:
 - `AgentUpdate` uses `event_type: String` + `data: JSON` instead of rigid enums
