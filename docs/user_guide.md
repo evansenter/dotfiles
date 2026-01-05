@@ -243,36 +243,32 @@ This is speculative—not implemented, but the logical next step after system-wi
 
 ### dotfiles (Control Plane)
 
-The orchestration hub. All commands, agents, and hooks that define how Claude Code operates.
+The orchestration hub. Key capabilities:
 
-**Commands:**
-- `/work <issue>` - Full workflow orchestration with checkpoints
-- `/pr-review local|remote` - Batch code review with decision interface
-- `/pr-create` - Commit, push, and open PR in one step
-- `/parallel-work` - Git worktree management with tmux auto-launch
-- `/status-report` - Session-aware orientation with recommendations
-- `/improve-workflow` - Data-driven suggestions from session analytics
-- `/im-lost` - Show current workflow position and context
-- `/watch-ci` - Background CI monitoring with notifications
+**Workflow Orchestration** — The core loop that turns issues into merged PRs:
+- `/work <issue>` orchestrates branch creation, checkpoints, self-review, and cleanup
+- `/pr-review local|remote` batches feedback into AskUserQuestion decisions
+- `/watch-ci` monitors CI in background, broadcasts results to event bus
 
-**Agents:**
-- `audit-codebase` - Code quality, anti-patterns, Evergreen violations
-- `audit-tests` - Test redundancy, staleness, coverage gaps
-- `audit-issues` - Issue triage, priority alignment, staleness
-- `audit-docs` - Documentation accuracy and drift
-- `status-report` - Repo status with recent work and recommendations
-- `summarize-work` - Summarize branch work for PR creation
+**Parallel Development** — Run multiple PRs simultaneously:
+- `/parallel-work` creates git worktrees with dedicated tmux sessions
+- Event bus coordinates discoveries and blockers across sessions
+- Up to 15 parallel Opus sessions during peak development
 
-**Hooks:**
-- `session-start.sh` - Auto-register with event bus, restore WIP state
-- `session-end.sh` - Clean unregister, persist state
-- `prompt-events.sh` - Poll event bus on each prompt
-- `tmux-status.sh` - Update tmux statusline with session info
+**Context Continuity** — Survive compaction and session switches:
+- `pre-compact` hook publishes `wip_checkpoint` with branch/PR/file state
+- `session-start` hook restores WIP context on resume
+- `/im-lost` shows current workflow position when disoriented
 
-**Infrastructure:**
-- Bootstrap system - Idempotent symlinks, MCP server installation, LaunchAgents
-- Statusline - Ambient awareness (repo/branch, session name, context %, model)
-- Dark mode switching - btop theme sync via `dark-notify`
+**Self-Improvement** — The system improves itself:
+- `/improve-workflow` mines session analytics for friction patterns
+- `audit-*` agents run background analysis (codebase, tests, issues, docs)
+- Every friction becomes an issue; issues become automation
+
+**Ambient Awareness** — Always know where you are:
+- Statusline shows repo/branch, session name, context %, model
+- `tmux-status` hook indicates working/waiting state per pane
+- Event bus surfaces cross-session activity on each prompt
 
 ## Further Reading
 
