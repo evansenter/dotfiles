@@ -4,7 +4,7 @@ A documented experiment in AI-augmented software development using Claude Code.
 
 ## The Thesis
 
-AI coding assistants are leverage multipliers. The more you invest in teaching them your workflows, the more they amplify output. This document records that investment.
+The coding harness is solved—Cursor, Copilot, and Claude Code all generate competent code. The leverage multiplier is **workflow integration**: issue tracking, review workflows, cross-session coordination, and session continuity. This document records that investment.
 
 ## The Architecture
 
@@ -67,7 +67,7 @@ _Source: `gh pr list`, `gh issue list`, `scc`, `git log --stat`_
 
 ### Session Analytics
 
-_Data available since December 30, 2025 (when session logging began)._
+_Data available since December 30, 2025 (when session logging began via the session-analytics trajectory store)._
 
 | Metric | Value | Source |
 |--------|-------|--------|
@@ -81,13 +81,13 @@ _Data available since December 30, 2025 (when session logging began)._
 
 **Regenerate:** `~/.claude/contrib/repo-stats.sh --days 17 --session-stats`
 
-### Cost
+### Cost since Dec 30th
 
 _Estimated from session analytics (Dec 30+)._
 
 | Metric | Value |
 |--------|-------|
-| Actual cost | ~£1,000 |
+| Actual cost | ~£700 |
 | API equivalent (Opus pricing) | ~$28,000 |
 | Without prompt caching | ~$156,000 |
 | Caching savings | 5.6x |
@@ -163,15 +163,41 @@ CLAUDE.md files are read on every interaction—a form of dependency injection f
 
 This is the highest-leverage investment: one hour improving your global CLAUDE.md saves hundreds of hours of repeated instruction across future sessions.
 
+### 6. Ownership over Skill
+
+Design agents around domain ownership, not capabilities. "An agent responsible for the Auth Service" beats "an agent good at code reviews." Ownership creates:
+- Accumulated context across sessions
+- Accountability (the agent sees consequences of its decisions)
+- Natural boundaries for what belongs in context
+
+Skill-based agents (code-reviewer, test-writer) apply shallow patterns. Domain-owning agents build deep understanding.
+
+### 7. Workflow Integration over Code Generation
+
+The coding problem is solved. Cursor, Copilot, and Claude Code all write competent code. The unsolved problem is integration with your organization's workflow:
+- Issue tracking (Buganizer, Jira, GitHub Issues)
+- Code review (Critique, Gerrit, GitHub PRs)
+- Code search (internal tools, cross-repo grep)
+- CI/CD coordination
+
+This system's value isn't better code generation—it's the `/work` command that orchestrates issue→branch→PR→review→merge, the event bus that coordinates parallel sessions, and the hooks that maintain context across compactions.
+
 ## The Frontier
 
 What's still broken:
 
-### MCP Doesn't Support Push
+### MCP Doesn't Support Push (or Learning Propagation)
 
-The Model Context Protocol is request/response only. Claude can call MCP tools, but servers can't push events to Claude. This is the fundamental blocker for real-time multi-agent coordination—without push, agents can't react to events without polling.
+The Model Context Protocol is request/response only. Claude can call MCP tools, but servers can't push events to Claude. This blocks two critical capabilities:
 
-**Impact:** When Session B publishes an event, Session A won't see it until the next prompt triggers a hook poll. Long tool-use loops run blind to external events.
+**Real-time coordination:** When Session B publishes an event, Session A won't see it until the next prompt triggers a hook poll. Long tool-use loops run blind to external events.
+
+**Learning propagation:** When one agent discovers something (a gotcha, a pattern, a better approach), that knowledge should flow to other agents automatically. Currently learning propagates via:
+- Events (ephemeral, require polling)
+- GitHub issues (persistent, but manual triage)
+- CLAUDE.md edits (manual, requires human approval)
+
+None of these are automatic agent-to-agent learning. The event bus is a hack around MCP's limitations, not a solution.
 
 **Workaround:** `prompt-events.sh` hook polls on every user prompt. Works for interactive sessions, but doesn't help autonomous agents.
 
@@ -192,6 +218,19 @@ The event bus runs locally. Events don't sync between machines.
 5+ parallel Opus sessions can hit API rate limits.
 
 **Mitigation:** Stagger session starts, use Sonnet for lighter tasks.
+
+### No Constrained Self-Evolution
+
+Agents should be able to update their own CLAUDE.md (their "dependency injection") within constraints. Currently:
+- Agents can propose changes via issues
+- Agents can draft CLAUDE.md edits
+- But humans must approve and apply
+
+The missing pieces:
+- **Constraint mechanism:** What prevents runaway self-modification? Probably: scope limits, rollback capability, approval for "large" changes.
+- **Swarm controller:** A meta-agent that embodies global policy and can push behavioral changes to all sessions in real-time.
+
+This is speculative—not implemented, but the logical next step after system-wide DI.
 
 ## Getting Started
 
