@@ -1,5 +1,8 @@
 {
   "cleanupPeriodDays": 365,
+  "env": {
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
+  },
   "permissions": {
     "allow": [
       "Edit",
@@ -116,6 +119,20 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/prompt-events.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/tmux-status.sh working"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/tmux-status.sh waiting"
           }
         ]
       }
