@@ -219,18 +219,20 @@ The event bus runs locally. Events don't sync between machines.
 
 **Mitigation:** Stagger session starts, use Sonnet for lighter tasks.
 
-### No Constrained Self-Evolution
+### Limited Self-Evolution
 
 Agents should be able to update their own CLAUDE.md (their "dependency injection") within constraints. Currently:
 - Agents can propose changes via issues
 - Agents can draft CLAUDE.md edits
 - But humans must approve and apply
 
-The missing pieces:
-- **Constraint mechanism:** What prevents runaway self-modification? Probably: scope limits, rollback capability, approval for "large" changes.
-- **Swarm controller:** A meta-agent that embodies global policy and can push behavioral changes to all sessions in real-time.
+**Partial implementation:** Running Claude Code in dotfiles/ acts as a swarm controller—it can update CLAUDE.md, and changes propagate to all repos. But two design constraints limit this:
+- **No push notifications:** Sessions don't see CLAUDE.md changes until restart
+- **No dynamic reload:** Claude Code reads CLAUDE.md at session start only
 
-This is speculative—not implemented, but the logical next step after system-wide DI.
+**Workarounds:** `claude --continue` preserves context across restarts. Event bus can broadcast "reload recommended" events. But true real-time behavioral updates require protocol changes.
+
+**Missing:** Constraint mechanism for autonomous self-modification (scope limits, rollback, approval thresholds).
 
 ## Getting Started
 
