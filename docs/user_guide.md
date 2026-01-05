@@ -196,6 +196,7 @@ Different sessions produce different but valid interpretations. Iteration surfac
 | gemicro | 2 | "Generic Interceptor Semantics" (single trait unifies concerns) |
 | event-bus | 2 | Corrected "SSE stream" to "poll-based"; suggested wiring with analytics |
 | session-analytics | 1 | "Guaranteed Drill-Down Paths" (every aggregate leads to source) |
+| dotfiles | 1 | "Session Lifecycle IoC" (hooks as extension points, not listeners) |
 
 Each session explored their codebase first, then wrote their own section. The prompts evolved: later rounds explicitly asked "what's architecturally novel, not just useful?" This framing consistently produced deeper insights.
 
