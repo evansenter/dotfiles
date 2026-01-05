@@ -255,7 +255,7 @@ The orchestration hub. Key capabilities:
 **Parallel Development** — Run multiple PRs simultaneously:
 - `/parallel-work` creates git worktrees with dedicated tmux sessions
 - Event bus coordinates discoveries and blockers across sessions
-- Up to 15 parallel Opus sessions during peak development
+- Up to 15 parallel Opus sessions—limited by user context-switching overhead and API rate limits, not tooling
 
 **Context Continuity** — Survive compaction and session switches:
 - `pre-compact` hook publishes `wip_checkpoint` with branch/PR/file state
