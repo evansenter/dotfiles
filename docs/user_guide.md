@@ -357,30 +357,26 @@ Agent experimentation platform built on rust-genai. Key capabilities:
 
 Rust client for Google's Gemini Interactions API. Key capabilities:
 
-**Stateful Conversations** — Server-side context preservation:
-- `previous_interaction_id` chains interactions automatically
-- System instructions inherited; tools must be resent per turn
-- Stateless mode available for privacy-sensitive applications
+**Evergreen Soft-Typing** — Future-proof API evolution without breaking changes:
+- Unknown enum values deserialize to `Unknown` variants preserving full data
+- Non-exhaustive enums with roundtrip serialization for forward compatibility
+- Decouples client upgrades from API feature rollout
 
-**Flexible Function Calling** — Three approaches for different needs:
-- `#[tool]` macro with compile-time schema generation via `utoipa`
-- `ToolService` trait for runtime dependency injection
-- Manual `FunctionDeclaration` for dynamic definitions
+**Unified Tool Ecosystem** — Single API surface for client and server-side tools:
+- `#[tool]` macro for compile-time stateless functions with schema generation
+- `ToolService` trait for runtime stateful tools (DB pools, API clients)
+- Built-in Google Search, Code Execution, URL Context, File Search
 - Auto-execution loops handle function calling rounds with error recovery
+
+**Multi-Turn State Management** — Automatic conversation context handling:
+- `previous_interaction_id` chains interactions; system instructions inherited
+- `ConversationBuilder` tracks history across turns
+- Thought signature preservation for extended thinking models
 
 **Streaming with Resume** — SSE delivery with interruption recovery:
 - `create_stream()` yields typed `StreamEvent` chunks
 - `event_id` tracking enables resume from last position
 - `create_stream_with_auto_functions()` layers function execution on streams
-
-**Evergreen Type System** — Unknown API types don't break deserialization:
-- All enums have `Unknown { <type>: String, data: Value }` variant
-- Preserves data for roundtrip; logs at warn level
-- Decouples client upgrades from API feature rollout
-
-**Built-In Tools** — Server-side execution for lower latency:
-- Google Search grounding, Python code execution, URL context
-- Results extracted via convenience methods on `InteractionResponse`
 
 ## Further Reading
 
