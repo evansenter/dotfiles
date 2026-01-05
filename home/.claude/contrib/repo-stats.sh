@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # repo-stats.sh - Show code stats across repositories
 #
-# Usage: repo-stats.sh [--days N] [repo1 repo2 ...]
+# Usage: repo-stats.sh [--days N] [--session-stats] [repo1 repo2 ...]
 #
 # Examples:
 #   repo-stats.sh                    # Default repos, last 30 days
-#   repo-stats.sh --days 7           # Last 7 days
+#   repo-stats.sh --days 28          # Last 28 days
+#   repo-stats.sh --session-stats    # Include Claude session analytics
 #   repo-stats.sh myrepo otherrepo   # Custom repos
 
 set -euo pipefail
 
 # Defaults
 DAYS=30
+SESSION_STATS=0
 OWNER="evansenter"
 LOCAL_DIR="$HOME/Documents/projects"
 DEFAULT_REPOS="dotfiles gemicro claude-event-bus claude-session-analytics rust-genai"
@@ -19,6 +21,14 @@ REPOS=""
 
 # Check for scc
 HAS_SCC=$(command -v scc >/dev/null 2>&1 && echo "1" || echo "0")
+
+# Check for session-analytics CLI
+SESSION_CLI=""
+if [[ -x "$HOME/Documents/projects/claude-session-analytics/.venv/bin/session-analytics-cli" ]]; then
+    SESSION_CLI="$HOME/Documents/projects/claude-session-analytics/.venv/bin/session-analytics-cli"
+elif command -v session-analytics-cli >/dev/null 2>&1; then
+    SESSION_CLI="session-analytics-cli"
+fi
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -35,16 +45,22 @@ while [[ $# -gt 0 ]]; do
             LOCAL_DIR="$2"
             shift 2
             ;;
+        --session-stats)
+            SESSION_STATS=1
+            shift
+            ;;
         --help|-h)
-            echo "Usage: repo-stats.sh [--days N] [--owner OWNER] [--local-dir DIR] [repo1 repo2 ...]"
+            echo "Usage: repo-stats.sh [--days N] [--owner OWNER] [--local-dir DIR] [--session-stats] [repo1 repo2 ...]"
             echo ""
             echo "Options:"
-            echo "  --days N        Look back N days (default: 30)"
-            echo "  --owner NAME    GitHub owner (default: evansenter)"
-            echo "  --local-dir DIR Local repos directory (default: ~/Documents/projects)"
+            echo "  --days N          Look back N days (default: 30)"
+            echo "  --owner NAME      GitHub owner (default: evansenter)"
+            echo "  --local-dir DIR   Local repos directory (default: ~/Documents/projects)"
+            echo "  --session-stats   Include Claude Code session analytics"
             echo ""
             echo "If repos are specified, uses those instead of defaults."
             echo "Uses 'scc' for accurate LoC if installed and repos exist locally."
+            echo "Uses 'session-analytics-cli' for session stats if available."
             exit 0
             ;;
         *)
@@ -405,5 +421,90 @@ if [[ "$HAS_SCC" == "1" ]]; then
         echo '```'
         scc --exclude-dir .worktrees,target,node_modules,vendor,dist,build,.git $local_paths
         echo '```'
+    fi
+fi
+
+# Print session analytics if requested and CLI available
+if [[ "$SESSION_STATS" == "1" ]]; then
+    if [[ -z "$SESSION_CLI" ]]; then
+        echo ""
+        echo "### Session Analytics"
+        echo ""
+        echo "_session-analytics-cli not found. Install from claude-session-analytics repo._"
+    else
+        echo ""
+        echo "### Session Analytics"
+        echo ""
+
+        # Get status for date range
+        status_json=$("$SESSION_CLI" --json status 2>/dev/null)
+        earliest=$(echo "$status_json" | jq -r '.earliest_event // "unknown"' | cut -d'T' -f1)
+        latest=$(echo "$status_json" | jq -r '.latest_event // "unknown"' | cut -d'T' -f1)
+
+        echo "**Data range:** $earliest to $latest"
+        echo ""
+
+        # Get token usage
+        tokens_json=$("$SESSION_CLI" --json tokens --days "$DAYS" 2>/dev/null)
+        sessions=$("$SESSION_CLI" --json sessions --days "$DAYS" 2>/dev/null | jq 'if type == "array" then length else .session_count // 0 end')
+        input_tokens=$(echo "$tokens_json" | jq -r '.total_input_tokens // 0')
+        output_tokens=$(echo "$tokens_json" | jq -r '.total_output_tokens // 0')
+        cache_read=$(echo "$tokens_json" | jq -r '.total_cache_read_tokens // 0')
+        cache_create=$(echo "$tokens_json" | jq -r '.total_cache_creation_tokens // 0')
+
+        # Get tool frequency
+        freq_json=$("$SESSION_CLI" --json frequency --days "$DAYS" 2>/dev/null)
+        tool_calls=$(echo "$freq_json" | jq -r '.total_tool_calls // 0')
+
+        # Get top sequences
+        seq_json=$("$SESSION_CLI" --json sequences --days "$DAYS" 2>/dev/null)
+        top_seq=$(echo "$seq_json" | jq -r '.sequences[0] | "\(.pattern): \(.count)"' 2>/dev/null || echo "N/A")
+
+        # Format large numbers
+        format_num() {
+            local n=$1
+            if [[ $n -ge 1000000000 ]]; then
+                printf "%.1fB" "$(echo "scale=1; $n / 1000000000" | bc)"
+            elif [[ $n -ge 1000000 ]]; then
+                printf "%.1fM" "$(echo "scale=1; $n / 1000000" | bc)"
+            elif [[ $n -ge 1000 ]]; then
+                printf "%.1fK" "$(echo "scale=1; $n / 1000" | bc)"
+            else
+                echo "$n"
+            fi
+        }
+
+        # Calculate cache ratio
+        if [[ "$cache_create" -gt 0 ]]; then
+            cache_ratio=$(echo "scale=0; $cache_read / $cache_create" | bc)
+        else
+            cache_ratio="N/A"
+        fi
+
+        # Column widths for session stats
+        sw1=20  # Metric
+        sw2=15  # Value
+
+        printf "┌%s┬%s┐\n" \
+            "$(printf '─%.0s' $(seq 1 $((sw1 + 2))))" \
+            "$(printf '─%.0s' $(seq 1 $((sw2 + 2))))"
+        print_row $sw1 $sw2 "Metric" "Value"
+        printf "├%s┼%s┤\n" \
+            "$(printf '─%.0s' $(seq 1 $((sw1 + 2))))" \
+            "$(printf '─%.0s' $(seq 1 $((sw2 + 2))))"
+        print_row $sw1 $sw2 "Sessions" "$sessions"
+        print_row $sw1 $sw2 "Tool invocations" "$tool_calls"
+        print_row $sw1 $sw2 "Input tokens" "$(format_num "$input_tokens")"
+        print_row $sw1 $sw2 "Output tokens" "$(format_num "$output_tokens")"
+        print_row $sw1 $sw2 "Cache read" "$(format_num "$cache_read")"
+        print_row $sw1 $sw2 "Cache creation" "$(format_num "$cache_create")"
+        print_row $sw1 $sw2 "Cache ratio" "${cache_ratio}:1"
+        print_row $sw1 $sw2 "Top sequence" "$top_seq"
+        printf "└%s┴%s┘\n" \
+            "$(printf '─%.0s' $(seq 1 $((sw1 + 2))))" \
+            "$(printf '─%.0s' $(seq 1 $((sw2 + 2))))"
+
+        echo ""
+        echo "_Source: session-analytics-cli (last ${DAYS}d)_"
     fi
 fi
