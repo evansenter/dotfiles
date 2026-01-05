@@ -357,26 +357,24 @@ Agent experimentation platform built on rust-genai. Key capabilities:
 
 Rust client for Google's Gemini Interactions API. Key capabilities:
 
-**Evergreen Soft-Typing** — Future-proof API evolution without breaking changes:
-- Unknown enum values deserialize to `Unknown` variants preserving full data
-- Non-exhaustive enums with roundtrip serialization for forward compatibility
-- Decouples client upgrades from API feature rollout
+**Compile-Time Conversation Safety** — Typestate pattern prevents API misuse before code runs:
+- Builder states (`FirstTurn`, `Chained`, `StoreDisabled`) enforce valid method sequences at compile time
+- `CanAutoFunction` trait makes impossible states unrepresentable
+- Undocumented API behaviors codified in types, not runtime checks
 
 **Unified Tool Ecosystem** — Single API surface for client and server-side tools:
-- `#[tool]` macro for compile-time stateless functions with schema generation
-- `ToolService` trait for runtime stateful tools (DB pools, API clients)
-- Built-in Google Search, Code Execution, URL Context, File Search
-- Auto-execution loops handle function calling rounds with error recovery
+- `#[tool]` macro: compile-time stateless functions with automatic schema generation
+- `ToolService` trait: runtime stateful tools sharing DB pools/API clients via Arc cloning
+- Built-in tools (Google Search, Code Execution, File Search) configured the same way as custom functions
 
-**Multi-Turn State Management** — Automatic conversation context handling:
-- `previous_interaction_id` chains interactions; system instructions inherited
-- `ConversationBuilder` tracks history across turns
-- Thought signature preservation for extended thinking models
+**Evergreen Soft-Typing** — Graceful API evolution without breaking deployments:
+- `Unknown { <context>_type, data }` variants preserve raw JSON when Google adds new types
+- `ENUM_WIRE_FORMATS.md` captures empirically-tested serialization (docs sometimes lie)
+- Non-exhaustive enums with full roundtrip fidelity
 
-**Streaming with Resume** — SSE delivery with interruption recovery:
-- `create_stream()` yields typed `StreamEvent` chunks
-- `event_id` tracking enables resume from last position
-- `create_stream_with_auto_functions()` layers function execution on streams
+**Resumable Streaming** — Network-resilient real-time responses:
+- Each event carries `event_id`; resume from exact failure point without re-executing functions
+- `create_stream_with_auto_functions()` streams intermediate results during multi-turn loops
 
 ## Further Reading
 
