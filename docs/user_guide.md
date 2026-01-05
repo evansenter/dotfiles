@@ -232,7 +232,7 @@ Agents should be able to update their own CLAUDE.md (their "dependency injection
 
 **Workarounds:** `claude --continue` preserves context across restarts. Event bus can broadcast "reload recommended" events. But true real-time behavioral updates require protocol changes.
 
-**Missing:** Constraint mechanism for autonomous self-modification (scope limits, rollback, approval thresholds).
+**Missing:** Constraint mechanism. Currently we allow *unconstrained* self-modification—if you approve an edit to CLAUDE.md, there are no guardrails on scope, no automatic rollback on regression, no approval thresholds for "large" behavioral changes. The human is the only constraint.
 
 ## Getting Started
 
