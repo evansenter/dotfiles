@@ -188,12 +188,18 @@ Different sessions produce different but valid interpretations. Iteration surfac
 
 **Pattern:** Send `help_needed` with a template prompt to another repo's session. They respond with `help_response`. Iterate 2-3 rounds. The final version incorporates perspectives neither session had initially.
 
-**Example:** This document's rust-genai section was refined through 3 rounds of event bus feedback:
-- Round 1: "Unified Tool Ecosystem", "Multi-Turn State Management"
-- Round 2: Discovered "Compile-Time Conversation Safety" (typestate pattern)
-- Round 3: Converged—kept the deep insight, restored good framing
+**This document's Repository Details section was generated this way:**
 
-The typestate insight ("impossible states unrepresentable") is deeper than "state management"—a fresh session recognized architectural patterns the original author missed.
+| Repo | Rounds | Key Discovery |
+|------|--------|---------------|
+| rust-genai | 3 | "Compile-Time Conversation Safety" (typestate pattern) |
+| gemicro | 2 | "Generic Interceptor Semantics" (single trait unifies concerns) |
+| event-bus | 2 | Corrected "SSE stream" to "poll-based"; suggested wiring with analytics |
+| session-analytics | 1 | "Guaranteed Drill-Down Paths" (every aggregate leads to source) |
+
+Each session explored their codebase first, then wrote their own section. The prompts evolved: later rounds explicitly asked "what's architecturally novel, not just useful?" This framing consistently produced deeper insights.
+
+**What broke:** I originally wrote "SSE stream" in the architecture diagram. The event-bus owner-session corrected it: "No dedicated SSE endpoint exists. The event bus is poll-only by design."
 
 **Limitation:** Only works for interactive sessions (hook polls on prompt). Autonomous agents running tool loops won't see responses until completion.
 
@@ -261,34 +267,31 @@ Agents should be able to update their own CLAUDE.md (their "dependency injection
 
 ## Repository Details
 
+_Each section below was written by that repository's owner-session through cross-session refinement via event bus. 2-3 rounds of `help_needed`/`help_response` exchanges surfaced architectural patterns the original author missed. See Key Learning #8._
+
 ### dotfiles (Control Plane)
 
-The orchestration hub. Key capabilities:
+The orchestration hub—behavioral configuration for Claude Code across all repositories. Key capabilities:
 
-**Workflow Orchestration** — The core loop that turns issues into merged PRs:
-- `/work <issue>` orchestrates branch creation, checkpoints, self-review, and cleanup
-- `/pr-review local|remote` batches feedback into AskUserQuestion decisions
-- `/watch-ci` monitors CI in background, broadcasts results to event bus
+**Commands as Workflow Specifications** — Not shortcuts, but encoded workflows with quality gates:
+- `/work <issue>` is ~200 lines of orchestration (branch, checkpoints, self-review, event bus coordination)
+- `/pr-review` batches feedback into AskUserQuestion decisions with opinion formation
+- Commands encode preferences that would otherwise require repeated instruction
 
-**Parallel Development** — Run multiple PRs simultaneously:
-- `/parallel-work` creates git worktrees with dedicated tmux sessions
-- Event bus coordinates discoveries and blockers across sessions
-- Up to 15 parallel Opus sessions—limited by user context-switching overhead and API rate limits, not tooling
+**Hook-Based Lifecycle Extension** — Extension points for context preservation:
+- `session-start`: Restore WIP context, register with event bus, inject recent events
+- `pre-compact`: Publish `wip_checkpoint` before context is lost
+- `prompt-events`: Poll event bus on each prompt for semi-realtime updates
+- Hooks transform ephemeral sessions into continuous workflows
 
-**Context Continuity** — Survive compaction and session switches:
-- `pre-compact` hook publishes `wip_checkpoint` with branch/PR/file state
-- `session-start` hook restores WIP context on resume
-- `/im-lost` shows current workflow position when disoriented
+**Global Behavioral Dependency Injection** — Single file propagates to all sessions:
+- `~/.claude/CLAUDE.md` changes affect every repo instantly
+- Per-project CLAUDE.md for repo-specific overrides
+- Changes require session restart (no dynamic reload—see Frontier section)
 
-**Self-Improvement** — The system improves itself:
-- `/improve-workflow` mines session analytics for friction patterns
-- `audit-*` agents run background analysis (codebase, tests, issues, docs)
-- Every friction becomes an issue; event bus routes to the appropriate repo owner; free agents (with human approval) pick up the work
-
-**Ambient Awareness** — Always know where you are:
-- Statusline shows repo/branch, session name, context %, model
-- `tmux-status` hook indicates working/waiting state per pane
-- Event bus surfaces cross-session activity on each prompt
+**Self-Improving Feedback Loop** — The system mines its own usage:
+- `/work` generates session activity → session-analytics ingests → `/improve-workflow` queries patterns → CLAUDE.md updated → future sessions inherit improvements
+- `audit-*` agents run background analysis; friction becomes issues; owner-sessions pick up work
 
 ### claude-event-bus (Owner)
 
