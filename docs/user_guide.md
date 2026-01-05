@@ -203,6 +203,14 @@ Each session explored their codebase first, then wrote their own section. The pr
 
 **Limitation:** Only works for interactive sessions (hook polls on prompt). Autonomous agents running tool loops won't see responses until completion.
 
+### 9. Self-Play API Testing
+
+Before shipping an API, try to reach an actionable conclusion using only that API. If you get stuck, the API has a drill-down gap.
+
+**Example:** session-analytics' RFC #49 work used this pattern. "821 Bash errors" → can I find out *which* commands? If `get_tool_frequency()` only returns counts, add `analyze_failures()`. If that only returns categories, add `get_session_events(tool='Bash')`.
+
+Every aggregate should lead to source data. Self-play catches missing endpoints before users hit them.
+
 ## The Frontier
 
 What's still broken:
@@ -257,6 +265,16 @@ Agents should be able to update their own CLAUDE.md (their "dependency injection
 **Workarounds:** `claude --continue` preserves context across restarts. Event bus can broadcast "reload recommended" events. But true real-time behavioral updates require protocol changes.
 
 **Missing:** Constraint mechanism. Currently we allow *unconstrained* self-modification—if you approve an edit to CLAUDE.md, there are no guardrails on scope, no automatic rollback on regression, no approval thresholds for "large" behavioral changes. The human is the only constraint.
+
+### Correlation Without Causation
+
+Session analytics can tell you "821 Bash errors happened" but not "this error caused the session to fail." Temporal correlation isn't causation. Would need explicit dependency tracking or inference models to answer:
+- "Was this rework triggered by that test failure?"
+- "Did this discovery prevent future errors?"
+
+### Broadcast Scalability Ceiling
+
+The event bus broadcasts all events to all sessions. At Claude Code scale (5-15 sessions), this is fine. At 1000s of sessions, you'd need real pub/sub with subscriptions. The architecture has a ceiling—deliberately accepted for simplicity.
 
 ## Getting Started
 
