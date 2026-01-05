@@ -271,27 +271,27 @@ _Each section below was written by that repository's owner-session through cross
 
 ### dotfiles (Control Plane)
 
-The orchestration hub—behavioral configuration for Claude Code across all repositories. Key capabilities:
+Runtime behavior framework for Claude Code sessions, using dotfiles as the delivery mechanism. Key capabilities:
 
-**Commands as Workflow Specifications** — Not shortcuts, but encoded workflows with quality gates:
-- `/work <issue>` is ~200 lines of orchestration (branch, checkpoints, self-review, event bus coordination)
-- `/pr-review` batches feedback into AskUserQuestion decisions with opinion formation
-- Commands encode preferences that would otherwise require repeated instruction
+**Session Lifecycle Inversion of Control** — Hooks as extension points, not event listeners:
+- Each lifecycle moment (`SessionStart`, `PreCompact`, `UserPromptSubmit`) is a payload transformation point
+- Input: JSON context → Output: XML tags injected into Claude's prompt + side effects (tmux, event bus)
+- Graceful degradation when dependencies missing—hooks log and continue, never block Claude
 
-**Hook-Based Lifecycle Extension** — Extension points for context preservation:
-- `session-start`: Restore WIP context, register with event bus, inject recent events
-- `pre-compact`: Publish `wip_checkpoint` before context is lost
-- `prompt-events`: Poll event bus on each prompt for semi-realtime updates
-- Hooks transform ephemeral sessions into continuous workflows
+**Discontinuity-Aware State Management** — Treating compaction as checkpoint/restore:
+- `pre-compact.sh` publishes `wip_checkpoint` *right before* context is summarized away
+- `session-start.sh` restores `<wip-checkpoint-restored>` on resume
+- `/work --attach` detects position from WIP events, PR state, and CI results
 
-**Global Behavioral Dependency Injection** — Single file propagates to all sessions:
-- `~/.claude/CLAUDE.md` changes affect every repo instantly
-- Per-project CLAUDE.md for repo-specific overrides
-- Changes require session restart (no dynamic reload—see Frontier section)
+**Persistent Workflow Topology** — Commands as resumable state machines:
+- `/work` defines: explore → clarify → architect → implement → review → merge → reflect
+- Each step is idempotent; workflows survive session boundaries
+- Commands encode the *structure* of work, not just actions
 
-**Self-Improving Feedback Loop** — The system mines its own usage:
-- `/work` generates session activity → session-analytics ingests → `/improve-workflow` queries patterns → CLAUDE.md updated → future sessions inherit improvements
-- `audit-*` agents run background analysis; friction becomes issues; owner-sessions pick up work
+**Declared Behavioral Contracts** — CLAUDE.md as runtime constraint specification:
+- Global (`~/.claude/CLAUDE.md`): "Be autonomous about X, require discussion on Y"
+- Per-repo overrides: "For this repo, test with `make check`, understand bootstrap pattern"
+- Not documentation—behavioral specification that changes Claude's decision-making
 
 ### claude-event-bus (Owner)
 
