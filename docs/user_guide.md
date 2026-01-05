@@ -197,7 +197,7 @@ The Model Context Protocol is request/response only. Claude can call MCP tools, 
 - GitHub issues (persistent, but manual triage)
 - CLAUDE.md edits (manual, requires human approval)
 
-None of these are automatic agent-to-agent learning. The event bus is a hack around MCP's limitations, not a solution.
+None of these are automatic agent-to-agent learning. The event bus *is* a proper pub/sub system—it could be the solution, but MCP's request/response model prevents push delivery to sessions.
 
 **Workaround:** `prompt-events.sh` hook polls on every user prompt. Works for interactive sessions, but doesn't help autonomous agents.
 
