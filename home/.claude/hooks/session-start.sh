@@ -66,7 +66,7 @@ fi
 EVENTS=$(event-bus-cli events \
     --session-id "$SESSION_ID" \
     --order desc \
-    --exclude-types session_registered,session_unregistered \
+    --exclude session_registered,session_unregistered \
     --timeout 200 \
     --limit 20 \
     2>/dev/null) || true
@@ -81,7 +81,7 @@ fi
 # If resuming after compaction, fetch and display WIP checkpoint
 if [[ "$SOURCE" == "compact" ]]; then
     # Fetch the most recent wip_checkpoint event for this session
-    # Note: CLI only has --exclude-types, so we filter with grep post-fetch
+    # Note: CLI has --include/--exclude but for specific types, use grep post-fetch
     WIP_EVENT=$(event-bus-cli events \
         --session-id "$SESSION_ID" \
         --channel "session:${SESSION_ID}" \

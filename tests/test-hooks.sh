@@ -146,13 +146,13 @@ case "$1" in
         ;;
 
     events)
-        # Parse args - real CLI also accepts --order, --exclude-types, --timeout, --limit
+        # Parse args - real CLI also accepts --order, --include, --exclude, --timeout, --limit
         # Currently only --session-id affects output; others are accepted but ignored
         session_id=""
         while [[ $# -gt 1 ]]; do
             case "$2" in
                 --session-id) session_id="$3"; shift 2 ;;
-                --order|--exclude-types|--timeout|--limit) shift 2 ;;  # Accept but ignore
+                --order|--include|--exclude|--timeout|--limit) shift 2 ;;  # Accept but ignore
                 *) shift ;;
             esac
         done
