@@ -182,6 +182,21 @@ The coding problem is solved. Cursor, Copilot, and Claude Code all write compete
 
 This system's value isn't better code generation—it's the `/work` command that orchestrates issue→branch→PR→review→merge, the event bus that coordinates parallel sessions, and the hooks that maintain context across compactions.
 
+### 8. Cross-Session Refinement
+
+Different sessions produce different but valid interpretations. Iteration surfaces deeper insights. The synthesis beats either alone.
+
+**Pattern:** Send `help_needed` with a template prompt to another repo's session. They respond with `help_response`. Iterate 2-3 rounds. The final version incorporates perspectives neither session had initially.
+
+**Example:** This document's rust-genai section was refined through 3 rounds of event bus feedback:
+- Round 1: "Unified Tool Ecosystem", "Multi-Turn State Management"
+- Round 2: Discovered "Compile-Time Conversation Safety" (typestate pattern)
+- Round 3: Converged—kept the deep insight, restored good framing
+
+The typestate insight ("impossible states unrepresentable") is deeper than "state management"—a fresh session recognized architectural patterns the original author missed.
+
+**Limitation:** Only works for interactive sessions (hook polls on prompt). Autonomous agents running tool loops won't see responses until completion.
+
 ## The Frontier
 
 What's still broken:
