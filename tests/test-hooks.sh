@@ -863,6 +863,7 @@ case "$1" in
         # Return mock values based on format
         case "$format" in
             '#{window_id}') echo "@1" ;;
+            '#{pane_current_path}') echo "/home/user/projects/test-project" ;;
             '#{b:pane_current_path}') echo "test-project" ;;
             *) echo "" ;;
         esac

@@ -23,9 +23,18 @@ if [[ -z "$PANE_ID" ]]; then
     exit 0
 fi
 
-# Get window ID and dirname for this specific pane
+# Get window ID and path for this specific pane
 WINDOW_ID=$(tmux display-message -t "$PANE_ID" -p '#{window_id}' 2>/dev/null) || exit 0
-DIR_NAME=$(tmux display-message -t "$PANE_ID" -p '#{b:pane_current_path}' 2>/dev/null) || DIR_NAME=$(basename "$PWD")
+PANE_PATH=$(tmux display-message -t "$PANE_ID" -p '#{pane_current_path}' 2>/dev/null) || PANE_PATH="$PWD"
+
+# Build display name - handle worktrees: show "branch (repo)" format
+DIR_NAME="${PANE_PATH##*/}"
+if [[ "$PANE_PATH" == */.worktrees/* ]]; then
+    worktree_parent="${PANE_PATH%/.worktrees/*}"
+    repo_name="${worktree_parent##*/}"
+    worktree_branch="${PANE_PATH##*/}"
+    DIR_NAME="${worktree_branch} (${repo_name})"
+fi
 
 case "$STATE" in
     working)
