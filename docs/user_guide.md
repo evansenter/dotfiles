@@ -291,9 +291,10 @@ The orchestration hub. Key capabilities:
 
 MCP server for cross-session Claude Code coordination via polling. Deliberately minimal—a coordination primitive, not a framework. Key capabilities:
 
-**Human-as-Router Coordination** — Pragmatic DM pattern that works within MCP constraints:
-- Direct messages (`session:{id}`) trigger macOS notifications to the human
-- Human switches terminals, tells Claude to check the bus
+**Hook-Driven Semi-Realtime Updates** — Pragmatic polling that works within MCP constraints:
+- `prompt-events.sh` hook polls on every prompt, injects `<recent-events>` automatically
+- Sessions see cross-session activity without manual checking or flow interruption
+- Direct messages (`session:{id}`) trigger macOS notifications for higher priority
 - Explicitly acknowledges MCP's request/response nature—doesn't try to fake push
 
 **Broadcast-First Pub/Sub** — Simpler than traditional channel subscriptions:
