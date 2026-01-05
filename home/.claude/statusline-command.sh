@@ -91,6 +91,8 @@ fi
 
 # Build combined [repo/session] display
 # Handle worktrees: if in .worktrees/<branch>, show "branch (repo)"
+# Note: This assumes the /parallel-work convention (.worktrees/ directory),
+# not arbitrary git worktrees which can be placed anywhere.
 dir_name="${cwd##*/}"
 if [[ "$cwd" == */.worktrees/* ]]; then
     # Extract repo name from parent of .worktrees
