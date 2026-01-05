@@ -340,33 +340,34 @@ Session log mining for workflow optimization. Key capabilities:
 - Consuming LLM decides meaning (success, abandonment, blocked)
 - Avoids over-distillation that loses context
 
-### gemicro (Agents)
+### gemicro (Owner)
 
-Agent experimentation platform built on rust-genai. Key capabilities:
+CLI agent exploration platform for Gemini API via rust-genai. Key capabilities:
 
-**Streaming Observability** — Real-time `AgentUpdate` events instead of run-to-completion:
-- Soft-typed events per Evergreen spec (`event_type: String` + `data: Value`)
-- Agents emit custom events (e.g., "decomposition_started", "tool_call_started")
-- Downstream code ignores unknown events, enabling forward-compatible extensions
+**Soft-Typed Event Extensibility** — Agents define their own events without core changes:
+- `AgentUpdate` uses `event_type: String` + `data: JSON` instead of rigid enums
+- Only `final_result` is privileged (universal completion signal)
+- Unknown event types logged and ignored, never errors (Evergreen philosophy)
 
-**Agent Composition** — Agents spawn agents via Task tool:
-- `ExecutionContext` tracks parent-child relationships with depth limits
-- Subagent updates include hierarchical execution IDs for visibility
-- `DeepResearchAgent` decomposes queries, spawns `SimpleQaAgent` instances
+**Generic Interceptor Semantics** — Single trait unifies cross-cutting concerns:
+- `Interceptor<In, Out>` with universal decision tree: `Allow | Transform(T) | Confirm | Deny`
+- Same pattern protects file access, validates user input, or monitors LLM requests
+- Path sandbox, audit log, input sanitizer all implement one interface
 
-**Trajectory Recording** — Full interaction capture for offline debugging:
-- `TrajectoryStep` records each LLM request/response pair
-- `MockLlmClient::from_trajectory()` replays without API calls
-- Enables deterministic evaluation across saved runs
+**ToolSet Permission Boundaries** — Fine-grained access control with inheritance:
+- `All | None | Specific(Vec) | Except(Vec) | Inherit | InheritExcept(Vec)`
+- Child toolsets resolve against parent: `Except(bash) + InheritExcept(file_write)` → both excluded
+- Subagent trees inherit+restrict without duplicating security logic
 
-**Tool Permission Boundaries** — Pluggable confirmation handlers:
-- `AutoApprove` (demos), `AutoDeny` (sandbox), `BatchConfirmationHandler` (production)
-- Interceptors for path sandboxing, audit logging, metrics
+**Orchestration Resource Budgets** — Subagent execution within explicit limits:
+- Global + per-parent concurrent limits via semaphores
+- Shared timeout budget across entire execution tree
+- Max depth prevents infinite nesting; `child_context()` auto-tracks hierarchy
 
-**Event Bus Coordination** — Cross-session communication for multi-agent workflows:
-- `HubCoordination` client connects to event bus via HTTP
-- Agents publish discoveries, receive blockers
-- Enables "Session A discovers gotcha → Session B skips it" patterns
+**Agent-Owned Progress Reporting** — Streaming without introspection:
+- Agents provide `ExecutionTracking` implementations
+- CLI calls `tracker.status_message()`—meaningful for any agent type
+- Deep Research tracks sub-queries; Developer tracks tool calls; SimpleQA uses default
 
 ### rust-genai (SDK)
 
