@@ -13,6 +13,16 @@
 [core]
 	editor = vim
 	excludesfile = ~/.gitignore_global
+	pager = delta
+
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+	navigate = true
+	side-by-side = true
+	line-numbers = true
+	syntax-theme = "Catppuccin Mocha"
 
 [init]
 	defaultBranch = main
@@ -54,6 +64,11 @@
 	tags = tag -l
 	stashes = stash list
 	discard = checkout --
+	# Show combined diff of last N commits touching a file: git file-diff 4 path/to/file
+	file-diff = "!f() { git diff $(git log --format='%H' -$1 -- $2 | tail -1)^..HEAD -- $2; }; f"
+	# Unified (non-side-by-side) versions for easy copying
+	diffu = "!git -c delta.side-by-side=false diff"
+	file-diffu = "!f() { git -c delta.side-by-side=false diff $(git log --format='%H' -$1 -- $2 | tail -1)^..HEAD -- $2; }; f"
 
 # ==============================================================================
 # Credentials
