@@ -90,7 +90,15 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
 fi
 
 # Build combined [repo/session] display
+# Handle worktrees: if in .worktrees/<branch>, show "branch (repo)"
 dir_name="${cwd##*/}"
+if [[ "$cwd" == */.worktrees/* ]]; then
+    # Extract repo name from parent of .worktrees
+    worktree_parent="${cwd%/.worktrees/*}"
+    repo_name="${worktree_parent##*/}"
+    worktree_branch="${cwd##*/}"
+    dir_name="${worktree_branch} (${repo_name})"
+fi
 link_end=$'\e]8;;\e\\'
 
 # Build repo part (cyan, with link if available)
@@ -251,10 +259,11 @@ LINK_RESET=$'\e]8;;\e\\'
 # Line 1: navigation context (repo, session, branch, PRs, issues)
 # Line 2: model info and user context
 # This gives CC room to append its own status on line 2
-line1=$(printf "%s%s%s%s%s" \
+# LINK_RESET on each line ensures hyperlinks don't capture CC's injected output
+line1=$(printf "%s%s%s%s%s%s" \
     "$repo_session_display" "$branch_display" \
     "$pr_display" "$issue_display" \
-    "$git_status")
+    "$git_status" "$LINK_RESET")
 
 line2=$(printf "%s%s%s%s" \
     "$model_display" \
