@@ -272,6 +272,116 @@ The orchestration hub. Key capabilities:
 - `tmux-status` hook indicates working/waiting state per pane
 - Event bus surfaces cross-session activity on each prompt
 
+### claude-event-bus (Coordinate)
+
+Cross-session pub/sub with SQLite persistence. Key capabilities:
+
+**Session Lifecycle** — Sessions announce presence, resume across restarts, and auto-cleanup on death:
+- Human-readable IDs (Docker-style: "brave-tiger") for display, UUIDs for APIs
+- Client deduplication via `(machine, client_id)` enables seamless session resumption
+- Process liveness checking via signals; 24-hour heartbeat timeout
+
+**Broadcast-First Pub/Sub** — All sessions see all events; channels are priority metadata, not routing rules:
+- Channel types: `all` (broadcast), `repo:<name>` (most common), `session:<id>` (DMs with notification), `machine:<host>`
+- Cursor-based polling with automatic high-water mark tracking
+- SSE endpoint `/events/stream` for external consumers (gemicro uses this)
+
+**MCP + CLI Parity** — Every operation available from both interfaces:
+- MCP server at `http://localhost:8080/mcp` with 7 tools
+- CLI `event-bus-cli` for hooks, scripts, and manual testing
+- `--track-state FILE` enables stateful polling in shell scripts
+
+**Observable Logging** — Real-time visibility via colored `tail -f` output:
+- Tool color coding (yellow=writes, blue=reads)
+- Session ID resolution to human-readable names
+- Result summaries (event counts, publishers, timespan)
+
+### claude-session-analytics (Insight)
+
+Session log mining for workflow optimization. Key capabilities:
+
+**Incremental Ingestion** — Transforms JSONL logs into queryable events without re-processing:
+- File-level state tracking skips unchanged logs
+- Agent tracking (RFC #41) separates main session from Task subagent activity
+- FTS5 full-text search across all user messages
+
+**Pattern Detection** — Surfaces friction points automatically:
+- Tool sequence mining (e.g., "Read → Edit" happens 847 times)
+- Permission gap detection (commands needing auto-approval)
+- Rework detection (same file edited 3+ times in 10 minutes)
+
+**Session Intelligence** — Classification and relationship discovery:
+- Auto-categorizes sessions: debugging, development, research, maintenance
+- Detects parallel sessions (overlapping time windows)
+- Finds related sessions by shared files, commands, or temporal proximity
+
+**Git Correlation** — Links commits to sessions based on timing:
+- Calculates time-to-commit from session start
+- Tracks first commit per session
+- Enables commit→session→events traceability
+
+**Raw Signals over Interpretations** — Per RFC #17, returns observable metrics for LLM interpretation:
+- `get_session_signals()` returns counts and flags, not outcomes
+- Consuming LLM decides meaning (success, abandonment, blocked)
+- Avoids over-distillation that loses context
+
+### gemicro (Agents)
+
+Agent experimentation platform built on rust-genai. Key capabilities:
+
+**Streaming Observability** — Real-time `AgentUpdate` events instead of run-to-completion:
+- Soft-typed events per Evergreen spec (`event_type: String` + `data: Value`)
+- Agents emit custom events (e.g., "decomposition_started", "tool_call_started")
+- Downstream code ignores unknown events, enabling forward-compatible extensions
+
+**Agent Composition** — Agents spawn agents via Task tool:
+- `ExecutionContext` tracks parent-child relationships with depth limits
+- Subagent updates include hierarchical execution IDs for visibility
+- `DeepResearchAgent` decomposes queries, spawns `SimpleQaAgent` instances
+
+**Trajectory Recording** — Full interaction capture for offline debugging:
+- `TrajectoryStep` records each LLM request/response pair
+- `MockLlmClient::from_trajectory()` replays without API calls
+- Enables deterministic evaluation across saved runs
+
+**Tool Permission Boundaries** — Pluggable confirmation handlers:
+- `AutoApprove` (demos), `AutoDeny` (sandbox), `BatchConfirmationHandler` (production)
+- Interceptors for path sandboxing, audit logging, metrics
+
+**Event Bus Coordination** — Cross-session communication for multi-agent workflows:
+- `HubCoordination` client connects to event bus via HTTP
+- Agents publish discoveries, receive blockers
+- Enables "Session A discovers gotcha → Session B skips it" patterns
+
+### rust-genai (SDK)
+
+Rust client for Google's Gemini Interactions API. Key capabilities:
+
+**Stateful Conversations** — Server-side context preservation:
+- `previous_interaction_id` chains interactions automatically
+- System instructions inherited; tools must be resent per turn
+- Stateless mode available for privacy-sensitive applications
+
+**Flexible Function Calling** — Three approaches for different needs:
+- `#[tool]` macro with compile-time schema generation via `utoipa`
+- `ToolService` trait for runtime dependency injection
+- Manual `FunctionDeclaration` for dynamic definitions
+- Auto-execution loops handle function calling rounds with error recovery
+
+**Streaming with Resume** — SSE delivery with interruption recovery:
+- `create_stream()` yields typed `StreamEvent` chunks
+- `event_id` tracking enables resume from last position
+- `create_stream_with_auto_functions()` layers function execution on streams
+
+**Evergreen Type System** — Unknown API types don't break deserialization:
+- All enums have `Unknown { <type>: String, data: Value }` variant
+- Preserves data for roundtrip; logs at warn level
+- Decouples client upgrades from API feature rollout
+
+**Built-In Tools** — Server-side execution for lower latency:
+- Google Search grounding, Python code execution, URL context
+- Results extracted via convenience methods on `InteractionResponse`
+
 ## Further Reading
 
 - [Multi-Agent Research Discussion](multi-agent-research-discussion.md)
