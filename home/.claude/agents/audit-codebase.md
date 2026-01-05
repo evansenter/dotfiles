@@ -85,16 +85,21 @@ Systematically examine the codebase for:
 
 ## Output Format
 
-### Critical Issues
-Issues that cause bugs, security problems, or severe maintenance burden.
+### Summary
 
-### Important Improvements
-Significant code quality issues worth addressing.
+| Metric | Value |
+|--------|-------|
+| Files analyzed | N |
+| Issues found | N |
+| Quick wins | N |
 
-### Suggestions
-Nice-to-have improvements for long-term health.
+### Critical / Important / Suggestions
 
-For each: Location, Problem, Impact, Recommendation, Effort (Low/Med/High). Prioritize by impact-to-effort ratio.
+For each: **[Category]** - Location, Problem, Impact, Recommendation, Effort
+
+Examples:
+- **[Error Handling]** - `src/api.rs:42` - Empty catch block swallows errors - Add logging and re-throw - Low
+- **[Complexity]** - `src/handler.rs` - 800-line file doing too much - Split into focused modules - High
 
 ## Focus Area
 
