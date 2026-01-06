@@ -207,13 +207,31 @@ Have the LLM use its own API to investigate a real question—no backdoors, no d
 
 Session-analytics ran 14 self-play experiments. Each started from an aggregate endpoint and tried to reach an actionable conclusion. Four missing drill-down paths surfaced and were fixed in the same session.
 
-## What to Build Next
+## Takeaway
 
-**Wire Event-Bus + Session-Analytics** — Currently parallel systems. If session-analytics ingested event-bus events, `gotcha_discovered` would become queryable. Then `/improve-workflow` could surface: "3 sessions discovered gotchas in auth code this week—here they are." This closes the learning propagation gap without waiting for MCP push support.
+**The control plane compounds.**
+
+Every improvement to dotfiles (CLAUDE.md, hooks, commands) makes all future sessions better. The experiment validated this: workflows crystallized from friction, infrastructure improvements came from accumulated issues, and the system got easier to operate over time.
+
+This experiment proves multi-agent-like behavior is achievable from single-agent tools. You don't need a custom agent framework. You need:
+1. **Behavioral contracts** (CLAUDE.md) that propagate to all sessions
+2. **Coordination primitives** (event bus) that enable cross-session awareness
+3. **Feedback loops** (analytics → `/improve-workflow` → CLAUDE.md) that make the system self-improving
+
+**The ecosystem view:** Even without building a custom swarm, you're participating in one. Your agent talks to MCP servers, CI systems, external APIs, and other sessions. A world of single agents is a swarm. The coordination infrastructure matters whether you label it "multi-agent" or not.
+
+**For agent researchers:** The human in this system makes low-bandwidth, high-leverage decisions at checkpoints. Session analytics shows 39% of tokens go to Task subagents, 61% to main sessions—but the human's input is sparse checkpoint approvals and course corrections. The leverage ratio is extreme: a few words of guidance shapes hours of autonomous work. Human amplification is the design.
+
+The limiting factor is the integration surface between AI capabilities and organizational workflow.
+
+**What didn't work well:**
+- **Push notification workarounds are annoying.** `prompt-events.sh` polls on every prompt, but autonomous tool loops run blind. Real-time coordination requires protocol changes.
+- **Context compression is a black box.** No control over when or how it occurs. Agent behavior subtly changes mid-development when switching from HD understanding (full context) to lo-fi summarization. The transition is invisible but behavior-altering.
+- **Session-analytics utility is emerging.** The event-bus integration would close the learning propagation gap. That said—much of the analysis in this document came directly from exploratory LLM-driven session-analytics queries, demonstrating the self-play pattern working in practice.
 
 ## The Frontier
 
-What's still broken (not yet actionable):
+What's still broken (and what to build next):
 
 ### MCP Doesn't Support Push (or Learning Propagation)
 
@@ -228,8 +246,6 @@ The gap is **latency**, not absence:
 - End-of-session (not real-time)
 - Human-gated (requires approval)
 - Indirect (goes through CLAUDE.md, not session-to-session)
-
-**Potential improvement:** If session-analytics ingested event-bus data, `gotcha_discovered` events would become queryable. Then `/improve-workflow` could surface: "3 sessions discovered gotchas in auth code this week." Currently event-bus and session-analytics are parallel systems—wiring them together would close the real-time gap with a structured batch process.
 
 **Workaround:** `prompt-events.sh` hook polls on every user prompt. Works for interactive sessions, but doesn't help autonomous agents.
 
@@ -262,30 +278,7 @@ Session analytics can tell you "821 Bash errors happened" but not "this error ca
 
 ### Known Limits
 
-- **Rate limiting:** 5+ parallel Opus sessions can hit API rate limits. Mitigate by staggering starts or using Sonnet for lighter tasks.
-- **Broadcast scalability:** The event bus broadcasts all events to all sessions. Works at Claude Code scale (5-15 sessions), wouldn't scale to thousands.
-
-## Takeaway
-
-**The control plane compounds.**
-
-Every improvement to dotfiles (CLAUDE.md, hooks, commands) makes all future sessions better. The experiment validated this: workflows crystallized from friction, infrastructure improvements came from accumulated issues, and the system got easier to operate over time.
-
-This experiment proves multi-agent-like behavior is achievable from single-agent tools. You don't need a custom agent framework. You need:
-1. **Behavioral contracts** (CLAUDE.md) that propagate to all sessions
-2. **Coordination primitives** (event bus) that enable cross-session awareness
-3. **Feedback loops** (analytics → `/improve-workflow` → CLAUDE.md) that make the system self-improving
-
-**What didn't work well:**
-- **Push notification workarounds are annoying.** `prompt-events.sh` polls on every prompt, but autonomous tool loops run blind. Real-time coordination requires protocol changes.
-- **Context compression is a black box.** No control over when or how it occurs. Agent behavior subtly changes mid-development when switching from HD understanding (full context) to lo-fi summarization. The transition is invisible but behavior-altering.
-- **Session-analytics utility is emerging.** The event-bus integration would close the learning propagation gap. That said—much of the analysis in this document came directly from exploratory LLM-driven session-analytics queries, demonstrating the self-play pattern working in practice.
-
-**For agent researchers:** The human in this system makes low-bandwidth, high-leverage decisions at checkpoints. Session analytics shows 39% of tokens go to Task subagents, 61% to main sessions—but the human's input is sparse checkpoint approvals and course corrections. The leverage ratio is extreme: a few words of guidance shapes hours of autonomous work. Human amplification is the design.
-
-The limiting factor is the integration surface between AI capabilities and organizational workflow.
-
-**The ecosystem view:** Even without building a custom swarm, you're participating in one. Your agent talks to MCP servers, CI systems, external APIs, and other sessions. A world of single agents is a swarm. The coordination infrastructure matters whether you label it "multi-agent" or not.
+- **Rate limiting:** 5+ parallel Opus sessions can easily hit API rate limits.
 
 ## The Experiment
 
