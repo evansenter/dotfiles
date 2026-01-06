@@ -4,9 +4,18 @@ A documented experiment in AI-augmented software development using Claude Code.
 
 ## The Thesis
 
-The coding harness is solved—Cursor, Copilot, and Claude Code all generate competent code. The leverage multiplier is **workflow integration**: issue tracking, review workflows, cross-session coordination, and session continuity.
+The coding harness is solved—Cursor, Antigravity, and Claude Code all generate competent code. The leverage multiplier is **workflow integration**: issue tracking, review workflows, cross-session coordination, and session continuity.
 
-This document records an experiment in getting multi-agent-like behavior **without building a custom agent framework**. The "agents" are Claude Code sessions. Each session owns a repository. The human orchestrates via event bus and slash commands. The goal isn't to build the best agent platform—it's to show what's achievable with Claude Code + workflow infrastructure.
+This document records an experiment in getting multi-agent-like behavior **without building a custom agent framework**. The "agents" are Claude Code sessions. Each session owns a repository. The human orchestrates via event bus and slash commands. The goal: demonstrate what ownership-based agents can achieve when coordinated through workflow infrastructure.
+
+### Concepts
+
+| This Doc | Generic Concept |
+|----------|-----------------|
+| Claude Code | Ownership-based agent instance |
+| CLAUDE.md | Behavioral developer instruction (hotswappable) |
+| Slash commands | Agent-interpreted behavioral recipes |
+| Event bus | Stateful agent communication layer (Slack-style channels) |
 
 ## The Architecture
 
@@ -187,18 +196,44 @@ This is the quality enforcement workflow that `/work <issue>` orchestrates:
 - Lost context? `/im-lost` shows current position
 - Joining existing work? `/work --attach`
 
+## Operating the Swarm
+
+What does it feel like to orchestrate 5+ parallel sessions?
+
+**Whack-a-mole with compounding returns.** High context-switching—spinning 10 plates simultaneously. But each intervention that improves the system (a hook, a prompt tweak, a new command) makes all future sessions better. The game gets easier as you play.
+
+**The hardest part: tracking state.** Which session is working on what? Who's blocked? Control plane updates require Claude Code restarts, so you're also tracking who has the latest CLAUDE.md and finding good moments to restart without losing flow. The event bus exists precisely to offload this—sessions announce their own state, repos can request features directly instead of hacking around missing capabilities. Without it, the human becomes the courier for every trivial coordination.
+
+**The workflows crystallized from repeated friction.** `/work` emerged from needing structured checkpoints. `/parallel-work` emerged from monorepo slowdown. `/pr-review` + `claude-review.md` were co-authored to be complementary. `/pr-create` documents discussions for later pickup.
+
+**A failure mode: prompt over-simplification.** Early on, I aggressively simplified prompts to reduce contradictions and make flows more explicit ([ce21e5b](https://github.com/evansenter/dotfiles/commit/ce21e5b)). This destabilized cross-agent dynamics—sessions stopped coordinating effectively. Partial rollback required ([914443c](https://github.com/evansenter/dotfiles/commit/914443c)). The lesson: prompts are load-bearing. The "contradictions" were actually productive tension; the verbosity carried necessary context.
+
 ## Key Learnings
 
-### 1. Permissions Are Trust Boundaries
+### 1. Context Is Infrastructure
 
-Add tools to `settings.json` only after repeated use. The permission prompt surfaces what automation you actually need.
+A surprising amount of this system is context window management:
+- **Hooks** checkpoint state before compaction, restore it on resume
+- **TodoWrite** survives summarization—work state lives outside the context window
+- **Task subagents** get isolated windows, enabling parallelization without context collision
+- **CLAUDE.md** is always injected—behavioral contracts that persist across compactions
+- **Event bus cursors** track position so only *new* events are injected, not full history
+- **Worktrees** physically separate parallel work, avoiding context bleed between PRs
 
-```bash
-# Review permission denials weekly
-session-analytics-cli permissions --days 7 --min-count 5
-```
+The context window is a design constraint that shapes architecture. 39% of tokens go to subagents precisely because fresh context windows are cheaper than cramming everything into one.
 
-### 2. Parallel Beats Sequential
+### 2. Ownership over Skill
+
+Design agents around domain ownership, not capabilities. "An agent responsible for the Auth Service" beats "an agent good at code reviews." Ownership creates:
+- Accumulated context across sessions
+- Accountability (the agent sees consequences of its decisions)
+- Natural boundaries for what belongs in context
+
+Skill-based agents (code-reviewer, test-writer) apply shallow patterns. Domain-owning agents build deep understanding.
+
+CLAUDE.md is the mechanism that makes ownership work—changes propagate instantly to all sessions, making it the highest-leverage investment.
+
+### 3. Parallel Beats Sequential
 
 One session doing 5 tasks sequentially: 5 hours.
 Five sessions doing 1 task each: 1 hour (+ coordination overhead).
@@ -210,12 +245,6 @@ The event bus makes coordination overhead small. CI becomes the bottleneck, not 
 /parallel-work start 43  # Another parallel PR
 ```
 
-### 3. Self-Review Works
-
-Before pushing: `/pr-review local`
-
-The model catches issues the model created. Fresh context (just finished vs. planning) plus explicit review checklist changes the mental mode.
-
 ### 4. Every Friction Is an Issue
 
 When something is annoying:
@@ -225,42 +254,34 @@ When something is annoying:
 
 Most infrastructure improvements came from accumulated friction, not planning.
 
-### 5. Ownership over Skill
-
-Design agents around domain ownership, not capabilities. "An agent responsible for the Auth Service" beats "an agent good at code reviews." Ownership creates:
-- Accumulated context across sessions
-- Accountability (the agent sees consequences of its decisions)
-- Natural boundaries for what belongs in context
-
-Skill-based agents (code-reviewer, test-writer) apply shallow patterns. Domain-owning agents build deep understanding.
-
-CLAUDE.md is the mechanism that makes ownership work—changes propagate instantly to all sessions, making it the highest-leverage investment.
-
-### 6. Cross-Session Refinement
+### 5. Cross-Session Refinement
 
 Different sessions produce different but valid interpretations. The synthesis beats either alone. See "The Methodology" section above for details.
 
 **Key insight:** The framing "what's architecturally novel, not just useful?" consistently produced deeper insights than "describe your features."
 
-### 7. Self-Play API Testing
+### 6. Self-Review Works
+
+Before pushing: `/pr-review local`
+
+The model catches issues the model created. Fresh context (just finished vs. planning) plus explicit review checklist changes the mental mode.
+
+### 7. Permissions Are Trust Boundaries
+
+Add tools to `settings.json` only after repeated use. The permission prompt surfaces what automation you actually need.
+
+```bash
+# Review permission denials weekly
+session-analytics-cli permissions --days 7 --min-count 5
+```
+
+### 8. Self-Play API Testing
 
 Before shipping an API, try to reach an actionable conclusion using only that API. If you get stuck, the API has a drill-down gap.
 
-**Example:** session-analytics' RFC #49 work used this pattern. "821 Bash errors" → can I find out *which* commands? If `get_tool_frequency()` only returns counts, add `analyze_failures()`. If that only returns categories, add `get_session_events(tool='Bash')`.
+**Example:** "821 Bash errors" → can I find out *which* commands failed? If the API only returns counts, add a breakdown endpoint. If that only returns categories, add access to raw events. Every aggregate should lead to source data.
 
-Every aggregate should lead to source data. Self-play catches missing endpoints before users hit them.
-
-### 8. Context Is Infrastructure
-
-A surprising amount of this system is context window management:
-- **Hooks** checkpoint state before compaction, restore it on resume
-- **TodoWrite** survives summarization—work state lives outside the context window
-- **Task subagents** get isolated windows, enabling parallelization without context collision
-- **CLAUDE.md** is always injected—behavioral contracts that persist across compactions
-- **Event bus cursors** track position so only *new* events are injected, not full history
-- **Worktrees** physically separate parallel work, avoiding context bleed between PRs
-
-The context window isn't just a limit to work around—it's a design constraint that shapes architecture. 39% of tokens go to subagents precisely because fresh context windows are cheaper than cramming everything into one.
+Self-play catches missing endpoints before users hit them.
 
 ## What to Build Next
 
@@ -370,24 +391,18 @@ This experiment proves multi-agent-like behavior is achievable from single-agent
 
 **What didn't work well:**
 - **Push notification workarounds are annoying.** `prompt-events.sh` polls on every prompt, but autonomous tool loops run blind. Real-time coordination requires protocol changes.
+- **Context compression is a black box.** No control over when or how it occurs. Agent behavior subtly changes mid-development when switching from HD understanding (full context) to lo-fi summarization. The transition is invisible but behavior-altering.
 - **Session-analytics utility is emerging.** The event-bus integration (Priority 1 above) would close the learning propagation gap. That said—the human's role analysis in this document came directly from session-analytics queries, demonstrating the self-play pattern working in practice.
 
-**For agent researchers:** The human in this system makes low-bandwidth, high-leverage decisions at checkpoints. Session analytics shows 39% of tokens go to Task subagents, 61% to main sessions—but the human's input is sparse checkpoint approvals and course corrections. The leverage ratio is extreme: a few words of guidance shapes hours of autonomous work. This isn't a limitation to be engineered away—it's the design. The goal isn't full autonomy; it's human amplification.
+**For agent researchers:** The human in this system makes low-bandwidth, high-leverage decisions at checkpoints. Session analytics shows 39% of tokens go to Task subagents, 61% to main sessions—but the human's input is sparse checkpoint approvals and course corrections. The leverage ratio is extreme: a few words of guidance shapes hours of autonomous work. Human amplification is the design.
 
-The limiting factor isn't code generation. It's the integration surface between AI capabilities and organizational workflow.
+The limiting factor is the integration surface between AI capabilities and organizational workflow.
 
 **The ecosystem view:** Even without building a custom swarm, you're participating in one. Your agent talks to MCP servers, CI systems, external APIs, and other sessions. A world of single agents is a swarm. The coordination infrastructure matters whether you label it "multi-agent" or not.
 
-## Getting Started
-
-1. Fork [evansenter/dotfiles](https://github.com/evansenter/dotfiles) and run `./bootstrap.sh`
-2. Start with `/status-report` to orient
-3. Use `/work <issue>` for guided development
-4. Run `/improve-workflow` weekly
-
 ## Repository Details
 
-_Each section below was written by that repository's owner-session through cross-session refinement via event bus. 2-3 rounds of `help_needed`/`help_response` exchanges surfaced architectural patterns the original author missed. See Key Learning #6._
+_Each section below was written by that repository's owner-session through cross-session refinement via event bus. 2-3 rounds of `help_needed`/`help_response` exchanges surfaced architectural patterns the original author missed. See Key Learning #5._
 
 ### Runtime System
 
@@ -475,58 +490,27 @@ These two repositories are being built during this experiment—the future runti
 
 Agent patterns and tool orchestration on top of rust-genai's LLM client. Key capabilities:
 
-**LLM-First Design** — Trust the model; don't over-engineer:
-- Agents are thin wrappers that emit events, not complex state machines
-- Breaking changes welcome—simplicity over backwards compatibility
-- No agent-specific parsing; let the model handle ambiguity
+**LLM-First Design** — Agents are thin wrappers that emit events, not complex state machines. Trust the model; don't over-engineer.
 
-**Soft-Typed Event Extensibility** — Agents define their own events without core changes:
-- `AgentUpdate` uses `event_type: String` + `data: JSON` instead of rigid enums
-- Only `final_result` is privileged (universal completion signal)
-- Unknown event types logged and ignored, never errors (Evergreen philosophy)
+**Soft-Typed Event Extensibility** — Agents define their own events without core changes. Unknown event types are logged and ignored (Evergreen philosophy).
 
-**Generic Interceptor Semantics** — Single trait unifies cross-cutting concerns:
-- `Interceptor<In, Out>` with universal decision tree: `Allow | Transform(T) | Confirm | Deny`
-- Same pattern protects file access, validates user input, or monitors LLM requests
-- Path sandbox, audit log, input sanitizer all implement one interface
+**Generic Interceptor Semantics** — Single trait unifies cross-cutting concerns: file access protection, input validation, and LLM request monitoring all implement one `Interceptor` interface with `Allow | Transform | Confirm | Deny` decisions.
 
-**ToolSet Permission Boundaries** — Fine-grained access control with inheritance:
-- `All | None | Specific(Vec) | Except(Vec) | Inherit | InheritExcept(Vec)`
-- Child toolsets resolve against parent: `Except(bash) + InheritExcept(file_write)` → both excluded
-- Subagent trees inherit+restrict without duplicating security logic
+**ToolSet Permission Boundaries** — Subagent trees inherit and restrict permissions without duplicating security logic.
 
-**Orchestration Resource Budgets** — Subagent execution within explicit limits:
-- Global + per-parent concurrent limits via semaphores
-- Shared timeout budget across entire execution tree
-- Max depth prevents infinite nesting; `child_context()` auto-tracks hierarchy
-
-**Agent-Owned Progress Reporting** — Streaming without introspection:
-- Agents provide `ExecutionTracking` implementations
-- CLI calls `tracker.status_message()`—meaningful for any agent type
-- Deep Research tracks sub-queries; Developer tracks tool calls; SimpleQA uses default
+**Orchestration Resource Budgets** — Concurrent limits, shared timeout budgets, and max depth prevent runaway subagent execution.
 
 #### rust-genai (SDK)
 
 Rust client for Google's Gemini Interactions API. Key capabilities:
 
-**Compile-Time Conversation Safety** — Typestate pattern prevents API misuse before code runs:
-- Builder states (`FirstTurn`, `Chained`, `StoreDisabled`) enforce valid method sequences at compile time
-- `CanAutoFunction` trait makes impossible states unrepresentable
-- Undocumented API behaviors codified in types, not runtime checks
+**Compile-Time Conversation Safety** — Typestate pattern prevents API misuse before code runs. Builder states enforce valid method sequences at compile time; undocumented API behaviors are codified in types, not runtime checks. _(This insight surfaced through cross-session refinement—I had written "state management.")_
 
-**Unified Tool Ecosystem** — Single API surface for client and server-side tools:
-- `#[tool]` macro: compile-time stateless functions with automatic schema generation
-- `ToolService` trait: runtime stateful tools sharing DB pools/API clients via Arc cloning
-- Built-in tools (Google Search, Code Execution, File Search) configured the same way as custom functions
+**Unified Tool Ecosystem** — Single API surface for client and server-side tools, from `#[tool]` macro functions to stateful services to Google's built-in tools.
 
-**Evergreen Soft-Typing** — Graceful API evolution without breaking deployments:
-- `Unknown { <context>_type, data }` variants preserve raw JSON when Google adds new types
-- `ENUM_WIRE_FORMATS.md` captures empirically-tested serialization (docs sometimes lie)
-- Non-exhaustive enums with full roundtrip fidelity
+**Evergreen Soft-Typing** — `Unknown` variants preserve raw JSON when Google adds new types. Non-exhaustive enums with full roundtrip fidelity.
 
-**Resumable Streaming** — Network-resilient real-time responses:
-- Each event carries `event_id`; resume from exact failure point without re-executing functions
-- `create_stream_with_auto_functions()` streams intermediate results during multi-turn loops
+**Resumable Streaming** — Each event carries `event_id`; resume from exact failure point without re-executing functions.
 
 ## Further Reading
 
@@ -536,6 +520,6 @@ Rust client for Google's Gemini Interactions API. Key capabilities:
 
 ---
 
-_This system was built with Claude Code, using Claude Code. The recursive nature isn't coincidental—the best way to improve AI tooling is to use it intensively and let friction drive improvements._
+_This system was built with Claude Code, using Claude Code. The best way to improve AI tooling is to use it intensively and let friction drive improvements._
 
 _Session analytics data available since December 30, 2025._
