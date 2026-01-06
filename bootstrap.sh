@@ -195,14 +195,16 @@ install_claude_mcp_servers() {
 		fi
 	fi
 
-	# Install Notion MCP server if not configured
-	if ! echo "$mcp_list" | grep -q "notion"; then
-		echo "Installing Notion MCP server..."
-		claude mcp add notion -s user -e 'NOTION_TOKEN=${NOTION_API_KEY}' -- npx -y @notionhq/notion-mcp-server
-
-		if [[ -z "$NOTION_API_KEY" ]]; then
-			echo "  Warning: NOTION_API_KEY not set. Add to ~/.extra:"
-			echo "    export NOTION_API_KEY=\"ntn_your_token_here\""
+	# Install/remove Notion MCP server based on NOTION_API_KEY availability
+	if [[ -n "${NOTION_API_KEY:-}" ]]; then
+		if ! echo "$mcp_list" | grep -q "notion"; then
+			echo "Installing Notion MCP server..."
+			claude mcp add notion -s user -e 'NOTION_TOKEN=${NOTION_API_KEY}' -- npx -y @notionhq/notion-mcp-server
+		fi
+	else
+		if echo "$mcp_list" | grep -q "notion"; then
+			echo "Removing Notion MCP server (NOTION_API_KEY not set)..."
+			claude mcp remove notion -s user
 		fi
 	fi
 }
