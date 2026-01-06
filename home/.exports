@@ -12,3 +12,6 @@ fi
 
 # Default editor
 export EDITOR='vim'
+
+# Claude Code statusline - disable hyperlinks due to injection corruption (#172)
+export STATUSLINE_NO_LINKS=1

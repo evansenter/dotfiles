@@ -75,6 +75,9 @@ Cross-session coordination. Sessions auto-register on startup.
 - When user says "ask/tell `<repo>` XYZ", send `help_needed` to `repo:<repo>`
 
 **Handling events** (from `<recent-events>` tags):
-- Act on: DMs, `help_needed`, CI failures you caused, blockers
-- Surface: `gotcha_discovered`, `pattern_found`, `test_flaky`, `improvement_suggested`
-- Ignore: Routine `task_completed` from other repos
+
+On each turn, scan incoming events *before* responding. For relevant events, briefly acknowledge them at the start of your response. When in doubt, overshare—it's better to mention something the user already knows than to silently drop important context.
+
+- **Act on immediately**: DMs (`session:<your-id>`), `help_needed` to your repo, CI failures you caused, blockers
+- **Mention to user**: `help_response`, `gotcha_discovered`, `pattern_found`, `test_flaky`, `improvement_suggested`
+- **Ignore silently**: Routine `task_completed`, `wip_checkpoint`, `ci_completed` from unrelated work

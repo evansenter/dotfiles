@@ -4,49 +4,93 @@ A documented experiment in AI-augmented software development using Claude Code.
 
 ## The Thesis
 
-The coding harness is solved—Cursor, Copilot, and Claude Code all generate competent code. The leverage multiplier is **workflow integration**: issue tracking, review workflows, cross-session coordination, and session continuity. This document records that investment.
+The coding harness is solved—Cursor, Copilot, and Claude Code all generate competent code. The leverage multiplier is **workflow integration**: issue tracking, review workflows, cross-session coordination, and session continuity.
+
+This document records an experiment in getting multi-agent-like behavior **without building a custom agent framework**. The "agents" are Claude Code sessions. Each session owns a repository. The human orchestrates via event bus and slash commands. The goal isn't to build the best agent platform—it's to show what's achievable with Claude Code + workflow infrastructure.
 
 ## The Architecture
 
-Five repositories form an integrated system:
+### The Runtime System
+
+Three repositories power this case study:
 
 ```
-┌─────────────────┐     events      ┌─────────────────┐
-│    dotfiles     │◄───────────────►│   event-bus     │
-│  (control plane)│                 │   (coordinate)  │
-│                 │                 │                 │
-│ - /work         │                 │ - pub/sub       │
-│ - /pr-review    │                 │ - channels      │
-│ - hooks         │                 │ - poll-based    │
-└────────┬────────┘                 └────────┬────────┘
-         │                                   │
-         │ commands/agents                   │ real-time events
-         │                                   │
-         ▼                                   ▼
-┌─────────────────┐                 ┌─────────────────┐
-│   analytics     │                 │    gemicro      │
-│   (insight)     │                 │   (agents)      │
-│                 │                 │                 │
-│ - tool patterns │                 │ - AgentRunner   │
-│ - token usage   │                 │ - Trajectory    │
-│ - permissions   │                 │ - MCP transport │
-└─────────────────┘                 └────────┬────────┘
-                                             │
-                                             │ API calls
-                                             ▼
-                                    ┌─────────────────┐
-                                    │   rust-genai    │
-                                    │     (SDK)       │
-                                    │                 │
-                                    │ - Gemini API    │
-                                    │ - streaming     │
-                                    │ - tool use      │
-                                    └─────────────────┘
+                        ┌─────────────────────────────────────┐
+                        │          Claude Code Sessions        │
+                        │  (the actual "agents" in this study) │
+                        └─────────────────┬───────────────────┘
+                                          │
+                    ┌─────────────────────┼─────────────────────┐
+                    │                     │                     │
+                    ▼                     ▼                     ▼
+           ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+           │    dotfiles     │   │   event-bus     │   │   analytics     │
+           │ (control plane) │◄─►│  (coordinate)   │──►│    (insight)    │
+           │                 │   │                 │   │                 │
+           │ - CLAUDE.md     │   │ - pub/sub       │   │ - tool patterns │
+           │ - /work, hooks  │   │ - channels      │   │ - token usage   │
+           │ - commands      │   │ - poll-based    │   │ - permissions   │
+           └─────────────────┘   └─────────────────┘   └─────────────────┘
 ```
 
-**Control plane (dotfiles):** Workflows, commands, hooks, and agents that Claude Code executes. This is where you encode preferences, quality gates, and coordination patterns. Changes here propagate to all sessions across all repositories.
+**What "agent" means here:** A Claude Code session + CLAUDE.md + repo ownership. Not autonomous execution—human-orchestrated via slash commands and event bus. Each session builds context within its repo; coordination happens through event bus broadcasts and DMs.
 
-**Data plane:** The other four repositories handle execution—event coordination, session analytics, agent infrastructure, and API calls.
+**dotfiles (control plane):** Workflows, commands, hooks that Claude Code executes. Changes here propagate to all sessions across all repositories instantly.
+
+**event-bus (coordinate):** Cross-session communication via polling. Sessions announce progress, discoveries, and blockers.
+
+**analytics (insight):** Mines session logs for patterns. Powers `/improve-workflow` suggestions.
+
+### Projects Under Development
+
+Two additional repositories are being built during this experiment. They don't power the current workflow—Claude Code sessions are the "agents" today—but represent where we're headed.
+
+**Current state:**
+```
+┌─────────────────┐         ┌─────────────────┐
+│    gemicro      │────────►│   rust-genai    │
+│ (Gemini agents) │         │  (Gemini SDK)   │
+│                 │         │                 │
+│ - AgentRunner   │         │ - Gemini API    │
+│ - Trajectory    │         │ - streaming     │
+│ - MCP transport │         │ - tool use      │
+└─────────────────┘         └─────────────────┘
+```
+
+**Future goal:** Replace Claude Code sessions with gemicro agents:
+
+```
+                        ┌─────────────────────────────────────┐
+                        │         gemicro Agents               │
+                        │  (autonomous, repo-owning agents)    │
+                        └─────────────────┬───────────────────┘
+                                          │
+                    ┌─────────────────────┼─────────────────────┐
+                    │                     │                     │
+                    ▼                     ▼                     ▼
+           ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+           │    dotfiles     │   │   event-bus     │   │   analytics     │
+           │ (control plane) │◄─►│  (coordinate)   │──►│    (insight)    │
+           └─────────────────┘   └─────────────────┘   └─────────────────┘
+                    │                     ▲
+                    │                     │ SSE push (when MCP supports it)
+                    │                     │
+                    └─────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │   rust-genai    │
+                    │  (Gemini SDK)   │
+                    └─────────────────┘
+```
+
+Same coordination infrastructure, but agents run autonomously instead of human-orchestrated.
+
+**Two blockers to this future:**
+
+1. **MCP push notifications** — Until MCP supports server-initiated messages, agents must poll the event bus themselves.
+
+2. **Owned infrastructure** — Claude Code is a black box. We're hacking around its limitations with hooks (prompt injection), state files (`/work` resumption after compaction), and CLAUDE.md (behavioral contracts). With gemicro, we own the entire stack and can iterate on the agent architecture directly—add memory layers, change context management, modify tool execution patterns.
 
 ## The Experiment
 
@@ -70,13 +114,21 @@ This document itself is an experiment result. Each Repository Details section wa
 
 ### Repository Activity
 
+**Runtime System:**
+
 | Repository | PRs (open/merged) | Issues (open/closed) | LoC | +/- Lines |
 |------------|-------------------|----------------------|-----|-----------|
 | dotfiles | 0/114 | 5/51 | 6K Shell | +6.4K/-3.8K |
-| gemicro | 0/116 | 29/85 | 30K Rust | +17.5K/-3.7K |
 | claude-event-bus | 0/41 | 7/22 | 6K Python | +6.1K/-3.0K |
 | claude-session-analytics | 0/30 | 4/19 | 12K Python | +19.0K/-1.8K |
+
+**Projects Under Development:**
+
+| Repository | PRs (open/merged) | Issues (open/closed) | LoC | +/- Lines |
+|------------|-------------------|----------------------|-----|-----------|
+| gemicro | 0/116 | 29/85 | 30K Rust | +17.5K/-3.7K |
 | rust-genai | 1/166 | 6/125 | 37K Rust | +21.1K/-4.6K |
+
 | **Total** | **1/467** | **51/302** | **91K** | **+70K/-17K** |
 
 _Source: `gh pr list`, `gh issue list`, `scc`, `git log --stat`_
@@ -330,7 +382,11 @@ Agent evaluation via `TrajectoryDataset` + `MockLlmClient` enables replay testin
 
 _Each section below was written by that repository's owner-session through cross-session refinement via event bus. 2-3 rounds of `help_needed`/`help_response` exchanges surfaced architectural patterns the original author missed. See Key Learning #8._
 
-### dotfiles (Control Plane)
+### Runtime System
+
+These three repositories power the current workflow.
+
+#### dotfiles (Control Plane)
 
 Runtime behavior framework for Claude Code sessions, using dotfiles as the delivery mechanism. Key capabilities:
 
@@ -354,7 +410,7 @@ Runtime behavior framework for Claude Code sessions, using dotfiles as the deliv
 - Per-repo overrides: "For this repo, test with `make check`, understand bootstrap pattern"
 - Not documentation—behavioral specification that changes Claude's decision-making
 
-### claude-event-bus (Owner)
+#### claude-event-bus (Coordinate)
 
 MCP server for cross-session Claude Code coordination via polling. Deliberately minimal—a coordination primitive, not a framework. Key capabilities:
 
@@ -379,7 +435,7 @@ MCP server for cross-session Claude Code coordination via polling. Deliberately 
 - UUIDs resolved to human-readable display_ids ("brave-tiger" not "b712a0ba...")
 - Publisher attribution with active (cyan) vs inactive (red) session names
 
-### claude-session-analytics (Owner)
+#### claude-session-analytics (Insight)
 
 Queryable analytics for Claude Code session logs, designed for LLM consumption. Key capabilities:
 
@@ -404,7 +460,11 @@ Queryable analytics for Claude Code session logs, designed for LLM consumption. 
 - `agent_id` + `is_sidechain` distinguish Task subagents from main session
 - Enables "how much work did agents do vs you?" queries (`get_agent_activity()`)
 
-### gemicro (Owner)
+### Projects Under Development
+
+These two repositories are being built during this experiment—the future runtime.
+
+#### gemicro (Agents)
 
 Agent patterns and tool orchestration on top of rust-genai's LLM client. Key capabilities:
 
@@ -438,7 +498,7 @@ Agent patterns and tool orchestration on top of rust-genai's LLM client. Key cap
 - CLI calls `tracker.status_message()`—meaningful for any agent type
 - Deep Research tracks sub-queries; Developer tracks tool calls; SimpleQA uses default
 
-### rust-genai (SDK)
+#### rust-genai (SDK)
 
 Rust client for Google's Gemini Interactions API. Key capabilities:
 
