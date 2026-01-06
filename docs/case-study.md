@@ -99,12 +99,6 @@ Two additional repositories are being built during this experiment. They don't p
 
 Same coordination infrastructure, but agents run autonomously instead of human-orchestrated.
 
-**Two blockers to this future:**
-
-1. **MCP push notifications** — Until MCP supports server-initiated messages, agents must poll the event bus themselves.
-
-2. **Owned infrastructure** — Claude Code is a black box. We're hacking around its limitations with hooks (prompt injection), state files (`/work` resumption after compaction), and CLAUDE.md (behavioral contracts). With gemicro, we own the entire stack and can iterate on the agent architecture directly—add memory layers, change context management, modify tool execution patterns.
-
 ## The Protocol
 
 This is the quality enforcement workflow that `/work <issue>` orchestrates:
@@ -271,18 +265,6 @@ At ~80% context, Claude Code compacts. Facts survive; reasoning chains and code 
 
 **Mitigation:** Event bus hooks publish `wip_checkpoint` events with branch, PR, and file state. On session resume, hooks restore this context automatically. `/im-lost` and `[work:N]` todos provide additional navigation.
 
-### No Cross-Machine Coordination
-
-The event bus runs locally. Events don't sync between machines.
-
-**Workaround:** Use GitHub issues as the coordination layer for cross-machine work.
-
-### Rate Limiting During Parallel Work
-
-5+ parallel Opus sessions can hit API rate limits.
-
-**Mitigation:** Stagger session starts, use Sonnet for lighter tasks.
-
 ### Limited Self-Evolution
 
 Agents should be able to update their own CLAUDE.md (their "dependency injection") within constraints. Currently:
@@ -304,9 +286,10 @@ Session analytics can tell you "821 Bash errors happened" but not "this error ca
 - "Was this rework triggered by that test failure?"
 - "Did this discovery prevent future errors?"
 
-### Broadcast Scalability Ceiling
+### Known Limits
 
-The event bus broadcasts all events to all sessions. At Claude Code scale (5-15 sessions), this is fine. At 1000s of sessions, you'd need real pub/sub with subscriptions. The architecture has a ceiling—deliberately accepted for simplicity.
+- **Rate limiting:** 5+ parallel Opus sessions can hit API rate limits. Mitigate by staggering starts or using Sonnet for lighter tasks.
+- **Broadcast scalability:** The event bus broadcasts all events to all sessions. Works at Claude Code scale (5-15 sessions), wouldn't scale to thousands.
 
 ## Takeaway
 
@@ -393,7 +376,7 @@ _Estimated from session analytics (Dec 30+)._
 
 | Metric | Value |
 |--------|-------|
-| Actual cost | ~£700 |
+| Actual cost | ~£1000 |
 | API equivalent (Opus pricing) | ~$28,000 |
 | Without prompt caching | ~$156,000 |
 | Caching savings | 5.6x |
