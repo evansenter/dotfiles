@@ -24,10 +24,10 @@ This document records an experiment in getting multi-agent-like behavior **witho
 Three repositories power this case study:
 
 ```
-                        ┌─────────────────────────────────────┐
+                        ┌──────────────────────────────────────┐
                         │          Claude Code Sessions        │
                         │  (the actual "agents" in this study) │
-                        └─────────────────┬───────────────────┘
+                        └─────────────────┬────────────────────┘
                                           │
                     ┌─────────────────────┼─────────────────────┐
                     │                     │                     │
@@ -69,10 +69,10 @@ Two additional repositories are being built during this experiment. They don't p
 **Future goal:** Replace Claude Code sessions with gemicro agents:
 
 ```
-                        ┌─────────────────────────────────────┐
+                        ┌──────────────────────────────────────┐
                         │         gemicro Agents               │
                         │  (autonomous, repo-owning agents)    │
-                        └─────────────────┬───────────────────┘
+                        └─────────────────┬────────────────────┘
                                           │
                     ┌─────────────────────┼─────────────────────┐
                     │                     │                     │
@@ -277,11 +277,9 @@ session-analytics-cli permissions --days 7 --min-count 5
 
 ### 8. Self-Play API Testing
 
-Before shipping an API, try to reach an actionable conclusion using only that API. If you get stuck, the API has a drill-down gap.
+Have the LLM use its own API to investigate a real question—no backdoors, no direct database access. Where it gets stuck reveals API gaps.
 
-**Example:** "821 Bash errors" → can I find out *which* commands failed? If the API only returns counts, add a breakdown endpoint. If that only returns categories, add access to raw events. Every aggregate should lead to source data.
-
-Self-play catches missing endpoints before users hit them.
+Session-analytics ran 14 self-play experiments. Each started from an aggregate endpoint and tried to reach an actionable conclusion. Four missing drill-down paths surfaced and were fixed in the same session.
 
 ## What to Build Next
 
