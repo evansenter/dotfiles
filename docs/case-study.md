@@ -225,13 +225,7 @@ When something is annoying:
 
 Most infrastructure improvements came from accumulated friction, not planning.
 
-### 5. System-Wide Dependency Injection
-
-CLAUDE.md files are read on every interaction—a form of dependency injection for AI behavior. A single global file (`~/.claude/CLAUDE.md`) propagates changes to all sessions across all repositories instantly.
-
-This is the highest-leverage investment: one hour improving your global CLAUDE.md saves hundreds of hours of repeated instruction across future sessions.
-
-### 6. Ownership over Skill
+### 5. Ownership over Skill
 
 Design agents around domain ownership, not capabilities. "An agent responsible for the Auth Service" beats "an agent good at code reviews." Ownership creates:
 - Accumulated context across sessions
@@ -240,23 +234,15 @@ Design agents around domain ownership, not capabilities. "An agent responsible f
 
 Skill-based agents (code-reviewer, test-writer) apply shallow patterns. Domain-owning agents build deep understanding.
 
-### 7. Workflow Integration over Code Generation
+CLAUDE.md is the mechanism that makes ownership work—changes propagate instantly to all sessions, making it the highest-leverage investment.
 
-The coding problem is solved. Cursor, Copilot, and Claude Code all write competent code. The unsolved problem is integration with your organization's workflow:
-- Issue tracking (Buganizer, Jira, GitHub Issues)
-- Code review (Critique, Gerrit, GitHub PRs)
-- Code search (internal tools, cross-repo grep)
-- CI/CD coordination
-
-This system's value isn't better code generation—it's the `/work` command that orchestrates issue→branch→PR→review→merge, the event bus that coordinates parallel sessions, and the hooks that maintain context across compactions.
-
-### 8. Cross-Session Refinement
+### 6. Cross-Session Refinement
 
 Different sessions produce different but valid interpretations. The synthesis beats either alone. See "The Methodology" section above for details.
 
 **Key insight:** The framing "what's architecturally novel, not just useful?" consistently produced deeper insights than "describe your features."
 
-### 9. Self-Play API Testing
+### 7. Self-Play API Testing
 
 Before shipping an API, try to reach an actionable conclusion using only that API. If you get stuck, the API has a drill-down gap.
 
@@ -359,18 +345,6 @@ Session analytics can tell you "821 Bash errors happened" but not "this error ca
 
 The event bus broadcasts all events to all sessions. At Claude Code scale (5-15 sessions), this is fine. At 1000s of sessions, you'd need real pub/sub with subscriptions. The architecture has a ceiling—deliberately accepted for simplicity.
 
-### External API Documentation Drift
-
-Google's Gemini docs are sometimes wrong. `ENUM_WIRE_FORMATS.md` in rust-genai documents empirically-tested serialization (e.g., `ThinkingSummaries` requires `"THINKING_SUMMARIES_AUTO"`, not `"auto"` as docs claim). No automated verification that docs match reality—manual testing is the only ground truth.
-
-### Typestate Complexity Ceiling
-
-Builder states (`FirstTurn`, `Chained`, `StoreDisabled`) prevent API misuse at compile time, but adding new constraints requires combinatorial state explosion. There's a limit to what's expressible without dependent types. Eventually you hit "too many type parameters."
-
-### Offline-Only Evaluation
-
-Agent evaluation via `TrajectoryDataset` + `MockLlmClient` enables replay testing, but no online evaluation—measuring agent quality *during* execution, not just after. You can't score a live agent's decisions mid-run.
-
 ## Takeaway
 
 **The control plane is the product.**
@@ -386,9 +360,11 @@ This experiment proves multi-agent-like behavior is achievable from single-agent
 - **Push notification workarounds are annoying.** `prompt-events.sh` polls on every prompt, but autonomous tool loops run blind. Real-time coordination requires protocol changes.
 - **Session-analytics utility is emerging.** The event-bus integration (Priority 1 above) would close the learning propagation gap. That said—the human's role analysis in this document came directly from session-analytics queries, demonstrating the self-play pattern working in practice.
 
-**For agent researchers:** The human in this system makes low-bandwidth, high-leverage decisions at checkpoints. Session analytics shows 39% of tokens go to Task subagents, 61% to main sessions—but the human's input is sparse checkpoint approvals and course corrections. The leverage ratio is extreme: a few words of guidance shapes hours of autonomous work.
+**For agent researchers:** The human in this system makes low-bandwidth, high-leverage decisions at checkpoints. Session analytics shows 39% of tokens go to Task subagents, 61% to main sessions—but the human's input is sparse checkpoint approvals and course corrections. The leverage ratio is extreme: a few words of guidance shapes hours of autonomous work. This isn't a limitation to be engineered away—it's the design. The goal isn't full autonomy; it's human amplification.
 
 The limiting factor isn't code generation. It's the integration surface between AI capabilities and organizational workflow.
+
+**The ecosystem view:** Even without building a custom swarm, you're participating in one. Your agent talks to MCP servers, CI systems, external APIs, and other sessions. A world of single agents is a swarm. The coordination infrastructure matters whether you label it "multi-agent" or not.
 
 ## Getting Started
 
@@ -399,7 +375,7 @@ The limiting factor isn't code generation. It's the integration surface between 
 
 ## Repository Details
 
-_Each section below was written by that repository's owner-session through cross-session refinement via event bus. 2-3 rounds of `help_needed`/`help_response` exchanges surfaced architectural patterns the original author missed. See Key Learning #8._
+_Each section below was written by that repository's owner-session through cross-session refinement via event bus. 2-3 rounds of `help_needed`/`help_response` exchanges surfaced architectural patterns the original author missed. See Key Learning #6._
 
 ### Runtime System
 
