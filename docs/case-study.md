@@ -86,7 +86,7 @@ Two additional repositories are being built during this experiment. They don't p
            │ (control plane) │◄─►│  (coordinate)   │──►│    (insight)    │
            └─────────────────┘   └─────────────────┘   └─────────────────┘
                     │                     ▲
-                    │                     │ SSE push (when MCP supports it)
+                    │                     │ push (MCP or custom protocol)
                     │                     │
                     └─────────────────────┘
                               │
