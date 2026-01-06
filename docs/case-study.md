@@ -44,15 +44,19 @@ Three repositories power this case study:
 
 **What "agent" means here:** A Claude Code session + CLAUDE.md + repo ownership. Not autonomous execution—human-orchestrated via slash commands and event bus. Each session builds context within its repo; coordination happens through event bus broadcasts and DMs.
 
-**dotfiles (control plane):** Workflows, commands, hooks that Claude Code executes. Changes here propagate to all sessions across all repositories instantly.
+**[dotfiles](https://github.com/evansenter/dotfiles) (control plane):** Workflows, commands, hooks that propagate to all sessions instantly.
 
-**event-bus (coordinate):** Cross-session communication via polling. Sessions announce progress, discoveries, and blockers.
+**[claude-event-bus](https://github.com/evansenter/claude-event-bus) (coordinate):** Cross-session communication via polling.
 
-**analytics (insight):** Mines session logs for patterns. Powers `/improve-workflow` suggestions.
+**[claude-session-analytics](https://github.com/evansenter/claude-session-analytics) (insight):** Mines session logs for patterns.
 
 ### Projects Under Development
 
 Two additional repositories are being built during this experiment. They don't power the current workflow—Claude Code sessions are the "agents" today—but represent where we're headed.
+
+**[gemicro](https://github.com/evansenter/gemicro) (agents):** Agent patterns and tool orchestration on top of rust-genai.
+
+**[rust-genai](https://github.com/evansenter/rust-genai) (SDK):** Rust client for Google's Gemini Interactions API.
 
 **Current state:**
 ```
