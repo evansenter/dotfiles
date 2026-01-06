@@ -4,7 +4,7 @@ A documented experiment in AI-augmented software development using Claude Code.
 
 ## The Thesis
 
-The coding harness is solved—Cursor, Antigravity, and Claude Code all generate competent code. The leverage multiplier is **workflow integration**: issue tracking, review workflows, cross-session coordination, and session continuity.
+Code generation isn't the bottleneck—Cursor, Antigravity, and Claude Code all produce competent code. The leverage multiplier is **workflow integration**: issue tracking, review workflows, cross-session coordination, and session continuity.
 
 This document records an experiment in getting multi-agent-like behavior **without building a custom agent framework**. The "agents" are Claude Code sessions. Each session owns a repository. The human orchestrates via event bus and slash commands. The goal: demonstrate what ownership-based agents can achieve when coordinated through workflow infrastructure.
 
@@ -209,33 +209,7 @@ Session-analytics ran 14 self-play experiments. Each started from an aggregate e
 
 ## What to Build Next
 
-Prioritized improvements based on impact and feasibility:
-
-### Priority 1: Wire Event-Bus + Session-Analytics
-
-**Repo:** claude-session-analytics | **Blocks:** Learning propagation
-
-Currently event-bus and session-analytics are parallel systems. If session-analytics ingested event-bus events, `gotcha_discovered` would become queryable. Then `/improve-workflow` could surface: "3 sessions discovered gotchas in auth code this week—here they are."
-
-This closes the learning propagation gap without waiting for MCP push support.
-
-### Priority 2: Agent Memory Layer
-
-**Repo:** gemicro | **Blocks:** Cross-run learning
-
-Agents are stateless. A DeepResearchAgent that discovers a useful decomposition pattern doesn't share it with future runs. Persist useful patterns across runs—make agents that learn.
-
-### Priority 3: Online Evaluation Hooks
-
-**Repo:** gemicro | **Blocks:** Quality measurement
-
-Trajectory replay enables offline testing, but no online evaluation—measuring agent quality *during* execution. Add scoring hooks that run mid-agent, not just post-mortem.
-
-### Priority 4: Wire Format Fuzzer
-
-**Repo:** rust-genai | **Blocks:** API reliability
-
-Google's docs drift from reality. Build a fuzzer that generates requests and compares actual vs expected responses. CI job that detects when our types diverge from the real API.
+**Wire Event-Bus + Session-Analytics** — Currently parallel systems. If session-analytics ingested event-bus events, `gotcha_discovered` would become queryable. Then `/improve-workflow` could surface: "3 sessions discovered gotchas in auth code this week—here they are." This closes the learning propagation gap without waiting for MCP push support.
 
 ## The Frontier
 
@@ -293,9 +267,9 @@ Session analytics can tell you "821 Bash errors happened" but not "this error ca
 
 ## Takeaway
 
-**The control plane is the product.**
+**The control plane compounds.**
 
-The coding problem is solved—Cursor, Antigravity, and Claude Code all generate competent code. What's unsolved is workflow integration: issue tracking, review coordination, session continuity, cross-session learning. dotfiles (CLAUDE.md, hooks, commands) is where that integration lives and where improvements compound.
+Every improvement to dotfiles (CLAUDE.md, hooks, commands) makes all future sessions better. The experiment validated this: workflows crystallized from friction, infrastructure improvements came from accumulated issues, and the system got easier to operate over time.
 
 This experiment proves multi-agent-like behavior is achievable from single-agent tools. You don't need a custom agent framework. You need:
 1. **Behavioral contracts** (CLAUDE.md) that propagate to all sessions
@@ -305,7 +279,7 @@ This experiment proves multi-agent-like behavior is achievable from single-agent
 **What didn't work well:**
 - **Push notification workarounds are annoying.** `prompt-events.sh` polls on every prompt, but autonomous tool loops run blind. Real-time coordination requires protocol changes.
 - **Context compression is a black box.** No control over when or how it occurs. Agent behavior subtly changes mid-development when switching from HD understanding (full context) to lo-fi summarization. The transition is invisible but behavior-altering.
-- **Session-analytics utility is emerging.** The event-bus integration (Priority 1 above) would close the learning propagation gap. That said—the human's role analysis in this document came directly from session-analytics queries, demonstrating the self-play pattern working in practice.
+- **Session-analytics utility is emerging.** The event-bus integration would close the learning propagation gap. That said—much of the analysis in this document came directly from exploratory LLM-driven session-analytics queries, demonstrating the self-play pattern working in practice.
 
 **For agent researchers:** The human in this system makes low-bandwidth, high-leverage decisions at checkpoints. Session analytics shows 39% of tokens go to Task subagents, 61% to main sessions—but the human's input is sparse checkpoint approvals and course corrections. The leverage ratio is extreme: a few words of guidance shapes hours of autonomous work. Human amplification is the design.
 
@@ -497,14 +471,6 @@ Rust client for Google's Gemini Interactions API. Key capabilities:
 
 **Resumable Streaming** — Each event carries `event_id`; resume from exact failure point without re-executing functions.
 
-## Further Reading
-
-- [Multi-Agent Research Discussion](multi-agent-research-discussion.md)
-- [Multi-Agent Ecosystem Coordination](multi-agent-ecosystem-coordination.md)
-- [Event Bus Guide](../home/.claude/contrib/README.md)
-
 ---
 
 _This system was built with Claude Code, using Claude Code. The best way to improve AI tooling is to use it intensively and let friction drive improvements._
-
-_Session analytics data available since December 30, 2025._
