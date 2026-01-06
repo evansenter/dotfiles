@@ -69,10 +69,10 @@ REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 
 ### 2. Fetch Comments
 
-```bash
-gh api "repos/${REPO}/pulls/${PR_NUM}/comments"
-gh api "repos/${REPO}/pulls/${PR_NUM}/reviews"
-gh api "repos/${REPO}/issues/${PR_NUM}/comments"
+```
+mcp__github__get_pull_request_comments(owner, repo, pull_number)  # inline code comments
+mcp__github__get_pull_request_reviews(owner, repo, pull_number)   # review summaries
+gh api "repos/${REPO}/issues/${PR_NUM}/comments"                  # general PR conversation
 ```
 
 **If no feedback found:** "No reviewer feedback found. PR is ready for merge or awaiting review." Exit early.

@@ -35,6 +35,9 @@ MAGENTA=$'\e[35m'
 BLUE=$'\e[34m'
 RESET=$'\e[0m'
 
+# Hyperlink toggle - set STATUSLINE_NO_LINKS=1 to disable (debug CC injection issues)
+NO_LINKS="${STATUSLINE_NO_LINKS:-}"
+
 # Event bus session name (cached per session_id to avoid repeated queries)
 # Uses Claude's session UUID to look up the nice-named event bus session
 EVENT_BUS_CLI="${HOME}/.local/bin/event-bus-cli"
@@ -104,7 +107,7 @@ fi
 link_end=$'\e]8;;\e\\'
 
 # Build repo part (cyan, with link if available)
-if [[ -n "$repo_url" ]]; then
+if [[ -n "$repo_url" ]] && [[ -z "$NO_LINKS" ]]; then
     link_start=$'\e]8;;'"${repo_url}"$'\e\\'
     repo_part="${CYAN}${link_start}${dir_name}${link_end}${RESET}"
 else
@@ -144,11 +147,19 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
                 # Skip malformed entries
                 [[ -z "$pr_number" || -z "$pr_url" ]] && continue
                 [[ ! "$pr_number" =~ ^[0-9]+$ ]] && continue
-                link_start=$'\e]8;;'"${pr_url}"$'\e\\'
-                if [[ -n "$pr_links" ]]; then
-                    pr_links="${pr_links},${link_start}#${pr_number}${link_end}"
+                if [[ -z "$NO_LINKS" ]]; then
+                    link_start=$'\e]8;;'"${pr_url}"$'\e\\'
+                    if [[ -n "$pr_links" ]]; then
+                        pr_links="${pr_links},${link_start}#${pr_number}${link_end}"
+                    else
+                        pr_links="${link_start}#${pr_number}${link_end}"
+                    fi
                 else
-                    pr_links="${link_start}#${pr_number}${link_end}"
+                    if [[ -n "$pr_links" ]]; then
+                        pr_links="${pr_links},#${pr_number}"
+                    else
+                        pr_links="#${pr_number}"
+                    fi
                 fi
             done <<< "$pr_list"
             # Only set pr_display if we actually built valid links
@@ -180,12 +191,20 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
             # Skip malformed entries
             [[ -z "$issue_num" ]] && continue
             [[ ! "$issue_num" =~ ^[0-9]+$ ]] && continue
-            issue_url="${repo_url}/issues/${issue_num}"
-            link_start=$'\e]8;;'"${issue_url}"$'\e\\'
-            if [[ -n "$issue_links" ]]; then
-                issue_links="${issue_links},${link_start}#${issue_num}${link_end}"
+            if [[ -z "$NO_LINKS" ]]; then
+                issue_url="${repo_url}/issues/${issue_num}"
+                link_start=$'\e]8;;'"${issue_url}"$'\e\\'
+                if [[ -n "$issue_links" ]]; then
+                    issue_links="${issue_links},${link_start}#${issue_num}${link_end}"
+                else
+                    issue_links="${link_start}#${issue_num}${link_end}"
+                fi
             else
-                issue_links="${link_start}#${issue_num}${link_end}"
+                if [[ -n "$issue_links" ]]; then
+                    issue_links="${issue_links},#${issue_num}"
+                else
+                    issue_links="#${issue_num}"
+                fi
             fi
         done
         # Only set issue_display if we actually built valid links
