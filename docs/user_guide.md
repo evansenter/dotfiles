@@ -371,6 +371,25 @@ Builder states (`FirstTurn`, `Chained`, `StoreDisabled`) prevent API misuse at c
 
 Agent evaluation via `TrajectoryDataset` + `MockLlmClient` enables replay testing, but no online evaluation—measuring agent quality *during* execution, not just after. You can't score a live agent's decisions mid-run.
 
+## Takeaway
+
+**The control plane is the product.**
+
+The coding problem is solved—Cursor, Copilot, and Claude Code all generate competent code. What's unsolved is workflow integration: issue tracking, review coordination, session continuity, cross-session learning. dotfiles (CLAUDE.md, hooks, commands) is where that integration lives and where improvements compound.
+
+This experiment proves multi-agent-like behavior is achievable from single-agent tools. You don't need a custom agent framework. You need:
+1. **Behavioral contracts** (CLAUDE.md) that propagate to all sessions
+2. **Coordination primitives** (event bus) that enable cross-session awareness
+3. **Feedback loops** (analytics → `/improve-workflow` → CLAUDE.md) that make the system self-improving
+
+**What didn't work well:**
+- **Push notification workarounds are annoying.** `prompt-events.sh` polls on every prompt, but autonomous tool loops run blind. Real-time coordination requires protocol changes.
+- **Session-analytics utility is emerging.** The event-bus integration (Priority 1 above) would close the learning propagation gap. That said—the human's role analysis in this document came directly from session-analytics queries, demonstrating the self-play pattern working in practice.
+
+**For agent researchers:** The human in this system makes low-bandwidth, high-leverage decisions at checkpoints. Session analytics shows 39% of tokens go to Task subagents, 61% to main sessions—but the human's input is sparse checkpoint approvals and course corrections. The leverage ratio is extreme: a few words of guidance shapes hours of autonomous work.
+
+The limiting factor isn't code generation. It's the integration surface between AI capabilities and organizational workflow.
+
 ## Getting Started
 
 1. Fork [evansenter/dotfiles](https://github.com/evansenter/dotfiles) and run `./bootstrap.sh`
