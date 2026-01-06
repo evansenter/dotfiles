@@ -250,6 +250,18 @@ Before shipping an API, try to reach an actionable conclusion using only that AP
 
 Every aggregate should lead to source data. Self-play catches missing endpoints before users hit them.
 
+### 8. Context Is Infrastructure
+
+A surprising amount of this system is context window management:
+- **Hooks** checkpoint state before compaction, restore it on resume
+- **TodoWrite** survives summarization—work state lives outside the context window
+- **Task subagents** get isolated windows, enabling parallelization without context collision
+- **CLAUDE.md** is always injected—behavioral contracts that persist across compactions
+- **Event bus cursors** track position so only *new* events are injected, not full history
+- **Worktrees** physically separate parallel work, avoiding context bleed between PRs
+
+The context window isn't just a limit to work around—it's a design constraint that shapes architecture. 39% of tokens go to subagents precisely because fresh context windows are cheaper than cramming everything into one.
+
 ## What to Build Next
 
 Prioritized improvements based on impact and feasibility:
