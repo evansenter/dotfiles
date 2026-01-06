@@ -17,123 +17,6 @@ This document records an experiment in getting multi-agent-like behavior **witho
 | Slash commands | Agent-interpreted behavioral recipes |
 | Event bus | Stateful agent communication layer (Slack-style channels) |
 
-## The Architecture
-
-### The Runtime System
-
-Three repositories power this case study:
-
-```
-                        ┌──────────────────────────────────────┐
-                        │          Claude Code Sessions        │
-                        │  (the actual "agents" in this study) │
-                        └─────────────────┬────────────────────┘
-                                          │
-                    ┌─────────────────────┼─────────────────────┐
-                    │                     │                     │
-                    ▼                     ▼                     ▼
-           ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
-           │    dotfiles     │   │   event-bus     │   │   analytics     │
-           │ (control plane) │◄─►│  (coordinate)   │──►│    (insight)    │
-           │                 │   │                 │   │                 │
-           │ - CLAUDE.md     │   │ - pub/sub       │   │ - tool patterns │
-           │ - /work, hooks  │   │ - channels      │   │ - token usage   │
-           │ - commands      │   │ - poll-based    │   │ - permissions   │
-           └─────────────────┘   └─────────────────┘   └─────────────────┘
-```
-
-**What "agent" means here:** A Claude Code session + CLAUDE.md + repo ownership. Not autonomous execution—human-orchestrated via slash commands and event bus. Each session builds context within its repo; coordination happens through event bus broadcasts and DMs.
-
-**[dotfiles](https://github.com/evansenter/dotfiles) (control plane):** Workflows, commands, hooks that propagate to all sessions instantly.
-
-**[claude-event-bus](https://github.com/evansenter/claude-event-bus) (coordinate):** Cross-session communication via polling.
-
-**[claude-session-analytics](https://github.com/evansenter/claude-session-analytics) (insight):** Mines session logs for patterns.
-
-### Projects Under Development
-
-Two additional repositories are being built during this experiment. They don't power the current workflow—Claude Code sessions are the "agents" today—but represent where we're headed.
-
-**[gemicro](https://github.com/evansenter/gemicro) (agents):** Agent patterns and tool orchestration on top of rust-genai.
-
-**[rust-genai](https://github.com/evansenter/rust-genai) (SDK):** Rust client for Google's Gemini Interactions API.
-
-**Current state:**
-```
-┌─────────────────┐         ┌─────────────────┐
-│    gemicro      │────────►│   rust-genai    │
-│ (Gemini agents) │         │  (Gemini SDK)   │
-│                 │         │                 │
-│ - AgentRunner   │         │ - Gemini API    │
-│ - Trajectory    │         │ - streaming     │
-│ - MCP transport │         │ - tool use      │
-└─────────────────┘         └─────────────────┘
-```
-
-**Future goal:** Replace Claude Code sessions with gemicro agents:
-
-```
-                        ┌──────────────────────────────────────┐
-                        │         gemicro Agents               │
-                        │  (autonomous, repo-owning agents)    │
-                        └─────────────────┬────────────────────┘
-                                          │
-                    ┌─────────────────────┼─────────────────────┐
-                    │                     │                     │
-                    ▼                     ▼                     ▼
-           ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
-           │    dotfiles     │   │   event-bus     │   │   analytics     │
-           │ (control plane) │◄─►│  (coordinate)   │──►│    (insight)    │
-           └─────────────────┘   └─────────────────┘   └─────────────────┘
-                    │                     ▲
-                    │                     │ push (MCP or custom protocol)
-                    │                     │
-                    └─────────────────────┘
-                              │
-                              ▼
-                    ┌─────────────────┐
-                    │   rust-genai    │
-                    │  (Gemini SDK)   │
-                    └─────────────────┘
-```
-
-Same coordination infrastructure, but agents run autonomously instead of human-orchestrated.
-
-## The Protocol
-
-This is the quality enforcement workflow that `/work <issue>` orchestrates:
-
-| Step | Command | Purpose |
-|------|---------|---------|
-| 1. Orient | `/status-report` | See recent work, open issues, recommendations |
-| 2. Start | `/work <issue>` | Create branch, plan with checkpoints |
-| 3. Develop | (work) | Make changes, run tests/linters |
-| 4. Self-review | `/pr-review local` | Catch issues before pushing |
-| 5. Iterate | (fix) | Address feedback, repeat step 4 |
-| 6. Create PR | `/pr-create` | Commit, push, open PR |
-| 7. Monitor | `/watch-ci <PR#>` | Background CI monitoring |
-| 8. Process feedback | `/pr-review remote` | Handle reviewer comments |
-| 9. Merge | (merge) | Merge PR, clean stale branches |
-| 10. Reflect | `/improve-workflow` | Surface friction, create issues |
-
-**Step 10 feeds back into the system.** Every completed task potentially improves the workflow for future tasks. This is how the tooling compounds.
-
-**Navigation:**
-- Lost context? `/im-lost` shows current position
-- Joining existing work? `/work --attach`
-
-## Operating the Swarm
-
-What does it feel like to orchestrate 5+ parallel sessions?
-
-**Whack-a-mole with compounding returns.** High context-switching—spinning 10 plates simultaneously. But each intervention that improves the system (a hook, a prompt tweak, a new command) makes all future sessions better. The game gets easier as you play.
-
-**The hardest part: tracking state.** Which session is working on what? Who's blocked? Control plane updates require Claude Code restarts, so you're also tracking who has the latest CLAUDE.md and finding good moments to restart without losing flow. The event bus exists precisely to offload this—sessions announce their own state, repos can request features directly instead of hacking around missing capabilities. Without it, the human becomes the courier for every trivial coordination.
-
-**The workflows crystallized from repeated friction.** `/work` emerged from needing structured checkpoints. `/parallel-work` emerged from monorepo slowdown. `/pr-review` + `claude-review.md` were co-authored to be complementary. `/pr-create` documents discussions for later pickup.
-
-**A failure mode: prompt over-simplification.** Early on, I aggressively simplified prompts to reduce contradictions and make flows more explicit ([ce21e5b](https://github.com/evansenter/dotfiles/commit/ce21e5b)). This destabilized cross-agent dynamics—sessions stopped coordinating effectively. Partial rollback required ([914443c](https://github.com/evansenter/dotfiles/commit/914443c)). The lesson: prompts are load-bearing. The "contradictions" were actually productive tension; the verbosity carried necessary context.
-
 ## Key Learnings
 
 ### 1. Context Is Infrastructure
@@ -279,6 +162,123 @@ Session analytics can tell you "821 Bash errors happened" but not "this error ca
 ### Known Limits
 
 - **Rate limiting:** 5+ parallel Opus sessions can easily hit API rate limits.
+
+## The Architecture
+
+### The Runtime System
+
+Three repositories power this case study:
+
+```
+                        ┌──────────────────────────────────────┐
+                        │          Claude Code Sessions        │
+                        │  (the actual "agents" in this study) │
+                        └─────────────────┬────────────────────┘
+                                          │
+                    ┌─────────────────────┼─────────────────────┐
+                    │                     │                     │
+                    ▼                     ▼                     ▼
+           ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+           │    dotfiles     │   │   event-bus     │   │   analytics     │
+           │ (control plane) │◄─►│  (coordinate)   │──►│    (insight)    │
+           │                 │   │                 │   │                 │
+           │ - CLAUDE.md     │   │ - pub/sub       │   │ - tool patterns │
+           │ - /work, hooks  │   │ - channels      │   │ - token usage   │
+           │ - commands      │   │ - poll-based    │   │ - permissions   │
+           └─────────────────┘   └─────────────────┘   └─────────────────┘
+```
+
+**What "agent" means here:** A Claude Code session + CLAUDE.md + repo ownership. Not autonomous execution—human-orchestrated via slash commands and event bus. Each session builds context within its repo; coordination happens through event bus broadcasts and DMs.
+
+**[dotfiles](https://github.com/evansenter/dotfiles) (control plane):** Workflows, commands, hooks that propagate to all sessions instantly.
+
+**[claude-event-bus](https://github.com/evansenter/claude-event-bus) (coordinate):** Cross-session communication via polling.
+
+**[claude-session-analytics](https://github.com/evansenter/claude-session-analytics) (insight):** Mines session logs for patterns.
+
+### Projects Under Development
+
+Two additional repositories are being built during this experiment. They don't power the current workflow—Claude Code sessions are the "agents" today—but represent where we're headed.
+
+**[gemicro](https://github.com/evansenter/gemicro) (agents):** Agent patterns and tool orchestration on top of rust-genai.
+
+**[rust-genai](https://github.com/evansenter/rust-genai) (SDK):** Rust client for Google's Gemini Interactions API.
+
+**Current state:**
+```
+┌─────────────────┐         ┌─────────────────┐
+│    gemicro      │────────►│   rust-genai    │
+│ (Gemini agents) │         │  (Gemini SDK)   │
+│                 │         │                 │
+│ - AgentRunner   │         │ - Gemini API    │
+│ - Trajectory    │         │ - streaming     │
+│ - MCP transport │         │ - tool use      │
+└─────────────────┘         └─────────────────┘
+```
+
+**Future goal:** Replace Claude Code sessions with gemicro agents:
+
+```
+                        ┌──────────────────────────────────────┐
+                        │         gemicro Agents               │
+                        │  (autonomous, repo-owning agents)    │
+                        └─────────────────┬────────────────────┘
+                                          │
+                    ┌─────────────────────┼─────────────────────┐
+                    │                     │                     │
+                    ▼                     ▼                     ▼
+           ┌─────────────────┐   ┌─────────────────┐   ┌─────────────────┐
+           │    dotfiles     │   │   event-bus     │   │   analytics     │
+           │ (control plane) │◄─►│  (coordinate)   │──►│    (insight)    │
+           └─────────────────┘   └─────────────────┘   └─────────────────┘
+                    │                     ▲
+                    │                     │ push (MCP or custom protocol)
+                    │                     │
+                    └─────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────┐
+                    │   rust-genai    │
+                    │  (Gemini SDK)   │
+                    └─────────────────┘
+```
+
+Same coordination infrastructure, but agents run autonomously instead of human-orchestrated.
+
+## The Protocol
+
+This is the quality enforcement workflow that `/work <issue>` orchestrates:
+
+| Step | Command | Purpose |
+|------|---------|---------|
+| 1. Orient | `/status-report` | See recent work, open issues, recommendations |
+| 2. Start | `/work <issue>` | Create branch, plan with checkpoints |
+| 3. Develop | (work) | Make changes, run tests/linters |
+| 4. Self-review | `/pr-review local` | Catch issues before pushing |
+| 5. Iterate | (fix) | Address feedback, repeat step 4 |
+| 6. Create PR | `/pr-create` | Commit, push, open PR |
+| 7. Monitor | `/watch-ci <PR#>` | Background CI monitoring |
+| 8. Process feedback | `/pr-review remote` | Handle reviewer comments |
+| 9. Merge | (merge) | Merge PR, clean stale branches |
+| 10. Reflect | `/improve-workflow` | Surface friction, create issues |
+
+**Step 10 feeds back into the system.** Every completed task potentially improves the workflow for future tasks. This is how the tooling compounds.
+
+**Navigation:**
+- Lost context? `/im-lost` shows current position
+- Joining existing work? `/work --attach`
+
+## Operating the Swarm
+
+What does it feel like to orchestrate 5+ parallel sessions?
+
+**Whack-a-mole with compounding returns.** High context-switching—spinning 10 plates simultaneously. But each intervention that improves the system (a hook, a prompt tweak, a new command) makes all future sessions better. The game gets easier as you play.
+
+**The hardest part: tracking state.** Which session is working on what? Who's blocked? Control plane updates require Claude Code restarts, so you're also tracking who has the latest CLAUDE.md and finding good moments to restart without losing flow. The event bus exists precisely to offload this—sessions announce their own state, repos can request features directly instead of hacking around missing capabilities. Without it, the human becomes the courier for every trivial coordination.
+
+**The workflows crystallized from repeated friction.** `/work` emerged from needing structured checkpoints. `/parallel-work` emerged from monorepo slowdown. `/pr-review` + `claude-review.md` were co-authored to be complementary. `/pr-create` documents discussions for later pickup.
+
+**A failure mode: prompt over-simplification.** Early on, I aggressively simplified prompts to reduce contradictions and make flows more explicit ([ce21e5b](https://github.com/evansenter/dotfiles/commit/ce21e5b)). This destabilized cross-agent dynamics—sessions stopped coordinating effectively. Partial rollback required ([914443c](https://github.com/evansenter/dotfiles/commit/914443c)). The lesson: prompts are load-bearing. The "contradictions" were actually productive tension; the verbosity carried necessary context.
 
 ## The Experiment
 
