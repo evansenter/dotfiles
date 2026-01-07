@@ -339,14 +339,16 @@ _Data available since December 30, 2025 (when session logging began via the sess
 
 ### Cost since Dec 30th
 
-_Estimated from session analytics (Dec 30+)._
+_Estimated from session analytics. Regenerate: [`~/.claude/contrib/compute-api-cost.sh`](../home/.claude/contrib/compute-api-cost.sh)_
 
 | Metric | Value |
 |--------|-------|
 | Actual cost | ~£1000 |
-| API equivalent (Opus pricing) | ~$28,000 |
-| Without prompt caching | ~$156,000 |
-| Caching savings | 5.6x |
+| API equivalent (Opus 4.5 pricing) | ~$9,500 |
+| Without prompt caching | ~$50,000 |
+| Caching savings | 5.2x |
+
+**Pricing (Opus 4.5, Nov 2025):** $5/MTok input, $25/MTok output, $6.25/MTok cache write, $0.50/MTok cache read.
 
 **Actual cost breakdown:** Claude Max subscription ($200/mo) + 2x quota during holiday period + pay-as-you-go overages for parallel sessions.
 
