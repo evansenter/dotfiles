@@ -62,9 +62,11 @@ if [[ -n "$session_id" ]]; then
                 head -1 | \
                 awk '{print $1}')
 
-            # Cache the result (even if empty, to avoid repeated queries)
-            mkdir -p "$cache_dir" && chmod 700 "$cache_dir" 2>/dev/null
-            echo "$session_name" > "$cache_file" 2>/dev/null
+            # Cache only successful lookups (empty = session not registered yet)
+            if [[ -n "$session_name" ]]; then
+                mkdir -p "$cache_dir" && chmod 700 "$cache_dir" 2>/dev/null
+                echo "$session_name" > "$cache_file" 2>/dev/null
+            fi
         fi
 
         if [[ -z "$session_name" ]]; then
