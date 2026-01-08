@@ -22,7 +22,7 @@ Respond to existing RFC-style issues with structured analysis.
 
 Launch the `rfc-respond` agent to handle research, drafting, and posting.
 
-### 1. Gather Context Summary
+### 1. Gather Context
 
 Before launching, collect from the current conversation:
 - **Issue**: Number, URL, or "infer" if not specified
@@ -31,18 +31,7 @@ Before launching, collect from the current conversation:
 
 ### 2. Launch Agent
 
-```
-Task(
-  subagent_type="rfc-respond",
-  prompt="Respond to RFC: [issue number or 'infer from context']
-
-    Context from conversation:
-    - Learnings: [relevant discoveries]
-    - Current work: [what we're doing]
-
-    Flags: $ARGUMENTS"
-)
-```
+`Task(subagent_type="rfc-respond", prompt="Respond to RFC [issue]. Learnings: [discoveries]. Context: [current work]. Flags: $ARGUMENTS")`
 
 ### 3. Report Result
 

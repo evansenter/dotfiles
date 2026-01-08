@@ -22,7 +22,7 @@ Create RFC-style issues with structured analysis.
 
 Launch the `rfc-create` agent to handle research, drafting, and issue creation.
 
-### 1. Gather Context Summary
+### 1. Gather Context
 
 Before launching, collect from the current conversation:
 - **Topic**: The problem or feature being discussed
@@ -32,20 +32,7 @@ Before launching, collect from the current conversation:
 
 ### 2. Launch Agent
 
-```
-Task(
-  subagent_type="rfc-create",
-  prompt="Create an RFC for: [topic summary]
-
-    Context from conversation:
-    - Problem: [description]
-    - Relevant files: [list]
-    - Decisions made: [list]
-    - Discovered during: [context]
-
-    Flags: $ARGUMENTS"
-)
-```
+`Task(subagent_type="rfc-create", prompt="Create RFC for: [topic]. Context: [problem, files, decisions, discovery]. Flags: $ARGUMENTS")`
 
 ### 3. Report Result
 

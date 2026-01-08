@@ -23,16 +23,7 @@ Launch the `audit-workflows` agent to handle scanning, analysis, and interactive
 
 ### 1. Launch Agent
 
-```
-Task(
-  subagent_type="audit-workflows",
-  prompt="Audit workflow commands for contradictions and inconsistencies.
-
-    Focus area: $ARGUMENTS
-
-    Repo: [current repo name]"
-)
-```
+`Task(subagent_type="audit-workflows", prompt="Audit workflow commands. Focus: $ARGUMENTS. Repo: [current repo]")`
 
 ### 2. Report Result
 
