@@ -1,5 +1,5 @@
 ---
-argument-hint: <start|list|cleanup> [branch-name] [base-branch]
+argument-hint: <start|list|resume|cleanup> [branch-name] [base-branch]
 description: Manage git worktrees for parallel PR development
 ---
 
@@ -12,6 +12,7 @@ Manage git worktrees for parallel PR development.
 ```
 /parallel-work start <branch-name> [base-branch]
 /parallel-work list
+/parallel-work resume <branch-name>
 /parallel-work cleanup
 ```
 
@@ -92,7 +93,7 @@ tmux new-window -c "[worktree-path]"
 # Pane:
 tmux split-window -h -c "[worktree-path]"
 # Then:
-tmux send-keys "claude 'ultrathink: Starting parallel work. Read .parallel-context.md for context.'" Enter
+tmux send-keys "claude --resume '$BRANCH_NAME' 'ultrathink: Starting parallel work. Read .parallel-context.md for context.'" Enter
 ```
 
 Broadcast `parallel_work_started` to `repo:<name>`.
@@ -129,12 +130,61 @@ Priority: `.parallel-context.md` Task → PR title → last commit message
 
 | Branch | Purpose | PR | CI | Last Activity |
 |--------|---------|----|----|---------------|
-| feature-auth | Add user authentication | #42 | passing | 2 hours ago |
+| feature-auth | Add user auth | #42 | passing | 2 hours ago |
+| fix-bug | Fix parsing error | - | - | 1 day ago |
 
 ### Quick Actions
 - Open: `cd .worktrees/<branch>`
+- Resume session: `claude --resume <branch>` (opens picker filtered by branch name)
 - Create PR: `/pr-create`
 - Cleanup: `/parallel-work cleanup`
+```
+
+---
+
+## Subcommand: `resume`
+
+Resume a named session for a worktree branch.
+
+### 1. Validate
+
+```bash
+BRANCH_NAME="$2"
+REPO_ROOT=$(git rev-parse --show-toplevel)
+WORKTREE_PATH="$REPO_ROOT/.worktrees/$BRANCH_NAME"
+```
+
+Check that:
+- Branch name is provided
+- Worktree exists at `$WORKTREE_PATH`
+
+If worktree doesn't exist, suggest `list` to see available worktrees.
+
+### 2. Launch
+
+Check if tmux is available. Ask user:
+- New tmux window (Recommended)
+- New tmux pane
+- Manual
+
+For tmux options:
+```bash
+# Window (default):
+tmux new-window -c "$WORKTREE_PATH"
+# Pane:
+tmux split-window -h -c "$WORKTREE_PATH"
+# Then:
+tmux send-keys "claude --resume '$BRANCH_NAME'" Enter
+```
+
+For manual: Output the commands for user to run.
+
+### 3. Output
+
+```markdown
+Resuming session `<branch>` in `.worktrees/<branch>`
+
+**Tip:** Use `/parallel-work list` to see all worktrees and session status.
 ```
 
 ---
