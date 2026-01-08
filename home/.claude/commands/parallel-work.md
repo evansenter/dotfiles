@@ -138,15 +138,13 @@ Priority: `.parallel-context.md` Task → PR title → last commit message
 - Resume session: `claude --resume <branch>` (opens picker filtered by branch name)
 - Create PR: `/pr-create`
 - Cleanup: `/parallel-work cleanup`
+```
 
 ### Merging PRs in Worktrees
 
-`gh pr merge` fails in worktrees with "fatal: main is already used by worktree".
-
-Use the GitHub API instead:
+Use the GitHub API:
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/merge -X PUT -f merge_method=squash
-```
 ```
 
 ---
