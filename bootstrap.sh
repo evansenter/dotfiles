@@ -218,6 +218,7 @@ sync_dotfiles() {
 	symlink_claude_dir "commands"
 	symlink_claude_dir "contrib"
 	symlink_claude_dir "agents"
+	symlink_claude_dir "skills"
 
 	# Install Claude Code MCP servers
 	install_claude_mcp_servers

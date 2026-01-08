@@ -48,7 +48,7 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 
 `sync_dotfiles` in `bootstrap.sh`:
 1. Symlinks `home/` files to `~`
-2. Symlinks `.claude/{hooks,commands,contrib,agents}/`
+2. Symlinks `.claude/{hooks,commands,contrib,agents,skills}/`
 3. Installs Claude Code MCP servers
 4. Installs TPM (manual `prefix + I` for plugins)
 5. Symlinks btop themes from `vendor/btop-catppuccin/`
@@ -60,15 +60,25 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 
 **Dark Mode Switching** (`home/.bin/toggle-btop-theme`) - Switches btop theme based on macOS appearance. Requires `dark-notify`.
 
-**Claude Code** (`home/.claude/`) - Global config, agents, commands, contrib scripts, hooks, settings.
+**Claude Code** (`home/.claude/`) - Global config, agents, commands, contrib scripts, hooks, skills, settings.
 
 **Hooks** (`home/.claude/hooks/`) - Shell scripts for Claude Code lifecycle events. See `hooks/README.md` for architecture and details. When adding or modifying hooks, update the README.
+
+**Skills** (`home/.claude/skills/`) - Model-invoked domain expertise. Skills auto-apply when Claude detects matching context (e.g., editing hooks triggers hook-authoring patterns).
+
+**Commands** (`home/.claude/commands/`) - User-invoked workflows. Explicit `/command` invocation (e.g., `/work`, `/pr-review`).
+
+| Aspect | Commands | Skills |
+|--------|----------|--------|
+| Invocation | User types `/command` | Claude auto-applies |
+| Trigger | Explicit | Context-based |
+| Examples | `/work`, `/pr-review` | `hook-authoring` |
 
 **iTerm2** (`preferences/`, `vendor/iterm-catppuccin/`) - Manual color preset import required.
 
 ### File Formats
 
-New commands and agents: follow the format of existing files in `home/.claude/commands/` and `home/.claude/agents/`.
+New commands, agents, and skills: follow the format of existing files in the respective `home/.claude/` subdirectories.
 
 ## After Merging
 
