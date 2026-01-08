@@ -3,56 +3,41 @@ argument-hint: [focus-area]
 description: Audit workflow commands for contradictions and inconsistencies
 ---
 
-ultrathink: Audit all workflow command files for contradictions, inconsistencies, and ambiguities.
+# Audit Workflows
 
-## Scope
+Audit workflow commands for contradictions and inconsistencies.
 
-Analyze `.md` files in `~/.claude/commands/`, `~/.claude/CLAUDE.md`, and project `CLAUDE.md` files.
+## Usage
 
-## Check For
-
-**Contradictions** (within/across files): Conflicting instructions, impossible phase ordering, steps that undo previous steps, checkpoint ownership conflicts.
-
-**Ambiguities**: Vague instructions, missing decision criteria, undefined references, unclear Claude vs Human ownership.
-
-**Staleness**: References to non-existent commands, outdated tool/MCP names, instructions contradicting codebase reality.
-
-**Consistency**: Naming conventions, output formats, terminology, AskUserQuestion vs autonomous patterns.
-
-## Related Command Groups
-
-- **Work flow**: /work, /pr-create, /pr-review, /watch-ci
-- **Audits**: /audit-codebase, /audit-tests, /audit-issues, /audit-workflows
-- **Coordination**: /parallel-work, /broadcast, /event-bus-status
-
-$ARGUMENTS
-
-## Output
-
-### 1. Summary
-
-```markdown
-## Audit Summary
-
-- **Critical:** N contradictions
-- **Important:** N ambiguities
-- **Minor:** N staleness/consistency issues
+```
+/audit-workflows [focus-area]
 ```
 
-### 2. Process Interactively
+- `focus-area`: Optional area to prioritize (e.g., "work flow", "audits", "coordination")
 
-Present findings in batches (1-4) via AskUserQuestion, starting with Critical.
+---
 
-For each: file:line reference, recommended fix, severity opinion.
+## Instructions
 
-Options: Implement (Recommended) / Skip / Defer
+Launch the `audit-workflows` agent to handle scanning, analysis, and interactive resolution.
 
-### 3. Act on Choices
+### 1. Launch Agent
 
-- **Implement**: Fix immediately
-- **Skip**: Note and move on
-- **Defer**: Create GitHub issue
+```
+Task(
+  subagent_type="audit-workflows",
+  prompt="Audit workflow commands for contradictions and inconsistencies.
 
-### 4. Final Summary
+    Focus area: $ARGUMENTS
 
-Report: N implemented, N skipped, N deferred (with issue links).
+    Repo: [current repo name]"
+)
+```
+
+### 2. Report Result
+
+When the agent completes, share its summary with the user:
+- Files analyzed
+- Issues found by category
+- Actions taken (implemented/skipped/deferred)
+- Any patterns worth noting

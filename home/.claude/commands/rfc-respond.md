@@ -20,39 +20,33 @@ Respond to existing RFC-style issues with structured analysis.
 
 ## Instructions
 
-### 1. Fetch the Issue
+Launch the `rfc-respond` agent to handle research, drafting, and posting.
 
-```bash
-gh issue view "${ISSUE_NUM}" --json title,body,number,comments
+### 1. Gather Context Summary
+
+Before launching, collect from the current conversation:
+- **Issue**: Number, URL, or "infer" if not specified
+- **Learnings**: Relevant discoveries from current work
+- **Context**: What prompted this response
+
+### 2. Launch Agent
+
+```
+Task(
+  subagent_type="rfc-respond",
+  prompt="Respond to RFC: [issue number or 'infer from context']
+
+    Context from conversation:
+    - Learnings: [relevant discoveries]
+    - Current work: [what we're doing]
+
+    Flags: $ARGUMENTS"
+)
 ```
 
-Read carefully, including linked PRs and existing comments.
+### 3. Report Result
 
-### 2. Draft Response
-
-ultrathink: Generate response with:
-
-- **Context/Learnings**: What we learned relevant to this RFC
-- **Assumptions**: Table with Confidence and Impact if Wrong
-- **Questions**: Why it matters, proposed solutions, what needs confirmation
-- **Blocking Decisions**: What blocks progress and why
-- **Actionable Requirements**: Table with Owner (Claude/Human) and Blocked By
-
-### 3. Resolve Blocking Questions
-
-Before posting, use AskUserQuestion for blocking decisions (max 4 at a time). Include recommended option first with "(Recommended)" suffix.
-
-### 4. Update and Post
-
-Incorporate decisions, update blocking/requirements sections.
-
-**If `--post`**: Post with `gh issue comment` and broadcast `rfc_responded` to `repo:<name>`.
-
-**Otherwise**: Display and ask if user wants to post.
-
-## Key Principles
-
-- Reference specific code/PRs
-- Propose solutions, don't just ask questions
-- Resolve blockers interactively before posting
-- Separate "needs human decision" from "Claude can proceed"
+When the agent completes, share its summary with the user:
+- Issue responded to (number, title, URL)
+- Key points from the response
+- Any follow-up actions identified
