@@ -107,7 +107,14 @@
       "Bash(.venv/bin/python:*)",
       "Bash(timeout:*)",
       "Bash(cp:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(jq:*)",
+      "Bash(shellcheck:*)",
+      "Bash(diff:*)",
+      "Bash(ps:*)",
+      "Bash(tree:*)",
+      "Bash(touch:*)",
+      "Bash(rg:*)"
     ],
     "defaultMode": "default"
   },
