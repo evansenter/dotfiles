@@ -51,7 +51,7 @@ Session End
 Always start with:
 
 ```bash
-#!/usr/bin/env bash
+#!/bin/bash
 set -euo pipefail
 ```
 
