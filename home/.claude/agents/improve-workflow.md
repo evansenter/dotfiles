@@ -28,6 +28,26 @@ Scan for patterns worth investigating:
 - Debugging-heavy session classifications
 - Repeated tool sequences suggesting manual work
 - Permission gaps (commands needing approval)
+- Cross-session activity (if `has_bus_events: true`)
+
+### Cross-Session Insights
+
+If `summary.has_bus_events` is true, check `cross_session_activity` for:
+- `gotcha_discovered` - Non-obvious issues found by other sessions
+- `pattern_found` - Useful patterns identified
+- `improvement_suggested` - Tooling/workflow gaps
+- `help_needed` / `help_response` - Collaboration patterns
+
+When counts > 0, fetch recent events:
+```
+mcp__event-bus__get_events(
+  event_types=["gotcha_discovered", "pattern_found", "improvement_suggested"],
+  limit=10,
+  order="desc"
+)
+```
+
+Summarize key learnings that could inform recommendations.
 
 ## Phase 2: Investigate Anomalies
 
@@ -78,6 +98,7 @@ Use additional MCP calls as needed to verify.
 ### Workflow Analysis Report
 
 **Data Source**: [N] sessions over [M] days, [X] total events
+(+ [Y] cross-session events from event-bus, if available)
 
 ### Key Findings
 
@@ -98,6 +119,22 @@ Use additional MCP calls as needed to verify.
 |---|---------|----------|--------|------------|
 | 1 | ... | alias | trivial | ▢ |
 | 2 | ... | config | small | ▢ |
+
+### Cross-Session Insights (if has_bus_events)
+
+**Gotchas** ([N] discovered this period):
+- "[gotcha payload excerpt]" - from session X
+- ...
+
+**Patterns** ([N] identified):
+- "[pattern payload excerpt]"
+- ...
+
+**Suggested Improvements** ([N] from other sessions):
+- "[improvement payload excerpt]"
+- ...
+
+If gotchas/patterns are actionable, include them in the Summary table.
 
 ### Tool Gaps (if any)
 
