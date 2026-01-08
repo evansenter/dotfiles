@@ -140,6 +140,13 @@ Priority: `.parallel-context.md` Task → PR title → last commit message
 - Cleanup: `/parallel-work cleanup`
 ```
 
+### Merging PRs in Worktrees
+
+Use the GitHub API:
+```bash
+gh api repos/{owner}/{repo}/pulls/{number}/merge -X PUT -f merge_method=squash
+```
+
 ---
 
 ## Subcommand: `resume`
