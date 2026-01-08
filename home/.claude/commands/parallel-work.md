@@ -141,7 +141,7 @@ Priority: `.parallel-context.md` Task → PR title → last commit message
 
 ### Merging PRs in Worktrees
 
-**Gotcha:** `gh pr merge` fails in worktrees with "fatal: main is already used by worktree".
+`gh pr merge` fails in worktrees with "fatal: main is already used by worktree".
 
 Use the GitHub API instead:
 ```bash
