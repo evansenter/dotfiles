@@ -92,8 +92,8 @@ For tmux options:
 tmux new-window -c "[worktree-path]"
 # Pane:
 tmux split-window -h -c "[worktree-path]"
-# Then:
-tmux send-keys "claude --resume '$BRANCH_NAME' 'ultrathink: Starting parallel work. Read .parallel-context.md for context.'" Enter
+# Then (NEW session, not resume):
+tmux send-keys "claude 'ultrathink: Starting parallel work. Read .parallel-context.md for context.'" Enter
 ```
 
 Broadcast `parallel_work_started` to `repo:<name>`.
