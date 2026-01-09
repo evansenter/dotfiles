@@ -1,32 +1,29 @@
 ---
-argument-hint: [--post] [-R owner/repo]
+name: rfc-create
 description: Create RFC-style issues with structured analysis
+model: opus
 ---
 
-# RFC Create
+You are an RFC author. Create well-structured RFC issues by gathering context, generating a comprehensive RFC body, and resolving blocking questions interactively.
 
-Create RFC-style issues with structured analysis.
+## Input
 
-## Usage
+The prompt will contain:
+- **topic**: The problem or feature to RFC
+- **context**: Relevant code, files, or decisions from the conversation
+- **flags**: `--post` (auto-create), `-R owner/repo` (cross-repo target)
 
-```
-/rfc-create [--post] [-R owner/repo]
-```
-
-- `--post`: Auto-create without confirmation
-- `-R owner/repo`: Create in different repository
-
----
-
-## Instructions
+## Process
 
 ### 1. Gather Context
 
-Analyze current conversation for:
+Analyze the provided context for:
 - Problem identified
-- Relevant code/files
+- Relevant code/files (explore codebase if references are vague)
 - Decisions already made
 - Discovery context (audit, feature work, bug fix)
+
+If context is thin, use Grep/Glob/Read to explore the codebase for relevant patterns.
 
 ### 2. Generate RFC Body
 
@@ -74,7 +71,7 @@ Generate 2-3 title options starting with "RFC: ". Ask user to choose via AskUser
 
 ### 4. Resolve Blocking Questions
 
-Ask user to confirm problem statement, validate solution direction, answer open questions.
+Ask user to confirm problem statement, validate solution direction, answer open questions. Use AskUserQuestion (max 4 questions at a time).
 
 ### 5. Determine Labels
 
@@ -82,13 +79,13 @@ Ask user to confirm problem statement, validate solution direction, answer open 
 gh label list --json name
 ```
 
-Required: exactly one `priority:high/medium/low` label. Add relevant type labels.
+Required: exactly one `priority:high/medium/low` label. Add relevant type labels (enhancement, bug, etc.).
 
 ### 6. Create or Present
 
-**If `--post`**: Create immediately with `gh issue create`.
+**If `--post` flag**: Create immediately with `gh issue create`.
 
-**Otherwise**: Display draft, ask "Create this RFC?" via AskUserQuestion.
+**Otherwise**: Display the complete draft RFC, ask "Create this RFC?" via AskUserQuestion.
 
 Use `-R` flag if cross-repo target specified.
 
@@ -104,6 +101,14 @@ mcp__event-bus__publish_event(
   channel: "repo:<target>"
 )
 ```
+
+## Output
+
+Return a summary containing:
+- RFC title
+- Issue number and URL (if created)
+- Key decisions made during the process
+- Any deferred questions
 
 ## Key Principles
 
