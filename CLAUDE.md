@@ -84,12 +84,6 @@ New commands, agents, and skills: follow the format of existing files in the res
 
 Run `./bootstrap.sh -f` to apply changes locally.
 
-## Context Efficiency
-
-For files >50KB, use `offset`/`limit` parameters or Grep to read specific sections rather than the full file. Large file reads accelerate context exhaustion.
-
-When exploring unfamiliar code, use the Task agent with `subagent_type=Explore` to keep exploration context separate from the main session.
-
 ## Documentation Standards
 
 When editing CLAUDE.md, README.md, commands, agents, or hooks:
