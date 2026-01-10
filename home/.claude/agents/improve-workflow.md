@@ -16,6 +16,23 @@ Don't just run fixed queries and report numbers. Use the session-analytics MCP a
 5. **Verify** - Check if the data supports the hypothesis
 6. **Propose concrete fixes** - Not observations, but implementations
 
+## Phase 0: Ensure Data Quality
+
+Before analysis, ensure data is fresh and complete:
+
+```
+# Ingest recent logs
+mcp__session-analytics__ingest_logs(days=7)
+
+# Ingest git commits from ALL known projects (not just current repo)
+mcp__session-analytics__ingest_git_history_all_projects(days=7)
+
+# Link commits to sessions
+mcp__session-analytics__correlate_git_with_sessions(days=7)
+```
+
+This ensures cross-project git correlation works properly.
+
 ## Phase 1: Gather Initial Signals
 
 ```
@@ -109,11 +126,15 @@ For each notable pattern, drill down:
 **High error rates?**
 ```
 mcp__session-analytics__analyze_failures(days=7)
+mcp__session-analytics__get_error_details(days=7, limit=20)
 ```
-Look at `error_examples` - what specific commands are failing? Are they:
+Look at `error_examples` and error details - what specific commands are failing? Are they:
 - Typos that could be aliased?
 - Missing tools that could be installed?
 - Permission issues that need allowlist updates?
+- Glob/Grep patterns that consistently fail?
+
+Note: Warmup events (Task tool with max_turns: 1) are no longer counted as errors.
 
 **Debugging-heavy sessions?**
 ```
