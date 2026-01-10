@@ -1,5 +1,5 @@
 ---
-argument-hint: <start|list|resume|cleanup> [branch-name] [base-branch]
+argument-hint: <start|list|cleanup> [branch-name] [base-branch]
 description: Manage git worktrees for parallel PR development
 ---
 
@@ -12,7 +12,6 @@ Manage git worktrees for parallel PR development.
 ```
 /parallel-work start <branch-name> [base-branch]
 /parallel-work list
-/parallel-work resume <branch-name>
 /parallel-work cleanup
 ```
 
@@ -156,7 +155,7 @@ Priority: `.parallel-context.md` Task → PR title → last commit message
 
 ### Quick Actions
 - Open: `cd .worktrees/<branch>`
-- Resume session: `claude --resume <branch>` (opens picker filtered by branch name)
+- Resume session: `cd .worktrees/<branch> && claude --resume`
 - Create PR: `/pr-create`
 - Cleanup: `/parallel-work cleanup`
 ```
@@ -166,53 +165,6 @@ Priority: `.parallel-context.md` Task → PR title → last commit message
 Use the GitHub API:
 ```bash
 gh api repos/{owner}/{repo}/pulls/{number}/merge -X PUT -f merge_method=squash
-```
-
----
-
-## Subcommand: `resume`
-
-Resume a named session for a worktree branch.
-
-### 1. Validate
-
-```bash
-BRANCH_NAME="$2"
-REPO_ROOT=$(git rev-parse --show-toplevel)
-WORKTREE_PATH="$REPO_ROOT/.worktrees/$BRANCH_NAME"
-```
-
-Check that:
-- Branch name is provided
-- Worktree exists at `$WORKTREE_PATH`
-
-If worktree doesn't exist, suggest `list` to see available worktrees.
-
-### 2. Launch
-
-Check if tmux is available. Ask user:
-- New tmux window (Recommended)
-- New tmux pane
-- Manual
-
-For tmux options:
-```bash
-# Window (default):
-tmux new-window -c "$WORKTREE_PATH"
-# Pane:
-tmux split-window -h -c "$WORKTREE_PATH"
-# Then:
-tmux send-keys "claude --resume '$BRANCH_NAME'" Enter
-```
-
-For manual: Output the commands for user to run.
-
-### 3. Output
-
-```markdown
-Resuming session `<branch>` in `.worktrees/<branch>`
-
-**Tip:** Use `/parallel-work list` to see all worktrees and session status.
 ```
 
 ---
