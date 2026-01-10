@@ -38,13 +38,17 @@ Skill(pr-review-toolkit:review-pr)
 
 ### 3. Check Coverage Gaps
 
-**Test coverage:**
-- Find new/modified source files, check for corresponding tests
-- Flag: new public APIs without tests (Important), missing edge cases (Suggestion)
+Analyze the diff for untested code paths. For each new/modified source file:
 
-**Example coverage:**
-- Identify user-facing features (new commands, flags, public APIs)
-- Flag: new user-facing feature without example (Important)
+1. **Extract functions** - Identify new/modified functions (detect by language patterns)
+2. **Find tests** - Check if corresponding test file exists and contains tests for those functions
+3. **Detect user-facing** - Look for CLI flags, commands, public exports
+4. **Verify examples** - Check for usage examples in README, examples/, or docs
+
+**Severity:**
+- **Critical** - Security-sensitive code (auth, validation, permissions) without tests
+- **Important** - New public function without tests; new user-facing feature without example
+- **Suggestion** - Modified function with incomplete coverage; private helpers without tests
 
 ### 4. Run Examples (if applicable)
 
