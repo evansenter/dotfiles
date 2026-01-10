@@ -53,7 +53,7 @@ High risk or complexity always warrants focused review.
 
 ### Files for Focused Review
 
-[2-3 sentence summary of where human reviewer should focus, followed by sections formatted like below]
+[2-3 sentence summary of where human reviewer should focus (including relevant files), followed by sections formatted like below]
 
 #### Critical
 
@@ -81,13 +81,7 @@ High risk or complexity always warrants focused review.
 | Unit | Added |
 | Integration | Missing |
 
-## Special Considerations
-
-- **Large PRs (>500 lines)**: Suggest splitting, recommend review order
-- **Security-sensitive**: Flag auth, validation, data handling
-- **Breaking changes**: Identify what breaks, migration needs
-
-## Offer to Post Summary (Optional)
+## Offer to Post Summary
 
 After generating the summary, offer to post it to the PR if conditions are met.
 
