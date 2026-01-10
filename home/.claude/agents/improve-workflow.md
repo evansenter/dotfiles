@@ -70,31 +70,34 @@ Summarize key learnings that could inform recommendations.
 
 Detect sessions that hit compaction and analyze what caused context blowup.
 
-### 2a. Get Compaction Events
+### 2a. Get Compaction Overview
 
 ```
-mcp__session-analytics__get_compaction_events(days=7)
+mcp__session-analytics__get_compaction_events(days=7, aggregate=True)
 ```
 
-Returns sessions that hit context limits with timestamps.
+Returns sessions grouped by compaction count. Focus on sessions with multiple compactions.
 
 ### 2b. Analyze Pre-Compaction Patterns
 
-For sessions with compactions, drill into what caused the reset:
+```
+mcp__session-analytics__analyze_pre_compaction_patterns(days=7)
+```
 
+Returns aggregated antipatterns across all compactions:
+- **Sequential reads without agent**: Many Read calls in a row (should use Task/Explore)
+- **Same file read multiple times**: Redundant reads that waste context
+- **Broad searches**: Glob/Grep without head_limit returning many results
+- **High read:edit ratio**: Lots of exploration, little action
+
+For drilling into a specific compaction event, use:
 ```
 mcp__session-analytics__get_pre_compaction_events(
-  session_id=<compacted_session>,
+  session_id=<session>,
   compaction_timestamp=<timestamp>,
   limit=50
 )
 ```
-
-Look for antipatterns:
-- **Sequential reads without agent**: Many Read calls in a row (should use Task/Explore)
-- **Same file read multiple times**: Check file_path repetition
-- **Broad searches**: Glob/Grep without head_limit returning many results
-- **High read:edit ratio**: Lots of exploration, little action
 
 ### 2c. Session Efficiency Overview
 
