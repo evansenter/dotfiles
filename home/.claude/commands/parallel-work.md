@@ -52,10 +52,23 @@ Summarize into "Context from Parent Session".
 
 ### 4. Gather Task Details
 
+**Issue Detection:** Extract issue number from branch name if present:
+```
+# Patterns to detect: issue-317, issue-317-foo, fix-317, feat-317, etc.
+DETECTED_ISSUE=$(echo "$BRANCH_NAME" | grep -oE '(issue|fix|feat|feature|bug|refactor|ci)-([0-9]+)' | grep -oE '[0-9]+' | head -1)
+```
+
 Ask user via AskUserQuestion:
 - What task will the new session work on?
-- Related issues/PRs to reference?
+- Issue number to track? (if detected: show as default, else "None")
 - Special instructions?
+
+**Issue question options:**
+- If `DETECTED_ISSUE`: `["$DETECTED_ISSUE (detected)", "None - no issue tracking"]`
+- If no detection: `["None - no issue tracking"]`
+- Always allow "Other" for manual entry
+
+Store result as `ISSUE_NUMBER` (empty string if "None" selected).
 
 ### 5. Write Context File
 
@@ -70,13 +83,14 @@ Write `.parallel-context.md` to the new worktree:
 ## Branch Info
 - **Branch:** [branch-name]
 - **Base:** [base-branch]
+- **Issue:** [#ISSUE_NUMBER or "None"]
 - **Created:** [timestamp]
 
 ## Context from Parent Session
 [Extracted context]
 
 ---
-**Session Start:** Read this file, then run `/work <issue>` or proceed with development.
+**Session Start:** This session will auto-launch with the appropriate workflow.
 ```
 
 ### 6. Launch Session
@@ -92,11 +106,18 @@ For tmux options:
 tmux new-window -c "[worktree-path]"
 # Pane:
 tmux split-window -h -c "[worktree-path]"
-# Then (NEW session, not resume):
-tmux send-keys "claude 'ultrathink: Starting parallel work. Read .parallel-context.md for context.'" Enter
+
+# Then launch based on issue (NEW session, not resume):
+if [ -n "$ISSUE_NUMBER" ]; then
+  # Issue provided - use /work for guided development
+  tmux send-keys "claude '/work $ISSUE_NUMBER'" Enter
+else
+  # No issue - generic parallel work start
+  tmux send-keys "claude 'ultrathink: Starting parallel work. Read .parallel-context.md for context.'" Enter
+fi
 ```
 
-Broadcast `parallel_work_started` to `repo:<name>`.
+Broadcast `parallel_work_started` to `repo:<name>` (include issue number if present).
 
 Output summary with location, branch, and tips.
 

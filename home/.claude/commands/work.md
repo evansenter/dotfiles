@@ -222,6 +222,8 @@ WIP state is **automatically checkpointed** by the `pre-compact.sh` hook before 
 **Confirm merge**: Spawn summarize-work agent to show what's being merged:
 - `Task(subagent_type="summarize-work", prompt="Summarize work on this PR for merge review")`
 
+When showing the output from summarize-work, always highlight the key files to look at, and the PR URL. Include any other relevant data as well.
+
 **Always** ask user via AskUserQuestion (Merge now / Wait). Never auto-merge. After merge:
 
 ```

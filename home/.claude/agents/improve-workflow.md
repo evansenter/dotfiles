@@ -49,7 +49,60 @@ mcp__event-bus__get_events(
 
 Summarize key learnings that could inform recommendations.
 
-## Phase 2: Investigate Anomalies
+## Phase 2: Context Efficiency Analysis
+
+Detect sessions that hit compaction and analyze what caused context blowup.
+
+### 2a. Get Compaction Events
+
+```
+mcp__session-analytics__get_compaction_events(days=7)
+```
+
+Returns sessions that hit context limits with timestamps.
+
+### 2b. Analyze Pre-Compaction Patterns
+
+For sessions with compactions, drill into what caused the reset:
+
+```
+mcp__session-analytics__get_pre_compaction_events(
+  session_id=<compacted_session>,
+  compaction_timestamp=<timestamp>,
+  limit=50
+)
+```
+
+Look for antipatterns:
+- **Sequential reads without agent**: Many Read calls in a row (should use Task/Explore)
+- **Same file read multiple times**: Check file_path repetition
+- **Broad searches**: Glob/Grep without head_limit returning many results
+- **High read:edit ratio**: Lots of exploration, little action
+
+### 2c. Session Efficiency Overview
+
+```
+mcp__session-analytics__get_session_efficiency(days=7)
+```
+
+Returns per-session metrics including:
+- `burn_rate_tokens_per_event` - Flag sessions > 500 tokens/event
+- `read_to_edit_ratio` - Flag sessions > 10:1 (exploration-heavy)
+- `files_read_multiple_times` - Flag sessions > 20 (repetitive reading)
+- `large_result_count` - Sessions with many large tool results
+
+### 2d. Large Tool Results
+
+```
+mcp__session-analytics__get_large_tool_results(days=7, min_size_kb=10, limit=20)
+```
+
+Identify space-consuming operations:
+- Large file reads that could use line limits
+- MCP calls returning huge payloads
+- Task outputs that could be summarized
+
+## Phase 3: Investigate Other Anomalies
 
 For each notable pattern, drill down:
 
@@ -84,7 +137,7 @@ mcp__session-analytics__get_permission_gaps(days=7, min_count=3)
 ```
 Filter out false positives (shell builtins, comments, variable assignments). Real gaps are commands users run repeatedly that require approval.
 
-## Phase 3: Form and Test Hypotheses
+## Phase 4: Form and Test Hypotheses
 
 For each finding, ask yourself:
 - **Why** is this happening? (Don't stop at "errors are high")
@@ -93,7 +146,7 @@ For each finding, ask yourself:
 
 Use additional MCP calls as needed to verify.
 
-## Phase 4: Output Format
+## Phase 5: Output Format
 
 ### Workflow Analysis Report
 
@@ -120,6 +173,20 @@ Use additional MCP calls as needed to verify.
 | 1 | ... | alias | trivial | ▢ |
 | 2 | ... | config | small | ▢ |
 
+### Context Efficiency (if compactions found)
+
+**Compaction Events**: [N] sessions hit context limits
+
+| Session | Burn Rate | Top Antipattern | Suggestion |
+|---------|-----------|-----------------|------------|
+| abc123 | 85k tok/event | Sequential reads | Use Task/Explore agent |
+| def456 | 62k tok/event | Same file 5x | Read once, reference |
+
+**Common Antipatterns**:
+- Sequential Read calls without agent delegation: [N] occurrences
+- Files read multiple times in same session: [list top 3]
+- Glob/Grep without head_limit: [N] occurrences
+
 ### Cross-Session Insights (if has_bus_events)
 
 **Gotchas** ([N] discovered this period):
@@ -144,7 +211,7 @@ During investigation, note questions you couldn't answer because the MCP lacked 
 
 Example: "Wanted hourly error distribution but only daily aggregates available"
 
-## Phase 5: Implement with Approval
+## Phase 6: Implement with Approval
 
 For each fix, use AskUserQuestion with options: "Implement" / "Skip" / "Defer to issue"
 
