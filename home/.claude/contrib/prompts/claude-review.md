@@ -62,17 +62,36 @@ Before raising any issue, check if it was already addressed in a "Feedback Addre
 ## Feedback Addressed
 
 ### Implemented
-- [Critical] item description - fixed in commit abc123
-- [Important] item description - resolved
+- [Critical] `auth.rs:42` - Missing null check - fixed in commit abc123
+- [Important] Error handling gap - resolved
 
 ### Skipped
-- [Suggestion] item description - reason for skipping
+- [Suggestion] `utils.rs:15` - Extract helper function - adds complexity without clear benefit
 
 ### Deferred
-- [Suggestion] item description - tracked in #123
+- [Suggestion] Add integration tests - tracked in #123
 ```
 
-**Do NOT re-raise issues that appear in Implemented, Skipped, or Deferred sections.**
+**Building the Previously Addressed List:**
+
+1. Parse ALL "Feedback Addressed" comments (there may be multiple from prior review rounds)
+2. For each item in Implemented, Skipped, or Deferred sections, extract:
+   - Severity: `[Critical]`, `[Important]`, or `[Suggestion]`
+   - File reference (if present): `file.rs:42`
+   - Issue description
+   - Resolution: Implemented/Skipped/Deferred + reason
+
+**Semantic Matching Rules:**
+
+Match by **file + issue meaning**, not exact text. Line numbers may shift between commits.
+
+| New Finding | Previously Addressed | Match? |
+|-------------|---------------------|--------|
+| `auth.rs:45` - Add null validation | `auth.rs:42` - Missing null check (Implemented) | Yes - same file, same issue |
+| `config.rs:10` - Handle parse error | `config.rs` - Error handling gap (Implemented) | Yes - same file, similar issue |
+| `auth.rs:80` - Log authentication attempts | `auth.rs:42` - Missing null check (Implemented) | No - same file but different issue |
+
+**Do NOT re-raise issues that semantically match items in Implemented, Skipped, or Deferred sections.**
 
 ### 4. Analyze Test and Example Coverage
 
@@ -176,6 +195,13 @@ gh pr comment $PR_NUMBER --body "$(cat <<'EOF'
 #### Suggestions
 - [ ] `file.rs:120` - Description of suggestion
 
+### Previously Addressed (Filtered)
+<!-- Include this section if any items matched previous "Feedback Addressed" comments. Omit if none. -->
+- `utils.rs:15` - Extract helper function (Skipped: adds complexity)
+- `auth.rs:42` - Missing null check (Implemented in prior round)
+
+> 2 items from prior feedback rounds were not re-raised.
+
 ### Verdict
 <!-- REMEMBER: If ANY items listed above, you MUST say REQUEST_CHANGES. APPROVE only if all sections are empty. -->
 [APPROVE / REQUEST_CHANGES] - [brief reason]
@@ -186,7 +212,7 @@ EOF
 )"
 ```
 
-If no issues found:
+If no issues found (include Previously Addressed section if items were filtered):
 ```bash
 gh pr comment $PR_NUMBER --body "> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)
 
@@ -194,6 +220,12 @@ gh pr comment $PR_NUMBER --body "> **Prompt:** [evansenter/dotfiles/.../claude-r
 
 ### Summary
 [1-2 sentences on what this PR does]
+
+### Previously Addressed (Filtered)
+<!-- Include only if items were filtered. Omit entire section if none. -->
+- `auth.rs:42` - Missing null check (Implemented in prior round)
+
+> 1 item from prior feedback rounds was not re-raised.
 
 ### Verdict
 APPROVE - Code looks good, no issues found.
