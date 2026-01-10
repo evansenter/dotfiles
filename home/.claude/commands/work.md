@@ -65,17 +65,27 @@ If incomplete `[work:*]` todos exist, block new work.
 - GitHub URL → extract issue number
 - Other → `adhoc`
 
-### 3. Fetch Context
+### 3. Check for Parallel Context
+
+If `.parallel-context.md` exists in cwd, read it. This file is created by `/parallel-work start` and contains:
+- Task description from parent session
+- Decisions and constraints already established
+- Relevant code locations identified
+- Whether exploration was already done
+
+Store this as `PARALLEL_CONTEXT` for use in scope presentation and guided development.
+
+### 4. Fetch Context
 
 For issues: `mcp__github__get_issue()` for title, body, labels.
 
-### 4. Derive Initial Tasks
+### 5. Derive Initial Tasks
 
 ultrathink: Break down into 2-6 implementation tasks (imperative form).
 
 These are preliminary - if user opts into guided development, they'll be refined.
 
-### 5. Present Scope
+### 6. Present Scope
 
 ```markdown
 ## Proposed Work Scope
@@ -87,6 +97,9 @@ These are preliminary - if user opts into guided development, they'll be refined
 1. <task 1>
 2. <task 2>
 
+### Context from Parent Session (if PARALLEL_CONTEXT exists)
+[Summary of decisions, constraints, and exploration from parent]
+
 ### Checkpoints
 - /pr-review local → /pr-create → /watch-ci → /pr-review remote → merge → reflect
 ```
@@ -96,7 +109,7 @@ Ask via AskUserQuestion:
 - **Modify scope** - Adjust tasks before starting
 - **Cancel** - Abort without creating todos
 
-### 6. Guided Development (Optional)
+### 7. Guided Development (Optional)
 
 Ask: **Yes, explore first (Recommended)** / No, proceed directly
 
@@ -107,6 +120,7 @@ Ask: **Yes, explore first (Recommended)** / No, proceed directly
 - The change touches ≤3 files
 - No architectural decisions to make
 - Requirements are unambiguous
+- **OR** `PARALLEL_CONTEXT` indicates parent already explored
 
 **When skipping, justify it to the user.**
 
@@ -169,7 +183,7 @@ Based on the architecture plan, derive final implementation tasks. These replace
 
 ---
 
-### 7. Create Todos
+### 8. Create Todos
 
 ```
 [work:${ID}] <task 1>
@@ -182,7 +196,7 @@ Based on the architecture plan, derive final implementation tasks. These replace
 [work:${ID}] Reflect with improve-workflow agent
 ```
 
-### 8. Broadcast & Begin
+### 9. Broadcast & Begin
 
 Publish `task_started` with your session_id (from startup: "Registered on event bus as: <session_id>"):
 
