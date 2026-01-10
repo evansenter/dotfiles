@@ -115,7 +115,9 @@
       "Bash(ps:*)",
       "Bash(tree:*)",
       "Bash(touch:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(PYTHONPATH=*:*)",
+      "Bash(*/session-analytics-cli:*)"
     ],
     "defaultMode": "default"
   },
