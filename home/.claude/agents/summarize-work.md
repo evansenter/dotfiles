@@ -81,6 +81,16 @@ High risk or complexity always warrants focused review.
 | Unit | Added |
 | Integration | Missing |
 
+### Quick Review Command
+
+Based on the critical/important files above, output a ready-to-run command:
+
+```bash
+git diff main...HEAD -- <file1> <file2> <file3>
+```
+
+Include only Critical and Important files (typically 3-6 files). This lets users quickly review the most important changes without scrolling through the full diff.
+
 ## Offer to Post Summary
 
 After generating the summary, offer to post it to the PR if conditions are met.
