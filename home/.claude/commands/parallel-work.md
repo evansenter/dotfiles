@@ -130,7 +130,7 @@ Show all active worktrees with status.
 
 ```bash
 git worktree list --porcelain
-gh pr list --state open --json number,headRefName,title,statusCheckRollup
+gh pr list --state open --limit 20 --json number,headRefName,title,statusCheckRollup
 ```
 
 For each worktree in `.worktrees/`:
