@@ -59,7 +59,6 @@
       "Bash(cargo add:*)",
       "Bash(LOUD_WIRE=1:*)",
       "mcp__github__*",
-      "mcp__notion__*",
       "mcp__event-bus__*",
       "EnterPlanMode",
       "Bash(RUSTDOCFLAGS=\"-D warnings\" cargo doc:*)",
