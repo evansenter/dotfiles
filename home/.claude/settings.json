@@ -2,7 +2,7 @@
   "cleanupPeriodDays": 365,
   "env": {
     "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
-    "EVENT_BUS_URL": "http://100.126.140.68:8080/mcp"
+    "EVENT_BUS_URL": "http://100.111.136.24:8080/mcp"
   },
   "permissions": {
     "allow": [
