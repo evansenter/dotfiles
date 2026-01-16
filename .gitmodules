@@ -4,3 +4,6 @@
 [submodule "vendor/iterm-catppuccin"]
 	path = vendor/iterm-catppuccin
 	url = https://github.com/catppuccin/iterm.git
+[submodule "vendor/bat-catppuccin"]
+	path = vendor/bat-catppuccin
+	url = https://github.com/catppuccin/bat.git
