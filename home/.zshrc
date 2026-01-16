@@ -39,8 +39,10 @@ setopt NO_BEEP              # disable beep
 # Disable flow control (Ctrl-S/Ctrl-Q) to free up Ctrl-Q for tmux prefix
 stty -ixon 2>/dev/null
 
-# Make / act as a word delimiter (for Ctrl+W, Alt+B, Alt+F, etc.)
+# Make / - . act as word delimiters (for Ctrl+W, Alt+B, Alt+F, etc.)
 WORDCHARS=${WORDCHARS/\//}
+WORDCHARS=${WORDCHARS/\-/}
+WORDCHARS=${WORDCHARS/\./}
 
 # ==============================================================================
 # Key Bindings
