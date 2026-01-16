@@ -40,6 +40,22 @@
 [fetch]
 	prune = true
 
+[rerere]
+	enabled = true
+
+[diff]
+	algorithm = histogram
+
+[merge]
+	conflictstyle = zdiff3
+
+[branch]
+	sort = -committerdate
+
+[rebase]
+	autoSquash = true
+	autoStash = true
+
 # ==============================================================================
 # Colors
 # ==============================================================================
