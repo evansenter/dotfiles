@@ -175,6 +175,38 @@ install_btop_themes() {
 	done
 }
 
+install_bat_themes() {
+	local bat_themes_dir="$HOME/.config/bat/themes"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local vendor_themes="$dotfiles_dir/vendor/bat-catppuccin/themes"
+
+	if [[ ! -d "$vendor_themes" ]]; then
+		echo "Skipping bat themes (submodule not initialized)"
+		return 0
+	fi
+
+	mkdir -p "$bat_themes_dir"
+
+	echo "Symlinking bat themes..."
+	for theme in "$vendor_themes"/*.tmTheme; do
+		local name="$(basename "$theme")"
+		ln -sf "$theme" "$bat_themes_dir/$name"
+	done
+
+	# Rebuild bat cache if bat is installed (batcat on Debian/Ubuntu)
+	local bat_cmd=""
+	if command -v bat >/dev/null 2>&1; then
+		bat_cmd="bat"
+	elif command -v batcat >/dev/null 2>&1; then
+		bat_cmd="batcat"
+	fi
+
+	if [[ -n "$bat_cmd" ]]; then
+		echo "Rebuilding bat theme cache..."
+		$bat_cmd cache --build
+	fi
+}
+
 install_claude_mcp_servers() {
 	if ! command -v claude >/dev/null 2>&1; then
 		echo "Skipping MCP servers (claude not installed)"
@@ -228,6 +260,9 @@ sync_dotfiles() {
 
 	# Install btop themes from submodule
 	install_btop_themes
+
+	# Install bat themes from submodule
+	install_bat_themes
 
 	# Install LaunchAgents
 	install_launch_agents
