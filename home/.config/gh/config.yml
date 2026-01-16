@@ -1,0 +1,13 @@
+# gh CLI configuration
+# Docs: https://cli.github.com/manual/gh_config
+version: 1
+
+# Use HTTPS for git operations (works with gh auth git-credential)
+git_protocol: https
+
+# Interactive prompts enabled
+prompt: enabled
+
+# Aliases
+aliases:
+  co: pr checkout
