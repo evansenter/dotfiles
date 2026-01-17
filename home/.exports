@@ -15,3 +15,6 @@ export EDITOR='vim'
 
 # Claude Code statusline - disable hyperlinks due to injection corruption (#172)
 export STATUSLINE_NO_LINKS=1
+
+# Cache for rustc artifacts, to speed up `make check`-like commands
+export RUSTC_WRAPPER=sccache
