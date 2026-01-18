@@ -17,4 +17,4 @@ export EDITOR='vim'
 export STATUSLINE_NO_LINKS=1
 
 # Cache for rustc artifacts, to speed up `make check`-like commands
-export RUSTC_WRAPPER=sccache
+command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache

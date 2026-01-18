@@ -235,7 +235,7 @@ run_brew_hooks() {
 	fi
 
 	for hook in "$hooks_dir"/*.sh; do
-		if [[ -x "$hook" ]]; then
+		if [[ -f "$hook" && -x "$hook" ]]; then
 			"$hook"
 		fi
 	done

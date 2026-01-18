@@ -8,8 +8,8 @@ if ! command -v rustup >/dev/null 2>&1; then
 	exit 0
 fi
 
-# Check if a default toolchain is already set
-if rustup default 2>/dev/null | grep -q "stable"; then
+# Check if any toolchain is already configured
+if rustup show active-toolchain >/dev/null 2>&1; then
 	exit 0
 fi
 
