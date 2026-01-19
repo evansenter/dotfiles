@@ -141,6 +141,62 @@ pull_latest() {
 	git pull origin main
 }
 
+install_packages() {
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+	if [[ "$(uname)" == "Darwin" ]]; then
+		# macOS - use Homebrew
+		if ! command -v brew >/dev/null 2>&1; then
+			echo "Installing Homebrew..."
+			/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+		fi
+
+		if [[ -f "$dotfiles_dir/Brewfile" ]]; then
+			echo "Installing packages from Brewfile..."
+			brew bundle --file="$dotfiles_dir/Brewfile"
+		fi
+	else
+		# Linux - use apt (Debian/Ubuntu)
+		if command -v apt-get >/dev/null 2>&1; then
+			echo "Installing packages via apt..."
+			local packages=(
+				bat
+				btop
+				delta
+				fzf
+				gh
+				git
+				jq
+				ripgrep
+				tmux
+				vim
+			)
+			# Filter to only packages not already installed
+			local to_install=()
+			for pkg in "${packages[@]}"; do
+				# Handle package name differences
+				local apt_pkg="$pkg"
+				case "$pkg" in
+					delta) apt_pkg="git-delta" ;;
+				esac
+				if ! dpkg -l "$apt_pkg" &>/dev/null; then
+					to_install+=("$apt_pkg")
+				fi
+			done
+
+			if [[ ${#to_install[@]} -gt 0 ]]; then
+				echo "Installing: ${to_install[*]}"
+				sudo apt-get update
+				sudo apt-get install -y "${to_install[@]}"
+			else
+				echo "All packages already installed"
+			fi
+		else
+			echo "Skipping package installation (apt not found)"
+		fi
+	fi
+}
+
 install_btop_themes() {
 	local btop_themes_dir="$HOME/.config/btop/themes"
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -280,23 +336,31 @@ sync_dotfiles() {
 # Parse arguments
 FORCE=false
 PULL=false
+PACKAGES=false
 for arg in "$@"; do
 	case "$arg" in
 		--force|-f) FORCE=true ;;
 		--pull|-p) PULL=true ;;
+		--packages|-i) PACKAGES=true ;;
 		--help|-h)
 			echo "Usage: ./bootstrap.sh [OPTIONS]"
 			echo ""
 			echo "Install dotfiles from home/ to ~"
 			echo ""
 			echo "Options:"
-			echo "  -f, --force  Skip confirmation prompt"
-			echo "  -p, --pull   Pull latest changes before installing"
-			echo "  -h, --help   Show this help message"
+			echo "  -f, --force     Skip confirmation prompt"
+			echo "  -p, --pull      Pull latest changes before installing"
+			echo "  -i, --packages  Install packages (brew on macOS, apt on Linux)"
+			echo "  -h, --help      Show this help message"
 			exit 0
 			;;
 	esac
 done
+
+# Install packages if requested
+if [[ "$PACKAGES" == true ]]; then
+	install_packages
+fi
 
 # Pull if requested
 if [[ "$PULL" == true ]]; then
