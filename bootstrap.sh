@@ -179,7 +179,8 @@ install_packages() {
 				case "$pkg" in
 					delta) apt_pkg="git-delta" ;;
 				esac
-				if ! dpkg -l "$apt_pkg" &>/dev/null; then
+				# dpkg -s returns 0 only if package is actually installed
+				if ! dpkg -s "$apt_pkg" &>/dev/null; then
 					to_install+=("$apt_pkg")
 				fi
 			done
@@ -197,28 +198,35 @@ install_packages() {
 	fi
 }
 
+init_submodules() {
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+	# Check if any submodule is missing
+	if [[ -d "$dotfiles_dir/vendor/btop-catppuccin/themes" ]] && \
+	   [[ -d "$dotfiles_dir/vendor/bat-catppuccin/themes" ]] && \
+	   [[ -d "$dotfiles_dir/vendor/iterm-catppuccin/colors" ]]; then
+		return 0
+	fi
+
+	if ! command -v git >/dev/null 2>&1; then
+		echo "Skipping submodules (git not installed)"
+		return 0
+	fi
+
+	echo "Initializing submodules..."
+	if ! git -C "$dotfiles_dir" submodule update --init; then
+		echo "Warning: Failed to initialize submodules"
+		echo "  Run manually: git submodule update --init"
+	fi
+}
+
 install_btop_themes() {
 	local btop_themes_dir="$HOME/.config/btop/themes"
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 	local vendor_themes="$dotfiles_dir/vendor/btop-catppuccin/themes"
 
 	if [[ ! -d "$vendor_themes" ]]; then
-		if ! command -v git >/dev/null 2>&1; then
-			echo "Skipping btop themes (git not installed)"
-			return 0
-		fi
-		echo "Initializing submodules..."
-		if ! git -C "$dotfiles_dir" submodule update --init; then
-			echo "Skipping btop themes (failed to initialize submodules)"
-			echo "  Run manually: git submodule update --init"
-			return 0
-		fi
-		echo "Submodules initialized successfully"
-	fi
-
-	# Verify themes directory exists after initialization
-	if [[ ! -d "$vendor_themes" ]]; then
-		echo "Skipping btop themes (themes directory not found)"
+		echo "Skipping btop themes (submodule not initialized)"
 		return 0
 	fi
 
@@ -313,6 +321,9 @@ sync_dotfiles() {
 
 	# Install tmux plugin manager if needed
 	install_tmux_plugin_manager
+
+	# Initialize submodules if needed
+	init_submodules
 
 	# Install btop themes from submodule
 	install_btop_themes
