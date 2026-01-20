@@ -84,15 +84,43 @@ install_tmux_plugin_manager() {
 	fi
 }
 
+install_launch_agent() {
+	local plist="$1"
+	local label="${plist%.plist}"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local launch_agents_dir="$HOME/Library/LaunchAgents"
+
+	mkdir -p "$launch_agents_dir"
+	mkdir -p "$HOME/.local/log"
+
+	local new_plist_content
+	new_plist_content=$(sed "s|__HOME__|$HOME|g" "$dotfiles_dir/LaunchAgents/$plist")
+	local dest_plist="$launch_agents_dir/$plist"
+
+	# Only update and reload if plist content changed
+	local tmp_plist
+	tmp_plist=$(mktemp)
+	echo "$new_plist_content" > "$tmp_plist"
+
+	if [[ ! -f "$dest_plist" ]] || ! cmp -s "$tmp_plist" "$dest_plist"; then
+		echo "Installing LaunchAgent: $plist"
+		mv "$tmp_plist" "$dest_plist"
+
+		# Reload the agent
+		launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+		launchctl bootstrap "gui/$(id -u)" "$dest_plist"
+	else
+		rm -f "$tmp_plist"
+	fi
+}
+
 install_launch_agents() {
 	# LaunchAgents are macOS-only
 	if [[ "$(uname)" != "Darwin" ]]; then
-		echo "Skipping LaunchAgents (macOS-only)"
 		return 0
 	fi
 
-	local launch_agents_dir="$HOME/Library/LaunchAgents"
-	mkdir -p "$launch_agents_dir"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 	# Install dark-notify LaunchAgent (only if dark-notify is installed)
 	if command -v dark-notify >/dev/null 2>&1; then
@@ -106,33 +134,52 @@ install_launch_agents() {
 			homebrew_prefix="/usr/local"
 		fi
 		local new_plist_content
-		new_plist_content=$(sed -e "s|__HOME__|$HOME|g" -e "s|__HOMEBREW_PREFIX__|$homebrew_prefix|g" "LaunchAgents/$plist")
-		local dest_plist="$launch_agents_dir/$plist"
+		new_plist_content=$(sed -e "s|__HOME__|$HOME|g" -e "s|__HOMEBREW_PREFIX__|$homebrew_prefix|g" "$dotfiles_dir/LaunchAgents/$plist")
+		local dest_plist="$HOME/Library/LaunchAgents/$plist"
 
-		# Only update and reload if plist content changed
+		mkdir -p "$HOME/Library/LaunchAgents"
+
 		local tmp_plist
 		tmp_plist=$(mktemp)
-		trap 'rm -f "$tmp_plist"' EXIT
 		echo "$new_plist_content" > "$tmp_plist"
 
 		if [[ ! -f "$dest_plist" ]] || ! cmp -s "$tmp_plist" "$dest_plist"; then
 			echo "Installing LaunchAgent: $plist"
 			mv "$tmp_plist" "$dest_plist"
-			trap - EXIT
 
-			# Reload the agent
 			launchctl bootout "gui/$(id -u)/com.user.dark-notify" 2>/dev/null || true
 			launchctl bootstrap "gui/$(id -u)" "$dest_plist"
 
-			# Run the script once to set initial theme
 			"$HOME/.bin/toggle-btop-theme"
 		else
 			rm -f "$tmp_plist"
-			trap - EXIT
 		fi
 	else
 		echo "Skipping dark-notify LaunchAgent (dark-notify not installed)"
 		echo "  Install with: brew install cormacrelf/tap/dark-notify"
+	fi
+
+	# Install cargo-sweep LaunchAgent (only if cargo is installed)
+	if command -v cargo >/dev/null 2>&1; then
+		install_launch_agent "com.user.cargo-sweep.plist"
+	fi
+}
+
+install_cron_jobs() {
+	# Cron jobs are Linux-only (macOS uses LaunchAgents)
+	if [[ "$(uname)" == "Darwin" ]]; then
+		return 0
+	fi
+
+	# Install cargo-sweep cron job (only if cargo is installed)
+	if command -v cargo >/dev/null 2>&1; then
+		local cron_entry="0 3 * * 0 $HOME/.bin/cargo-sweep-all"
+
+		# Check if already installed
+		if ! crontab -l 2>/dev/null | grep -qF "cargo-sweep-all"; then
+			echo "Installing cargo-sweep cron job (weekly Sunday 3am)..."
+			(crontab -l 2>/dev/null || true; echo "$cron_entry") | crontab -
+		fi
 	fi
 }
 
@@ -331,8 +378,9 @@ sync_dotfiles() {
 	# Install bat themes from submodule
 	install_bat_themes
 
-	# Install LaunchAgents
+	# Install LaunchAgents (macOS) or cron jobs (Linux)
 	install_launch_agents
+	install_cron_jobs
 
 	# Reload zsh configuration
 	if [[ -n "${ZSH_VERSION:-}" ]]; then
