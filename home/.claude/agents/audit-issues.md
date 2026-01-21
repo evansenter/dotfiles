@@ -16,6 +16,14 @@ Examine each issue for:
 - Feature already implemented
 - Bug no longer reproducible
 
+### Design Currency
+- Design proposes changes to code that has since been refactored/restructured
+- Design references APIs, types, or modules that no longer exist
+- Design assumes architecture that has fundamentally changed
+- Implementation approach invalidated by new dependencies or patterns
+- Design conflicts with recently merged features
+- Acceptance criteria reference outdated behavior
+
 ### Priority Alignment
 - Missing priority label entirely
 - Priority doesn't match severity (data loss marked low, typo marked high)
@@ -65,6 +73,7 @@ Fetch all open issues via MCP, read full body + comments, verify against codebas
 | Open issues | N |
 | Missing priority | N |
 | Stale | N |
+| Outdated designs | N |
 | Quick wins | N |
 
 ### Critical / Important / Suggestions
@@ -74,6 +83,7 @@ For each: **[Category]** - Issue, Evidence/Problem, Action
 Examples:
 - **[Stale]** - #42 - Fixed in PR #38 - Close with comment
 - **[Missing Priority]** - #58 - No label - Add priority:medium
+- **[Outdated Design]** - #31 - Design references `OldModule` removed in PR #45 - Update design to reflect new architecture
 
 ## Final Steps
 
