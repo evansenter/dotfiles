@@ -217,6 +217,7 @@ install_packages() {
 				ripgrep
 				tmux
 				vim
+				xclip
 			)
 			# Filter to only packages not already installed
 			local to_install=()
@@ -241,6 +242,12 @@ install_packages() {
 			fi
 		else
 			echo "Skipping package installation (apt not found)"
+		fi
+
+		# Install toad (batrachian.ai)
+		if ! command -v toad >/dev/null 2>&1; then
+			echo "Installing toad..."
+			curl -fsSL batrachian.ai/install | sh
 		fi
 	fi
 }
