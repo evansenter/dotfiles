@@ -249,6 +249,12 @@ install_packages() {
 			echo "Installing toad..."
 			curl -fsSL batrachian.ai/install | sh
 		fi
+
+		# Configure npm to use user-owned global directory (avoids permission issues)
+		if command -v npm >/dev/null 2>&1; then
+			mkdir -p "$HOME/.npm-global"
+			npm config set prefix "$HOME/.npm-global"
+		fi
 	fi
 }
 
