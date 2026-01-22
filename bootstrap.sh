@@ -203,11 +203,6 @@ install_packages() {
 			brew bundle --file="$dotfiles_dir/Brewfile"
 		fi
 
-		# Install toad (batrachian.ai)
-		if ! command -v toad >/dev/null 2>&1; then
-			echo "Installing toad..."
-			curl -fsSL batrachian.ai/install | sh
-		fi
 	else
 		# Linux - use apt (Debian/Ubuntu)
 		if command -v apt-get >/dev/null 2>&1; then
@@ -288,12 +283,6 @@ install_packages() {
 			curl -Lo /tmp/lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
 			sudo tar xf /tmp/lazygit.tar.gz -C /usr/local/bin lazygit
 			rm /tmp/lazygit.tar.gz
-		fi
-
-		# Install toad (batrachian.ai)
-		if ! command -v toad >/dev/null 2>&1; then
-			echo "Installing toad..."
-			curl -fsSL batrachian.ai/install | sh
 		fi
 
 		# Create fd alias (Debian/Ubuntu installs as fdfind)
