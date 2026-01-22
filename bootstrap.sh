@@ -217,6 +217,7 @@ install_packages() {
 				btop
 				delta
 				eza
+				fd
 				fzf
 				gh
 				git
@@ -234,6 +235,7 @@ install_packages() {
 				local apt_pkg="$pkg"
 				case "$pkg" in
 					delta) apt_pkg="git-delta" ;;
+					fd) apt_pkg="fd-find" ;;
 				esac
 				# dpkg -s returns 0 only if package is actually installed
 				if ! dpkg -s "$apt_pkg" &>/dev/null; then
@@ -290,6 +292,21 @@ install_packages() {
 		if ! command -v toad >/dev/null 2>&1; then
 			echo "Installing toad..."
 			curl -fsSL batrachian.ai/install | sh
+		fi
+
+		# Create fd alias (Debian/Ubuntu installs as fdfind)
+		if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
+			sudo ln -sf "$(which fdfind)" /usr/local/bin/fd
+		fi
+
+		# Install JetBrains Mono Nerd Font
+		if ! fc-list | grep -qi "JetBrainsMono Nerd Font"; then
+			echo "Installing JetBrains Mono Nerd Font..."
+			mkdir -p ~/.local/share/fonts
+			curl -fLo /tmp/JetBrainsMono.zip "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
+			unzip -o /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/
+			rm /tmp/JetBrainsMono.zip
+			fc-cache -fv
 		fi
 
 		# Configure npm to use user-owned global directory (avoids permission issues)
@@ -373,6 +390,18 @@ install_bat_themes() {
 	fi
 }
 
+install_yazi_flavor() {
+	if ! command -v ya >/dev/null 2>&1; then
+		return 0
+	fi
+
+	# Install catppuccin-mocha flavor if not present
+	if [[ ! -d "$HOME/.config/yazi/flavors/catppuccin-mocha.yazi" ]]; then
+		echo "Installing yazi catppuccin-mocha flavor..."
+		ya pkg add yazi-rs/flavors:catppuccin-mocha
+	fi
+}
+
 install_claude_mcp_servers() {
 	if ! command -v claude >/dev/null 2>&1; then
 		echo "Skipping MCP servers (claude not installed)"
@@ -432,6 +461,9 @@ sync_dotfiles() {
 
 	# Install bat themes from submodule
 	install_bat_themes
+
+	# Install yazi flavor
+	install_yazi_flavor
 
 	# Install LaunchAgents (macOS) or cron jobs (Linux)
 	install_launch_agents
