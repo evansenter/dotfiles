@@ -393,14 +393,19 @@ install_bat_themes() {
 }
 
 install_yazi_flavor() {
-	if ! command -v ya >/dev/null 2>&1; then
+	local ya_cmd=""
+	if command -v ya >/dev/null 2>&1; then
+		ya_cmd="ya"
+	elif command -v yazi.ya >/dev/null 2>&1; then
+		ya_cmd="yazi.ya"
+	else
 		return 0
 	fi
 
 	# Install catppuccin-mocha flavor if not present
-	if [[ ! -d "$HOME/.config/yazi/flavors/catppuccin-mocha.yazi" ]]; then
+	if ! $ya_cmd pkg list 2>/dev/null | grep -q "catppuccin-mocha"; then
 		echo "Installing yazi catppuccin-mocha flavor..."
-		ya pkg add yazi-rs/flavors:catppuccin-mocha
+		$ya_cmd pkg add yazi-rs/flavors:catppuccin-mocha
 	fi
 }
 
