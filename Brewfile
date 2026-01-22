@@ -1,9 +1,6 @@
 # Brewfile - Install with: brew bundle
 # Docs: https://github.com/Homebrew/homebrew-bundle
 
-# Taps
-tap "homebrew/bundle"
-
 # CLI Tools
 brew "bat"           # Cat with syntax highlighting
 brew "btop"          # Resource monitor
