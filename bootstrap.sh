@@ -404,8 +404,12 @@ install_claude_mcp_servers() {
 		return 0
 	fi
 
+	# Test that claude can actually execute (may be blocked by security software)
 	local mcp_list
-	mcp_list=$(claude mcp list 2>/dev/null || true)
+	if ! mcp_list=$(claude mcp list 2>/dev/null); then
+		echo "Skipping MCP servers (claude blocked or not working)"
+		return 0
+	fi
 
 	# Install GitHub MCP server if not configured
 	if ! echo "$mcp_list" | grep -q "github"; then
