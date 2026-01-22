@@ -216,6 +216,7 @@ install_packages() {
 				bat
 				btop
 				delta
+				eza
 				fzf
 				gh
 				git
@@ -224,6 +225,7 @@ install_packages() {
 				tmux
 				vim
 				xclip
+				zoxide
 			)
 			# Filter to only packages not already installed
 			local to_install=()
