@@ -218,12 +218,14 @@ install_packages() {
 				delta
 				eza
 				fd
+				fontconfig
 				fzf
 				gh
 				git
 				jq
 				ripgrep
 				tmux
+				unzip
 				vim
 				xclip
 				zoxide
