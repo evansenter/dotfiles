@@ -85,6 +85,7 @@ After clemini completes:
    - Does it address the task?
    - Are there obvious issues?
    - Is scope appropriate (no over-engineering)?
+   - **Did clemini add tests?** New functions/features should have unit tests
 
 Present findings to user:
 
@@ -108,6 +109,11 @@ If issues found, ask user:
 - **Abort** - Discard changes
 
 For feedback, call `mcp__clemini__clemini_chat(message: <feedback>, interaction_id: <stored_id>)`
+
+**Common follow-ups** (always use same interaction_id for context continuity):
+- Missing tests: "Add unit tests for the new functions you added"
+- Coverage gaps: "The X function has no test coverage, please add tests"
+- Edge cases: "Add tests for error conditions and edge cases"
 
 Loop back to Step 4.
 
@@ -135,7 +141,7 @@ Once changes look good:
 
 **Logging/output changes:**
 - View actual log output, don't just trust compilation
-- Test with `make logs` or `make json-logs`
+- test with `make logs`
 
 **Stateful features:**
 - Test state creation, persistence, and retrieval
