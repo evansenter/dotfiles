@@ -1,0 +1,15 @@
+// Zellij configuration
+// Docs: https://zellij.dev/documentation/
+
+// Catppuccin Mocha theme (built-in)
+theme "catppuccin-mocha"
+
+// Cleaner UI
+pane_frames false
+simplified_ui true
+
+// Mouse support
+mouse_mode true
+
+// Copy to system clipboard
+copy_on_select true

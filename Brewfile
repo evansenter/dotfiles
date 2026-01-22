@@ -18,6 +18,8 @@ brew "node"          # Node.js runtime
 brew "ripgrep"       # Fast grep
 brew "tmux"          # Terminal multiplexer
 brew "vim"           # Text editor
+brew "yazi"          # Terminal file manager
+brew "zellij"        # Terminal workspace
 
 # Optional: dark-notify for automatic theme switching
 brew "cormacrelf/tap/dark-notify"
