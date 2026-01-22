@@ -9,6 +9,9 @@
 if [ -d "$HOME/.local/bin" ]; then
     export PATH="$HOME/.local/bin:$PATH"
 fi
+if [ -d "$HOME/.npm-global/bin" ]; then
+    export PATH="$HOME/.npm-global/bin:$PATH"
+fi
 
 # Default editor
 export EDITOR='vim'
@@ -18,3 +21,10 @@ export STATUSLINE_NO_LINKS=1
 
 # Cache for rustc artifacts, to speed up `make check`-like commands
 command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache
+
+# fzf - Catppuccin Mocha theme
+export FZF_DEFAULT_OPTS=" \
+--color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
+--color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \
+--color=marker:#b4befe,fg+:#cdd6f4,prompt:#cba6f7,hl+:#f38ba8 \
+--color=selected-bg:#45475a"

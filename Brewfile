@@ -9,11 +9,22 @@ tap "cormacrelf/tap"
 brew "bat"                    # Cat with syntax highlighting
 brew "btop"                   # System monitor
 brew "eza"                    # Modern ls
+brew "fd"                     # Fast find alternative
+brew "fzf"                    # Fuzzy finder
 brew "gh"                     # GitHub CLI
+brew "git"                    # Version control
 brew "git-delta"              # Better git diffs
+brew "helix"                  # Modal text editor
+brew "jq"                     # JSON processor
+brew "lazygit"                # Git TUI
+brew "ripgrep"                # Fast grep
 brew "shellcheck"             # Shell script linting
 brew "tmux"                   # Terminal multiplexer
 brew "terminal-notifier"      # macOS notifications
+brew "vim"                    # Text editor
+brew "yazi"                   # Terminal file manager
+brew "zellij"                 # Terminal workspace
+brew "zoxide"                 # Smart cd command
 brew "cormacrelf/tap/dark-notify"  # Dark mode detection
 
 # Languages & Runtimes

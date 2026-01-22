@@ -84,15 +84,43 @@ install_tmux_plugin_manager() {
 	fi
 }
 
+install_launch_agent() {
+	local plist="$1"
+	local label="${plist%.plist}"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local launch_agents_dir="$HOME/Library/LaunchAgents"
+
+	mkdir -p "$launch_agents_dir"
+	mkdir -p "$HOME/.local/log"
+
+	local new_plist_content
+	new_plist_content=$(sed "s|__HOME__|$HOME|g" "$dotfiles_dir/LaunchAgents/$plist")
+	local dest_plist="$launch_agents_dir/$plist"
+
+	# Only update and reload if plist content changed
+	local tmp_plist
+	tmp_plist=$(mktemp)
+	echo "$new_plist_content" > "$tmp_plist"
+
+	if [[ ! -f "$dest_plist" ]] || ! cmp -s "$tmp_plist" "$dest_plist"; then
+		echo "Installing LaunchAgent: $plist"
+		mv "$tmp_plist" "$dest_plist"
+
+		# Reload the agent
+		launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
+		launchctl bootstrap "gui/$(id -u)" "$dest_plist"
+	else
+		rm -f "$tmp_plist"
+	fi
+}
+
 install_launch_agents() {
 	# LaunchAgents are macOS-only
 	if [[ "$(uname)" != "Darwin" ]]; then
-		echo "Skipping LaunchAgents (macOS-only)"
 		return 0
 	fi
 
-	local launch_agents_dir="$HOME/Library/LaunchAgents"
-	mkdir -p "$launch_agents_dir"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 	# Install dark-notify LaunchAgent (only if dark-notify is installed)
 	if command -v dark-notify >/dev/null 2>&1; then
@@ -106,33 +134,52 @@ install_launch_agents() {
 			homebrew_prefix="/usr/local"
 		fi
 		local new_plist_content
-		new_plist_content=$(sed -e "s|__HOME__|$HOME|g" -e "s|__HOMEBREW_PREFIX__|$homebrew_prefix|g" "LaunchAgents/$plist")
-		local dest_plist="$launch_agents_dir/$plist"
+		new_plist_content=$(sed -e "s|__HOME__|$HOME|g" -e "s|__HOMEBREW_PREFIX__|$homebrew_prefix|g" "$dotfiles_dir/LaunchAgents/$plist")
+		local dest_plist="$HOME/Library/LaunchAgents/$plist"
 
-		# Only update and reload if plist content changed
+		mkdir -p "$HOME/Library/LaunchAgents"
+
 		local tmp_plist
 		tmp_plist=$(mktemp)
-		trap 'rm -f "$tmp_plist"' EXIT
 		echo "$new_plist_content" > "$tmp_plist"
 
 		if [[ ! -f "$dest_plist" ]] || ! cmp -s "$tmp_plist" "$dest_plist"; then
 			echo "Installing LaunchAgent: $plist"
 			mv "$tmp_plist" "$dest_plist"
-			trap - EXIT
 
-			# Reload the agent
 			launchctl bootout "gui/$(id -u)/com.user.dark-notify" 2>/dev/null || true
 			launchctl bootstrap "gui/$(id -u)" "$dest_plist"
 
-			# Run the script once to set initial theme
 			"$HOME/.bin/toggle-btop-theme"
 		else
 			rm -f "$tmp_plist"
-			trap - EXIT
 		fi
 	else
 		echo "Skipping dark-notify LaunchAgent (dark-notify not installed)"
 		echo "  Install with: brew install cormacrelf/tap/dark-notify"
+	fi
+
+	# Install cargo-sweep LaunchAgent (only if cargo is installed)
+	if command -v cargo >/dev/null 2>&1; then
+		install_launch_agent "com.user.cargo-sweep.plist"
+	fi
+}
+
+install_cron_jobs() {
+	# Cron jobs are Linux-only (macOS uses LaunchAgents)
+	if [[ "$(uname)" == "Darwin" ]]; then
+		return 0
+	fi
+
+	# Install cargo-sweep cron job (only if cargo is installed)
+	if command -v cargo >/dev/null 2>&1; then
+		local cron_entry="0 3 * * 0 $HOME/.bin/cargo-sweep-all"
+
+		# Check if already installed
+		if ! crontab -l 2>/dev/null | grep -qF "cargo-sweep-all"; then
+			echo "Installing cargo-sweep cron job (weekly Sunday 3am)..."
+			(crontab -l 2>/dev/null || true; echo "$cron_entry") | crontab -
+		fi
 	fi
 }
 
@@ -141,28 +188,155 @@ pull_latest() {
 	git pull origin main
 }
 
+install_packages() {
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+	if [[ "$(uname)" == "Darwin" ]]; then
+		# macOS - use Homebrew
+		if ! command -v brew >/dev/null 2>&1; then
+			echo "Installing Homebrew..."
+			/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+		fi
+
+		if [[ -f "$dotfiles_dir/Brewfile" ]]; then
+			echo "Installing packages from Brewfile..."
+			brew bundle --file="$dotfiles_dir/Brewfile"
+		fi
+
+	else
+		# Linux - use apt (Debian/Ubuntu)
+		if command -v apt-get >/dev/null 2>&1; then
+			echo "Installing packages via apt..."
+			local packages=(
+				bat
+				btop
+				delta
+				eza
+				fd
+				fontconfig
+				fzf
+				gh
+				git
+				jq
+				ripgrep
+				tmux
+				unzip
+				vim
+				xclip
+				zoxide
+			)
+			# Filter to only packages not already installed
+			local to_install=()
+			for pkg in "${packages[@]}"; do
+				# Handle package name differences
+				local apt_pkg="$pkg"
+				case "$pkg" in
+					delta) apt_pkg="git-delta" ;;
+					fd) apt_pkg="fd-find" ;;
+				esac
+				# dpkg -s returns 0 only if package is actually installed
+				if ! dpkg -s "$apt_pkg" &>/dev/null; then
+					to_install+=("$apt_pkg")
+				fi
+			done
+
+			if [[ ${#to_install[@]} -gt 0 ]]; then
+				echo "Installing: ${to_install[*]}"
+				sudo apt-get update
+				sudo apt-get install -y "${to_install[@]}"
+			else
+				echo "All packages already installed"
+			fi
+		else
+			echo "Skipping package installation (apt not found)"
+		fi
+
+		# Install Node.js 22 via NodeSource
+		if ! command -v node >/dev/null 2>&1; then
+			echo "Installing Node.js 22..."
+			curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+			sudo apt-get install -y nodejs
+		fi
+
+		# Install Helix editor via snap
+		if command -v snap >/dev/null 2>&1 && ! command -v hx >/dev/null 2>&1; then
+			echo "Installing Helix..."
+			sudo snap install helix --classic
+		fi
+
+		# Install Yazi file manager via snap
+		if command -v snap >/dev/null 2>&1 && ! command -v yazi >/dev/null 2>&1; then
+			echo "Installing Yazi..."
+			sudo snap install yazi --classic
+		fi
+
+		# Install Zellij via snap
+		if command -v snap >/dev/null 2>&1 && ! command -v zellij >/dev/null 2>&1; then
+			echo "Installing Zellij..."
+			sudo snap install zellij --classic
+		fi
+
+		# Install lazygit
+		if ! command -v lazygit >/dev/null 2>&1; then
+			echo "Installing lazygit..."
+			LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+			curl -Lo /tmp/lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+			sudo tar xf /tmp/lazygit.tar.gz -C /usr/local/bin lazygit
+			rm /tmp/lazygit.tar.gz
+		fi
+
+		# Create fd alias (Debian/Ubuntu installs as fdfind)
+		if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
+			sudo ln -sf "$(which fdfind)" /usr/local/bin/fd
+		fi
+
+		# Install JetBrains Mono Nerd Font
+		if ! fc-list | grep -qi "JetBrainsMono Nerd Font"; then
+			echo "Installing JetBrains Mono Nerd Font..."
+			mkdir -p ~/.local/share/fonts
+			curl -fLo /tmp/JetBrainsMono.zip "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
+			unzip -o /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/
+			rm /tmp/JetBrainsMono.zip
+			fc-cache -fv
+		fi
+
+		# Configure npm to use user-owned global directory (avoids permission issues)
+		if command -v npm >/dev/null 2>&1; then
+			mkdir -p "$HOME/.npm-global"
+			npm config set prefix "$HOME/.npm-global"
+		fi
+	fi
+}
+
+init_submodules() {
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+	# Check if any submodule is missing
+	if [[ -d "$dotfiles_dir/vendor/btop-catppuccin/themes" ]] && \
+	   [[ -d "$dotfiles_dir/vendor/bat-catppuccin/themes" ]] && \
+	   [[ -d "$dotfiles_dir/vendor/iterm-catppuccin/colors" ]]; then
+		return 0
+	fi
+
+	if ! command -v git >/dev/null 2>&1; then
+		echo "Skipping submodules (git not installed)"
+		return 0
+	fi
+
+	echo "Initializing submodules..."
+	if ! git -C "$dotfiles_dir" submodule update --init; then
+		echo "Warning: Failed to initialize submodules"
+		echo "  Run manually: git submodule update --init"
+	fi
+}
+
 install_btop_themes() {
 	local btop_themes_dir="$HOME/.config/btop/themes"
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 	local vendor_themes="$dotfiles_dir/vendor/btop-catppuccin/themes"
 
 	if [[ ! -d "$vendor_themes" ]]; then
-		if ! command -v git >/dev/null 2>&1; then
-			echo "Skipping btop themes (git not installed)"
-			return 0
-		fi
-		echo "Initializing submodules..."
-		if ! git -C "$dotfiles_dir" submodule update --init; then
-			echo "Skipping btop themes (failed to initialize submodules)"
-			echo "  Run manually: git submodule update --init"
-			return 0
-		fi
-		echo "Submodules initialized successfully"
-	fi
-
-	# Verify themes directory exists after initialization
-	if [[ ! -d "$vendor_themes" ]]; then
-		echo "Skipping btop themes (themes directory not found)"
+		echo "Skipping btop themes (submodule not initialized)"
 		return 0
 	fi
 
@@ -241,14 +415,35 @@ run_brew_hooks() {
 	done
 }
 
+install_yazi_flavor() {
+	local ya_cmd=""
+	if command -v ya >/dev/null 2>&1; then
+		ya_cmd="ya"
+	elif command -v yazi.ya >/dev/null 2>&1; then
+		ya_cmd="yazi.ya"
+	else
+		return 0
+	fi
+
+	# Install catppuccin-mocha flavor if not present
+	if ! $ya_cmd pkg list 2>/dev/null | grep -q "catppuccin-mocha"; then
+		echo "Installing yazi catppuccin-mocha flavor..."
+		$ya_cmd pkg add yazi-rs/flavors:catppuccin-mocha
+	fi
+}
+
 install_claude_mcp_servers() {
 	if ! command -v claude >/dev/null 2>&1; then
 		echo "Skipping MCP servers (claude not installed)"
 		return 0
 	fi
 
+	# Test that claude can actually execute (may be blocked by security software)
 	local mcp_list
-	mcp_list=$(claude mcp list 2>/dev/null || true)
+	if ! mcp_list=$(claude mcp list 2>/dev/null); then
+		echo "Skipping MCP servers (claude blocked or not working)"
+		return 0
+	fi
 
 	# Install GitHub MCP server if not configured
 	if ! echo "$mcp_list" | grep -q "github"; then
@@ -296,14 +491,21 @@ sync_dotfiles() {
 	# Install tmux plugin manager if needed
 	install_tmux_plugin_manager
 
+	# Initialize submodules if needed
+	init_submodules
+
 	# Install btop themes from submodule
 	install_btop_themes
 
 	# Install bat themes from submodule
 	install_bat_themes
 
-	# Install LaunchAgents
+	# Install yazi flavor
+	install_yazi_flavor
+
+	# Install LaunchAgents (macOS) or cron jobs (Linux)
 	install_launch_agents
+	install_cron_jobs
 
 	# Reload zsh configuration
 	if [[ -n "${ZSH_VERSION:-}" ]]; then
@@ -318,23 +520,31 @@ sync_dotfiles() {
 # Parse arguments
 FORCE=false
 PULL=false
+PACKAGES=false
 for arg in "$@"; do
 	case "$arg" in
 		--force|-f) FORCE=true ;;
 		--pull|-p) PULL=true ;;
+		--packages|-i) PACKAGES=true ;;
 		--help|-h)
 			echo "Usage: ./bootstrap.sh [OPTIONS]"
 			echo ""
 			echo "Install dotfiles from home/ to ~"
 			echo ""
 			echo "Options:"
-			echo "  -f, --force  Skip confirmation prompt"
-			echo "  -p, --pull   Pull latest changes before installing"
-			echo "  -h, --help   Show this help message"
+			echo "  -f, --force     Skip confirmation prompt"
+			echo "  -p, --pull      Pull latest changes before installing"
+			echo "  -i, --packages  Install packages (brew on macOS, apt on Linux)"
+			echo "  -h, --help      Show this help message"
 			exit 0
 			;;
 	esac
 done
+
+# Install packages if requested
+if [[ "$PACKAGES" == true ]]; then
+	install_packages
+fi
 
 # Pull if requested
 if [[ "$PULL" == true ]]; then

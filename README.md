@@ -1,16 +1,41 @@
 # Evan's dotfiles
 
-Minimal macOS dotfiles for zsh, git, vim, and tmux with automatic dark/light mode theme switching.
+Minimal macOS/Linux dotfiles for a modern terminal setup with Catppuccin Mocha theming throughout.
 
 ## What's included
 
-- **Zsh** - History management, completion caching, directory navigation, custom prompt with command timer
-- **Git** - Sensible defaults, common aliases (`st`, `co`, `br`, `lg`, etc.)
-- **Vim** - 2-space indentation, Catppuccin theme, sensible search settings
-- **Tmux** - Catppuccin theme, vim-style navigation, session persistence
-- **btop** - Automatic dark/light theme switching via macOS appearance
-- **iTerm2** - Catppuccin color schemes (manual import required)
-- **Claude Code** - Global workflow preferences, custom commands, and hooks
+**Shell & Config:**
+- **Zsh** - History, completion, custom prompt with command timer
+- **Git** - Sensible defaults, delta diffs, common aliases
+- **Vim/Helix** - Catppuccin theme, sensible defaults
+- **Tmux** - Catppuccin theme, session persistence
+
+**Modern CLI tools:**
+- **bat** - `cat` with syntax highlighting
+- **eza** - `ls` with icons and git status
+- **fd** - Fast `find` alternative
+- **ripgrep** - Fast `grep` alternative
+- **fzf** - Fuzzy finder
+- **zoxide** - Smart `cd` that learns your paths
+- **lazygit** - Git TUI
+- **yazi** - Terminal file manager
+- **btop** - Resource monitor
+
+## Tool cheatsheet
+
+| Instead of | Use | Why |
+|------------|-----|-----|
+| `ls` | `ls` (eza) | Icons, colors, git status |
+| `ls -la` | `la` | Long format with hidden files |
+| `tree` | `lt` | Tree view with icons |
+| `cat file` | `bat file` | Syntax highlighting |
+| `cd path` | `z partial` | Jump to frequently used dirs |
+| `find -name` | `fd pattern` | Simpler, faster |
+| `grep -r` | `rg pattern` | Faster, respects .gitignore |
+| `git status/add/commit` | `lazygit` | Visual TUI for git |
+| File browsing | `yazi` | Navigate, preview, bulk ops |
+| `htop` | `btop` | Prettier, more info |
+| `vim` | `hx` | Modern editor, LSP built-in |
 
 ### Claude Code Commands
 

@@ -1,0 +1,32 @@
+#!/bin/bash
+# Sweep old cargo artifacts from all Rust projects
+# Run weekly via cron/launchd
+
+set -euo pipefail
+
+# Ensure cargo-sweep is installed
+if ! command -v cargo-sweep &>/dev/null; then
+    if command -v cargo &>/dev/null; then
+        echo "Installing cargo-sweep..."
+        cargo install cargo-sweep
+    else
+        echo "cargo not found, skipping"
+        exit 0
+    fi
+fi
+
+# Find all Cargo.toml files and sweep their target directories
+# Limit to common project locations to avoid scanning entire filesystem
+for dir in "$HOME/Documents/projects" "$HOME/projects" "$HOME/src" "$HOME/code"; do
+    if [[ -d "$dir" ]]; then
+        find "$dir" -name "Cargo.toml" -type f 2>/dev/null | while read -r cargo_file; do
+            project_dir=$(dirname "$cargo_file")
+            if [[ -d "$project_dir/target" ]]; then
+                echo "Sweeping: $project_dir"
+                cargo sweep --time 30 --maxsize 0 "$project_dir" 2>/dev/null || true
+            fi
+        done
+    fi
+done
+
+echo "Cargo sweep complete"

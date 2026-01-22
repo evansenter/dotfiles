@@ -11,9 +11,17 @@ alias src="cd ~/Documents/projects"
 # File Listing
 # ==============================================================================
 
-alias ls="ls -G"
-alias l="ls -lhF"
-alias la="ls -lAhF"
+# Use eza if available, otherwise fall back to ls
+if command -v eza &>/dev/null; then
+    alias ls="eza"
+    alias l="eza -l --icons"
+    alias la="eza -la --icons"
+    alias lt="eza -T --icons"  # tree view
+else
+    alias ls="ls -G"
+    alias l="ls -lhF"
+    alias la="ls -lAhF"
+fi
 
 # ==============================================================================
 # Git

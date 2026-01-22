@@ -75,6 +75,36 @@ if [ -f ~/.aliases ]; then
 fi
 
 # ==============================================================================
+# fzf
+# ==============================================================================
+
+# Source fzf keybindings and completion (Ctrl+R, Ctrl+T, Alt+C)
+if command -v fzf &>/dev/null; then
+    # Debian/Ubuntu
+    if [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]; then
+        source /usr/share/doc/fzf/examples/key-bindings.zsh
+    fi
+    if [ -f /usr/share/doc/fzf/examples/completion.zsh ]; then
+        source /usr/share/doc/fzf/examples/completion.zsh
+    fi
+    # Homebrew
+    if [ -f "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/fzf/shell/key-bindings.zsh" ]; then
+        source "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/fzf/shell/key-bindings.zsh"
+    fi
+    if [ -f "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/fzf/shell/completion.zsh" ]; then
+        source "${HOMEBREW_PREFIX:-/opt/homebrew}/opt/fzf/shell/completion.zsh"
+    fi
+fi
+
+# ==============================================================================
+# zoxide (smart cd)
+# ==============================================================================
+
+if command -v zoxide &>/dev/null; then
+    eval "$(zoxide init zsh)"
+fi
+
+# ==============================================================================
 # Personal Customizations
 # ==============================================================================
 
@@ -83,3 +113,7 @@ fi
 if [ -f ~/.extra ]; then
     source ~/.extra
 fi
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
