@@ -8,6 +8,7 @@ tap "homebrew/bundle"
 brew "bat"           # Cat with syntax highlighting
 brew "btop"          # Resource monitor
 brew "delta"         # Better git diffs
+brew "eza"           # Modern ls replacement
 brew "fzf"           # Fuzzy finder
 brew "gh"            # GitHub CLI
 brew "git"           # Version control
@@ -20,6 +21,7 @@ brew "tmux"          # Terminal multiplexer
 brew "vim"           # Text editor
 brew "yazi"          # Terminal file manager
 brew "zellij"        # Terminal workspace
+brew "zoxide"        # Smart cd command
 
 # Optional: dark-notify for automatic theme switching
 brew "cormacrelf/tap/dark-notify"
