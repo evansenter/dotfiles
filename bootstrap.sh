@@ -263,6 +263,18 @@ install_packages() {
 			sudo snap install helix --classic
 		fi
 
+		# Install Yazi file manager via snap
+		if command -v snap >/dev/null 2>&1 && ! command -v yazi >/dev/null 2>&1; then
+			echo "Installing Yazi..."
+			sudo snap install yazi --classic
+		fi
+
+		# Install Zellij via snap
+		if command -v snap >/dev/null 2>&1 && ! command -v zellij >/dev/null 2>&1; then
+			echo "Installing Zellij..."
+			sudo snap install zellij --classic
+		fi
+
 		# Install lazygit
 		if ! command -v lazygit >/dev/null 2>&1; then
 			echo "Installing lazygit..."
