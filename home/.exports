@@ -19,6 +19,9 @@ export EDITOR='vim'
 # Claude Code statusline - disable hyperlinks due to injection corruption (#172)
 export STATUSLINE_NO_LINKS=1
 
+# Cache for rustc artifacts, to speed up `make check`-like commands
+command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache
+
 # fzf - Catppuccin Mocha theme
 export FZF_DEFAULT_OPTS=" \
 --color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
