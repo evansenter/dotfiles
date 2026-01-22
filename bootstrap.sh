@@ -202,6 +202,12 @@ install_packages() {
 			echo "Installing packages from Brewfile..."
 			brew bundle --file="$dotfiles_dir/Brewfile"
 		fi
+
+		# Install toad (batrachian.ai)
+		if ! command -v toad >/dev/null 2>&1; then
+			echo "Installing toad..."
+			curl -fsSL batrachian.ai/install | sh
+		fi
 	else
 		# Linux - use apt (Debian/Ubuntu)
 		if command -v apt-get >/dev/null 2>&1; then
@@ -242,6 +248,28 @@ install_packages() {
 			fi
 		else
 			echo "Skipping package installation (apt not found)"
+		fi
+
+		# Install Node.js 22 via NodeSource
+		if ! command -v node >/dev/null 2>&1; then
+			echo "Installing Node.js 22..."
+			curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+			sudo apt-get install -y nodejs
+		fi
+
+		# Install Helix editor via snap
+		if command -v snap >/dev/null 2>&1 && ! command -v hx >/dev/null 2>&1; then
+			echo "Installing Helix..."
+			sudo snap install helix --classic
+		fi
+
+		# Install lazygit
+		if ! command -v lazygit >/dev/null 2>&1; then
+			echo "Installing lazygit..."
+			LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+			curl -Lo /tmp/lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+			sudo tar xf /tmp/lazygit.tar.gz -C /usr/local/bin lazygit
+			rm /tmp/lazygit.tar.gz
 		fi
 
 		# Install toad (batrachian.ai)
