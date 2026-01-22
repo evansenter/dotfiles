@@ -11,7 +11,10 @@ brew "delta"         # Better git diffs
 brew "fzf"           # Fuzzy finder
 brew "gh"            # GitHub CLI
 brew "git"           # Version control
+brew "helix"         # Modal text editor
 brew "jq"            # JSON processor
+brew "lazygit"       # Git TUI
+brew "node"          # Node.js runtime
 brew "ripgrep"       # Fast grep
 brew "tmux"          # Terminal multiplexer
 brew "vim"           # Text editor
