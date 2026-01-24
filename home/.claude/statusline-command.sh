@@ -144,30 +144,17 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
 
     # Check for associated PRs (supports multiple PRs to different bases)
     if [[ -n "$branch" ]]; then
-        pr_list=$(cd "$cwd" && gh pr list --head "$branch" --json number,url -q '.[] | [.number, .url] | @tsv' 2>/dev/null)
+        pr_list=$(cd "$cwd" && gh pr list --head "$branch" --json url -q '.[].url' 2>/dev/null)
         if [[ -n "$pr_list" ]]; then
             pr_links=""
-            link_end=$'\e]8;;\e\\'
-            while IFS=$'\t' read -r pr_number pr_url; do
-                # Skip malformed entries
-                [[ -z "$pr_number" || -z "$pr_url" ]] && continue
-                [[ ! "$pr_number" =~ ^[0-9]+$ ]] && continue
-                if [[ -z "$NO_LINKS" ]]; then
-                    link_start=$'\e]8;;'"${pr_url}"$'\e\\'
-                    if [[ -n "$pr_links" ]]; then
-                        pr_links="${pr_links},${link_start}#${pr_number}${link_end}"
-                    else
-                        pr_links="${link_start}#${pr_number}${link_end}"
-                    fi
+            while read -r pr_url; do
+                [[ -z "$pr_url" ]] && continue
+                if [[ -n "$pr_links" ]]; then
+                    pr_links="${pr_links} ${pr_url}"
                 else
-                    if [[ -n "$pr_links" ]]; then
-                        pr_links="${pr_links},#${pr_number}"
-                    else
-                        pr_links="#${pr_number}"
-                    fi
+                    pr_links="${pr_url}"
                 fi
             done <<< "$pr_list"
-            # Only set pr_display if we actually built valid links
             [[ -n "$pr_links" ]] && pr_display=" ${GREEN}${pr_links}${RESET}"
         fi
     fi
