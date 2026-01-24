@@ -57,9 +57,9 @@ else
     SESSION_NAME="$REPO_NAME"
 fi
 
-# Check for event-bus-cli
-if ! command -v event-bus-cli &>/dev/null; then
-    echo "Event bus registration skipped (event-bus-cli not installed)"
+# Check for agent-event-bus-cli
+if ! command -v agent-event-bus-cli &>/dev/null; then
+    echo "Event bus registration skipped (agent-event-bus-cli not installed)"
     exit 0
 fi
 
@@ -67,7 +67,7 @@ fi
 REGISTER_ARGS=(--name "$SESSION_NAME")
 [[ -n "$CLIENT_ID" ]] && REGISTER_ARGS+=(--client-id "$CLIENT_ID")
 
-OUTPUT=$(event-bus-cli register "${REGISTER_ARGS[@]}" 2>/dev/null) || true
+OUTPUT=$(agent-event-bus-cli register "${REGISTER_ARGS[@]}" 2>/dev/null) || true
 SESSION_ID=$(echo "$OUTPUT" | jq -r '.session_id // ""')
 
 if [[ -n "$SESSION_ID" ]]; then
@@ -83,7 +83,7 @@ fi
 # - "repo:<name>" - repo-specific coordination
 # - "machine:<hostname>" - local machine coordination
 # - "session:<id>" - direct messages (if resumed with same session_id)
-EVENTS=$(event-bus-cli events \
+EVENTS=$(agent-event-bus-cli events \
     --session-id "$SESSION_ID" \
     --order desc \
     --exclude session_registered,session_unregistered \
@@ -102,7 +102,7 @@ fi
 if [[ "$SOURCE" == "compact" ]]; then
     # Fetch the most recent wip_checkpoint event for this session
     # Note: CLI has --include/--exclude but for specific types, use grep post-fetch
-    WIP_EVENT=$(event-bus-cli events \
+    WIP_EVENT=$(agent-event-bus-cli events \
         --session-id "$SESSION_ID" \
         --channel "session:${SESSION_ID}" \
         --limit 1 \

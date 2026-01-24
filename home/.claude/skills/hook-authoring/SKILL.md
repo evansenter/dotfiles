@@ -78,9 +78,9 @@ if ! command -v jq &>/dev/null; then
     exit 0  # Silent exit, don't break Claude
 fi
 
-# Check for event-bus-cli
-if ! command -v event-bus-cli &>/dev/null; then
-    cli_path="$HOME/.local/bin/event-bus-cli"
+# Check for agent-event-bus-cli
+if ! command -v agent-event-bus-cli &>/dev/null; then
+    cli_path="$HOME/.local/bin/agent-event-bus-cli"
     [[ -x "$cli_path" ]] || exit 0
 fi
 
@@ -174,10 +174,10 @@ For hooks that interact with the event bus:
 
 ```bash
 # Find CLI
-if command -v event-bus-cli &>/dev/null; then
-    cli="event-bus-cli"
-elif [[ -x "$HOME/.local/bin/event-bus-cli" ]]; then
-    cli="$HOME/.local/bin/event-bus-cli"
+if command -v agent-event-bus-cli &>/dev/null; then
+    cli="agent-event-bus-cli"
+elif [[ -x "$HOME/.local/bin/agent-event-bus-cli" ]]; then
+    cli="$HOME/.local/bin/agent-event-bus-cli"
 else
     exit 0
 fi

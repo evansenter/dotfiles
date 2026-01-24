@@ -90,7 +90,7 @@ EOF
 }
 
 # ============================================================================
-# Mock event-bus-cli for Integration Testing
+# Mock agent-event-bus-cli for Integration Testing
 # ============================================================================
 #
 # These mocks validate the API contract between hooks/statusline and the CLI.
@@ -102,7 +102,7 @@ EOF
 # 3. When breaking changes are made to command output
 #
 # HOW TO UPDATE:
-# 1. Run the real `event-bus-cli <command>` to see current output format
+# 1. Run the real `agent-event-bus-cli <command>` to see current output format
 # 2. Update the corresponding case in setup_mock_event_bus_cli()
 # 3. Run tests to verify hooks still work: make test-hooks
 #
@@ -118,9 +118,9 @@ EOF
 #
 # ============================================================================
 setup_mock_event_bus_cli() {
-    cat > "$TEST_TMP/bin/event-bus-cli" << 'MOCK_CLI'
+    cat > "$TEST_TMP/bin/agent-event-bus-cli" << 'MOCK_CLI'
 #!/bin/bash
-# Mock event-bus-cli for integration testing
+# Mock agent-event-bus-cli for integration testing
 # Simulates the real CLI's JSON responses
 #
 # API version: claude-event-bus#51 (UUID-based session IDs)
@@ -218,7 +218,7 @@ case "$1" in
         ;;
 esac
 MOCK_CLI
-    chmod +x "$TEST_TMP/bin/event-bus-cli"
+    chmod +x "$TEST_TMP/bin/agent-event-bus-cli"
 }
 
 teardown_test_env() {
@@ -251,16 +251,16 @@ test_session_start_graceful_no_jq() {
 }
 
 test_session_start_graceful_no_cli() {
-    # Test behavior when event-bus-cli is not available
-    # In CI: event-bus-cli not installed, expect skip message
-    # Locally: event-bus-cli may be installed, expect success or skip
+    # Test behavior when agent-event-bus-cli is not available
+    # In CI: agent-event-bus-cli not installed, expect skip message
+    # Locally: agent-event-bus-cli may be installed, expect success or skip
     local output
     local exit_code=0
     output=$(echo '{"session_id":"test-123","cwd":"/tmp"}' | bash "$HOOKS_DIR/session-start.sh" 2>&1) || exit_code=$?
 
     # Accept any of: skip message, success message, or clean exit
     [[ "$output" == *"skipped"* ]] || \
-    [[ "$output" == *"event-bus-cli not installed"* ]] || \
+    [[ "$output" == *"agent-event-bus-cli not installed"* ]] || \
     [[ "$output" == *"Registered"* ]] || \
     [[ $exit_code -eq 0 ]]
 }
@@ -325,16 +325,16 @@ test_session_end_graceful_no_jq() {
 }
 
 test_session_end_graceful_no_cli() {
-    # Test behavior when event-bus-cli is not available
-    # In CI: event-bus-cli not installed, expect skip message
-    # Locally: event-bus-cli may be installed, expect success or skip
+    # Test behavior when agent-event-bus-cli is not available
+    # In CI: agent-event-bus-cli not installed, expect skip message
+    # Locally: agent-event-bus-cli may be installed, expect success or skip
     local output
     local exit_code=0
     output=$(echo '{"session_id":"test-123"}' | bash "$HOOKS_DIR/session-end.sh" 2>&1) || exit_code=$?
 
     # Accept any of: skip message, unregister message, or clean exit
     [[ "$output" == *"skipped"* ]] || \
-    [[ "$output" == *"event-bus-cli not installed"* ]] || \
+    [[ "$output" == *"agent-event-bus-cli not installed"* ]] || \
     [[ "$output" == *"Unregistered"* ]] || \
     [[ "$output" == *"not found"* ]] || \
     [[ $exit_code -eq 0 ]]
@@ -463,7 +463,7 @@ test_pre_compact_graceful_no_cli() {
     output=$(echo '{"session_id":"test-123","cwd":"/tmp"}' | bash "$HOOKS_DIR/pre-compact.sh" 2>&1) || exit_code=$?
 
     [[ "$output" == *"skipped"* ]] || \
-    [[ "$output" == *"event-bus-cli not installed"* ]] || \
+    [[ "$output" == *"agent-event-bus-cli not installed"* ]] || \
     [[ "$output" == *"checkpointed"* ]] || \
     [[ $exit_code -eq 0 ]]
 }
@@ -628,8 +628,8 @@ fi
 MOCK_GH
     chmod +x "$TEST_TMP/bin/gh"
 
-    # Create event-bus-cli mock that captures and validates payload
-    cat > "$TEST_TMP/bin/event-bus-cli" << 'MOCK_CLI'
+    # Create agent-event-bus-cli mock that captures and validates payload
+    cat > "$TEST_TMP/bin/agent-event-bus-cli" << 'MOCK_CLI'
 #!/bin/bash
 if [[ "$1" == "publish" ]]; then
     payload=""
@@ -652,7 +652,7 @@ if [[ "$1" == "publish" ]]; then
     fi
 fi
 MOCK_CLI
-    chmod +x "$TEST_TMP/bin/event-bus-cli"
+    chmod +x "$TEST_TMP/bin/agent-event-bus-cli"
 
     local output
     local exit_code=0
@@ -692,8 +692,8 @@ test_statusline_basic_output() {
 }
 
 test_statusline_no_ansi_leak_in_session_name() {
-    # Simulate event-bus-cli output with ANSI codes
-    # This is the bug we're testing for: ANSI codes from event-bus-cli leaking into output
+    # Simulate agent-event-bus-cli output with ANSI codes
+    # This is the bug we're testing for: ANSI codes from agent-event-bus-cli leaking into output
     local input='{"workspace":{"current_dir":"/tmp/test"},"context_window":{"current_usage":{"input_tokens":1000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0},"context_window_size":200000},"model":{"id":"test"},"session_id":"test-session"}'
     local output
     output=$(bash "$STATUSLINE_SCRIPT" <<< "$input" 2>/dev/null) || true
@@ -773,11 +773,11 @@ test_statusline_graceful_no_gh() {
 }
 
 test_statusline_graceful_no_event_bus_cli() {
-    # Test with a session_id but event-bus-cli unavailable
+    # Test with a session_id but agent-event-bus-cli unavailable
     local input='{"workspace":{"current_dir":"/tmp"},"context_window":{"current_usage":{"input_tokens":1000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0},"context_window_size":200000},"model":{"id":"test"},"session_id":"test-session"}'
     local exit_code=0
 
-    # Run with PATH that doesn't include event-bus-cli location
+    # Run with PATH that doesn't include agent-event-bus-cli location
     PATH="/bin:/usr/bin:/usr/local/bin" bash "$STATUSLINE_SCRIPT" <<< "$input" >/dev/null 2>&1 || exit_code=$?
 
     # Should exit cleanly and show warning indicator
@@ -816,7 +816,7 @@ test_statusline_graceful_null_fields() {
 
 # Integration test: statusline client_id lookup
 # This test verifies the statusline can find sessions by client_id
-# IMPORTANT: This will fail if event-bus-cli doesn't output client_id
+# IMPORTANT: This will fail if agent-event-bus-cli doesn't output client_id
 test_statusline_client_id_lookup() {
     setup_mock_event_bus_cli
 
@@ -984,7 +984,7 @@ main() {
     echo "=== session-start.sh ==="
     run_test "syntax check" "test_session_start_syntax"
     run_test "graceful degradation (no jq)" "test_session_start_graceful_no_jq"
-    run_test "graceful degradation (no event-bus-cli)" "test_session_start_graceful_no_cli"
+    run_test "graceful degradation (no agent-event-bus-cli)" "test_session_start_graceful_no_cli"
     run_test "integration: happy path" "test_session_start_happy_path"
     run_test "integration: parses session_id" "test_session_start_parses_session_id"
     run_test "integration: fetches events" "test_session_start_fetches_events"
@@ -993,7 +993,7 @@ main() {
     echo "=== session-end.sh ==="
     run_test "syntax check" "test_session_end_syntax"
     run_test "graceful degradation (no jq)" "test_session_end_graceful_no_jq"
-    run_test "graceful degradation (no event-bus-cli)" "test_session_end_graceful_no_cli"
+    run_test "graceful degradation (no agent-event-bus-cli)" "test_session_end_graceful_no_cli"
     run_test "graceful degradation (no session_id)" "test_session_end_graceful_no_session_id"
     run_test "integration: happy path" "test_session_end_happy_path"
     run_test "integration: parses response" "test_session_end_parses_response"
@@ -1001,7 +1001,7 @@ main() {
 
     echo "=== prompt-events.sh ==="
     run_test "syntax check" "test_prompt_events_syntax"
-    run_test "graceful degradation (no event-bus-cli)" "test_prompt_events_graceful_no_cli"
+    run_test "graceful degradation (no agent-event-bus-cli)" "test_prompt_events_graceful_no_cli"
     run_test "graceful degradation (no session_id)" "test_prompt_events_graceful_no_session_id"
     run_test "integration: happy path" "test_prompt_events_happy_path"
     run_test "integration: returns events" "test_prompt_events_returns_events"
@@ -1011,7 +1011,7 @@ main() {
     echo "=== pre-compact.sh ==="
     run_test "syntax check" "test_pre_compact_syntax"
     run_test "graceful degradation (no jq)" "test_pre_compact_graceful_no_jq"
-    run_test "graceful degradation (no event-bus-cli)" "test_pre_compact_graceful_no_cli"
+    run_test "graceful degradation (no agent-event-bus-cli)" "test_pre_compact_graceful_no_cli"
     run_test "graceful degradation (no session_id)" "test_pre_compact_graceful_no_session_id"
     run_test "integration: happy path" "test_pre_compact_happy_path"
     run_test "integration: publishes event" "test_pre_compact_publishes_event"
@@ -1032,7 +1032,7 @@ main() {
     run_test "graceful degradation (no jq)" "test_statusline_graceful_no_jq"
     run_test "graceful degradation (no git)" "test_statusline_graceful_no_git"
     run_test "graceful degradation (no gh)" "test_statusline_graceful_no_gh"
-    run_test "graceful degradation (no event-bus-cli)" "test_statusline_graceful_no_event_bus_cli"
+    run_test "graceful degradation (no agent-event-bus-cli)" "test_statusline_graceful_no_event_bus_cli"
     run_test "graceful degradation (missing transcript)" "test_statusline_graceful_missing_transcript"
     run_test "graceful degradation (malformed JSON)" "test_statusline_graceful_malformed_json"
     run_test "graceful degradation (null fields)" "test_statusline_graceful_null_fields"

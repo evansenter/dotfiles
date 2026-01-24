@@ -17,8 +17,8 @@ if ! command -v jq &>/dev/null; then
     exit 0
 fi
 
-if ! command -v event-bus-cli &>/dev/null; then
-    echo "WIP checkpoint skipped (event-bus-cli not installed)"
+if ! command -v agent-event-bus-cli &>/dev/null; then
+    echo "WIP checkpoint skipped (agent-event-bus-cli not installed)"
     exit 0
 fi
 
@@ -91,7 +91,7 @@ PAYLOAD="[work:${WORK_ID:-unknown}] | branch: ${BRANCH:-unknown}"
 PAYLOAD="${PAYLOAD} | time: ${CHECKPOINT_TIME}"
 
 # Publish to session-specific channel
-RESULT=$(event-bus-cli publish \
+RESULT=$(agent-event-bus-cli publish \
     --type "wip_checkpoint" \
     --payload "$PAYLOAD" \
     --session-id "$SESSION_ID" \
