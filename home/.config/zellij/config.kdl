@@ -12,7 +12,7 @@ plugins {
         reaction_seconds "0.3"
     }
     forgot location="file:~/.config/zellij/plugins/zellij-forgot.wasm" {
-        LOAD_ZELLIJ_BINDINGS "true"
+        "LOAD_ZELLIJ_BINDINGS" "true"
     }
 }
 
@@ -35,6 +35,6 @@ copy_on_select true
 keybinds {
     session {
         // Ctrl+o then ? to open forgot (keybinding cheatsheet)
-        bind "?" { LaunchOrFocusPlugin "forgot" { floating true }; SwitchToMode "Normal"; }
+        bind "?" { LaunchOrFocusPlugin "forgot" floating=true; SwitchToMode "Normal"; }
     }
 }
