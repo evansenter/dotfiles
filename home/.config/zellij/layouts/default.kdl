@@ -46,5 +46,8 @@ layout {
                 datetime_timezone "Local"
             }
         }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
+        }
     }
 }
