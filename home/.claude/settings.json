@@ -90,8 +90,8 @@
       "Bash(uv:*)",
       "Bash(agent-event-bus-cli:*)",
       "Bash(~/.local/bin/agent-event-bus-cli:*)",
-      "Bash(session-analytics-cli:*)",
-      "Bash(.venv/bin/session-analytics-cli:*)",
+      "Bash(agent-session-analytics-cli:*)",
+      "Bash(.venv/bin/agent-session-analytics-cli:*)",
       "Bash(sqlite3:*)",
       "Bash(launchctl:*)",
       "Bash(claude:*)",
@@ -118,7 +118,7 @@
       "Bash(touch:*)",
       "Bash(rg:*)",
       "Bash(PYTHONPATH=*:*)",
-      "Bash(*/session-analytics-cli:*)"
+      "Bash(*/agent-session-analytics-cli:*)"
     ],
     "defaultMode": "default"
   },

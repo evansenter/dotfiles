@@ -81,7 +81,7 @@ Add tools to `settings.json` only after repeated use. The permission prompt surf
 
 ```bash
 # Review permission denials weekly
-agent-agent-session-analytics-cli permissions --days 7 --min-count 5
+agent-session-analytics-cli permissions --days 7 --min-count 5
 ```
 
 ### 8. Self-Play API Testing
