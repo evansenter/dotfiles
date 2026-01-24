@@ -12,8 +12,8 @@ set -euo pipefail
 # Read session info (always consume stdin to avoid broken pipe)
 INPUT=$(cat)
 
-# Check for event-bus-cli
-if ! command -v event-bus-cli &>/dev/null; then
+# Check for agent-event-bus-cli
+if ! command -v agent-event-bus-cli &>/dev/null; then
     # Graceful degradation: skip if CLI not installed
     exit 0
 fi
@@ -32,7 +32,7 @@ fi
 # Fetch only NEW events since last prompt using --resume
 # --resume: incremental polling - server tracks cursor, only returns new events
 # --order asc: chronological order (oldest first, new events at end)
-EVENTS=$(event-bus-cli events \
+EVENTS=$(agent-event-bus-cli events \
     --resume \
     --session-id "$SESSION_ID" \
     --order asc \

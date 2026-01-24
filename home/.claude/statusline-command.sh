@@ -40,7 +40,7 @@ NO_LINKS="${STATUSLINE_NO_LINKS:-}"
 
 # Event bus session name (cached per session_id to avoid repeated queries)
 # Uses Claude's session UUID to look up the nice-named event bus session
-EVENT_BUS_CLI="${HOME}/.local/bin/event-bus-cli"
+EVENT_BUS_CLI="${HOME}/.local/bin/agent-event-bus-cli"
 if [[ -n "$session_id" ]]; then
     if [[ -x "$EVENT_BUS_CLI" ]]; then
         # Check cache first (session name doesn't change during a session)
@@ -55,7 +55,7 @@ if [[ -n "$session_id" ]]; then
         else
             # Query event bus for session matching this client_id
             # Output format: "  session-name  repo/branch" then details on following lines
-            # Strip ANSI escape codes (event-bus-cli may output colors for inactive sessions)
+            # Strip ANSI escape codes (agent-event-bus-cli may output colors for inactive sessions)
             session_name=$("$EVENT_BUS_CLI" sessions 2>/dev/null | \
                 sed 's/\x1b\[[0-9;]*m//g' | \
                 grep -B2 "client_id: ${session_id}" | \
@@ -74,7 +74,7 @@ if [[ -n "$session_id" ]]; then
             session_warning="no-session"
         fi
     else
-        # event-bus-cli not installed - show warning
+        # agent-event-bus-cli not installed - show warning
         session_warning="no-cli"
     fi
 fi

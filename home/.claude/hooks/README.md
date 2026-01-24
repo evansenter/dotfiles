@@ -54,7 +54,7 @@ Session End
    - Disable `allow-rename` to prevent Claude from overwriting window name
    - Disable `automatic-rename` to keep our custom name
    - Set window name to directory (with worktree format: `repo (branch)`)
-2. Register with event bus using `event-bus-cli`
+2. Register with event bus using `agent-event-bus-cli`
 3. Fetch recent events (last 20, newest first)
 4. If resuming after compaction, restore WIP checkpoint
 
@@ -132,7 +132,7 @@ Session End
 - Must be executable (`chmod +x`)
 - Must consume stdin (even if not used) to avoid broken pipe errors
 - Should use `set -euo pipefail` for safety
-- Should gracefully degrade if dependencies missing (jq, event-bus-cli, tmux)
+- Should gracefully degrade if dependencies missing (jq, agent-event-bus-cli, tmux)
 
 ### Input Format
 All hooks receive JSON on stdin with at least:

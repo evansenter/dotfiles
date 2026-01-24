@@ -21,8 +21,8 @@ if ! command -v jq &>/dev/null; then
     exit 0
 fi
 
-if ! command -v event-bus-cli &>/dev/null; then
-    echo "Event bus unregistration skipped (event-bus-cli not installed)"
+if ! command -v agent-event-bus-cli &>/dev/null; then
+    echo "Event bus unregistration skipped (agent-event-bus-cli not installed)"
     exit 0
 fi
 
@@ -35,7 +35,7 @@ if [[ -z "$CLIENT_ID" ]]; then
 fi
 
 # Unregister by client_id - server looks up session by (machine, client_id)
-OUTPUT=$(event-bus-cli unregister --client-id "$CLIENT_ID" 2>/dev/null) || true
+OUTPUT=$(agent-event-bus-cli unregister --client-id "$CLIENT_ID" 2>/dev/null) || true
 
 if echo "$OUTPUT" | jq -e '.success == true' >/dev/null 2>&1; then
     SESSION_ID=$(echo "$OUTPUT" | jq -r '.session_id // "unknown"')
