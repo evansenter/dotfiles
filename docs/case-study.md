@@ -81,7 +81,7 @@ Add tools to `settings.json` only after repeated use. The permission prompt surf
 
 ```bash
 # Review permission denials weekly
-session-analytics-cli permissions --days 7 --min-count 5
+agent-agent-session-analytics-cli permissions --days 7 --min-count 5
 ```
 
 ### 8. Self-Play API Testing
@@ -192,9 +192,9 @@ Three repositories power this case study:
 
 **[dotfiles](https://github.com/evansenter/dotfiles) (control plane):** Workflows, commands, hooks that propagate to all sessions instantly.
 
-**[claude-event-bus](https://github.com/evansenter/claude-event-bus) (coordinate):** Cross-session communication via polling.
+**[agent-event-bus](https://github.com/evansenter/agent-event-bus) (coordinate):** Cross-session communication via polling.
 
-**[claude-session-analytics](https://github.com/evansenter/claude-session-analytics) (insight):** Mines session logs for patterns.
+**[agent-session-analytics](https://github.com/evansenter/agent-session-analytics) (insight):** Mines session logs for patterns.
 
 ### Projects Under Development
 
@@ -307,8 +307,8 @@ This document itself is an experiment result. Each Repository Details section wa
 | Repository | PRs (open/merged) | Issues (open/closed) | LoC | +/- Lines |
 |------------|-------------------|----------------------|-----|-----------|
 | dotfiles | 0/114 | 5/51 | 6K Shell | +6.4K/-3.8K |
-| claude-event-bus | 0/41 | 7/22 | 6K Python | +6.1K/-3.0K |
-| claude-session-analytics | 0/30 | 4/19 | 12K Python | +19.0K/-1.8K |
+| agent-event-bus | 0/41 | 7/22 | 6K Python | +6.1K/-3.0K |
+| agent-session-analytics | 0/30 | 4/19 | 12K Python | +19.0K/-1.8K |
 
 **Projects Under Development:**
 
@@ -327,12 +327,12 @@ _Data available since December 30, 2025 (when session logging began via the sess
 
 | Metric | Value | Source |
 |--------|-------|--------|
-| Sessions | 258 | `session-analytics-cli sessions --days 17` |
-| Tool invocations | 33,073 | `session-analytics-cli frequency --days 17` |
-| Input tokens | 10.0M | `session-analytics-cli tokens --days 17` |
-| Output tokens | 10.9M | `session-analytics-cli tokens --days 17` |
-| Cache read | 9.7B | `session-analytics-cli tokens --days 17` |
-| Cache creation | 658M | `session-analytics-cli tokens --days 17` |
+| Sessions | 258 | `agent-session-analytics-cli sessions --days 17` |
+| Tool invocations | 33,073 | `agent-session-analytics-cli frequency --days 17` |
+| Input tokens | 10.0M | `agent-session-analytics-cli tokens --days 17` |
+| Output tokens | 10.9M | `agent-session-analytics-cli tokens --days 17` |
+| Cache read | 9.7B | `agent-session-analytics-cli tokens --days 17` |
+| Cache creation | 658M | `agent-session-analytics-cli tokens --days 17` |
 | Cache ratio | 15:1 | cache_read / cache_creation |
 
 **Regenerate:** `~/.claude/contrib/repo-stats.sh --days 17 --session-stats`

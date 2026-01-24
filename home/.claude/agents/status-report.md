@@ -30,8 +30,8 @@ gh issue list --state open --limit 20 --json number,title,labels
 
 ```
 # Lightweight analytics - avoid heavy per-session data
-mcp__session-analytics__analyze_trends(days=1)        # Aggregate stats, not per-session
-mcp__session-analytics__get_permission_gaps(days=1, min_count=3)
+mcp__agent-session-analytics__analyze_trends(days=1)        # Aggregate stats, not per-session
+mcp__agent-session-analytics__get_permission_gaps(days=1, min_count=3)
 mcp__event-bus__list_sessions()
 mcp__event-bus__get_events(limit=10)
 ```

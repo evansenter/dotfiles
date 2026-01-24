@@ -10,8 +10,8 @@ MCP servers store their data under subdirectories here:
 
 | Directory | MCP Server | Purpose |
 |-----------|------------|---------|
-| `analytics/` | [session-analytics](https://github.com/evansenter/claude-session-analytics) | Session log analysis and workflow insights |
-| `event-bus/` | [event-bus](https://github.com/evansenter/claude-event-bus) | Cross-session communication and coordination |
+| `agent-session-analytics/` | [agent-session-analytics](https://github.com/evansenter/agent-session-analytics) | Session log analysis and workflow insights |
+| `agent-event-bus/` | [agent-event-bus](https://github.com/evansenter/agent-event-bus) | Cross-session communication and coordination |
 
 ## Scripts
 
@@ -19,7 +19,7 @@ MCP servers store their data under subdirectories here:
 
 ## Session Analytics CLI
 
-The `session-analytics-cli` provides command-line access to workflow insights. Key commands:
+The `agent-session-analytics-cli` provides command-line access to workflow insights. Key commands:
 
 | Command | Description |
 |---------|-------------|
@@ -34,12 +34,12 @@ The `session-analytics-cli` provides command-line access to workflow insights. K
 
 **Usage:**
 ```bash
-session-analytics-cli <command> [--days N] [--project PATH]
+agent-session-analytics-cli <command> [--days N] [--project PATH]
 ```
 
 **Examples:**
 ```bash
-session-analytics-cli frequency --days 7
-session-analytics-cli agents --days 3
-session-analytics-cli failures --days 1
+agent-session-analytics-cli frequency --days 7
+agent-session-analytics-cli agents --days 3
+agent-session-analytics-cli failures --days 1
 ```

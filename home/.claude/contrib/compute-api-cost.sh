@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# compute-api-cost.sh - Calculate estimated API costs from session-analytics data
+# compute-api-cost.sh - Calculate estimated API costs from agent-session-analytics data
 #
 # Usage: compute-api-cost.sh [--days N] [--json]
 #
@@ -33,7 +33,7 @@ usage() {
     cat <<EOF
 Usage: $(basename "$0") [OPTIONS]
 
-Calculate estimated API costs from session-analytics token data.
+Calculate estimated API costs from agent-session-analytics token data.
 
 Options:
     --days N     Number of days to analyze (default: 17)
@@ -69,20 +69,20 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Get token data using session-analytics CLI
+# Get token data using agent-session-analytics CLI
 get_token_data() {
     local cli_path=""
 
     # Find CLI - check common locations
-    if command -v session-analytics-cli &>/dev/null; then
-        cli_path="session-analytics-cli"
-    elif [[ -x "$HOME/Documents/projects/claude-session-analytics/.venv/bin/session-analytics-cli" ]]; then
-        cli_path="$HOME/Documents/projects/claude-session-analytics/.venv/bin/session-analytics-cli"
-    elif [[ -x "$HOME/.local/bin/session-analytics-cli" ]]; then
-        cli_path="$HOME/.local/bin/session-analytics-cli"
+    if command -v agent-session-analytics-cli &>/dev/null; then
+        cli_path="agent-session-analytics-cli"
+    elif [[ -x "$HOME/Documents/projects/agent-session-analytics/.venv/bin/agent-session-analytics-cli" ]]; then
+        cli_path="$HOME/Documents/projects/agent-session-analytics/.venv/bin/agent-session-analytics-cli"
+    elif [[ -x "$HOME/.local/bin/agent-session-analytics-cli" ]]; then
+        cli_path="$HOME/.local/bin/agent-session-analytics-cli"
     else
-        echo "Error: session-analytics-cli not found" >&2
-        echo "Install from: https://github.com/evansenter/claude-session-analytics" >&2
+        echo "Error: agent-session-analytics-cli not found" >&2
+        echo "Install from: https://github.com/evansenter/agent-session-analytics" >&2
         exit 1
     fi
 
