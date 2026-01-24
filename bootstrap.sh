@@ -451,6 +451,26 @@ install_yazi_flavor() {
 	fi
 }
 
+install_zellij_plugins() {
+	local plugins_dir="$HOME/.config/zellij/plugins"
+
+	mkdir -p "$plugins_dir"
+
+	# Install zellij-autolock if not present
+	if [[ ! -f "$plugins_dir/zellij-autolock.wasm" ]]; then
+		echo "Installing zellij-autolock plugin..."
+		curl -fsSL "https://github.com/fresh2dev/zellij-autolock/releases/latest/download/zellij-autolock.wasm" \
+			-o "$plugins_dir/zellij-autolock.wasm"
+	fi
+
+	# Install zellij-forgot if not present
+	if [[ ! -f "$plugins_dir/zellij-forgot.wasm" ]]; then
+		echo "Installing zellij-forgot plugin..."
+		curl -fsSL "https://github.com/karimould/zellij-forgot/releases/latest/download/zellij_forgot.wasm" \
+			-o "$plugins_dir/zellij-forgot.wasm"
+	fi
+}
+
 install_claude_mcp_servers() {
 	if ! command -v claude >/dev/null 2>&1; then
 		echo "Skipping MCP servers (claude not installed)"
@@ -524,6 +544,9 @@ sync_dotfiles() {
 
 	# Install yazi flavor
 	install_yazi_flavor
+
+	# Install zellij plugins
+	install_zellij_plugins
 
 	# Install LaunchAgents (macOS) or cron jobs (Linux)
 	install_launch_agents
