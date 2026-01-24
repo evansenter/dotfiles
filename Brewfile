@@ -20,12 +20,16 @@ brew "lazygit"                # Git TUI
 brew "ripgrep"                # Fast grep
 brew "shellcheck"             # Shell script linting
 brew "tmux"                   # Terminal multiplexer
-brew "terminal-notifier"      # macOS notifications
+brew "terminal-notifier" if OS.mac?  # macOS notifications
 brew "vim"                    # Text editor
 brew "yazi"                   # Terminal file manager
 brew "zellij"                 # Terminal workspace
 brew "zoxide"                 # Smart cd command
-brew "cormacrelf/tap/dark-notify"  # Dark mode detection
+brew "atuin"                  # Shell history search/sync
+brew "direnv"                 # Directory-specific env vars
+brew "glow"                   # Terminal markdown viewer
+brew "tldr"                   # Simplified man pages
+brew "cormacrelf/tap/dark-notify" if OS.mac?  # Dark mode detection
 
 # Languages & Runtimes
 brew "go"
@@ -38,8 +42,12 @@ brew "bazelisk"               # Bazel wrapper
 brew "cmake"
 brew "gradle"
 brew "sccache"                # Compile cache
-brew "swiftlint"
-brew "xcodegen"
+
+# Xcode-dependent (skipped if Xcode not installed)
+if File.directory?("/Applications/Xcode.app")
+  brew "swiftlint"
+  brew "xcodegen"
+end
 
 # Utilities
 brew "ffmpeg"

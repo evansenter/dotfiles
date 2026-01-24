@@ -16,6 +16,12 @@ fi
 # Default editor
 export EDITOR='vim'
 
+# Truecolor support - apps check this env var for 24-bit color capability
+export COLORTERM='truecolor'
+
+# Enable ANSI colors in less (for git log, man pages, etc.)
+export LESS='-R'
+
 # Claude Code statusline - disable hyperlinks due to injection corruption (#172)
 export STATUSLINE_NO_LINKS=1
 
