@@ -12,6 +12,7 @@ set backspace=indent,eol,start " Backspace over everything
 " ==============================================================================
 
 syntax on                     " Syntax highlighting
+set termguicolors             " Enable 24-bit RGB colors
 colorscheme catppuccin_mocha  " Catppuccin theme
 set number                    " Line numbers
 set ruler                     " Show cursor position
