@@ -4,12 +4,37 @@
 // Catppuccin Mocha theme (built-in)
 theme "catppuccin-mocha"
 
-// Cleaner UI
-pane_frames false
-simplified_ui true
+// Plugins
+plugins {
+    autolock location="file:~/.config/zellij/plugins/zellij-autolock.wasm" {
+        is_enabled true
+        triggers "nvim|vim|git|fzf|zoxide|atuin|helix"
+        reaction_seconds "0.3"
+    }
+    forgot location="file:~/.config/zellij/plugins/zellij-forgot.wasm" {
+        LOAD_ZELLIJ_BINDINGS "true"
+    }
+}
+
+load_plugins {
+    autolock
+}
+
+// Session management
+pane_viewport_serialization true  // Save scrollback on exit
+on_force_close "detach"           // Ctrl+q detaches instead of killing
+scroll_buffer_size 50000          // Match tmux history-limit
 
 // Mouse support
 mouse_mode true
 
 // Copy to system clipboard
 copy_on_select true
+
+// Keybindings
+keybinds {
+    session {
+        // Ctrl+o then ? to open forgot (keybinding cheatsheet)
+        bind "?" { LaunchOrFocusPlugin "forgot" { floating true }; SwitchToMode "Normal"; }
+    }
+}
