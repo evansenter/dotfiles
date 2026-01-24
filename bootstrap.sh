@@ -480,6 +480,13 @@ install_zellij_plugins() {
 		curl -fsSL "https://github.com/karimould/zellij-forgot/releases/latest/download/zellij_forgot.wasm" \
 			-o "$plugins_dir/zellij-forgot.wasm"
 	fi
+
+	# Install zjstatus if not present
+	if [[ ! -f "$plugins_dir/zjstatus.wasm" ]]; then
+		echo "Installing zjstatus plugin..."
+		curl -fsSL "https://github.com/dj95/zjstatus/releases/latest/download/zjstatus.wasm" \
+			-o "$plugins_dir/zjstatus.wasm"
+	fi
 }
 
 install_claude_mcp_servers() {
