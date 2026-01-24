@@ -1,0 +1,22 @@
+# Yazi configuration
+# Docs: https://yazi-rs.github.io/docs/configuration/yazi/
+
+[mgr]
+# Show hidden files by default
+show_hidden = true
+# Keep files above/below cursor when scrolling
+scrolloff = 5
+# Show file sizes
+linemode = "size"
+
+[preview]
+# Wrap long lines in code preview
+wrap = "yes"
+# Tab width
+tab_size = 2
+
+[opener]
+# Use helix as default editor (falls back to $EDITOR)
+edit = [
+  { run = 'hx "$@"', desc = "Edit with Helix", block = true, for = "unix" },
+]

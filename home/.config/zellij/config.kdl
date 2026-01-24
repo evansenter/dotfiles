@@ -23,6 +23,7 @@ load_plugins {
 // Session management
 pane_viewport_serialization true  // Save scrollback on exit
 on_force_close "detach"           // Ctrl+q detaches instead of killing
+scroll_buffer_size 50000          // Match tmux history-limit
 
 // Mouse support
 mouse_mode true

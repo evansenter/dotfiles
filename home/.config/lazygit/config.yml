@@ -1,7 +1,12 @@
 # lazygit configuration
 # Docs: https://github.com/jesseduffield/lazygit/blob/master/docs/Config.md
 
+git:
+  paging:
+    pager: delta --dark --paging=never
+
 gui:
+  nerdFontsVersion: "3"
   # Catppuccin Mocha theme (blue accent)
   # https://github.com/catppuccin/lazygit
   theme:
