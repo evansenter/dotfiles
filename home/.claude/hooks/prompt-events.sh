@@ -9,6 +9,9 @@
 
 set -euo pipefail
 
+# Source user's environment for AGENT_EVENT_BUS_URL
+[[ -f ~/.extra ]] && source ~/.extra
+
 # Read session info (always consume stdin to avoid broken pipe)
 INPUT=$(cat)
 

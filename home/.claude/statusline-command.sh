@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Source user's environment for AGENT_EVENT_BUS_URL
+[[ -f ~/.extra ]] && source ~/.extra
+
 # Claude Code status line script
 # Usage: Called automatically by Claude Code with JSON on stdin
 # Example: echo '{"workspace":{"current_dir":"/path"},"context_window":{"current_usage":{...},"context_window_size":200000}}' | ~/.claude/statusline-command.sh
