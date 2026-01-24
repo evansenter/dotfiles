@@ -16,7 +16,7 @@ DAYS=30
 SESSION_STATS=0
 OWNER="evansenter"
 LOCAL_DIR="$HOME/Documents/projects"
-DEFAULT_REPOS="dotfiles gemicro claude-event-bus claude-session-analytics rust-genai"
+DEFAULT_REPOS="dotfiles gemicro agent-event-bus agent-session-analytics rust-genai"
 REPOS=""
 
 # Check for scc
@@ -24,10 +24,10 @@ HAS_SCC=$(command -v scc >/dev/null 2>&1 && echo "1" || echo "0")
 
 # Check for session-analytics CLI
 SESSION_CLI=""
-if [[ -x "$HOME/Documents/projects/claude-session-analytics/.venv/bin/session-analytics-cli" ]]; then
-    SESSION_CLI="$HOME/Documents/projects/claude-session-analytics/.venv/bin/session-analytics-cli"
-elif command -v session-analytics-cli >/dev/null 2>&1; then
-    SESSION_CLI="session-analytics-cli"
+if [[ -x "$HOME/Documents/projects/agent-session-analytics/.venv/bin/agent-session-analytics-cli" ]]; then
+    SESSION_CLI="$HOME/Documents/projects/agent-session-analytics/.venv/bin/agent-session-analytics-cli"
+elif command -v agent-session-analytics-cli >/dev/null 2>&1; then
+    SESSION_CLI="agent-session-analytics-cli"
 fi
 
 # Parse arguments
@@ -56,11 +56,11 @@ while [[ $# -gt 0 ]]; do
             echo "  --days N          Look back N days (default: 30)"
             echo "  --owner NAME      GitHub owner (default: evansenter)"
             echo "  --local-dir DIR   Local repos directory (default: ~/Documents/projects)"
-            echo "  --session-stats   Include Claude Code session analytics"
+            echo "  --session-stats   Include Agent Session Analytics"
             echo ""
             echo "If repos are specified, uses those instead of defaults."
             echo "Uses 'scc' for accurate LoC if installed and repos exist locally."
-            echo "Uses 'session-analytics-cli' for session stats if available."
+            echo "Uses 'agent-session-analytics-cli' for session stats if available."
             exit 0
             ;;
         *)
@@ -430,7 +430,7 @@ if [[ "$SESSION_STATS" == "1" ]]; then
         echo ""
         echo "### Session Analytics"
         echo ""
-        echo "_session-analytics-cli not found. Install from claude-session-analytics repo._"
+        echo "_agent-session-analytics-cli not found. Install from agent-session-analytics repo._"
     else
         echo ""
         echo "### Session Analytics"
@@ -505,6 +505,6 @@ if [[ "$SESSION_STATS" == "1" ]]; then
             "$(printf '─%.0s' $(seq 1 $((sw2 + 2))))"
 
         echo ""
-        echo "_Source: session-analytics-cli (last ${DAYS}d)_"
+        echo "_Source: agent-session-analytics-cli (last ${DAYS}d)_"
     fi
 fi

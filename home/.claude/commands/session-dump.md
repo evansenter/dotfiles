@@ -37,7 +37,7 @@ session_id = current_session.session_id
 ### 3. Get Messages
 
 ```
-mcp__session-analytics__get_session_messages(
+mcp__agent-session-analytics__get_session_messages(
   days=1,
   limit=<parsed limit>,
   session_id=<session_id or null if cross_session>
