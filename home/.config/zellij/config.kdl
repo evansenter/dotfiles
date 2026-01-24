@@ -8,8 +8,8 @@ theme "catppuccin-mocha"
 plugins {
     autolock location="file:~/.config/zellij/plugins/zellij-autolock.wasm" {
         is_enabled true
-        triggers "nvim|vim|git|fzf|zoxide|atuin|helix"
-        reaction_seconds "0.3"
+        triggers "nvim|vim|git|fzf|zoxide|atuin|helix|claude"
+        reaction_seconds "1.0"
     }
     forgot location="file:~/.config/zellij/plugins/zellij-forgot.wasm" {
         "LOAD_ZELLIJ_BINDINGS" "true"
@@ -27,6 +27,9 @@ scroll_buffer_size 50000          // Match tmux history-limit
 
 // Mouse support
 mouse_mode true
+
+// Borderless panes by default
+pane_frames false
 
 // Copy to system clipboard
 copy_on_select true
