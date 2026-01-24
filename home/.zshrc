@@ -129,3 +129,5 @@ fi
 if [ -f ~/.extra ]; then
     source ~/.extra
 fi
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

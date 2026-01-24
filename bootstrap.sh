@@ -214,7 +214,6 @@ install_packages() {
 				eza
 				fd
 				fontconfig
-				fzf
 				gh
 				git
 				jq
@@ -283,6 +282,18 @@ install_packages() {
 			curl -Lo /tmp/lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
 			sudo tar xf /tmp/lazygit.tar.gz -C /usr/local/bin lazygit
 			rm /tmp/lazygit.tar.gz
+		fi
+
+		# Install fzf from git (apt version is too old for modern color options)
+		if [[ ! -d "$HOME/.fzf" ]]; then
+			echo "Installing fzf from git..."
+			git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+			"$HOME/.fzf/install" --all --no-bash --no-fish
+		elif [[ -d "$HOME/.fzf/.git" ]]; then
+			# Update existing fzf installation
+			echo "Updating fzf..."
+			git -C "$HOME/.fzf" pull --ff-only
+			"$HOME/.fzf/install" --all --no-bash --no-fish
 		fi
 
 		# Create fd alias (Debian/Ubuntu installs as fdfind)
