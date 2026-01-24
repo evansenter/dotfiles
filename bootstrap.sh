@@ -38,7 +38,7 @@ symlink_dotfiles() {
 		# Create symlink
 		ln -s "$src_file" "$dest_file"
 		echo "Linked: ~/$rel_path"
-	done < <(find "$dotfiles_dir/home" -type f -not -name ".DS_Store" -not -path "*/.claude/hooks/*" -not -path "*/.claude/commands/*" -not -path "*/.claude/contrib/*" -not -path "*/.claude/agents/*" -not -path "*/.claude/skills/*" -print0)
+	done < <(find "$dotfiles_dir/home" -type f -not -name ".DS_Store" -not -path "*/.claude/hooks/*" -not -path "*/.claude/commands/*" -not -path "*/.claude/contrib/*" -not -path "*/.claude/agents/*" -not -path "*/.claude/skills/*" -not -path "*/.config/btop/btop.conf" -print0)
 }
 
 symlink_claude_dir() {
@@ -349,6 +349,25 @@ install_btop_themes() {
 	done
 }
 
+copy_btop_config() {
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local src_config="$dotfiles_dir/home/.config/btop/btop.conf"
+	local dest_config="$HOME/.config/btop/btop.conf"
+
+	if [[ ! -f "$src_config" ]]; then
+		return 0
+	fi
+
+	mkdir -p "$(dirname "$dest_config")"
+
+	# Copy only if missing or if it's a symlink (migrate from old setup)
+	if [[ ! -e "$dest_config" || -L "$dest_config" ]]; then
+		rm -f "$dest_config"
+		cp "$src_config" "$dest_config"
+		echo "Copied: ~/.config/btop/btop.conf (btop may modify this freely)"
+	fi
+}
+
 install_bat_themes() {
 	local bat_themes_dir="$HOME/.config/bat/themes"
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -496,6 +515,9 @@ sync_dotfiles() {
 
 	# Install btop themes from submodule
 	install_btop_themes
+
+	# Copy btop config (not symlinked - btop auto-saves settings)
+	copy_btop_config
 
 	# Install bat themes from submodule
 	install_bat_themes
