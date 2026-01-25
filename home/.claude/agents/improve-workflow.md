@@ -28,9 +28,9 @@ git log --oneline -5
 
 Then ingest only what's needed:
 ```
-mcp__session-analytics__ingest_logs(days=1)
-mcp__session-analytics__ingest_git_history(days=1)
-mcp__session-analytics__correlate_git_with_sessions(days=1)
+mcp__agent-session-analytics__ingest_logs(days=1)
+mcp__agent-session-analytics__ingest_git_history(days=1)
+mcp__agent-session-analytics__correlate_git_with_sessions(days=1)
 ```
 
 Only expand to `days=3` if the 1-day window has < 3 sessions.
@@ -40,8 +40,8 @@ Only expand to `days=3` if the 1-day window has < 3 sessions.
 Start with lightweight queries. Use `days=1` (expand to 3 only if sparse):
 
 ```
-mcp__session-analytics__get_insights(refresh=true, days=1, include_advanced=true)
-mcp__session-analytics__list_sessions(days=1)
+mcp__agent-session-analytics__get_insights(refresh=true, days=1, include_advanced=true)
+mcp__agent-session-analytics__list_sessions(days=1)
 ```
 
 From insights, note:
@@ -69,19 +69,19 @@ Only run this phase if Phase 1 insights show compaction events.
 ### 2a. Compaction Overview
 
 ```
-mcp__session-analytics__get_compaction_events(days=1)
+mcp__agent-session-analytics__get_compaction_events(days=1)
 ```
 
 If compactions exist, check what caused them:
 ```
-mcp__session-analytics__get_large_tool_results(days=1, min_size_kb=20, limit=10)
+mcp__agent-session-analytics__get_large_tool_results(days=1, min_size_kb=20, limit=10)
 ```
 
 ### 2b. Session Efficiency (Optional)
 
 Only if investigating a specific problematic session:
 ```
-mcp__session-analytics__get_session_efficiency(days=1)
+mcp__agent-session-analytics__get_session_efficiency(days=1)
 ```
 
 Look for:
@@ -94,19 +94,19 @@ Only investigate patterns flagged in Phase 1. Pick ONE area to focus on.
 
 **If error rate > 5%:**
 ```
-mcp__session-analytics__get_error_details(days=1, limit=10)
+mcp__agent-session-analytics__get_error_details(days=1, limit=10)
 ```
 Focus on: What specific commands/patterns are failing?
 
 **If permission gaps flagged:**
 ```
-mcp__session-analytics__get_permission_gaps(days=1, min_count=2)
+mcp__agent-session-analytics__get_permission_gaps(days=1, min_count=2)
 ```
 Focus on: Commands needing allowlist updates (ignore shell builtins).
 
 **If debugging-heavy classification:**
 ```
-mcp__session-analytics__classify_sessions(days=1)
+mcp__agent-session-analytics__classify_sessions(days=1)
 ```
 Focus on: What's driving the classification?
 
