@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Source user's environment for AGENT_EVENT_BUS_URL
-[[ -f ~/.extra ]] && source ~/.extra
+# Source user's environment for AGENT_EVENT_BUS_URL (suppress any output)
+[[ -f ~/.extra ]] && source ~/.extra >/dev/null 2>&1
 
 # Claude Code status line script
 # Usage: Called automatically by Claude Code with JSON on stdin
