@@ -1,5 +1,4 @@
-// Default layout with zjstatus status bar
-// Catppuccin Mocha colors: https://catppuccin.com/palette
+// Default layout with tab-bar, zjstatus, and status-bar
 
 layout {
     default_tab_template {
