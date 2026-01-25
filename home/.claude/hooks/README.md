@@ -133,6 +133,7 @@ Session End
 - Must consume stdin (even if not used) to avoid broken pipe errors
 - Should use `set -euo pipefail` for safety
 - Should gracefully degrade if dependencies missing (jq, agent-event-bus-cli, tmux)
+- Source `~/.extra` if the hook needs user environment variables (e.g., `AGENT_EVENT_BUS_URL`)
 
 ### Input Format
 All hooks receive JSON on stdin with at least:

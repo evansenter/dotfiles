@@ -8,7 +8,7 @@ layout {
             plugin location="file:~/.config/zellij/plugins/zjstatus.wasm" {
                 format_left   "{mode} #[fg=#89b4fa,bold]{session}"
                 format_center "{tabs}"
-                format_right  "{datetime}"
+                format_right  "{command_host} {datetime}"
                 format_space  ""
 
                 border_enabled  "false"
@@ -40,11 +40,20 @@ layout {
                 tab_active_sync         "#[fg=#cdd6f4,bold] {name} <> "
                 tab_separator           "#[fg=#45475a] | "
 
+                // Hostname (static, only runs once)
+                command_host_command    "hostname -s"
+                command_host_format     "#[fg=#6c7086]{stdout}"
+                command_host_interval   "0"
+                command_host_rendermode "static"
+
                 // Datetime
                 datetime          "#[fg=#6c7086] {format} "
-                datetime_format   "%H:%M"
+                datetime_format   "%Y-%m-%d %H:%M"
                 datetime_timezone "Local"
             }
+        }
+        pane size=1 borderless=true {
+            plugin location="zellij:status-bar"
         }
     }
 }
