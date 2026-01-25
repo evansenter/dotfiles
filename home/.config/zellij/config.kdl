@@ -9,7 +9,7 @@ plugins {
     autolock location="file:~/.config/zellij/plugins/zellij-autolock.wasm" {
         is_enabled true
         triggers "nvim|vim|git|fzf|zoxide|atuin|helix|claude"
-        reaction_seconds "1.0"
+        reaction_seconds "5.0"
     }
     forgot location="file:~/.config/zellij/plugins/zellij-forgot.wasm" {
         "LOAD_ZELLIJ_BINDINGS" "true"
