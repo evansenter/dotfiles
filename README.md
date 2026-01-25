@@ -48,11 +48,10 @@ Minimal macOS/Linux dotfiles for a modern terminal setup with Catppuccin Mocha t
 | `/pr-create` | Commit changes and create/update a PR |
 | `/pr-review` | Review code via local analysis or remote reviewer comments |
 | `/watch-ci` | Monitor CI in background with notification when complete |
-| `/rfc-create` | Create RFC-style issues with structured analysis |
-| `/rfc-respond` | Respond to RFC-style issues |
-| `/audit-workflows` | Command contradictions and inconsistencies |
 | `/event-bus-status` | Overview of active sessions and recent events |
 | `/broadcast` | Send message to other Claude Code sessions |
+| `/session-dump` | Dump recent conversation to file |
+| `/clemini-work` | Delegate work to clemini with supervised review |
 
 **Agents** (invoked via Task tool for background/complex work):
 | Agent | Description |
@@ -63,7 +62,10 @@ Minimal macOS/Linux dotfiles for a modern terminal setup with Catppuccin Mocha t
 | `audit-tests` | Test redundancy, staleness, coverage gaps |
 | `audit-issues` | Issue triage, priority alignment, staleness |
 | `audit-docs` | CLAUDE.md, README, and documentation quality |
+| `audit-workflows` | Command contradictions and inconsistencies |
 | `improve-workflow` | Data-driven workflow improvements from session analytics |
+| `rfc-create` | Create RFC-style issues with structured analysis |
+| `rfc-respond` | Respond to RFC-style issues |
 
 **Usage examples:**
 ```bash
@@ -111,7 +113,7 @@ brew install cormacrelf/tap/dark-notify
 ./bootstrap.sh  # Symlinks commands/, hooks/, settings.json, CLAUDE.md
 ```
 
-Also installs GitHub MCP server and enables plugins (feature-dev, pr-review-toolkit, code-review, commit-commands, LSP integrations). Set `GITHUB_TOKEN` in `~/.extra`:
+Also installs GitHub MCP server and enables plugins (feature-dev, pr-review-toolkit, commit-commands, code-simplifier, LSP integrations). Set `GITHUB_TOKEN` in `~/.extra`:
 ```bash
 export GITHUB_TOKEN="ghp_your_token_here"
 ```
@@ -141,11 +143,14 @@ dotfiles/
 │   ├── .aliases
 │   ├── .bin/
 │   ├── .claude/
-│   │   ├── CLAUDE.md      # Global workflow preferences
-│   │   ├── commands/      # Custom slash commands
-│   │   ├── agents/        # Background task agents
-│   │   ├── hooks/         # Notification hook
-│   │   └── settings.json  # Plugins and hook config
+│   │   ├── CLAUDE.md            # Global workflow preferences
+│   │   ├── commands/            # Custom slash commands
+│   │   ├── agents/              # Background task agents
+│   │   ├── skills/              # Auto-applied domain expertise
+│   │   ├── contrib/             # Shared scripts for hooks/commands
+│   │   ├── hooks/               # Lifecycle event hooks
+│   │   ├── statusline-command.sh  # Statusline provider script
+│   │   └── settings.json        # Plugins and hook config
 │   ├── .exports
 │   ├── .gitconfig
 │   ├── .tmux.conf

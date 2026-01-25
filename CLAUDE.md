@@ -46,13 +46,14 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 
 ### Bootstrap Process
 
-`sync_dotfiles` in `bootstrap.sh`:
+`sync_dotfiles` in `bootstrap.sh` (see script for full details):
 1. Symlinks `home/` files to `~`
 2. Symlinks `.claude/{hooks,commands,contrib,agents,skills}/`
 3. Installs Claude Code MCP servers
-4. Installs TPM (manual `prefix + I` for plugins)
-5. Symlinks btop themes from `vendor/btop-catppuccin/`
-6. Installs LaunchAgents (macOS)
+4. Installs Homebrew packages (macOS) and hooks
+5. Installs TPM (manual `prefix + I` for plugins)
+6. Installs bat/yazi/zellij themes from `vendor/`
+7. Installs LaunchAgents and cron jobs
 
 ### Key Components
 
