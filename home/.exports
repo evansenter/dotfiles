@@ -3,7 +3,9 @@
 # ==============================================================================
 
 # Variables expected in ~/.extra (not tracked):
-#   GITHUB_TOKEN - Required for Claude Code GitHub MCP server
+#   GITHUB_TOKEN   - Required for Claude Code GitHub MCP server
+#   GEMINI_API_KEY - Required for Gemini API access
+#   EVENT_BUS_URL  - URL for event bus MCP server (e.g., http://host:8080/mcp)
 
 # PATH configuration
 if [ -d "$HOME/.local/bin" ]; then
@@ -28,7 +30,14 @@ export STATUSLINE_NO_LINKS=1
 # Cache for rustc artifacts, to speed up `make check`-like commands
 command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache
 
+# Google Cloud SDK - enables site-packages for IAP TCP forwarding bandwidth
+# https://docs.cloud.google.com/iap/docs/using-tcp-forwarding#increasing_the_tcp_upload_bandwidth
+export CLOUDSDK_PYTHON_SITEPACKAGES=1
+
 # fzf - Catppuccin Mocha theme
+# Colors: bg=background, fg=foreground, hl=highlight, info=match count,
+#         prompt=input prompt, pointer=selection arrow, marker=multi-select,
+#         spinner=loading, header=header text, selected-bg=current line bg
 export FZF_DEFAULT_OPTS=" \
 --color=bg+:#313244,bg:#1e1e2e,spinner:#f5e0dc,hl:#f38ba8 \
 --color=fg:#cdd6f4,header:#f38ba8,info:#cba6f7,pointer:#f5e0dc \

@@ -29,7 +29,7 @@ else
     THEME="catppuccin_latte"
 fi
 
-# Update btop config
+# Update btop config (macOS sed requires '' after -i; Linux would use -i alone)
 sed -i '' "s/^color_theme = .*/color_theme = \"$THEME\"/" "$BTOP_CONF"
 
 # Signal btop to reload config (if running)
