@@ -91,6 +91,16 @@
 # Credentials
 # ==============================================================================
 
+# Global fallback: Use Git Credential Manager
+[credential]
+	helper = 
+	helper = /usr/local/share/gcm-core/git-credential-manager
+
+# Azure DevOps specific settings
+[credential "https://dev.azure.com"]
+	useHttpPath = true
+
+# GitHub-specific override: Use gh CLI
 [credential "https://github.com"]
 	helper =
 	helper = !gh auth git-credential

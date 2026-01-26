@@ -27,6 +27,9 @@ export LESS='-R'
 # Claude Code statusline - disable hyperlinks due to injection corruption (#172)
 export STATUSLINE_NO_LINKS=1
 
+# Suppress Node.js deprecation warnings (e.g., DEP0040 punycode)
+export NODE_NO_WARNINGS=1
+
 # Cache for rustc artifacts, to speed up `make check`-like commands
 command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache
 
