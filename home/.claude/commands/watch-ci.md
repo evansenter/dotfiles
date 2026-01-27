@@ -42,7 +42,9 @@ If PR_NUMBER is omitted, uses the current branch's PR.
 
 5. Continue with other work - do not block waiting for CI.
 
-6. When CI completes (you receive the background task notification):
+6. When you receive a `<system-reminder>` about background task output, check the output file to see if CI completed (all checks show pass/fail, no more "pending"). Use `TaskOutput(task_id, block=false)` or read the output file directly.
+
+7. When CI completes:
    - Notify: `mcp__event-bus__notify(title="CI", message="CI passed/failed on PR #<PR_NUMBER>")`
    - Broadcast the result to the event bus so parallel sessions are notified.
    - Include your session_id (from startup: "Registered on event bus as: <session_id>") for attribution:
