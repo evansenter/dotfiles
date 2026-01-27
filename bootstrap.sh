@@ -90,17 +90,20 @@ symlink_clawdbot_config() {
 	fi
 
 	# Ask if this is the gateway host or a remote client
+	# Default to remote client when non-interactive (CI, scripts, -f flag)
 	if [[ ! -e "$dest_file" ]]; then
-		echo ""
-		echo "Clawdbot setup:"
-		echo "  1) Remote client - connect to existing gateway (default)"
-		echo "  2) Gateway host - run the gateway on this machine"
-		read -p "Choose [1/2]: " -n 1 -r clawdbot_choice
-		echo ""
+		if [[ -t 0 ]]; then
+			echo ""
+			echo "Clawdbot setup:"
+			echo "  1) Remote client - connect to existing gateway (default)"
+			echo "  2) Gateway host - run the gateway on this machine"
+			read -p "Choose [1/2]: " -n 1 -r clawdbot_choice
+			echo ""
 
-		if [[ "$clawdbot_choice" == "2" ]]; then
-			echo "Skipped: ~/.clawdbot/clawdbot.json (run 'clawdbot onboard' to set up gateway)"
-			return 0
+			if [[ "$clawdbot_choice" == "2" ]]; then
+				echo "Skipped: ~/.clawdbot/clawdbot.json (run 'clawdbot onboard' to set up gateway)"
+				return 0
+			fi
 		fi
 	fi
 
