@@ -221,6 +221,7 @@ install_packages() {
 				tmux
 				unzip
 				vim
+				watch
 				xclip
 				zoxide
 			)

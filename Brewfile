@@ -29,6 +29,7 @@ brew "atuin"                  # Shell history search/sync
 brew "direnv"                 # Directory-specific env vars
 brew "glow"                   # Terminal markdown viewer
 brew "tldr"                   # Simplified man pages
+brew "watch"                  # Run command periodically
 brew "cormacrelf/tap/dark-notify" if OS.mac?  # Dark mode detection
 
 # Languages & Runtimes
