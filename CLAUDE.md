@@ -55,6 +55,26 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 6. Installs bat/yazi/zellij themes from `vendor/`
 7. Installs LaunchAgents and cron jobs
 
+### Symlink Pattern
+
+Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version control of dotfiles while keeping them in their expected locations.
+
+**Adding new configs:**
+1. Create the file under `home/` mirroring the `~` path (e.g., `home/.clawdbot/clawdbot.json` → `~/.clawdbot/clawdbot.json`)
+2. Run `./bootstrap.sh -f` to create the symlink
+3. The existing file will be replaced with a symlink to the dotfiles version
+
+**Handling sensitive data:**
+- Never commit secrets (tokens, API keys, passwords)
+- Use environment variable substitution if the tool supports it (e.g., `${CLAWDBOT_GATEWAY_TOKEN}`)
+- Store actual secrets in `~/.extra` (sourced by zsh, not tracked)
+
+**Examples:**
+| Tool | Tracked Config | Secrets Location |
+|------|---------------|------------------|
+| Claude Code | `home/.claude/settings.json` | `~/.claude/.credentials.json` (not tracked) |
+| Clawdbot | `home/.clawdbot/clawdbot.json` | `~/.extra` via `${CLAWDBOT_GATEWAY_TOKEN}` |
+
 ### Key Components
 
 **Prompt** (`home/.zsh_prompt`) - Timer displayed if command takes >0s.
@@ -74,6 +94,13 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 | Invocation | User types `/command` | Claude auto-applies |
 | Trigger | Explicit | Context-based |
 | Examples | `/work`, `/pr-review` | `hook-authoring` |
+
+**Clawdbot** (`home/.clawdbot/`) - Personal AI assistant. The tracked config is for **remote clients** connecting to the gateway on speck-vm. Bootstrap skips symlinking if a local config exists (gateway host).
+
+- **Client machines** (after bootstrap): `npm i -g clawdbot`, add `CLAWDBOT_GATEWAY_TOKEN` to `~/.extra`. (Claude auth lives on gateway, not clients.)
+- **Gateway host** (speck-vm): Maintains its own `~/.clawdbot/clawdbot.json` with `mode: local`. Runs WhatsApp channel. Exposed via tailscale serve at `https://speck-vm.tailac7b3c.ts.net/`.
+
+Remote browsers require pairing: `clawdbot devices approve <id>` (check `clawdbot devices list`).
 
 **iTerm2** (`preferences/`, `vendor/iterm-catppuccin/`) - Manual color preset import required.
 
