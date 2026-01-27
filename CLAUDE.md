@@ -102,6 +102,19 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 
 Remote browsers require pairing: `clawdbot devices approve <id>` (check `clawdbot devices list`).
 
+**WhatsApp Channel Configuration** (on gateway host):
+```bash
+# DM policies: pairing (default), allowlist, open, disabled
+clawdbot config set channels.whatsapp.dmPolicy allowlist
+
+# Add numbers to allowlist (E.164 format)
+clawdbot config set channels.whatsapp.allowFrom '["+1234567890", "+447385020381"]'
+
+# Restart to apply
+clawdbot gateway restart
+```
+Note: WhatsApp shows "online" whenever clawdbot is connected (WhatsApp Web limitation).
+
 **iTerm2** (`preferences/`, `vendor/iterm-catppuccin/`) - Manual color preset import required.
 
 ### File Formats
