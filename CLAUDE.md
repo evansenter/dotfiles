@@ -95,12 +95,11 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 | Trigger | Explicit | Context-based |
 | Examples | `/work`, `/pr-review` | `hook-authoring` |
 
-**Clawdbot** (`home/.clawdbot/`) - Personal AI assistant config. Gateway token via `${CLAWDBOT_GATEWAY_TOKEN}` in `~/.extra`. Setup after bootstrap:
-```bash
-npm i -g clawdbot && source ~/.extra
-clawdbot models auth setup-token  # sync Claude CLI creds
-clawdbot gateway install          # install systemd service
-```
+**Clawdbot** (`home/.clawdbot/`) - Personal AI assistant. The tracked config is for **remote clients** connecting to the gateway on speck-vm. Bootstrap skips symlinking if a local config exists (gateway host).
+
+- **Client machines** (after bootstrap): `npm i -g clawdbot`, add `CLAWDBOT_GATEWAY_TOKEN` to `~/.extra`. (Claude auth lives on gateway, not clients.)
+- **Gateway host** (speck-vm): Maintains its own `~/.clawdbot/clawdbot.json` with `mode: local`. Runs WhatsApp channel. Exposed via tailscale serve at `https://speck-vm.tailac7b3c.ts.net/`.
+
 Remote browsers require pairing: `clawdbot devices approve <id>` (check `clawdbot devices list`).
 
 **iTerm2** (`preferences/`, `vendor/iterm-catppuccin/`) - Manual color preset import required.

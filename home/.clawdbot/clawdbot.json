@@ -19,16 +19,10 @@
     "nativeSkills": "auto"
   },
   "gateway": {
-    "port": 18789,
-    "mode": "local",
-    "bind": "loopback",
-    "auth": {
-      "mode": "token",
+    "mode": "remote",
+    "remote": {
+      "url": "wss://speck-vm.tailac7b3c.ts.net/",
       "token": "${CLAWDBOT_GATEWAY_TOKEN}"
-    },
-    "tailscale": {
-      "mode": "off",
-      "resetOnExit": false
     }
   },
   "skills": {
