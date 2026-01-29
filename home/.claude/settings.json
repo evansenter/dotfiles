@@ -2,7 +2,8 @@
   "cleanupPeriodDays": 365,
   "env": {
     "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
-    "EVENT_BUS_URL": "https://speck-vm.tailac7b3c.ts.net/mcp"
+    "AGENT_EVENT_BUS_URL": "https://speck-vm.tailac7b3c.ts.net/agent-event-bus/mcp",
+    "AGENT_SESSION_ANALYTICS_URL": "https://speck-vm.tailac7b3c.ts.net/agent-session-analytics/mcp"
   },
   "permissions": {
     "allow": [
@@ -94,6 +95,7 @@
       "Bash(.venv/bin/agent-session-analytics-cli:*)",
       "Bash(sqlite3:*)",
       "Bash(launchctl:*)",
+      "Bash(systemctl:*)",
       "Bash(claude:*)",
       "Bash(chmod:*)",
       "Bash(ls:*)",
