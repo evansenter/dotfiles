@@ -60,20 +60,20 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version control of dotfiles while keeping them in their expected locations.
 
 **Adding new configs:**
-1. Create the file under `home/` mirroring the `~` path (e.g., `home/.clawdbot/clawdbot.json` → `~/.clawdbot/clawdbot.json`)
+1. Create the file under `home/` mirroring the `~` path (e.g., `home/.moltbot/moltbot.json` → `~/.moltbot/moltbot.json`)
 2. Run `./bootstrap.sh -f` to create the symlink
 3. The existing file will be replaced with a symlink to the dotfiles version
 
 **Handling sensitive data:**
 - Never commit secrets (tokens, API keys, passwords)
-- Use environment variable substitution if the tool supports it (e.g., `${CLAWDBOT_GATEWAY_TOKEN}`)
+- Use environment variable substitution if the tool supports it (e.g., `${MOLTBOT_GATEWAY_TOKEN}`)
 - Store actual secrets in `~/.extra` (sourced by zsh, not tracked)
 
 **Examples:**
 | Tool | Tracked Config | Secrets Location |
 |------|---------------|------------------|
 | Claude Code | `home/.claude/settings.json` | `~/.claude/.credentials.json` (not tracked) |
-| Clawdbot | `home/.clawdbot/clawdbot.json` | `~/.extra` via `${CLAWDBOT_GATEWAY_TOKEN}` |
+| Moltbot | `home/.moltbot/moltbot.json` | `~/.extra` via `${MOLTBOT_GATEWAY_TOKEN}` |
 
 ### Key Components
 
@@ -95,12 +95,12 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 | Trigger | Explicit | Context-based |
 | Examples | `/work`, `/pr-review` | `hook-authoring` |
 
-**Clawdbot** (`home/.clawdbot/`) - Personal AI assistant. The tracked config is for **remote clients** connecting to the gateway on speck-vm. Bootstrap skips symlinking if a local config exists (gateway host).
+**Moltbot** (`home/.moltbot/`) - Personal AI assistant. The tracked config is for **remote clients** connecting to the gateway on speck-vm. Bootstrap symlinks config and installs the CLI automatically. Skipped if local gateway config exists.
 
-- **Client machines** (after bootstrap): `npm i -g clawdbot`, add `CLAWDBOT_GATEWAY_TOKEN` to `~/.extra`. (Claude auth lives on gateway, not clients.)
-- **Gateway host** (speck-vm): Maintains its own `~/.clawdbot/clawdbot.json` with `mode: local`. Runs WhatsApp channel. Exposed via tailscale serve at `https://speck-vm.tailac7b3c.ts.net/`.
+- **Client machines**: Bootstrap handles everything. Just add `MOLTBOT_GATEWAY_TOKEN` to `~/.extra`. (Claude auth lives on gateway, not clients.)
+- **Gateway host** (speck-vm): Maintains its own `~/.moltbot/moltbot.json` with `mode: local`. Runs WhatsApp channel. Exposed via tailscale serve at `https://speck-vm.tailac7b3c.ts.net/`.
 
-Remote browsers require pairing: `clawdbot devices approve <id>` (check `clawdbot devices list`).
+Remote browsers require pairing: `moltbot devices approve <id>` (check `moltbot devices list`).
 
 **iTerm2** (`preferences/`, `vendor/iterm-catppuccin/`) - Manual color preset import required.
 
