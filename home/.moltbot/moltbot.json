@@ -22,7 +22,7 @@
     "mode": "remote",
     "remote": {
       "url": "wss://speck-vm.tailac7b3c.ts.net/",
-      "token": "${CLAWDBOT_GATEWAY_TOKEN}"
+      "token": "${MOLTBOT_GATEWAY_TOKEN}"
     }
   },
   "skills": {
