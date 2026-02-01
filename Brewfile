@@ -64,6 +64,7 @@ cask "lm-studio"
 cask "claude"
 cask "google-chrome"
 cask "iina"                   # Video player
+cask "obsidian"               # Note-taking
 cask "spotify"
 cask "stats"                  # Menu bar system monitor
 cask "steam"
