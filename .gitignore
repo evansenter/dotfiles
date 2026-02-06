@@ -14,6 +14,7 @@
 # MCP server runtime data (databases, logs)
 home/.claude/contrib/agent-event-bus/
 home/.claude/contrib/agent-session-analytics/
+home/.claude/contrib/agent-memory-store/
 
 # Zellij saved layouts (machine-specific snapshots, but keep default.kdl)
 home/.config/zellij/layouts/*

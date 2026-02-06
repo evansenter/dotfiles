@@ -632,10 +632,14 @@ sync_dotfiles() {
 	symlink_claude_dir "skills"
 
 	# Symlink Moltbot config (skipped if local gateway config exists)
-	symlink_moltbot_config
+	if [[ "$SKIP_ASSISTANTS" != true ]]; then
+		symlink_moltbot_config
+	fi
 
 	# Install Claude Code MCP servers
-	install_claude_mcp_servers
+	if [[ "$SKIP_ASSISTANTS" != true ]]; then
+		install_claude_mcp_servers
+	fi
 
 	# Install tmux plugin manager if needed
 	install_tmux_plugin_manager
@@ -676,21 +680,24 @@ sync_dotfiles() {
 FORCE=false
 PULL=false
 PACKAGES=false
+SKIP_ASSISTANTS=false
 for arg in "$@"; do
 	case "$arg" in
 		--force|-f) FORCE=true ;;
 		--pull|-p) PULL=true ;;
 		--packages|-i) PACKAGES=true ;;
+		--skip-assistants|-s) SKIP_ASSISTANTS=true ;;
 		--help|-h)
 			echo "Usage: ./bootstrap.sh [OPTIONS]"
 			echo ""
 			echo "Install dotfiles from home/ to ~"
 			echo ""
 			echo "Options:"
-			echo "  -f, --force     Skip confirmation prompt"
-			echo "  -p, --pull      Pull latest changes before installing"
-			echo "  -i, --packages  Install packages (brew on macOS, apt on Linux)"
-			echo "  -h, --help      Show this help message"
+			echo "  -f, --force           Skip confirmation prompt"
+			echo "  -p, --pull            Pull latest changes before installing"
+			echo "  -i, --packages        Install packages (brew on macOS, apt on Linux)"
+			echo "  -s, --skip-assistants Skip Claude MCP servers and Moltbot setup"
+			echo "  -h, --help            Show this help message"
 			exit 0
 			;;
 	esac
