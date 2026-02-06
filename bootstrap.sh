@@ -38,7 +38,7 @@ symlink_dotfiles() {
 		# Create symlink
 		ln -s "$src_file" "$dest_file"
 		echo "Linked: ~/$rel_path"
-	done < <(find "$dotfiles_dir/home" -type f -not -name ".DS_Store" -not -path "*/.claude/hooks/*" -not -path "*/.claude/commands/*" -not -path "*/.claude/contrib/*" -not -path "*/.claude/agents/*" -not -path "*/.claude/skills/*" -not -path "*/.clawdbot/*" -not -path "*/.config/btop/btop.conf" -print0)
+	done < <(find "$dotfiles_dir/home" -type f -not -name ".DS_Store" -not -path "*/.claude/hooks/*" -not -path "*/.claude/commands/*" -not -path "*/.claude/contrib/*" -not -path "*/.claude/agents/*" -not -path "*/.claude/skills/*" -not -path "*/.moltbot/*" -not -path "*/.config/btop/btop.conf" -print0)
 }
 
 symlink_claude_dir() {
@@ -67,25 +67,63 @@ symlink_claude_dir() {
 	echo "Linked: ~/.claude/$dir_name/"
 }
 
-symlink_clawdbot_config() {
+# Install an npm package globally with graceful error handling
+# Usage: install_npm_package "package-name" "Display Name" ["package@version"]
+# Install an npm package globally with graceful error handling
+# Usage: install_npm_package "package-name" "Display Name" ["package@version"]
+install_npm_package() {
+	local package="$1"
+	local display_name="${2:-$package}"
+	local install_spec="${3:-$package}"
+
+	if ! command -v npm >/dev/null 2>&1; then
+		echo "Skipping $display_name (npm not installed)"
+		return 0
+	fi
+
+	# Check if already installed
+	if command -v "$package" >/dev/null 2>&1; then
+		return 0
+	fi
+
+	echo "Installing $display_name..."
+	# Use explicit registry to avoid custom registry misconfigurations
+	if ! npm install -g --registry https://registry.npmjs.org/ "$install_spec" 2>&1; then
+		echo ""
+		echo "Warning: Failed to install $display_name"
+		echo "  This may be due to npm authentication issues."
+		echo "  To fix, run:"
+		echo "    npm login --registry https://registry.npmjs.org/"
+		echo "    npm install -g $install_spec"
+		echo ""
+		return 0  # Continue bootstrap despite failure
+	fi
+}
+
+install_moltbot_cli() {
+	install_npm_package "moltbot" "moltbot CLI" "moltbot@beta"
+}
+
+symlink_moltbot_config() {
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-	local src_file="$dotfiles_dir/home/.clawdbot/clawdbot.json"
-	local dest_file="$HOME/.clawdbot/clawdbot.json"
+	local src_file="$dotfiles_dir/home/.moltbot/moltbot.json"
+	local dest_file="$HOME/.moltbot/moltbot.json"
 
 	if [[ ! -f "$src_file" ]]; then
 		return 0
 	fi
 
-	mkdir -p "$HOME/.clawdbot"
+	mkdir -p "$HOME/.moltbot"
 
 	# Skip if local config exists (gateway host keeps its own config)
 	if [[ -f "$dest_file" && ! -L "$dest_file" ]]; then
-		echo "Skipped: ~/.clawdbot/clawdbot.json (local gateway config exists)"
+		echo "Skipped: ~/.moltbot/moltbot.json (local gateway config exists)"
 		return 0
 	fi
 
 	# Skip if already correctly symlinked
 	if [[ -L "$dest_file" && "$(readlink "$dest_file")" == "$src_file" ]]; then
+		install_moltbot_cli
 		return 0
 	fi
 
@@ -94,14 +132,14 @@ symlink_clawdbot_config() {
 	if [[ ! -e "$dest_file" ]]; then
 		if [[ -t 0 ]]; then
 			echo ""
-			echo "Clawdbot setup:"
+			echo "Moltbot setup:"
 			echo "  1) Remote client - connect to existing gateway (default)"
 			echo "  2) Gateway host - run the gateway on this machine"
-			read -p "Choose [1/2]: " -n 1 -r clawdbot_choice
+			read -p "Choose [1/2]: " -n 1 -r moltbot_choice
 			echo ""
 
-			if [[ "$clawdbot_choice" == "2" ]]; then
-				echo "Skipped: ~/.clawdbot/clawdbot.json (run 'clawdbot onboard' to set up gateway)"
+			if [[ "$moltbot_choice" == "2" ]]; then
+				echo "Skipped: ~/.moltbot/moltbot.json (run 'moltbot onboard' to set up gateway)"
 				return 0
 			fi
 		fi
@@ -113,7 +151,8 @@ symlink_clawdbot_config() {
 	fi
 
 	ln -s "$src_file" "$dest_file"
-	echo "Linked: ~/.clawdbot/clawdbot.json (remote client config)"
+	echo "Linked: ~/.moltbot/moltbot.json (remote client config)"
+	install_moltbot_cli
 }
 
 install_tmux_plugin_manager() {
@@ -592,8 +631,8 @@ sync_dotfiles() {
 	symlink_claude_dir "agents"
 	symlink_claude_dir "skills"
 
-	# Symlink Clawdbot config (skipped if local gateway config exists)
-	symlink_clawdbot_config
+	# Symlink Moltbot config (skipped if local gateway config exists)
+	symlink_moltbot_config
 
 	# Install Claude Code MCP servers
 	install_claude_mcp_servers
