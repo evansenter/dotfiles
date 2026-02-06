@@ -631,13 +631,40 @@ sync_dotfiles() {
 	symlink_claude_dir "agents"
 	symlink_claude_dir "skills"
 
-	# Symlink Moltbot config (skipped if local gateway config exists)
-	if [[ "$SKIP_ASSISTANTS" != true ]]; then
-		symlink_moltbot_config
+	# Ask about AI assistant setup (Claude MCP servers + Moltbot)
+	# Skip prompt if already configured or in non-interactive mode
+	local install_assistants=true
+	if [[ -t 0 ]]; then
+		# Check if either is already set up
+		local claude_configured=false
+		local moltbot_configured=false
+		if command -v claude >/dev/null 2>&1 && claude mcp list 2>/dev/null | grep -q "github"; then
+			claude_configured=true
+		fi
+		if [[ -e "$HOME/.moltbot/moltbot.json" ]]; then
+			moltbot_configured=true
+		fi
+
+		# Only ask if neither is configured
+		if [[ "$claude_configured" != true || "$moltbot_configured" != true ]]; then
+			echo ""
+			echo "AI assistant setup (Claude MCP servers + Moltbot):"
+			echo "  1) Install (default)"
+			echo "  2) Skip"
+			read -p "Choose [1/2]: " -n 1 -r assistant_choice
+			echo ""
+
+			if [[ "$assistant_choice" == "2" ]]; then
+				install_assistants=false
+			fi
+		fi
 	fi
 
-	# Install Claude Code MCP servers
-	if [[ "$SKIP_ASSISTANTS" != true ]]; then
+	if [[ "$install_assistants" == true ]]; then
+		# Symlink Moltbot config (skipped if local gateway config exists)
+		symlink_moltbot_config
+
+		# Install Claude Code MCP servers
 		install_claude_mcp_servers
 	fi
 
@@ -680,24 +707,21 @@ sync_dotfiles() {
 FORCE=false
 PULL=false
 PACKAGES=false
-SKIP_ASSISTANTS=false
 for arg in "$@"; do
 	case "$arg" in
 		--force|-f) FORCE=true ;;
 		--pull|-p) PULL=true ;;
 		--packages|-i) PACKAGES=true ;;
-		--skip-assistants|-s) SKIP_ASSISTANTS=true ;;
 		--help|-h)
 			echo "Usage: ./bootstrap.sh [OPTIONS]"
 			echo ""
 			echo "Install dotfiles from home/ to ~"
 			echo ""
 			echo "Options:"
-			echo "  -f, --force           Skip confirmation prompt"
-			echo "  -p, --pull            Pull latest changes before installing"
-			echo "  -i, --packages        Install packages (brew on macOS, apt on Linux)"
-			echo "  -s, --skip-assistants Skip Claude MCP servers and Moltbot setup"
-			echo "  -h, --help            Show this help message"
+			echo "  -f, --force     Skip confirmation prompt"
+			echo "  -p, --pull      Pull latest changes before installing"
+			echo "  -i, --packages  Install packages (brew on macOS, apt on Linux)"
+			echo "  -h, --help      Show this help message"
 			exit 0
 			;;
 	esac
