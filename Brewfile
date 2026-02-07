@@ -50,6 +50,9 @@ if File.directory?("/Applications/Xcode.app")
   brew "xcodegen"
 end
 
+# Python Libraries
+brew "numpy"                  # IAP tunnel perf (gcloud)
+
 # Utilities
 brew "ffmpeg"
 brew "scc"                    # Code line counter
