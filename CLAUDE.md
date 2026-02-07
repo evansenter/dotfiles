@@ -108,7 +108,7 @@ Remote browsers require pairing: `moltbot devices approve <id>` (check `moltbot 
 moltbot config set channels.whatsapp.dmPolicy allowlist
 
 # Add numbers to allowlist (E.164 format)
-moltbot config set channels.whatsapp.allowFrom '["+1234567890", "+447385020381"]'
+moltbot config set channels.whatsapp.allowFrom '["+12025551234", "+441234567890"]'
 
 # Restart to apply
 moltbot gateway restart

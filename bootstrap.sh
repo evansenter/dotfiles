@@ -644,7 +644,7 @@ sync_dotfiles() {
 			moltbot_configured=true
 		fi
 
-		# Only ask if neither is configured
+		# Ask if not fully configured
 		if [[ "$claude_configured" != true || "$moltbot_configured" != true ]]; then
 			echo ""
 			echo "AI assistant setup (Claude MCP servers + Moltbot):"
