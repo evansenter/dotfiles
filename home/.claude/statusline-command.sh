@@ -5,7 +5,7 @@
 
 # Claude Code status line script
 # Usage: Called automatically by Claude Code with JSON on stdin
-# Example: echo '{"workspace":{"current_dir":"/path"},"context_window":{"current_usage":{...},"context_window_size":200000}}' | ~/.claude/statusline-command.sh
+# Example: echo '{"workspace":{"current_dir":"/path"},"context_window":{"used_percentage":42},"model":{"id":"claude-opus-4-6"}}' | ~/.claude/statusline-command.sh
 
 # Collect all output in a buffer to avoid interleaving with CC status messages
 exec 3>&1  # Save stdout
@@ -18,11 +18,10 @@ if [[ -z "$input" ]]; then
     exit 1
 fi
 
-read -r cwd current size model_id transcript_path session_id < <(
+read -r cwd pct model_id transcript_path session_id < <(
     echo "$input" | jq -r '[
         .workspace.current_dir,
-        ((.context_window.current_usage.input_tokens // 0) + (.context_window.current_usage.cache_creation_input_tokens // 0) + (.context_window.current_usage.cache_read_input_tokens // 0)),
-        (.context_window.context_window_size // 0),
+        (.context_window.used_percentage // 0 | round),
         (.model.id // ""),
         (.transcript_path // ""),
         (.session_id // "")
@@ -206,8 +205,7 @@ fi
 
 # Context window percentage
 context_display=""
-if [[ "$size" =~ ^[0-9]+$ ]] && [[ "$current" =~ ^[0-9]+$ ]] && [ "$size" -gt 0 ]; then
-    pct=$((current * 100 / size))
+if [[ "$pct" =~ ^[0-9]+$ ]] && [ "$pct" -gt 0 ]; then
     context_display=" ${GRAY}${pct}%${RESET}"
 fi
 
