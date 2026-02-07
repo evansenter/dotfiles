@@ -5,7 +5,7 @@
 
 # Claude Code status line script
 # Usage: Called automatically by Claude Code with JSON on stdin
-# Example: echo '{"workspace":{"current_dir":"/path"},"context_window":{"current_usage":{...},"context_window_size":200000}}' | ~/.claude/statusline-command.sh
+# Example: echo '{"workspace":{"current_dir":"/path"},"context_window":{"used_percentage":42},"model":{"id":"claude-opus-4-6"}}' | ~/.claude/statusline-command.sh
 
 # Collect all output in a buffer to avoid interleaving with CC status messages
 exec 3>&1  # Save stdout
