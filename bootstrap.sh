@@ -304,6 +304,7 @@ install_packages() {
 				gh
 				git
 				jq
+				python3-numpy
 				ripgrep
 				tmux
 				unzip
@@ -311,7 +312,6 @@ install_packages() {
 				watch
 				xclip
 				zoxide
-				python3-numpy
 			)
 			# Filter to only packages not already installed
 			local to_install=()
