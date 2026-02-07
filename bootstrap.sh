@@ -119,19 +119,39 @@ symlink_moltbot_config() {
 	install_moltbot_cli
 }
 
-install_moltbot_cli() {
+# Install an npm package globally with graceful error handling
+# Usage: install_npm_package "package-name" "Display Name" ["package@version"]
+install_npm_package() {
+	local package="$1"
+	local display_name="${2:-$package}"
+	local install_spec="${3:-$package}"
+
 	if ! command -v npm >/dev/null 2>&1; then
-		echo "Skipping moltbot CLI (npm not installed)"
+		echo "Skipping $display_name (npm not installed)"
 		return 0
 	fi
 
-	# Check if moltbot is already installed
-	if command -v moltbot >/dev/null 2>&1; then
+	# Check if already installed
+	if command -v "$package" >/dev/null 2>&1; then
 		return 0
 	fi
 
-	echo "Installing moltbot CLI..."
-	npm install -g moltbot@beta
+	echo "Installing $display_name..."
+	# Use explicit registry to avoid custom registry misconfigurations
+	if ! npm install -g --registry https://registry.npmjs.org/ "$install_spec" 2>&1; then
+		echo ""
+		echo "Warning: Failed to install $display_name"
+		echo "  This may be due to npm authentication issues."
+		echo "  To fix, run:"
+		echo "    npm login --registry https://registry.npmjs.org/"
+		echo "    npm install -g $install_spec"
+		echo ""
+		return 0  # Continue bootstrap despite failure
+	fi
+}
+
+install_moltbot_cli() {
+	install_npm_package "moltbot" "moltbot CLI" "moltbot@beta"
 }
 
 install_tmux_plugin_manager() {
@@ -610,11 +630,42 @@ sync_dotfiles() {
 	symlink_claude_dir "agents"
 	symlink_claude_dir "skills"
 
-	# Symlink Moltbot config and install CLI (skipped if local gateway config exists)
-	symlink_moltbot_config
+	# Ask about AI assistant setup (Claude MCP servers + Moltbot)
+	# Skip prompt if already configured or in non-interactive mode
+	local install_assistants=true
+	if [[ -t 0 ]]; then
+		# Check if either is already set up
+		local claude_configured=false
+		local moltbot_configured=false
+		if command -v claude >/dev/null 2>&1 && claude mcp list 2>/dev/null | grep -q "github"; then
+			claude_configured=true
+		fi
+		if [[ -e "$HOME/.moltbot/moltbot.json" ]]; then
+			moltbot_configured=true
+		fi
 
-	# Install Claude Code MCP servers
-	install_claude_mcp_servers
+		# Ask if not fully configured
+		if [[ "$claude_configured" != true || "$moltbot_configured" != true ]]; then
+			echo ""
+			echo "AI assistant setup (Claude MCP servers + Moltbot):"
+			echo "  1) Install (default)"
+			echo "  2) Skip"
+			read -p "Choose [1/2]: " -n 1 -r assistant_choice
+			echo ""
+
+			if [[ "$assistant_choice" == "2" ]]; then
+				install_assistants=false
+			fi
+		fi
+	fi
+
+	if [[ "$install_assistants" == true ]]; then
+		# Symlink Moltbot config (skipped if local gateway config exists)
+		symlink_moltbot_config
+
+		# Install Claude Code MCP servers
+		install_claude_mcp_servers
+	fi
 
 	# Install tmux plugin manager if needed
 	install_tmux_plugin_manager
