@@ -304,6 +304,7 @@ install_packages() {
 				gh
 				git
 				jq
+				python3-numpy
 				ripgrep
 				tmux
 				unzip
