@@ -7,3 +7,6 @@
 [submodule "vendor/bat-catppuccin"]
 	path = vendor/bat-catppuccin
 	url = https://github.com/catppuccin/bat.git
+[submodule "vendor/glamour-catppuccin"]
+	path = vendor/glamour-catppuccin
+	url = https://github.com/catppuccin/glamour.git

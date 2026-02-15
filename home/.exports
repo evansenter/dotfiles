@@ -37,6 +37,11 @@ command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache
 # https://docs.cloud.google.com/iap/docs/using-tcp-forwarding#increasing_the_tcp_upload_bandwidth
 export CLOUDSDK_PYTHON_SITEPACKAGES=1
 
+# Glamour (glow, gh) - Catppuccin Mocha theme
+if [[ -f "$HOME/.config/glamour/catppuccin-mocha.json" ]]; then
+    export GLAMOUR_STYLE="$HOME/.config/glamour/catppuccin-mocha.json"
+fi
+
 # fzf - Catppuccin Mocha theme
 # Colors: bg=background, fg=foreground, hl=highlight, info=match count,
 #         prompt=input prompt, pointer=selection arrow, marker=multi-select,

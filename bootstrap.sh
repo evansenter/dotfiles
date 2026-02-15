@@ -414,6 +414,7 @@ init_submodules() {
 	# Check if any submodule is missing
 	if [[ -d "$dotfiles_dir/vendor/btop-catppuccin/themes" ]] && \
 	   [[ -d "$dotfiles_dir/vendor/bat-catppuccin/themes" ]] && \
+	   [[ -d "$dotfiles_dir/vendor/glamour-catppuccin/themes" ]] && \
 	   [[ -d "$dotfiles_dir/vendor/iterm-catppuccin/colors" ]]; then
 		return 0
 	fi
@@ -532,6 +533,29 @@ run_brew_hooks() {
 			"$hook"
 		fi
 	done
+}
+
+install_glamour_theme() {
+	local glamour_dir="$HOME/.config/glamour"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local vendor_themes="$dotfiles_dir/vendor/glamour-catppuccin/themes"
+
+	if [[ ! -d "$vendor_themes" ]]; then
+		echo "Skipping glamour theme (submodule not initialized)"
+		return 0
+	fi
+
+	mkdir -p "$glamour_dir"
+
+	local theme="$vendor_themes/catppuccin-mocha.json"
+	local name="$(basename "$theme")"
+
+	if [[ -L "$glamour_dir/$name" && "$(readlink "$glamour_dir/$name")" == "$theme" ]]; then
+		return 0
+	fi
+
+	echo "Symlinking glamour theme..."
+	ln -sf "$theme" "$glamour_dir/$name"
 }
 
 install_yazi_flavor() {
@@ -682,6 +706,9 @@ sync_dotfiles() {
 
 	# Install bat themes from submodule
 	install_bat_themes
+
+	# Install glamour theme from submodule
+	install_glamour_theme
 
 	# Install yazi flavor
 	install_yazi_flavor
