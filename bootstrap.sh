@@ -297,15 +297,20 @@ install_packages() {
 			local packages=(
 				bat
 				btop
+				cmake
 				delta
+				direnv
 				eza
 				fd
+				ffmpeg
 				fontconfig
 				gh
 				git
 				jq
 				python3-numpy
 				ripgrep
+				shellcheck
+				testdisk
 				tmux
 				unzip
 				vim
@@ -371,6 +376,77 @@ install_packages() {
 			curl -Lo /tmp/lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
 			sudo tar xf /tmp/lazygit.tar.gz -C /usr/local/bin lazygit
 			rm /tmp/lazygit.tar.gz
+		fi
+
+		# Install Go
+		if ! command -v go >/dev/null 2>&1; then
+			echo "Installing Go..."
+			local go_version
+			go_version=$(curl -fsSL "https://go.dev/VERSION?m=text" | head -1)
+			curl -fsSL "https://go.dev/dl/${go_version}.linux-amd64.tar.gz" -o /tmp/go.tar.gz
+			sudo rm -rf /usr/local/go
+			sudo tar -C /usr/local -xzf /tmp/go.tar.gz
+			rm /tmp/go.tar.gz
+		fi
+
+		# Install Rust via rustup
+		if ! command -v rustup >/dev/null 2>&1; then
+			echo "Installing Rust via rustup..."
+			curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+		fi
+
+		# Install uv (Python package manager)
+		if ! command -v uv >/dev/null 2>&1; then
+			echo "Installing uv..."
+			curl -LsSf https://astral.sh/uv/install.sh | sh
+		fi
+
+		# Install atuin (shell history)
+		if ! command -v atuin >/dev/null 2>&1; then
+			echo "Installing atuin..."
+			curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
+		fi
+
+		# Install glow (terminal markdown viewer)
+		if ! command -v glow >/dev/null 2>&1; then
+			echo "Installing glow..."
+			sudo mkdir -p /etc/apt/keyrings
+			curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+			echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
+			sudo apt-get update
+			sudo apt-get install -y glow
+		fi
+
+		# Install tldr
+		if ! command -v tldr >/dev/null 2>&1; then
+			echo "Installing tldr..."
+			install_npm_package "tldr" "tldr"
+		fi
+
+		# Install scc (code line counter)
+		if ! command -v scc >/dev/null 2>&1 && command -v snap >/dev/null 2>&1; then
+			echo "Installing scc..."
+			sudo snap install scc
+		fi
+
+		# Install bazelisk
+		if ! command -v bazelisk >/dev/null 2>&1; then
+			echo "Installing bazelisk..."
+			install_npm_package "bazelisk" "bazelisk" "@aspect/bazelisk"
+		fi
+
+		# Install gradle
+		if ! command -v gradle >/dev/null 2>&1 && command -v snap >/dev/null 2>&1; then
+			echo "Installing gradle..."
+			sudo snap install gradle --classic
+		fi
+
+		# Install sccache
+		if ! command -v sccache >/dev/null 2>&1; then
+			echo "Installing sccache..."
+			if command -v cargo >/dev/null 2>&1; then
+				cargo install sccache --locked
+			fi
 		fi
 
 		# Install fzf from git (apt version is too old for modern color options)
