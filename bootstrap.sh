@@ -446,9 +446,11 @@ install_packages() {
 
 		# Install sccache
 		if ! command -v sccache >/dev/null 2>&1; then
-			echo "Installing sccache..."
 			if command -v cargo >/dev/null 2>&1; then
+				echo "Installing sccache..."
 				cargo install sccache --locked
+			else
+				echo "Skipping sccache (cargo not available)"
 			fi
 		fi
 
