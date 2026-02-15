@@ -10,3 +10,6 @@
 [submodule "vendor/glamour-catppuccin"]
 	path = vendor/glamour-catppuccin
 	url = https://github.com/catppuccin/glamour.git
+[submodule "vendor/eza-catppuccin"]
+	path = vendor/eza-catppuccin
+	url = https://github.com/catppuccin/eza.git

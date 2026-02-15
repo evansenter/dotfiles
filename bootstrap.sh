@@ -414,6 +414,7 @@ init_submodules() {
 	# Check if any submodule is missing
 	if [[ -d "$dotfiles_dir/vendor/btop-catppuccin/themes" ]] && \
 	   [[ -d "$dotfiles_dir/vendor/bat-catppuccin/themes" ]] && \
+	   [[ -d "$dotfiles_dir/vendor/eza-catppuccin/themes" ]] && \
 	   [[ -d "$dotfiles_dir/vendor/glamour-catppuccin/themes" ]] && \
 	   [[ -d "$dotfiles_dir/vendor/iterm-catppuccin/colors" ]]; then
 		return 0
@@ -533,6 +534,28 @@ run_brew_hooks() {
 			"$hook"
 		fi
 	done
+}
+
+install_eza_theme() {
+	local eza_config_dir="$HOME/.config/eza"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local vendor_theme="$dotfiles_dir/vendor/eza-catppuccin/themes/mocha/catppuccin-mocha-mauve.yml"
+
+	if [[ ! -f "$vendor_theme" ]]; then
+		echo "Skipping eza theme (submodule not initialized)"
+		return 0
+	fi
+
+	mkdir -p "$eza_config_dir"
+
+	local dest="$eza_config_dir/theme.yml"
+
+	if [[ -L "$dest" && "$(readlink "$dest")" == "$vendor_theme" ]]; then
+		return 0
+	fi
+
+	echo "Symlinking eza theme..."
+	ln -sf "$vendor_theme" "$dest"
 }
 
 install_glamour_theme() {
@@ -706,6 +729,9 @@ sync_dotfiles() {
 
 	# Install bat themes from submodule
 	install_bat_themes
+
+	# Install eza theme from submodule
+	install_eza_theme
 
 	# Install glamour theme from submodule
 	install_glamour_theme

@@ -42,6 +42,9 @@ if [[ -f "$HOME/.config/glamour/catppuccin-mocha.json" ]]; then
     export GLAMOUR_STYLE="$HOME/.config/glamour/catppuccin-mocha.json"
 fi
 
+# eza - Catppuccin Mocha theme (force ~/.config/eza on all platforms)
+export EZA_CONFIG_DIR="$HOME/.config/eza"
+
 # fzf - Catppuccin Mocha theme
 # Colors: bg=background, fg=foreground, hl=highlight, info=match count,
 #         prompt=input prompt, pointer=selection arrow, marker=multi-select,
