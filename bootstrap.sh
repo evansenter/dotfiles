@@ -383,14 +383,14 @@ install_packages() {
 			echo "Installing Go..."
 			local go_version
 			go_version=$(curl -fsSL "https://go.dev/VERSION?m=text" | head -1)
-			if [[ -z "$go_version" ]]; then
+			if [[ -n "$go_version" ]]; then
+				curl -fsSL "https://go.dev/dl/${go_version}.linux-amd64.tar.gz" -o /tmp/go.tar.gz
+				sudo rm -rf /usr/local/go
+				sudo tar -C /usr/local -xzf /tmp/go.tar.gz
+				rm /tmp/go.tar.gz
+			else
 				echo "Warning: Failed to fetch Go version, skipping Go install"
-				return 0
 			fi
-			curl -fsSL "https://go.dev/dl/${go_version}.linux-amd64.tar.gz" -o /tmp/go.tar.gz
-			sudo rm -rf /usr/local/go
-			sudo tar -C /usr/local -xzf /tmp/go.tar.gz
-			rm /tmp/go.tar.gz
 		fi
 
 		# Install Rust via rustup
@@ -425,10 +425,7 @@ install_packages() {
 		fi
 
 		# Install tldr
-		if ! command -v tldr >/dev/null 2>&1; then
-			echo "Installing tldr..."
-			install_npm_package "tldr" "tldr"
-		fi
+		install_npm_package "tldr" "tldr"
 
 		# Install scc (code line counter)
 		if ! command -v scc >/dev/null 2>&1 && command -v snap >/dev/null 2>&1; then
