@@ -393,6 +393,9 @@ install_packages() {
 		if ! command -v rustup >/dev/null 2>&1; then
 			echo "Installing Rust via rustup..."
 			curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+			# Source cargo env so cargo is available for sccache install below
+			# shellcheck disable=SC1091
+			[[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
 		fi
 
 		# Install uv (Python package manager)
@@ -411,7 +414,7 @@ install_packages() {
 		if ! command -v glow >/dev/null 2>&1; then
 			echo "Installing glow..."
 			sudo mkdir -p /etc/apt/keyrings
-			curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+			curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --yes --dearmor -o /etc/apt/keyrings/charm.gpg
 			echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
 			sudo apt-get update
 			sudo apt-get install -y glow
@@ -643,24 +646,23 @@ install_eza_theme() {
 install_glamour_theme() {
 	local glamour_dir="$HOME/.config/glamour"
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-	local vendor_themes="$dotfiles_dir/vendor/glamour-catppuccin/themes"
+	local vendor_theme="$dotfiles_dir/vendor/glamour-catppuccin/themes/catppuccin-mocha.json"
 
-	if [[ ! -d "$vendor_themes" ]]; then
+	if [[ ! -f "$vendor_theme" ]]; then
 		echo "Skipping glamour theme (submodule not initialized)"
 		return 0
 	fi
 
 	mkdir -p "$glamour_dir"
 
-	local theme="$vendor_themes/catppuccin-mocha.json"
-	local name="$(basename "$theme")"
+	local dest="$glamour_dir/catppuccin-mocha.json"
 
-	if [[ -L "$glamour_dir/$name" && "$(readlink "$glamour_dir/$name")" == "$theme" ]]; then
+	if [[ -L "$dest" && "$(readlink "$dest")" == "$vendor_theme" ]]; then
 		return 0
 	fi
 
 	echo "Symlinking glamour theme..."
-	ln -sf "$theme" "$glamour_dir/$name"
+	ln -sf "$vendor_theme" "$dest"
 }
 
 install_yazi_flavor() {
