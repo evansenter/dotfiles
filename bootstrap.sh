@@ -435,20 +435,23 @@ init_submodules() {
 install_btop_themes() {
 	local btop_themes_dir="$HOME/.config/btop/themes"
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-	local vendor_themes="$dotfiles_dir/vendor/btop-catppuccin/themes"
+	local vendor_theme="$dotfiles_dir/vendor/btop-catppuccin/themes/catppuccin_mocha.theme"
 
-	if [[ ! -d "$vendor_themes" ]]; then
+	if [[ ! -f "$vendor_theme" ]]; then
 		echo "Skipping btop themes (submodule not initialized)"
 		return 0
 	fi
 
 	mkdir -p "$btop_themes_dir"
 
-	echo "Symlinking btop themes..."
-	for theme in "$vendor_themes"/*.theme; do
-		local name="$(basename "$theme")"
-		ln -sf "$theme" "$btop_themes_dir/$name"
-	done
+	local dest="$btop_themes_dir/catppuccin_mocha.theme"
+
+	if [[ -L "$dest" && "$(readlink "$dest")" == "$vendor_theme" ]]; then
+		return 0
+	fi
+
+	echo "Symlinking btop theme..."
+	ln -sf "$vendor_theme" "$dest"
 }
 
 copy_btop_config() {
@@ -473,20 +476,23 @@ copy_btop_config() {
 install_bat_themes() {
 	local bat_themes_dir="$HOME/.config/bat/themes"
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-	local vendor_themes="$dotfiles_dir/vendor/bat-catppuccin/themes"
+	local vendor_theme="$dotfiles_dir/vendor/bat-catppuccin/themes/Catppuccin Mocha.tmTheme"
 
-	if [[ ! -d "$vendor_themes" ]]; then
+	if [[ ! -f "$vendor_theme" ]]; then
 		echo "Skipping bat themes (submodule not initialized)"
 		return 0
 	fi
 
 	mkdir -p "$bat_themes_dir"
 
-	echo "Symlinking bat themes..."
-	for theme in "$vendor_themes"/*.tmTheme; do
-		local name="$(basename "$theme")"
-		ln -sf "$theme" "$bat_themes_dir/$name"
-	done
+	local dest="$bat_themes_dir/Catppuccin Mocha.tmTheme"
+
+	if [[ -L "$dest" && "$(readlink "$dest")" == "$vendor_theme" ]]; then
+		return 0
+	fi
+
+	echo "Symlinking bat theme..."
+	ln -sf "$vendor_theme" "$dest"
 
 	# Rebuild bat cache if bat is installed (batcat on Debian/Ubuntu)
 	local bat_cmd=""
