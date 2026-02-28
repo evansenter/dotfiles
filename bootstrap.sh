@@ -487,6 +487,45 @@ install_packages() {
 	fi
 }
 
+update_packages() {
+	if [[ "$(uname)" == "Darwin" ]]; then
+		if command -v brew >/dev/null 2>&1; then
+			echo "Updating Homebrew and upgrading packages..."
+			brew update
+			brew upgrade
+			brew cleanup
+		else
+			echo "Homebrew not installed, skipping"
+		fi
+
+		if command -v softwareupdate >/dev/null 2>&1; then
+			echo "Checking for macOS software updates..."
+			softwareupdate --list
+		fi
+	else
+		if command -v apt-get >/dev/null 2>&1; then
+			echo "Updating apt packages..."
+			sudo apt-get update
+			sudo apt-get upgrade -y
+			sudo apt-get autoremove -y
+		fi
+
+		if command -v snap >/dev/null 2>&1; then
+			echo "Refreshing snap packages..."
+			sudo snap refresh
+		fi
+
+		# Update fzf if installed from git
+		if [[ -d "$HOME/.fzf/.git" ]]; then
+			echo "Updating fzf..."
+			git -C "$HOME/.fzf" pull --ff-only
+			"$HOME/.fzf/install" --all --no-bash --no-fish
+		fi
+	fi
+
+	echo "Package updates complete."
+}
+
 init_submodules() {
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -844,11 +883,13 @@ sync_dotfiles() {
 FORCE=false
 PULL=false
 PACKAGES=false
+UPDATE=false
 for arg in "$@"; do
 	case "$arg" in
 		--force|-f) FORCE=true ;;
 		--pull|-p) PULL=true ;;
 		--packages|-i) PACKAGES=true ;;
+		--update|-u) UPDATE=true ;;
 		--help|-h)
 			echo "Usage: ./bootstrap.sh [OPTIONS]"
 			echo ""
@@ -858,11 +899,21 @@ for arg in "$@"; do
 			echo "  -f, --force     Skip confirmation prompt"
 			echo "  -p, --pull      Pull latest changes before installing"
 			echo "  -i, --packages  Install packages (brew on macOS, apt on Linux)"
+			echo "  -u, --update    Update/upgrade installed packages"
 			echo "  -h, --help      Show this help message"
 			exit 0
 			;;
 	esac
 done
+
+# Update packages if requested (standalone operation)
+if [[ "$UPDATE" == true ]]; then
+	update_packages
+	# If only --update was passed, exit without syncing dotfiles
+	if [[ "$PACKAGES" == false && "$PULL" == false && "$FORCE" == false ]]; then
+		exit 0
+	fi
+fi
 
 # Install packages if requested
 if [[ "$PACKAGES" == true ]]; then
