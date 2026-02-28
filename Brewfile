@@ -50,6 +50,9 @@ if File.directory?("/Applications/Xcode.app")
   brew "xcodegen"
 end
 
+# Python Libraries
+brew "numpy"                  # IAP tunnel perf (gcloud)
+
 # Utilities
 brew "ffmpeg"
 brew "scc"                    # Code line counter
@@ -72,6 +75,9 @@ cask "whatsapp"
 
 # Casks - Fonts
 cask "font-jetbrains-mono-nerd-font"
+
+# Casks - Networking
+cask "tailscale-app"          # Mesh VPN (event bus, moltbot)
 
 # Casks - Cloud
 cask "gcloud-cli"             # Requires: gcloud init

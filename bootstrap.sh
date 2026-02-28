@@ -119,19 +119,39 @@ symlink_moltbot_config() {
 	install_moltbot_cli
 }
 
-install_moltbot_cli() {
+# Install an npm package globally with graceful error handling
+# Usage: install_npm_package "package-name" "Display Name" ["package@version"]
+install_npm_package() {
+	local package="$1"
+	local display_name="${2:-$package}"
+	local install_spec="${3:-$package}"
+
 	if ! command -v npm >/dev/null 2>&1; then
-		echo "Skipping moltbot CLI (npm not installed)"
+		echo "Skipping $display_name (npm not installed)"
 		return 0
 	fi
 
-	# Check if moltbot is already installed
-	if command -v moltbot >/dev/null 2>&1; then
+	# Check if already installed
+	if command -v "$package" >/dev/null 2>&1; then
 		return 0
 	fi
 
-	echo "Installing moltbot CLI..."
-	npm install -g moltbot@beta
+	echo "Installing $display_name..."
+	# Use explicit registry to avoid custom registry misconfigurations
+	if ! npm install -g --registry https://registry.npmjs.org/ "$install_spec" 2>&1; then
+		echo ""
+		echo "Warning: Failed to install $display_name"
+		echo "  This may be due to npm authentication issues."
+		echo "  To fix, run:"
+		echo "    npm login --registry https://registry.npmjs.org/"
+		echo "    npm install -g $install_spec"
+		echo ""
+		return 0  # Continue bootstrap despite failure
+	fi
+}
+
+install_moltbot_cli() {
+	install_npm_package "moltbot" "moltbot CLI" "moltbot@beta"
 }
 
 install_tmux_plugin_manager() {
@@ -277,14 +297,20 @@ install_packages() {
 			local packages=(
 				bat
 				btop
+				cmake
 				delta
+				direnv
 				eza
 				fd
+				ffmpeg
 				fontconfig
 				gh
 				git
 				jq
+				python3-numpy
 				ripgrep
+				shellcheck
+				testdisk
 				tmux
 				unzip
 				vim
@@ -350,6 +376,80 @@ install_packages() {
 			curl -Lo /tmp/lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
 			sudo tar xf /tmp/lazygit.tar.gz -C /usr/local/bin lazygit
 			rm /tmp/lazygit.tar.gz
+		fi
+
+		# Install Go
+		if ! command -v go >/dev/null 2>&1; then
+			echo "Installing Go..."
+			local go_version
+			go_version=$(curl -fsSL "https://go.dev/VERSION?m=text" | head -1)
+			if [[ -n "$go_version" ]]; then
+				curl -fsSL "https://go.dev/dl/${go_version}.linux-amd64.tar.gz" -o /tmp/go.tar.gz
+				sudo rm -rf /usr/local/go
+				sudo tar -C /usr/local -xzf /tmp/go.tar.gz
+				rm /tmp/go.tar.gz
+			else
+				echo "Warning: Failed to fetch Go version, skipping Go install"
+			fi
+		fi
+
+		# Install Rust via rustup
+		if ! command -v rustup >/dev/null 2>&1; then
+			echo "Installing Rust via rustup..."
+			curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+			# Source cargo env so cargo is available for sccache install below
+			# shellcheck disable=SC1091
+			[[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
+		fi
+
+		# Install uv (Python package manager)
+		if ! command -v uv >/dev/null 2>&1; then
+			echo "Installing uv..."
+			curl -LsSf https://astral.sh/uv/install.sh | sh
+		fi
+
+		# Install atuin (shell history)
+		if ! command -v atuin >/dev/null 2>&1; then
+			echo "Installing atuin..."
+			curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
+		fi
+
+		# Install glow (terminal markdown viewer)
+		if ! command -v glow >/dev/null 2>&1; then
+			echo "Installing glow..."
+			sudo mkdir -p /etc/apt/keyrings
+			curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --yes --dearmor -o /etc/apt/keyrings/charm.gpg
+			echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
+			sudo apt-get update
+			sudo apt-get install -y glow
+		fi
+
+		# Install tldr
+		install_npm_package "tldr" "tldr"
+
+		# Install scc (code line counter)
+		if ! command -v scc >/dev/null 2>&1 && command -v snap >/dev/null 2>&1; then
+			echo "Installing scc..."
+			sudo snap install scc
+		fi
+
+		# Install bazelisk
+		install_npm_package "bazelisk" "bazelisk" "@aspect/bazelisk"
+
+		# Install gradle
+		if ! command -v gradle >/dev/null 2>&1 && command -v snap >/dev/null 2>&1; then
+			echo "Installing gradle..."
+			sudo snap install gradle --classic
+		fi
+
+		# Install sccache
+		if ! command -v sccache >/dev/null 2>&1; then
+			if command -v cargo >/dev/null 2>&1; then
+				echo "Installing sccache..."
+				cargo install sccache --locked
+			else
+				echo "Skipping sccache (cargo not available)"
+			fi
 		fi
 
 		# Install fzf from git (apt version is too old for modern color options)
@@ -432,6 +532,8 @@ init_submodules() {
 	# Check if any submodule is missing
 	if [[ -d "$dotfiles_dir/vendor/btop-catppuccin/themes" ]] && \
 	   [[ -d "$dotfiles_dir/vendor/bat-catppuccin/themes" ]] && \
+	   [[ -d "$dotfiles_dir/vendor/eza-catppuccin/themes" ]] && \
+	   [[ -d "$dotfiles_dir/vendor/glamour-catppuccin/themes" ]] && \
 	   [[ -d "$dotfiles_dir/vendor/iterm-catppuccin/colors" ]]; then
 		return 0
 	fi
@@ -451,20 +553,23 @@ init_submodules() {
 install_btop_themes() {
 	local btop_themes_dir="$HOME/.config/btop/themes"
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-	local vendor_themes="$dotfiles_dir/vendor/btop-catppuccin/themes"
+	local vendor_theme="$dotfiles_dir/vendor/btop-catppuccin/themes/catppuccin_mocha.theme"
 
-	if [[ ! -d "$vendor_themes" ]]; then
+	if [[ ! -f "$vendor_theme" ]]; then
 		echo "Skipping btop themes (submodule not initialized)"
 		return 0
 	fi
 
 	mkdir -p "$btop_themes_dir"
 
-	echo "Symlinking btop themes..."
-	for theme in "$vendor_themes"/*.theme; do
-		local name="$(basename "$theme")"
-		ln -sf "$theme" "$btop_themes_dir/$name"
-	done
+	local dest="$btop_themes_dir/catppuccin_mocha.theme"
+
+	if [[ -L "$dest" && "$(readlink "$dest")" == "$vendor_theme" ]]; then
+		return 0
+	fi
+
+	echo "Symlinking btop theme..."
+	ln -sf "$vendor_theme" "$dest"
 }
 
 copy_btop_config() {
@@ -489,20 +594,23 @@ copy_btop_config() {
 install_bat_themes() {
 	local bat_themes_dir="$HOME/.config/bat/themes"
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-	local vendor_themes="$dotfiles_dir/vendor/bat-catppuccin/themes"
+	local vendor_theme="$dotfiles_dir/vendor/bat-catppuccin/themes/Catppuccin Mocha.tmTheme"
 
-	if [[ ! -d "$vendor_themes" ]]; then
+	if [[ ! -f "$vendor_theme" ]]; then
 		echo "Skipping bat themes (submodule not initialized)"
 		return 0
 	fi
 
 	mkdir -p "$bat_themes_dir"
 
-	echo "Symlinking bat themes..."
-	for theme in "$vendor_themes"/*.tmTheme; do
-		local name="$(basename "$theme")"
-		ln -sf "$theme" "$bat_themes_dir/$name"
-	done
+	local dest="$bat_themes_dir/Catppuccin Mocha.tmTheme"
+
+	if [[ -L "$dest" && "$(readlink "$dest")" == "$vendor_theme" ]]; then
+		return 0
+	fi
+
+	echo "Symlinking bat theme..."
+	ln -sf "$vendor_theme" "$dest"
 
 	# Rebuild bat cache if bat is installed (batcat on Debian/Ubuntu)
 	local bat_cmd=""
@@ -550,6 +658,50 @@ run_brew_hooks() {
 			"$hook"
 		fi
 	done
+}
+
+install_eza_theme() {
+	local eza_config_dir="$HOME/.config/eza"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local vendor_theme="$dotfiles_dir/vendor/eza-catppuccin/themes/mocha/catppuccin-mocha-mauve.yml"
+
+	if [[ ! -f "$vendor_theme" ]]; then
+		echo "Skipping eza theme (submodule not initialized)"
+		return 0
+	fi
+
+	mkdir -p "$eza_config_dir"
+
+	local dest="$eza_config_dir/theme.yml"
+
+	if [[ -L "$dest" && "$(readlink "$dest")" == "$vendor_theme" ]]; then
+		return 0
+	fi
+
+	echo "Symlinking eza theme..."
+	ln -sf "$vendor_theme" "$dest"
+}
+
+install_glamour_theme() {
+	local glamour_dir="$HOME/.config/glamour"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local vendor_theme="$dotfiles_dir/vendor/glamour-catppuccin/themes/catppuccin-mocha.json"
+
+	if [[ ! -f "$vendor_theme" ]]; then
+		echo "Skipping glamour theme (submodule not initialized)"
+		return 0
+	fi
+
+	mkdir -p "$glamour_dir"
+
+	local dest="$glamour_dir/catppuccin-mocha.json"
+
+	if [[ -L "$dest" && "$(readlink "$dest")" == "$vendor_theme" ]]; then
+		return 0
+	fi
+
+	echo "Symlinking glamour theme..."
+	ln -sf "$vendor_theme" "$dest"
 }
 
 install_yazi_flavor() {
@@ -649,11 +801,42 @@ sync_dotfiles() {
 	symlink_claude_dir "agents"
 	symlink_claude_dir "skills"
 
-	# Symlink Moltbot config and install CLI (skipped if local gateway config exists)
-	symlink_moltbot_config
+	# Ask about AI assistant setup (Claude MCP servers + Moltbot)
+	# Skip prompt if already configured or in non-interactive mode
+	local install_assistants=true
+	if [[ -t 0 ]]; then
+		# Check if either is already set up
+		local claude_configured=false
+		local moltbot_configured=false
+		if command -v claude >/dev/null 2>&1 && claude mcp list 2>/dev/null | grep -q "github"; then
+			claude_configured=true
+		fi
+		if [[ -e "$HOME/.moltbot/moltbot.json" ]]; then
+			moltbot_configured=true
+		fi
 
-	# Install Claude Code MCP servers
-	install_claude_mcp_servers
+		# Ask if not fully configured
+		if [[ "$claude_configured" != true || "$moltbot_configured" != true ]]; then
+			echo ""
+			echo "AI assistant setup (Claude MCP servers + Moltbot):"
+			echo "  1) Install (default)"
+			echo "  2) Skip"
+			read -p "Choose [1/2]: " -n 1 -r assistant_choice
+			echo ""
+
+			if [[ "$assistant_choice" == "2" ]]; then
+				install_assistants=false
+			fi
+		fi
+	fi
+
+	if [[ "$install_assistants" == true ]]; then
+		# Symlink Moltbot config (skipped if local gateway config exists)
+		symlink_moltbot_config
+
+		# Install Claude Code MCP servers
+		install_claude_mcp_servers
+	fi
 
 	# Install tmux plugin manager if needed
 	install_tmux_plugin_manager
@@ -669,6 +852,12 @@ sync_dotfiles() {
 
 	# Install bat themes from submodule
 	install_bat_themes
+
+	# Install eza theme from submodule
+	install_eza_theme
+
+	# Install glamour theme from submodule
+	install_glamour_theme
 
 	# Install yazi flavor
 	install_yazi_flavor

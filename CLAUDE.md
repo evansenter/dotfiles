@@ -102,6 +102,19 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 
 Remote browsers require pairing: `moltbot devices approve <id>` (check `moltbot devices list`).
 
+**WhatsApp Channel Configuration** (on gateway host):
+```bash
+# DM policies: pairing (default), allowlist, open, disabled
+moltbot config set channels.whatsapp.dmPolicy allowlist
+
+# Add numbers to allowlist (E.164 format)
+moltbot config set channels.whatsapp.allowFrom '["+12025551234", "+441234567890"]'
+
+# Restart to apply
+moltbot gateway restart
+```
+Note: WhatsApp shows "online" whenever moltbot is connected (WhatsApp Web limitation).
+
 **iTerm2** (`preferences/`, `vendor/iterm-catppuccin/`) - Manual color preset import required.
 
 ### File Formats
