@@ -787,8 +787,10 @@ install_claude_mcp_servers() {
 }
 
 sync_dotfiles() {
-	# Install Homebrew packages and run post-install hooks
-	install_brew_packages
+	# Install Homebrew packages and run post-install hooks (skip if -i already ran them)
+	if [[ "$PACKAGES" != true ]]; then
+		install_brew_packages
+	fi
 	run_brew_hooks
 
 	# Symlink dotfiles from home/ directory to ~
