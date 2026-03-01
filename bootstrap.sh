@@ -804,31 +804,18 @@ sync_dotfiles() {
 	symlink_claude_dir "skills"
 
 	# Ask about AI assistant setup (Claude MCP servers + Moltbot)
-	# Skip prompt if already configured or in non-interactive mode
+	# Always prompt first — never call claude without user consent
 	local install_assistants=true
 	if [[ -t 0 ]]; then
-		# Check if either is already set up
-		local claude_configured=false
-		local moltbot_configured=false
-		if command -v claude >/dev/null 2>&1 && claude mcp list 2>/dev/null | grep -q "github"; then
-			claude_configured=true
-		fi
-		if [[ -e "$HOME/.moltbot/moltbot.json" ]]; then
-			moltbot_configured=true
-		fi
+		echo ""
+		echo "AI assistant setup (Claude MCP servers + Moltbot):"
+		echo "  1) Install (default)"
+		echo "  2) Skip"
+		read -p "Choose [1/2]: " -n 1 -r assistant_choice
+		echo ""
 
-		# Ask if not fully configured
-		if [[ "$claude_configured" != true || "$moltbot_configured" != true ]]; then
-			echo ""
-			echo "AI assistant setup (Claude MCP servers + Moltbot):"
-			echo "  1) Install (default)"
-			echo "  2) Skip"
-			read -p "Choose [1/2]: " -n 1 -r assistant_choice
-			echo ""
-
-			if [[ "$assistant_choice" == "2" ]]; then
-				install_assistants=false
-			fi
+		if [[ "$assistant_choice" == "2" ]]; then
+			install_assistants=false
 		fi
 	fi
 
