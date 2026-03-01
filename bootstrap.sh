@@ -915,9 +915,13 @@ if [[ "$UPDATE" == true ]]; then
 	fi
 fi
 
-# Install packages if requested
+# Install packages if requested (standalone operation)
 if [[ "$PACKAGES" == true ]]; then
 	install_packages
+	# If only --packages was passed, exit without syncing dotfiles
+	if [[ "$UPDATE" == false && "$PULL" == false && "$FORCE" == false ]]; then
+		exit 0
+	fi
 fi
 
 # Pull if requested
