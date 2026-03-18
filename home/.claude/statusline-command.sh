@@ -87,10 +87,12 @@ fi
 
 # Git dirty status indicator
 git_status=""
+git_dirty=false
 if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     if ! git -C "$cwd" diff --quiet 2>/dev/null || \
        ! git -C "$cwd" diff --cached --quiet 2>/dev/null; then
         git_status=" ${YELLOW}●${RESET}"
+        git_dirty=true
     fi
 fi
 
@@ -227,8 +229,8 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
         [[ -n "$issue_links" ]] && issue_display=" ${CYAN}→${issue_links}${RESET}"
     fi
 
-    # CI status indicator (cached for 30s)
-    if [[ -n "$pr_num" ]]; then
+    # CI status indicator (cached for 30s, hidden when dirty — result is stale)
+    if [[ -n "$pr_num" ]] && [[ "$git_dirty" == false ]]; then
         ci_cache_file="${gh_cache_dir}/ci_${pr_num}"
 
         ci_status=""
