@@ -94,10 +94,25 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     fi
 fi
 
-# Get repo URL for hyperlinks (used by directory, PR, and issues)
+# GitHub API cache (repo URL, PR number, PR body, CI status)
+gh_cache_dir="${TMPDIR:-/tmp}/claude-statusline-gh"
+mkdir -p "$gh_cache_dir" && chmod 700 "$gh_cache_dir" 2>/dev/null
+find "$gh_cache_dir" -type f -mtime +1 -delete 2>/dev/null
+
+# Get repo URL for hyperlinks (cached per cwd — never changes within a session)
 repo_url=""
 if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
-    repo_url=$(cd "$cwd" && gh repo view --json url -q .url 2>/dev/null)
+    repo_cache_key=$(echo "$cwd" | tr '/' '_')
+    repo_cache_file="${gh_cache_dir}/repo_${repo_cache_key}"
+
+    if [[ -f "$repo_cache_file" ]]; then
+        repo_url=$(cat "$repo_cache_file")
+    else
+        repo_url=$(cd "$cwd" && gh repo view --json url -q .url 2>/dev/null)
+        if [[ -n "$repo_url" ]]; then
+            echo "$repo_url" > "$repo_cache_file" 2>/dev/null
+        fi
+    fi
 fi
 
 # Build combined [repo/session] display
@@ -145,15 +160,44 @@ ci_display=""
 if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
 
-    # Check for associated PRs (needed for CI status and issue lookups)
+    # Check for associated PRs (cached per branch, 60s TTL)
     pr_num=""
     if [[ -n "$branch" ]]; then
-        pr_num=$(cd "$cwd" && gh pr list --head "$branch" --json number -q '.[0].number' 2>/dev/null)
+        pr_cache_file="${gh_cache_dir}/pr_${branch}"
+        if [[ -f "$pr_cache_file" ]]; then
+            if [[ "$(uname)" == "Darwin" ]]; then
+                pr_cache_age=$(( $(date +%s) - $(stat -f %m "$pr_cache_file" 2>/dev/null || echo 0) ))
+            else
+                pr_cache_age=$(( $(date +%s) - $(stat -c %Y "$pr_cache_file" 2>/dev/null || echo 0) ))
+            fi
+            [[ $pr_cache_age -lt 60 ]] && pr_num=$(cat "$pr_cache_file")
+        fi
+        if [[ -z "$pr_num" ]]; then
+            pr_num=$(cd "$cwd" && gh pr list --head "$branch" --json number -q '.[0].number' 2>/dev/null)
+            if [[ -n "$pr_num" ]]; then
+                echo "$pr_num" > "$pr_cache_file" 2>/dev/null
+            fi
+        fi
     fi
 
-    # Check for linked issues - from PR body or branch name
+    # Check for linked issues - from PR body (cached with PR) or branch name
     if [[ -n "$pr_num" ]]; then
-        pr_body=$(cd "$cwd" && gh pr view "$pr_num" --json body -q '.body' 2>/dev/null)
+        body_cache_file="${gh_cache_dir}/body_${pr_num}"
+        pr_body=""
+        if [[ -f "$body_cache_file" ]]; then
+            if [[ "$(uname)" == "Darwin" ]]; then
+                body_cache_age=$(( $(date +%s) - $(stat -f %m "$body_cache_file" 2>/dev/null || echo 0) ))
+            else
+                body_cache_age=$(( $(date +%s) - $(stat -c %Y "$body_cache_file" 2>/dev/null || echo 0) ))
+            fi
+            [[ $body_cache_age -lt 60 ]] && pr_body=$(cat "$body_cache_file")
+        fi
+        if [[ -z "$pr_body" ]]; then
+            pr_body=$(cd "$cwd" && gh pr view "$pr_num" --json body -q '.body' 2>/dev/null)
+            if [[ -n "$pr_body" ]]; then
+                echo "$pr_body" > "$body_cache_file" 2>/dev/null
+            fi
+        fi
         if [[ -n "$pr_body" ]]; then
             issue_nums=$(echo "$pr_body" | grep -oiE '(fixes|closes|resolves|addresses) #[0-9]+' | grep -oE '[0-9]+' | sort -u)
         fi
@@ -179,27 +223,23 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
         [[ -n "$issue_links" ]] && issue_display=" ${CYAN}→${issue_links}${RESET}"
     fi
 
-    # CI status indicator (cached for 30s to avoid hammering gh)
+    # CI status indicator (cached for 30s)
     if [[ -n "$pr_num" ]]; then
-        ci_cache_dir="${TMPDIR:-/tmp}/claude-statusline-ci"
-        ci_cache_file="${ci_cache_dir}/${pr_num}"
+        ci_cache_file="${gh_cache_dir}/ci_${pr_num}"
 
         ci_status=""
-        # Use cache if fresh (< 30s old)
         if [[ -f "$ci_cache_file" ]]; then
             if [[ "$(uname)" == "Darwin" ]]; then
-                cache_age=$(( $(date +%s) - $(stat -f %m "$ci_cache_file" 2>/dev/null || echo 0) ))
+                ci_cache_age=$(( $(date +%s) - $(stat -f %m "$ci_cache_file" 2>/dev/null || echo 0) ))
             else
-                cache_age=$(( $(date +%s) - $(stat -c %Y "$ci_cache_file" 2>/dev/null || echo 0) ))
+                ci_cache_age=$(( $(date +%s) - $(stat -c %Y "$ci_cache_file" 2>/dev/null || echo 0) ))
             fi
-            [[ $cache_age -lt 30 ]] && ci_status=$(cat "$ci_cache_file")
+            [[ $ci_cache_age -lt 30 ]] && ci_status=$(cat "$ci_cache_file")
         fi
 
-        # Query if no cache hit
         if [[ -z "$ci_status" ]]; then
             checks_output=$(cd "$cwd" && gh pr checks "$pr_num" 2>/dev/null || true)
             if [[ -n "$checks_output" ]]; then
-                # Match status column (tab-delimited) to avoid false positives from check names
                 if echo "$checks_output" | awk -F'\t' '{print $2}' | grep -q "fail"; then
                     ci_status="fail"
                 elif echo "$checks_output" | awk -F'\t' '{print $2}' | grep -q "pending"; then
@@ -207,7 +247,6 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
                 else
                     ci_status="pass"
                 fi
-                mkdir -p "$ci_cache_dir" && chmod 700 "$ci_cache_dir" 2>/dev/null
                 echo "$ci_status" > "$ci_cache_file" 2>/dev/null
             fi
         fi
