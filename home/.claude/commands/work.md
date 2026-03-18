@@ -38,7 +38,7 @@ Join existing PR on current branch, restoring WIP context if available.
 2. Get PR info: `gh pr view --json number,title,state`
    - If no PR: "No PR found. Use `/work <issue-number>` to start new work, or `/pr-create` first."
 3. Determine identifier from PR body (`Fixes #N` → `issue-N`, otherwise `pr-N`)
-4. Fetch recent `wip_progress` events for this session: `mcp__event-bus__get_events(channel: "session:<session-id>", limit: 5)`
+4. Fetch recent `wip_progress` events for this session: `mcp__agent-event-bus__get_events(channel: "session:<session-id>", limit: 5)`
 5. Determine position (from WIP events, or fall back to PR/CI state):
 
 | State | Already Completed |
@@ -201,7 +201,7 @@ Based on the architecture plan, derive final implementation tasks. These replace
 Publish `task_started` with your session_id (from startup: "Registered on event bus as: <session_id>"):
 
 ```
-mcp__event-bus__publish_event(
+mcp__agent-event-bus__publish_event(
   event_type: "task_started",
   payload: "Starting work on #<issue> - <title>",
   session_id: "<your-session-id>",
@@ -241,7 +241,7 @@ When showing the output from summarize-work, always highlight the key files to l
 **Always** ask user via AskUserQuestion (Merge now / Wait). Never auto-merge. After merge:
 
 ```
-mcp__event-bus__publish_event(
+mcp__agent-event-bus__publish_event(
   event_type: "task_completed",
   payload: "Merged PR #<N> - <title>",
   session_id: "<your-session-id>",
@@ -251,7 +251,7 @@ mcp__event-bus__publish_event(
 
 **Cleanup WIP state** (optional, prevents stale checkpoints):
 ```
-mcp__event-bus__publish_event(
+mcp__agent-event-bus__publish_event(
   event_type: "wip_cleared",
   payload: "[work:<ID>] Work completed - merged PR #<N>",
   session_id: "<your-session-id>",

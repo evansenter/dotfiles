@@ -185,7 +185,7 @@ If committing:
 
    Fixes #N (if issue number)
 
-   Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
+   Co-Authored-By: Claude <noreply@anthropic.com>
    Co-Authored-By: Gemini <noreply@google.com>
    ```
 3. `git commit`

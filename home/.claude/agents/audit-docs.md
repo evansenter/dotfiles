@@ -124,7 +124,7 @@ If you couldn't answer a question due to missing data, note what API/field would
 
 Share significant findings:
 ```
-mcp__event-bus__publish_event(
+mcp__agent-event-bus__publish_event(
   event_type: "gotcha_discovered",
   payload: "[finding]",
   session_id: "<your-session-id>",

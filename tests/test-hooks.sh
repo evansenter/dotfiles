@@ -129,7 +129,9 @@ setup_mock_event_bus_cli() {
 # - session_id: UUID/client_id (for API calls)
 # - display_id: Human-readable name (for display)
 
-# Skip global flags (e.g., --url URL) before subcommand
+# Skip global flags before subcommand.
+# Assumes all flags take exactly one value (e.g., --url URL).
+# If a boolean flag is added, this needs updating.
 while [[ "$1" == --* ]]; do shift 2; done
 
 case "$1" in

@@ -98,7 +98,7 @@ PAYLOAD="[work:${WORK_ID:-unknown}] | branch: ${BRANCH:-unknown}"
 PAYLOAD="${PAYLOAD} | time: ${CHECKPOINT_TIME}"
 
 # Publish to session-specific channel
-RESULT=$(agent-event-bus-cli "${URL_ARGS[@]}" publish \
+RESULT=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} publish \
     --type "wip_checkpoint" \
     --payload "$PAYLOAD" \
     --session-id "$SESSION_ID" \

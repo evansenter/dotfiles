@@ -94,7 +94,7 @@ Use `-R` flag if cross-repo target specified.
 Include your session_id (from startup: "Registered on event bus as: <session_id>") for attribution:
 
 ```
-mcp__event-bus__publish_event(
+mcp__agent-event-bus__publish_event(
   event_type: "rfc_created",
   payload: "RFC created: #N in <repo> - <title>",
   session_id: "<your-session-id>",

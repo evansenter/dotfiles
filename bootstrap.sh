@@ -178,11 +178,17 @@ configure_claude_local_settings() {
 		if command -v jq &>/dev/null; then
 			local tmp
 			tmp=$(mktemp)
-			jq --arg bus "https://${gateway_host}/agent-event-bus/mcp" \
+			if jq --arg bus "https://${gateway_host}/agent-event-bus/mcp" \
 			   --arg analytics "https://${gateway_host}/agent-session-analytics/mcp" \
 			   '.env = (.env // {}) + {"AGENT_EVENT_BUS_URL": $bus, "AGENT_SESSION_ANALYTICS_URL": $analytics}' \
-			   "$settings_local" > "$tmp" && mv "$tmp" "$settings_local"
-			echo "Updated: ~/.claude/settings.local.json (remote MCP URLs)"
+			   "$settings_local" > "$tmp" 2>/dev/null; then
+				mv "$tmp" "$settings_local"
+				echo "Updated: ~/.claude/settings.local.json (remote MCP URLs)"
+			else
+				rm -f "$tmp"
+				echo "Warning: Failed to merge into settings.local.json (invalid JSON?)"
+				echo "  Manually add AGENT_EVENT_BUS_URL and AGENT_SESSION_ANALYTICS_URL"
+			fi
 		else
 			echo "Warning: jq not found, cannot update settings.local.json"
 			echo "  Manually add AGENT_EVENT_BUS_URL and AGENT_SESSION_ANALYTICS_URL"

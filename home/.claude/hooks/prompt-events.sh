@@ -39,7 +39,7 @@ fi
 # Fetch only NEW events since last prompt using --resume
 # --resume: incremental polling - server tracks cursor, only returns new events
 # --order asc: chronological order (oldest first, new events at end)
-EVENTS=$(agent-event-bus-cli "${URL_ARGS[@]}" events \
+EVENTS=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} events \
     --resume \
     --session-id "$SESSION_ID" \
     --order asc \

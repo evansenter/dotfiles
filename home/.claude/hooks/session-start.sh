@@ -74,7 +74,7 @@ URL_ARGS=()
 REGISTER_ARGS=(--name "$SESSION_NAME")
 [[ -n "$CLIENT_ID" ]] && REGISTER_ARGS+=(--client-id "$CLIENT_ID")
 
-OUTPUT=$(agent-event-bus-cli "${URL_ARGS[@]}" register "${REGISTER_ARGS[@]}" 2>/dev/null) || true
+OUTPUT=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} register "${REGISTER_ARGS[@]}" 2>/dev/null) || true
 SESSION_ID=$(echo "$OUTPUT" | jq -r '.session_id // ""')
 
 if [[ -n "$SESSION_ID" ]]; then
@@ -97,7 +97,7 @@ fi
 # - "repo:<name>" - repo-specific coordination
 # - "machine:<hostname>" - local machine coordination
 # - "session:<id>" - direct messages (if resumed with same session_id)
-EVENTS=$(agent-event-bus-cli "${URL_ARGS[@]}" events \
+EVENTS=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} events \
     --session-id "$SESSION_ID" \
     --order desc \
     --exclude session_registered,session_unregistered \
@@ -116,7 +116,7 @@ fi
 if [[ "$SOURCE" == "compact" ]]; then
     # Fetch the most recent wip_checkpoint event for this session
     # Note: CLI has --include/--exclude but for specific types, use grep post-fetch
-    WIP_EVENT=$(agent-event-bus-cli "${URL_ARGS[@]}" events \
+    WIP_EVENT=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} events \
         --session-id "$SESSION_ID" \
         --channel "session:${SESSION_ID}" \
         --limit 1 \

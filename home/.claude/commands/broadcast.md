@@ -28,7 +28,7 @@ If no message provided, ask the user what to send.
 ### 2. Determine Channel
 
 - **Default (no --to)**: `all` — broadcasts to every session
-- **--to <name>**: Get active sessions via `mcp__event-bus__list_sessions()`, then:
+- **--to <name>**: Get active sessions via `mcp__agent-event-bus__list_sessions()`, then:
   1. Match `display_id` (e.g., "kind-ibis") → `session:<session-id>`
   2. Match `name` (e.g., "dotfiles/main") → `session:<session-id>`
   3. Match `repo` field (e.g., "gemicro") → `repo:<name>`
@@ -39,7 +39,7 @@ If no message provided, ask the user what to send.
 Include your session_id (from startup: "Registered on event bus as: <session_id>") for attribution:
 
 ```
-mcp__event-bus__publish_event(
+mcp__agent-event-bus__publish_event(
   event_type: "message",
   payload: "<MESSAGE>",
   session_id: "<your-session-id>",

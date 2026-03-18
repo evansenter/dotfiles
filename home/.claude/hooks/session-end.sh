@@ -42,7 +42,7 @@ if [[ -z "$CLIENT_ID" ]]; then
 fi
 
 # Unregister by client_id - server looks up session by (machine, client_id)
-OUTPUT=$(agent-event-bus-cli "${URL_ARGS[@]}" unregister --client-id "$CLIENT_ID" 2>/dev/null) || true
+OUTPUT=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} unregister --client-id "$CLIENT_ID" 2>/dev/null) || true
 
 if echo "$OUTPUT" | jq -e '.success == true' >/dev/null 2>&1; then
     SESSION_ID=$(echo "$OUTPUT" | jq -r '.session_id // "unknown"')
