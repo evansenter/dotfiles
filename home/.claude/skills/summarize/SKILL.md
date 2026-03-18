@@ -1,13 +1,47 @@
 ---
 name: summarize
-description: Use when asked to summarize URLs, documents, PDFs, code files, git history, or any large body of text into concise output
+description: "Use when asked to summarize URLs, documents, PDFs, YouTube videos, audio, code files, git history, or any large body of text. If the summarize CLI is installed, prefer it for URLs and media."
 ---
 
 # Summarize
 
 Produce concise, structured summaries of any content.
 
-## Supported Inputs
+## Summarize CLI (Preferred for URLs/Media)
+
+If the `summarize` CLI is installed, use it for URLs, YouTube, PDFs, and audio:
+
+```bash
+# Install
+brew install steipete/tap/summarize
+
+# Summarize a URL
+summarize "https://example.com/article"
+
+# Summarize a PDF
+summarize "/path/to/file.pdf"
+
+# Summarize a YouTube video
+summarize "https://youtu.be/dQw4w9WgXcQ" --youtube auto
+
+# Control output length
+summarize "https://example.com" --length short    # short/medium/long/xl/xxl
+summarize "https://example.com" --length 500      # character count
+
+# Extract content without summarizing
+summarize "https://example.com" --extract-only
+
+# JSON output
+summarize "https://example.com" --json
+```
+
+**Configuration:** `~/.summarize/config.json` for default model/preferences.
+
+**API keys:** Uses GEMINI_API_KEY (default model: google/gemini-3-flash-preview), ANTHROPIC_API_KEY, OPENAI_API_KEY, or XAI_API_KEY.
+
+## Built-in Summarization (No CLI Needed)
+
+For content accessible via tools, summarize directly:
 
 | Input | How to Access |
 |-------|---------------|
@@ -32,11 +66,10 @@ Use this structure unless the user specifies otherwise:
 - [Most important takeaway]
 - [Second most important]
 - [Third most important]
-- ...
 
 ## Details
 
-[Optional: deeper context if the content warrants it]
+[Optional: deeper context if warranted]
 ```
 
 ## Guidelines
@@ -46,6 +79,5 @@ Use this structure unless the user specifies otherwise:
 - Include specific numbers, names, and dates when relevant
 - For code: focus on what it does, not how (unless asked)
 - For PRs/issues: include status, key decisions, blockers
-- For long documents: summarize by section, then provide overall summary
 - Default to ~200 words unless asked for more/less detail
 - Preserve technical accuracy — don't simplify to the point of being wrong
