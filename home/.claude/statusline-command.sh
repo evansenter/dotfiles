@@ -30,6 +30,7 @@ read -r cwd pct model_id transcript_path session_id < <(
 
 # ANSI color codes
 CYAN=$'\e[36m'
+RED=$'\e[31m'
 GRAY=$'\e[90m'
 YELLOW=$'\e[33m'
 GREEN=$'\e[32m'
@@ -137,72 +138,85 @@ else
     repo_session_display="[${repo_part}]"
 fi
 
-# Associated PR or Issue indicator
-pr_display=""
+# PR, issue, and CI indicators
+# PR links are shown natively by Claude Code on line 3, so we only show CI status and issues
 issue_display=""
+ci_display=""
 if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
-    # Get current branch for PR and issue lookups
     branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
 
-    # Check for associated PRs (supports multiple PRs to different bases)
+    # Check for associated PRs (needed for CI status and issue lookups)
+    pr_num=""
     if [[ -n "$branch" ]]; then
-        pr_list=$(cd "$cwd" && gh pr list --head "$branch" --json url -q '.[].url' 2>/dev/null)
-        if [[ -n "$pr_list" ]]; then
-            pr_links=""
-            while read -r pr_url; do
-                [[ -z "$pr_url" ]] && continue
-                if [[ -n "$pr_links" ]]; then
-                    pr_links="${pr_links} ${pr_url}"
-                else
-                    pr_links="${pr_url}"
-                fi
-            done <<< "$pr_list"
-            [[ -n "$pr_links" ]] && pr_display=" ${GREEN}${pr_links}${RESET}"
-        fi
+        pr_num=$(cd "$cwd" && gh pr list --head "$branch" --json number -q '.[0].number' 2>/dev/null)
     fi
 
-    # Check for linked issues - first from PR body, then from branch name
-    issue_nums=""
-
-    # 1. If PR exists, check body for issue refs (Fixes #N, Closes #N, etc.)
-    if [[ -n "$pr_list" ]]; then
-        pr_body=$(cd "$cwd" && gh pr view --json body -q '.body' 2>/dev/null)
+    # Check for linked issues - from PR body or branch name
+    if [[ -n "$pr_num" ]]; then
+        pr_body=$(cd "$cwd" && gh pr view "$pr_num" --json body -q '.body' 2>/dev/null)
         if [[ -n "$pr_body" ]]; then
             issue_nums=$(echo "$pr_body" | grep -oiE '(fixes|closes|resolves|addresses) #[0-9]+' | grep -oE '[0-9]+' | sort -u)
         fi
     fi
 
-    # 2. Fall back to branch name with tight pattern (require issue-related prefix)
-    if [[ -z "$issue_nums" ]] && [[ -n "$branch" ]]; then
-        # Only match: issue-42, fix-42, bug-42, feat-42, feature-42
+    if [[ -z "${issue_nums:-}" ]] && [[ -n "$branch" ]]; then
         issue_nums=$(echo "$branch" | grep -oE '(issue|fix|bug|feat|feature|closes|resolves)[-/][0-9]+' | grep -oE '[0-9]+' | sort -u)
     fi
 
-    if [[ -n "$issue_nums" ]] && [[ -n "$repo_url" ]]; then
+    if [[ -n "${issue_nums:-}" ]] && [[ -n "$repo_url" ]]; then
         issue_links=""
         link_end=$'\e]8;;\e\\'
         for issue_num in $issue_nums; do
-            # Skip malformed entries
-            [[ -z "$issue_num" ]] && continue
-            [[ ! "$issue_num" =~ ^[0-9]+$ ]] && continue
+            [[ -z "$issue_num" || ! "$issue_num" =~ ^[0-9]+$ ]] && continue
             if [[ -z "$NO_LINKS" ]]; then
                 issue_url="${repo_url}/issues/${issue_num}"
                 link_start=$'\e]8;;'"${issue_url}"$'\e\\'
-                if [[ -n "$issue_links" ]]; then
-                    issue_links="${issue_links},${link_start}#${issue_num}${link_end}"
-                else
-                    issue_links="${link_start}#${issue_num}${link_end}"
-                fi
+                issue_links="${issue_links:+${issue_links},}${link_start}#${issue_num}${link_end}"
             else
-                if [[ -n "$issue_links" ]]; then
-                    issue_links="${issue_links},#${issue_num}"
-                else
-                    issue_links="#${issue_num}"
-                fi
+                issue_links="${issue_links:+${issue_links},}#${issue_num}"
             fi
         done
-        # Only set issue_display if we actually built valid links
         [[ -n "$issue_links" ]] && issue_display=" ${CYAN}→${issue_links}${RESET}"
+    fi
+
+    # CI status indicator (cached for 30s to avoid hammering gh)
+    if [[ -n "$pr_num" ]]; then
+        ci_cache_dir="${TMPDIR:-/tmp}/claude-statusline-ci"
+        ci_cache_file="${ci_cache_dir}/${pr_num}"
+
+        ci_status=""
+        # Use cache if fresh (< 30s old)
+        if [[ -f "$ci_cache_file" ]]; then
+            if [[ "$(uname)" == "Darwin" ]]; then
+                cache_age=$(( $(date +%s) - $(stat -f %m "$ci_cache_file" 2>/dev/null || echo 0) ))
+            else
+                cache_age=$(( $(date +%s) - $(stat -c %Y "$ci_cache_file" 2>/dev/null || echo 0) ))
+            fi
+            [[ $cache_age -lt 30 ]] && ci_status=$(cat "$ci_cache_file")
+        fi
+
+        # Query if no cache hit
+        if [[ -z "$ci_status" ]]; then
+            checks_output=$(cd "$cwd" && gh pr checks "$pr_num" 2>/dev/null || true)
+            if [[ -n "$checks_output" ]]; then
+                # Match status column (tab-delimited) to avoid false positives from check names
+                if echo "$checks_output" | awk -F'\t' '{print $2}' | grep -q "fail"; then
+                    ci_status="fail"
+                elif echo "$checks_output" | awk -F'\t' '{print $2}' | grep -q "pending"; then
+                    ci_status="pending"
+                else
+                    ci_status="pass"
+                fi
+                mkdir -p "$ci_cache_dir" && chmod 700 "$ci_cache_dir" 2>/dev/null
+                echo "$ci_status" > "$ci_cache_file" 2>/dev/null
+            fi
+        fi
+
+        case "$ci_status" in
+            pass)    ci_display=" ${GREEN}✓${RESET}" ;;
+            fail)    ci_display=" ${RED}✗${RESET}" ;;
+            pending) ci_display=" ${YELLOW}↻${RESET}" ;;
+        esac
     fi
 fi
 
@@ -276,7 +290,7 @@ LINK_RESET=$'\e]8;;\e\\'
 # LINK_RESET on each line ensures hyperlinks don't capture CC's injected output
 line1=$(printf "%s%s%s%s%s%s" \
     "$repo_session_display" "$branch_display" \
-    "$pr_display" "$issue_display" \
+    "$ci_display" "$issue_display" \
     "$git_status" "$LINK_RESET")
 
 line2=$(printf "%s%s%s%s" \
