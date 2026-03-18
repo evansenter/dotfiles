@@ -53,6 +53,13 @@ end
 # Python Libraries
 brew "numpy"                  # IAP tunnel perf (gcloud)
 
+# AI/ML
+brew "whisper-cpp"              # Local speech-to-text
+
+# OpenClaw Agent Tools
+tap "steipete/tap"
+brew "steipete/tap/spogo"       # Spotify CLI control
+
 # Utilities
 brew "ffmpeg"
 brew "scc"                    # Code line counter
@@ -77,7 +84,7 @@ cask "whatsapp"
 cask "font-jetbrains-mono-nerd-font"
 
 # Casks - Networking
-cask "tailscale-app"          # Mesh VPN (event bus, moltbot)
+cask "tailscale-app"          # Mesh VPN (event bus, openclaw)
 
 # Casks - Cloud
 cask "gcloud-cli"             # Requires: gcloud init
