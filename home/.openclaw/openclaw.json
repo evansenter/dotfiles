@@ -21,8 +21,8 @@
   "gateway": {
     "mode": "remote",
     "remote": {
-      "url": "wss://speck-vm.tailac7b3c.ts.net/",
-      "token": "${MOLTBOT_GATEWAY_TOKEN}"
+      "url": "wss://mac-mini.tailac7b3c.ts.net/",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
     }
   },
   "skills": {

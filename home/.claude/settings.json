@@ -2,8 +2,8 @@
   "cleanupPeriodDays": 365,
   "env": {
     "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
-    "AGENT_EVENT_BUS_URL": "https://speck-vm.tailac7b3c.ts.net/agent-event-bus/mcp",
-    "AGENT_SESSION_ANALYTICS_URL": "https://speck-vm.tailac7b3c.ts.net/agent-session-analytics/mcp"
+    "AGENT_EVENT_BUS_URL": "http://localhost:8080/mcp",
+    "AGENT_SESSION_ANALYTICS_URL": "http://localhost:8081/mcp"
   },
   "permissions": {
     "allow": [
@@ -124,7 +124,7 @@
     ],
     "defaultMode": "default"
   },
-  "model": "opus",
+  "model": "opus[1m]",
   "hooks": {
     "UserPromptSubmit": [
       {
@@ -191,5 +191,6 @@
     "commit-commands@claude-plugins-official": true,
     "rust-analyzer-lsp@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true
-  }
+  },
+  "skipDangerousModePermissionPrompt": true
 }

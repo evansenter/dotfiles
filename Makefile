@@ -1,7 +1,7 @@
-.PHONY: check lint test test-hooks clean install uninstall
+.PHONY: check lint test test-hooks test-bootstrap clean install uninstall
 
-# Run all quality gates (lint, syntax check, hook tests)
-check: lint test test-hooks
+# Run all quality gates (lint, syntax check, hook tests, bootstrap tests)
+check: lint test test-hooks test-bootstrap
 
 # Run shellcheck on all shell scripts (matches CI)
 lint:
@@ -26,6 +26,11 @@ test:
 test-hooks:
 	@echo "Running hook tests..."
 	@./tests/test-hooks.sh
+
+# Run bootstrap tests (naming consistency, URL migration)
+test-bootstrap:
+	@echo "Running bootstrap tests..."
+	@./tests/test-bootstrap.sh
 
 # Clean generated files
 clean:

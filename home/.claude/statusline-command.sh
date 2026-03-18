@@ -56,13 +56,16 @@ if [[ -n "$session_id" ]]; then
             session_name=$(cat "$cache_file")
         else
             # Query event bus for session matching this client_id
-            # Output format: "  session-name  repo/branch" then details on following lines
-            # Strip ANSI escape codes (agent-event-bus-cli may output colors for inactive sessions)
-            session_name=$("$EVENT_BUS_CLI" sessions 2>/dev/null | \
-                sed 's/\x1b\[[0-9;]*m//g' | \
-                grep -B2 "client_id: ${session_id}" | \
-                head -1 | \
-                awk '{print $1}')
+            # Retry briefly: statusline can fire before session-start hook registers
+            for _attempt in 1 2 3; do
+                session_name=$("$EVENT_BUS_CLI" sessions 2>/dev/null | \
+                    sed 's/\x1b\[[0-9;]*m//g' | \
+                    grep -B2 "client_id: ${session_id}" | \
+                    head -1 | \
+                    awk '{print $1}')
+                [[ -n "$session_name" ]] && break
+                sleep 0.2
+            done
 
             # Cache only successful lookups (empty = session not registered yet)
             if [[ -n "$session_name" ]]; then
@@ -72,7 +75,7 @@ if [[ -n "$session_id" ]]; then
         fi
 
         if [[ -z "$session_name" ]]; then
-            # Session not found in event bus - show warning
+            # Session not found after retries
             session_warning="no-session"
         fi
     else

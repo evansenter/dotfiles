@@ -74,6 +74,13 @@ OUTPUT=$(agent-event-bus-cli register "${REGISTER_ARGS[@]}" 2>/dev/null) || true
 SESSION_ID=$(echo "$OUTPUT" | jq -r '.session_id // ""')
 
 if [[ -n "$SESSION_ID" ]]; then
+    # Pre-populate statusline cache so it doesn't need to query the event bus
+    DISPLAY_ID=$(echo "$OUTPUT" | jq -r '.display_id // ""')
+    if [[ -n "$DISPLAY_ID" && -n "$CLIENT_ID" ]]; then
+        CACHE_DIR="${TMPDIR:-/tmp}/claude-statusline"
+        mkdir -p "$CACHE_DIR" && chmod 700 "$CACHE_DIR" 2>/dev/null
+        echo "$DISPLAY_ID" > "$CACHE_DIR/$CLIENT_ID" 2>/dev/null
+    fi
     echo "Registered on event bus as: $SESSION_ID ($SESSION_NAME)"
 else
     echo "Event bus registration failed"

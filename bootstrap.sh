@@ -38,7 +38,7 @@ symlink_dotfiles() {
 		# Create symlink
 		ln -s "$src_file" "$dest_file"
 		echo "Linked: ~/$rel_path"
-	done < <(find "$dotfiles_dir/home" -type f -not -name ".DS_Store" -not -path "*/.claude/hooks/*" -not -path "*/.claude/commands/*" -not -path "*/.claude/contrib/*" -not -path "*/.claude/agents/*" -not -path "*/.claude/skills/*" -not -path "*/.moltbot/*" -not -path "*/.config/btop/btop.conf" -print0)
+	done < <(find "$dotfiles_dir/home" -type f -not -name ".DS_Store" -not -path "*/.claude/hooks/*" -not -path "*/.claude/commands/*" -not -path "*/.claude/contrib/*" -not -path "*/.claude/agents/*" -not -path "*/.claude/skills/*" -not -path "*/.openclaw/*" -not -path "*/.config/btop/btop.conf" -print0)
 }
 
 symlink_claude_dir() {
@@ -67,26 +67,26 @@ symlink_claude_dir() {
 	echo "Linked: ~/.claude/$dir_name/"
 }
 
-symlink_moltbot_config() {
+symlink_openclaw_config() {
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-	local src_file="$dotfiles_dir/home/.moltbot/moltbot.json"
-	local dest_file="$HOME/.moltbot/moltbot.json"
+	local src_file="$dotfiles_dir/home/.openclaw/openclaw.json"
+	local dest_file="$HOME/.openclaw/openclaw.json"
 
 	if [[ ! -f "$src_file" ]]; then
 		return 0
 	fi
 
-	mkdir -p "$HOME/.moltbot"
+	mkdir -p "$HOME/.openclaw"
 
 	# Skip if local config exists (gateway host keeps its own config)
 	if [[ -f "$dest_file" && ! -L "$dest_file" ]]; then
-		echo "Skipped: ~/.moltbot/moltbot.json (local gateway config exists)"
+		echo "Skipped: ~/.openclaw/openclaw.json (local gateway config exists)"
 		return 0
 	fi
 
 	# Skip if already correctly symlinked
 	if [[ -L "$dest_file" && "$(readlink "$dest_file")" == "$src_file" ]]; then
-		install_moltbot_cli
+		install_openclaw_cli
 		return 0
 	fi
 
@@ -95,14 +95,14 @@ symlink_moltbot_config() {
 	if [[ ! -e "$dest_file" ]]; then
 		if [[ -t 0 ]]; then
 			echo ""
-			echo "Moltbot setup:"
+			echo "OpenClaw setup:"
 			echo "  1) Remote client - connect to existing gateway (default)"
 			echo "  2) Gateway host - run the gateway on this machine"
-			read -p "Choose [1/2]: " -n 1 -r moltbot_choice
+			read -p "Choose [1/2]: " -n 1 -r openclaw_choice
 			echo ""
 
-			if [[ "$moltbot_choice" == "2" ]]; then
-				echo "Skipped: ~/.moltbot/moltbot.json (run 'moltbot onboard' to set up gateway)"
+			if [[ "$openclaw_choice" == "2" ]]; then
+				echo "Skipped: ~/.openclaw/openclaw.json (run 'openclaw configure' to set up gateway)"
 				return 0
 			fi
 		fi
@@ -114,9 +114,9 @@ symlink_moltbot_config() {
 	fi
 
 	ln -s "$src_file" "$dest_file"
-	echo "Linked: ~/.moltbot/moltbot.json (remote client config)"
+	echo "Linked: ~/.openclaw/openclaw.json (remote client config)"
 
-	install_moltbot_cli
+	install_openclaw_cli
 }
 
 # Install an npm package globally with graceful error handling
@@ -150,8 +150,8 @@ install_npm_package() {
 	fi
 }
 
-install_moltbot_cli() {
-	install_npm_package "moltbot" "moltbot CLI" "moltbot@beta"
+install_openclaw_cli() {
+	install_npm_package "openclaw" "OpenClaw CLI" "openclaw"
 }
 
 install_tmux_plugin_manager() {
@@ -253,11 +253,6 @@ install_launch_agents() {
 }
 
 install_cron_jobs() {
-	# Cron jobs are Linux-only (macOS uses LaunchAgents)
-	if [[ "$(uname)" == "Darwin" ]]; then
-		return 0
-	fi
-
 	# Install cargo-sweep cron job (only if cargo is installed)
 	if command -v cargo >/dev/null 2>&1; then
 		local cron_entry="0 3 * * 0 $HOME/.bin/cargo-sweep-all"
@@ -462,6 +457,28 @@ install_packages() {
 			echo "Updating fzf..."
 			git -C "$HOME/.fzf" pull --ff-only
 			"$HOME/.fzf/install" --all --no-bash --no-fish
+		fi
+
+		# Install whisper-cpp (speech-to-text)
+		if ! command -v whisper-cli >/dev/null 2>&1; then
+			echo "Installing whisper-cpp..."
+			local whisper_tmp
+			whisper_tmp="$(mktemp -d)"
+			git clone --depth 1 https://github.com/ggerganov/whisper.cpp.git "$whisper_tmp"
+			cmake -B "$whisper_tmp/build" -S "$whisper_tmp" -DCMAKE_BUILD_TYPE=Release
+			cmake --build "$whisper_tmp/build" --config Release -j"$(nproc)"
+			if [[ -f "$whisper_tmp/build/bin/whisper-cli" ]]; then
+				sudo cp "$whisper_tmp/build/bin/whisper-cli" /usr/local/bin/
+			else
+				echo "whisper-cpp build failed — skipping install"
+			fi
+			rm -rf "$whisper_tmp"
+		fi
+
+		# Install piper-tts (text-to-speech)
+		if ! command -v piper >/dev/null 2>&1; then
+			echo "Installing piper-tts..."
+			pip3 install --user piper-tts 2>/dev/null || pip3 install --user --break-system-packages piper-tts
 		fi
 
 		# Create fd alias (Debian/Ubuntu installs as fdfind)
@@ -771,19 +788,6 @@ install_claude_mcp_servers() {
 			echo "    export GITHUB_TOKEN=\"ghp_your_token_here\""
 		fi
 	fi
-
-	# Install/remove Notion MCP server based on NOTION_API_KEY availability
-	if [[ -n "${NOTION_API_KEY:-}" ]]; then
-		if ! echo "$mcp_list" | grep -q "notion"; then
-			echo "Installing Notion MCP server..."
-			claude mcp add notion -s user -e 'NOTION_TOKEN=${NOTION_API_KEY}' -- npx -y @notionhq/notion-mcp-server
-		fi
-	else
-		if echo "$mcp_list" | grep -q "notion"; then
-			echo "Removing Notion MCP server (NOTION_API_KEY not set)..."
-			claude mcp remove notion -s user
-		fi
-	fi
 }
 
 sync_dotfiles() {
@@ -801,24 +805,24 @@ sync_dotfiles() {
 	symlink_claude_dir "agents"
 	symlink_claude_dir "skills"
 
-	# Ask about AI assistant setup (Claude MCP servers + Moltbot)
+	# Ask about AI assistant setup (Claude MCP servers + OpenClaw)
 	# Skip prompt if already configured or in non-interactive mode
 	local install_assistants=true
 	if [[ -t 0 ]]; then
 		# Check if either is already set up
 		local claude_configured=false
-		local moltbot_configured=false
+		local openclaw_configured=false
 		if command -v claude >/dev/null 2>&1 && claude mcp list 2>/dev/null | grep -q "github"; then
 			claude_configured=true
 		fi
-		if [[ -e "$HOME/.moltbot/moltbot.json" ]]; then
-			moltbot_configured=true
+		if [[ -e "$HOME/.openclaw/openclaw.json" ]]; then
+			openclaw_configured=true
 		fi
 
 		# Ask if not fully configured
-		if [[ "$claude_configured" != true || "$moltbot_configured" != true ]]; then
+		if [[ "$claude_configured" != true || "$openclaw_configured" != true ]]; then
 			echo ""
-			echo "AI assistant setup (Claude MCP servers + Moltbot):"
+			echo "AI assistant setup (Claude MCP servers + OpenClaw):"
 			echo "  1) Install (default)"
 			echo "  2) Skip"
 			read -p "Choose [1/2]: " -n 1 -r assistant_choice
@@ -831,8 +835,8 @@ sync_dotfiles() {
 	fi
 
 	if [[ "$install_assistants" == true ]]; then
-		# Symlink Moltbot config (skipped if local gateway config exists)
-		symlink_moltbot_config
+		# Symlink OpenClaw config (skipped if local gateway config exists)
+		symlink_openclaw_config
 
 		# Install Claude Code MCP servers
 		install_claude_mcp_servers
