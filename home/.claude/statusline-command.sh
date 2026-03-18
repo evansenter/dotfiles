@@ -181,13 +181,11 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
         branch_key=$(echo "$branch" | tr '/' '_')
         pr_cache_file="${gh_cache_dir}/pr_${branch_key}"
         if cache_fresh "$pr_cache_file" 60; then
-            pr_num=$(cat "$pr_cache_file")
-        fi
-        if [[ -z "$pr_num" ]]; then
+            cached_val=$(cat "$pr_cache_file")
+            [[ "$cached_val" != "none" ]] && pr_num="$cached_val"
+        else
             pr_num=$(cd "$cwd" && gh pr list --head "$branch" --json number -q '.[0].number' 2>/dev/null)
-            if [[ -n "$pr_num" ]]; then
-                echo "$pr_num" > "$pr_cache_file" 2>/dev/null
-            fi
+            echo "${pr_num:-none}" > "$pr_cache_file" 2>/dev/null
         fi
     fi
 
