@@ -97,6 +97,24 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 
 Each service repo has `make install-server`. Never place projects in `~/Documents/` — macOS TCC blocks LaunchAgents from accessing it.
 
+**Statusline** (`home/.claude/statusline-command.sh`) - Two-line custom statusline for Claude Code.
+- Line 1: `[repo/session]:branch ✓/✗/↻ →#issues ●` (CI status hidden when dirty)
+- Line 2: `model_id N% (last user message...)`
+- GitHub API calls (repo URL, PR number, PR body, CI status) are cached in `$TMPDIR/claude-statusline-gh/` with per-call TTLs
+- Session name cached in `$TMPDIR/claude-statusline/` (pre-populated by session-start hook)
+
+**Infrastructure Services** - LaunchAgents on mac-mini, exposed via tailscale:
+| Service | Port | Tailscale Path | LaunchAgent |
+|---------|------|---------------|-------------|
+| OpenClaw gateway | 18789 | `/` | managed by openclaw |
+| agent-event-bus | 8080 | `/agent-event-bus` | `com.evansenter.agent-event-bus` |
+| agent-session-analytics | 8081 | `/agent-session-analytics` | `com.evansenter.agent-session-analytics` |
+| agent-memory-store | 8083 | `/agent-memory-store` | `com.evansenter.agent-memory-store` |
+
+LaunchAgent plists live in `~/Library/LaunchAgents/`. Each service repo has `make install-server` to set up. Reload with `launchctl unload` + `launchctl load`.
+
+**Important:** Never place projects in `~/Documents/` — macOS TCC blocks LaunchAgents from accessing it, causing silent `PermissionError` failures.
+
 **iTerm2** (`preferences/`, `vendor/iterm-catppuccin/`) - Manual color preset import required.
 
 ## After Merging
