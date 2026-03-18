@@ -21,20 +21,18 @@ gog login your@email.com
 
 ### Gmail
 ```bash
-gog gmail inbox                             # Show inbox
-gog gmail unread                            # Show unread messages
-gog gmail read <messageId>                  # Read a message
+gog gmail search "is:unread"                # Search unread messages
+gog gmail search "from:boss subject:urgent" # Search with Gmail query syntax
+gog gmail get <messageId>                   # Read a message
 gog send --to "user@example.com" --subject "Hi" --body "Hello"
-gog gmail reply <messageId> --body "Thanks"
-gog gmail search "from:boss subject:urgent"
+gog gmail messages reply <messageId> --body "Thanks"
 ```
 
 ### Calendar
 ```bash
-gog calendar agenda                         # Upcoming events
-gog calendar today                          # Today's events
-gog calendar add --summary "Meeting" --start "2026-03-18T10:00" --end "2026-03-18T11:00"
-gog calendar list                           # List calendars
+gog calendar events                         # List upcoming events
+gog calendar calendars                      # List calendars
+gog calendar create <calendarId> --summary "Meeting" --start "2026-03-18T10:00" --end "2026-03-18T11:00"
 ```
 
 ### Drive

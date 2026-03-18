@@ -15,11 +15,11 @@ If the `summarize` CLI is installed, use it for URLs, YouTube, PDFs, and audio:
 # Install
 brew install steipete/tap/summarize
 
-# Summarize a URL
-summarize "https://example.com/article"
+# Summarize a URL (default model: anthropic/claude-sonnet-4-6)
+summarize "https://example.com/article" --model anthropic/claude-sonnet-4-6
 
 # Summarize a PDF
-summarize "/path/to/file.pdf"
+summarize "/path/to/file.pdf" --model anthropic/claude-sonnet-4-6
 
 # Summarize a YouTube video
 summarize "https://youtu.be/dQw4w9WgXcQ" --youtube auto
@@ -37,7 +37,12 @@ summarize "https://example.com" --json
 
 **Configuration:** `~/.summarize/config.json` for default model/preferences.
 
-**API keys:** Uses GEMINI_API_KEY (default model: google/gemini-3-flash-preview), ANTHROPIC_API_KEY, OPENAI_API_KEY, or XAI_API_KEY.
+**Recommended model:** `anthropic/claude-sonnet-4-6` (requires ANTHROPIC_API_KEY). Also supports GEMINI_API_KEY, OPENAI_API_KEY, or XAI_API_KEY.
+
+**Set default model:** Add to `~/.summarize/config.json`:
+```json
+{"model": "anthropic/claude-sonnet-4-6"}
+```
 
 ## Built-in Summarization (No CLI Needed)
 
