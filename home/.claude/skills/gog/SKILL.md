@@ -1,6 +1,6 @@
 ---
 name: gog
-description: "Use when working with Google Workspace - Gmail, Calendar, Drive, Docs, Sheets, Chat, Tasks, Forms, Slides, Contacts. Requires gog CLI (brew install gogcli/tap/gog)."
+description: "Use when working with Google Workspace — Gmail, Calendar, Drive, Docs, Sheets, Chat, Tasks, Forms, Slides, Contacts. Also use when the user mentions email, checking mail, scheduling, meetings, shared documents, spreadsheets, or any Google service. Even if they don't say 'Google' explicitly — if they say 'check my email', 'what's on my calendar', 'find that doc', use this skill. Requires gog CLI (brew install gogcli/tap/gog)."
 metadata:
   requires:
     bins: ["gog"]

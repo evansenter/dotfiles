@@ -1,6 +1,6 @@
 ---
 name: summarize
-description: "Use when asked to summarize URLs, documents, PDFs, YouTube videos, audio, code files, git history, or any large body of text. If the summarize CLI is installed, prefer it for URLs and media."
+description: "Use when asked to summarize, condense, or get the gist of anything — URLs, documents, PDFs, YouTube videos, audio, code files, git history, PRs, issues, articles, or any large body of text. Also use when the user says 'what is this', 'TLDR', 'explain this link', 'what happened in this PR', or shares a URL and wants to understand it. If the summarize CLI is installed, prefer it for URLs and media."
 ---
 
 # Summarize

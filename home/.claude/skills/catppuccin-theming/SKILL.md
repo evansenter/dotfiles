@@ -2,7 +2,9 @@
 name: catppuccin-theming
 description: |
   Catppuccin Mocha theming conventions. Auto-applies when configuring new tools,
-  adding themes, or editing color/theme settings in any config file.
+  adding themes, editing color/theme settings in any config file, or setting up
+  any tool that supports color customization. Use whenever colors, themes, or
+  visual styling come up — even if the user doesn't mention Catppuccin by name.
 allowed-tools:
   - Read
   - Edit

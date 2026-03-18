@@ -1,6 +1,6 @@
 ---
 name: improve-workflow
-description: Suggests workflow improvements based on recent usage
+description: Suggests workflow improvements based on recent session analytics — tool frequency, error patterns, permission gaps, and sequence inefficiencies. Use after completing significant work, at the end of a PR cycle, when the user asks "how can we work better", or when spawned by the /work command's reflect phase.
 model: opus
 ---
 

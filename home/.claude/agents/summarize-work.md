@@ -1,6 +1,6 @@
 ---
 name: summarize-work
-description: Summarizes work done on the current branch/PR and highlights files most relevant for user review. Use before creating a PR or when preparing for code review.
+description: Summarizes work done on the current branch/PR and highlights files most relevant for user review. Use before creating a PR, when preparing for code review, when the user asks "what did we change", "summarize this PR", or when wrapping up a work session.
 model: sonnet
 ---
 

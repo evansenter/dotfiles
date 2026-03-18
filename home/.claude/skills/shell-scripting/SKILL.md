@@ -2,7 +2,9 @@
 name: shell-scripting
 description: |
   Shell script conventions for bash/zsh. Auto-applies when writing or editing
-  .sh files, shell functions, aliases, or scripts in bin/.
+  .sh files, shell functions, aliases, scripts in bin/, or any bash/zsh code
+  including heredocs, pipes, and one-liners in other contexts. Use whenever
+  writing shell code, even inline in Makefiles, hooks, or CI configs.
 allowed-tools:
   - Read
   - Edit

@@ -1,6 +1,6 @@
 ---
 name: status-report
-description: Generates comprehensive repo status with recent work, open issues, parallel sessions, and actionable recommendations. Use for orientation at session start or status checks.
+description: Generates comprehensive repo status with recent work, open issues, parallel sessions, and actionable recommendations. Use for orientation at session start, status checks, when the user asks "what's going on", "where did we leave off", "what needs attention", or when starting a new session on a repo with existing work.
 model: haiku
 ---
 

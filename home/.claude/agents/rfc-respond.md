@@ -1,6 +1,6 @@
 ---
 name: rfc-respond
-description: Respond to RFC-style issues with structured analysis
+description: Respond to RFC-style issues with structured analysis — evaluate the proposal, identify risks, suggest improvements, and provide a recommendation. Use when reviewing an existing RFC issue, when asked to comment on a design proposal, or when an RFC needs feedback.
 model: opus
 ---
 

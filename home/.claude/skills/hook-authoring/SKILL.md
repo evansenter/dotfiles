@@ -2,7 +2,10 @@
 name: hook-authoring
 description: |
   Writing and modifying Claude Code hooks. Auto-applies when editing files in
-  hooks/, creating new hooks, or debugging hook behavior.
+  hooks/, creating new hooks, debugging hook behavior, or discussing hook
+  lifecycle events (PreToolUse, PostToolUse, Stop, etc.). Also use when
+  modifying settings.json hook configuration or troubleshooting hooks that
+  aren't firing or are producing errors.
 allowed-tools:
   - Read
   - Edit

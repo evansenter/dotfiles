@@ -1,6 +1,6 @@
 ---
 name: audit-docs
-description: Audits CLAUDE.md, README, and project documentation for accuracy, staleness, and actionability. Use when docs may have drifted from reality.
+description: Audits CLAUDE.md, README, and project documentation for accuracy, staleness, and actionability. Use when docs may have drifted from reality, after significant refactors, when onboarding context feels wrong, or when the user asks "are the docs up to date" or "does the README still match."
 model: opus
 ---
 

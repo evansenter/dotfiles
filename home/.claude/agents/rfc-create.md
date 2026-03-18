@@ -1,6 +1,6 @@
 ---
 name: rfc-create
-description: Create RFC-style issues with structured analysis
+description: Create RFC-style issues with structured analysis — problem statement, proposed solution, alternatives considered, and implementation plan. Use when a design decision needs discussion, when creating issues for non-trivial features, or when the user says "let's think through this" or "create an RFC."
 model: opus
 ---
 

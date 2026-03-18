@@ -1,6 +1,6 @@
 ---
 name: systematic-debugging
-description: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes
+description: Use when encountering any bug, test failure, unexpected behavior, error message, or confusing output — before proposing fixes. Also use when a fix attempt fails, when the same error appears twice, when you're tempted to say "let me just try this", or when debugging feels like guessing. This skill MUST be consulted before any fix attempt — even quick ones.
 ---
 
 # Systematic Debugging
