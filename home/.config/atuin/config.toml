@@ -1,0 +1,34 @@
+# Atuin - shell history search/sync
+# https://docs.atuin.sh/configuration/config/
+
+# Fuzzy search by default, workspace-aware filtering
+search_mode = "fuzzy"
+filter_mode = "global"
+workspaces = true
+
+# Compact UI, execute on enter
+style = "compact"
+enter_accept = true
+inline_height = 40
+
+# Filter secrets automatically
+secrets_filter = true
+
+# Sync v2
+[sync]
+records = true
+
+[stats]
+common_subcommands = [
+  "cargo",
+  "docker",
+  "git",
+  "gh",
+  "go",
+  "kubectl",
+  "npm",
+  "brew",
+  "tmux",
+]
+common_prefix = ["sudo"]
+ignored_commands = ["cd", "ls", "la", "lt", "ll", "clear", "exit"]
