@@ -1,103 +1,112 @@
 ---
 name: gog
-description: "Use when working with Google Workspace - Gmail, Calendar, Drive, Docs, Sheets, Chat, Admin. Requires gws CLI (npm install -g @googleworkspace/cli)."
+description: "Use when working with Google Workspace - Gmail, Calendar, Drive, Docs, Sheets, Chat, Tasks, Forms, Slides, Contacts. Requires gog CLI (brew install gogcli/tap/gog)."
 metadata:
   requires:
-    bins: ["gws"]
+    bins: ["gog"]
 ---
 
-# Google Workspace Integration
+# Google Workspace Integration (gog)
 
-Interact with Google Workspace services via the `gws` CLI. The CLI dynamically discovers all Google APIs through Google's Discovery Service and exposes them as a unified interface.
+Interact with Google Workspace services via the `gog` CLI.
 
 ## Prerequisites
 
 ```bash
-npm install -g @googleworkspace/cli
-gws auth login
-```
-
-To generate per-service SKILL.md files with full API details:
-```bash
-gws generate-skills
+brew install gogcli/tap/gog
+gog login your@email.com
 ```
 
 ## Quick Reference
 
 ### Gmail
 ```bash
-gws gmail +triage                           # Show unread inbox summary
-gws gmail +send --to "user@example.com" --subject "Hi" --body "Hello"
-gws gmail +read <message-id>                # Read a message
-gws gmail +reply <message-id> --body "Thanks"
-gws gmail +forward <message-id> --to "other@example.com"
-gws gmail users messages list --params '{"q": "is:unread"}'
+gog gmail inbox                             # Show inbox
+gog gmail unread                            # Show unread messages
+gog gmail read <messageId>                  # Read a message
+gog send --to "user@example.com" --subject "Hi" --body "Hello"
+gog gmail reply <messageId> --body "Thanks"
+gog gmail search "from:boss subject:urgent"
 ```
 
 ### Calendar
 ```bash
-gws calendar +agenda                        # Show upcoming events
-gws calendar +insert --summary "Meeting" --start "2026-03-18T10:00:00" --end "2026-03-18T11:00:00"
-gws calendar events list --params '{"calendarId": "primary", "timeMin": "2026-03-18T00:00:00Z"}'
-gws calendar events delete --params '{"calendarId": "primary", "eventId": "<id>"}'
+gog calendar agenda                         # Upcoming events
+gog calendar today                          # Today's events
+gog calendar add --summary "Meeting" --start "2026-03-18T10:00" --end "2026-03-18T11:00"
+gog calendar list                           # List calendars
 ```
 
 ### Drive
 ```bash
-gws drive files list --params '{"q": "name contains '\''report'\''"}'
-gws drive files get --params '{"fileId": "<id>"}'
+gog ls                                      # List Drive files
+gog search "quarterly report"               # Search Drive
+gog download <fileId>                       # Download a file
+gog upload ./file.pdf                       # Upload a file
 ```
 
 ### Sheets
 ```bash
-gws sheets spreadsheets.values get --params '{"spreadsheetId": "<id>", "range": "Sheet1!A1:D10"}'
-gws sheets spreadsheets.values update --params '{"spreadsheetId": "<id>", "range": "Sheet1!A1"}' --json '[["a","b"],["c","d"]]'
+gog sheets get <spreadsheetId> --range "Sheet1!A1:D10"
+gog sheets update <spreadsheetId> --range "Sheet1!A1" --values '[["a","b"]]'
 ```
 
 ### Docs
 ```bash
-gws docs documents get --params '{"documentId": "<id>"}'
+gog docs get <documentId>                   # Get document content
+gog docs export <documentId> --format pdf   # Export as PDF
 ```
 
 ### Chat
 ```bash
-gws chat spaces list
-gws chat spaces.messages list --params '{"parent": "spaces/<id>"}'
+gog chat spaces                             # List chat spaces
+gog chat messages <spaceId>                 # List messages in a space
 ```
+
+### Tasks
+```bash
+gog tasks list                              # List task lists
+gog tasks get <taskListId>                  # Get tasks in a list
+```
+
+### Other Services
+```bash
+gog contacts list                           # Google Contacts
+gog forms get <formId>                      # Google Forms
+gog slides get <presentationId>             # Google Slides
+gog classroom courses                       # Google Classroom
+```
+
+## Useful Flags
+
+| Flag | Description |
+|------|-------------|
+| `-j, --json` | JSON output (best for scripting) |
+| `-p, --plain` | TSV output (parseable, no colors) |
+| `--results-only` | JSON mode: emit only primary result |
+| `-n, --dry-run` | Preview without making changes |
+| `-a, --account` | Specify account email |
+| `--select` | Select specific JSON fields |
 
 ## Discovering Commands
 
-Before calling any API method, inspect it:
-
 ```bash
-# Browse all services
-gws --help
-
-# Browse resources and methods for a service
-gws gmail --help
-
-# Inspect a method's required params, types, and defaults
-gws schema gmail.<resource>.<method>
+gog --help                                  # All services
+gog gmail --help                            # Gmail commands
+gog calendar --help                         # Calendar commands
+gog schema gmail.send                       # Machine-readable command schema
 ```
 
-Use `gws schema` output to build your `--params` and `--json` flags.
-
-## Helper Commands
-
-Helper commands (prefixed with `+`) are high-level shortcuts that compose multiple API calls:
+## Agent Helpers
 
 ```bash
-gws gmail +send      # Send email
-gws gmail +triage    # Unread inbox summary
-gws gmail +reply     # Reply to message (handles threading)
-gws gmail +read      # Read message body/headers
-gws calendar +agenda # Upcoming events across calendars
-gws calendar +insert # Create event
+gog agent exit-codes                        # Stable exit codes for scripting
+gog schema <command>                        # JSON schema for any command
 ```
 
 ## Notes
 
-- All commands output JSON by default — pipe through `jq` for formatting
-- Auth tokens are stored locally after `gws auth login`
-- If `gws` is not installed, inform the user and provide install instructions
-- For full per-service skills with complete API documentation, run `gws generate-skills`
+- All commands support `-j` for JSON output — pipe through `jq` for formatting
+- Use `gog login <email>` to add accounts, `gog status` to check auth
+- Multiple accounts supported via `--account` flag
+- If `gog` is not installed: `brew install gogcli/tap/gog`
