@@ -243,25 +243,15 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
         case "$ci_status" in
             pass)    ci_display=" ${GREEN}✓${RESET}" ;;
             fail)    ci_display=" ${RED}✗${RESET}" ;;
-            pending) ci_display=" ${YELLOW}◉${RESET}" ;;
+            pending) ci_display=" ${YELLOW}↻${RESET}" ;;
         esac
     fi
 fi
 
-# Context window percentage + compaction count
+# Context window percentage
 context_display=""
 if [[ "$pct" =~ ^[0-9]+$ ]] && [ "$pct" -gt 0 ]; then
-    context_parts="${pct}%"
-
-    # Count compactions from transcript (summary messages indicate compaction)
-    if [[ -n "$transcript_path" ]] && [[ -r "$transcript_path" ]]; then
-        compactions=$(grep -c '"type":"summary"' "$transcript_path" 2>/dev/null || echo "0")
-        if [[ "$compactions" -gt 0 ]]; then
-            context_parts="${context_parts}↻${compactions}"
-        fi
-    fi
-
-    context_display=" ${GRAY}${context_parts}${RESET}"
+    context_display=" ${GRAY}${pct}%${RESET}"
 fi
 
 # Last user message context (truncated to 40 chars)
