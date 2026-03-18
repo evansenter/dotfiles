@@ -467,7 +467,11 @@ install_packages() {
 			git clone --depth 1 https://github.com/ggerganov/whisper.cpp.git "$whisper_tmp"
 			cmake -B "$whisper_tmp/build" -S "$whisper_tmp" -DCMAKE_BUILD_TYPE=Release
 			cmake --build "$whisper_tmp/build" --config Release -j"$(nproc)"
-			sudo cp "$whisper_tmp/build/bin/whisper-cli" /usr/local/bin/
+			if [[ -f "$whisper_tmp/build/bin/whisper-cli" ]]; then
+				sudo cp "$whisper_tmp/build/bin/whisper-cli" /usr/local/bin/
+			else
+				echo "whisper-cpp build failed — skipping install"
+			fi
 			rm -rf "$whisper_tmp"
 		fi
 
