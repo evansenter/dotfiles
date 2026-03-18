@@ -30,6 +30,7 @@ read -r cwd pct model_id transcript_path session_id < <(
 
 # ANSI color codes
 CYAN=$'\e[36m'
+RED=$'\e[31m'
 GRAY=$'\e[90m'
 YELLOW=$'\e[33m'
 GREEN=$'\e[32m'
@@ -204,12 +205,63 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
         # Only set issue_display if we actually built valid links
         [[ -n "$issue_links" ]] && issue_display=" ${CYAN}→${issue_links}${RESET}"
     fi
+
+    # CI status indicator (cached for 30s to avoid hammering gh)
+    ci_display=""
+    if [[ -n "$pr_list" ]]; then
+        ci_cache_dir="${TMPDIR:-/tmp}/claude-statusline-ci"
+        # Use first PR URL as cache key
+        first_pr=$(echo "$pr_list" | head -1)
+        ci_cache_key=$(echo "$first_pr" | tr -dc '0-9')
+        ci_cache_file="${ci_cache_dir}/${ci_cache_key}"
+
+        ci_status=""
+        # Use cache if fresh (< 30s old)
+        if [[ -f "$ci_cache_file" ]]; then
+            cache_age=$(( $(date +%s) - $(stat -f %m "$ci_cache_file" 2>/dev/null || echo 0) ))
+            if [[ $cache_age -lt 30 ]]; then
+                ci_status=$(cat "$ci_cache_file")
+            fi
+        fi
+
+        # Query if no cache hit
+        if [[ -z "$ci_status" ]]; then
+            checks_output=$(cd "$cwd" && gh pr checks 2>/dev/null || true)
+            if [[ -n "$checks_output" ]]; then
+                if echo "$checks_output" | grep -q "fail"; then
+                    ci_status="fail"
+                elif echo "$checks_output" | grep -q "pending"; then
+                    ci_status="pending"
+                else
+                    ci_status="pass"
+                fi
+                mkdir -p "$ci_cache_dir" && chmod 700 "$ci_cache_dir" 2>/dev/null
+                echo "$ci_status" > "$ci_cache_file" 2>/dev/null
+            fi
+        fi
+
+        case "$ci_status" in
+            pass)    ci_display=" ${GREEN}✓${RESET}" ;;
+            fail)    ci_display=" ${RED}✗${RESET}" ;;
+            pending) ci_display=" ${YELLOW}◉${RESET}" ;;
+        esac
+    fi
 fi
 
-# Context window percentage
+# Context window percentage + compaction count
 context_display=""
 if [[ "$pct" =~ ^[0-9]+$ ]] && [ "$pct" -gt 0 ]; then
-    context_display=" ${GRAY}${pct}%${RESET}"
+    context_parts="${pct}%"
+
+    # Count compactions from transcript (summary messages indicate compaction)
+    if [[ -n "$transcript_path" ]] && [[ -r "$transcript_path" ]]; then
+        compactions=$(grep -c '"type":"summary"' "$transcript_path" 2>/dev/null || echo "0")
+        if [[ "$compactions" -gt 0 ]]; then
+            context_parts="${context_parts}↻${compactions}"
+        fi
+    fi
+
+    context_display=" ${GRAY}${context_parts}${RESET}"
 fi
 
 # Last user message context (truncated to 40 chars)
@@ -274,9 +326,9 @@ LINK_RESET=$'\e]8;;\e\\'
 # Line 2: model info and user context
 # This gives CC room to append its own status on line 2
 # LINK_RESET on each line ensures hyperlinks don't capture CC's injected output
-line1=$(printf "%s%s%s%s%s%s" \
+line1=$(printf "%s%s%s%s%s%s%s" \
     "$repo_session_display" "$branch_display" \
-    "$pr_display" "$issue_display" \
+    "$pr_display" "$ci_display" "$issue_display" \
     "$git_status" "$LINK_RESET")
 
 line2=$(printf "%s%s%s%s" \
