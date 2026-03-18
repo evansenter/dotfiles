@@ -1,6 +1,6 @@
 ---
 name: audit-docs
-description: Audits CLAUDE.md, README, and project documentation for accuracy, staleness, and actionability. Use when docs may have drifted from reality.
+description: Audits CLAUDE.md, README, and project documentation for accuracy, staleness, and actionability. Use when docs may have drifted from reality, after significant refactors, when onboarding context feels wrong, or when the user asks "are the docs up to date" or "does the README still match."
 model: opus
 ---
 
@@ -124,7 +124,7 @@ If you couldn't answer a question due to missing data, note what API/field would
 
 Share significant findings:
 ```
-mcp__event-bus__publish_event(
+mcp__agent-event-bus__publish_event(
   event_type: "gotcha_discovered",
   payload: "[finding]",
   session_id: "<your-session-id>",

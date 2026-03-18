@@ -1,6 +1,6 @@
 ---
 name: audit-codebase
-description: Audits codebase for anti-patterns, Evergreen violations, and refactoring opportunities. Use when you need a comprehensive code quality analysis that can run in the background.
+description: Audits codebase for anti-patterns, Evergreen violations, and refactoring opportunities. Use when you need a comprehensive code quality analysis that can run in the background. Also use when the user mentions code smells, tech debt, cleanup, or asks "what should we fix" or "is there anything wrong with the code."
 model: opus
 ---
 
@@ -113,7 +113,7 @@ If you couldn't answer a question due to missing data, note what API/field would
 
 Share significant findings to event bus:
 ```
-mcp__event-bus__publish_event(
+mcp__agent-event-bus__publish_event(
   event_type: "pattern_found",  // or "gotcha_discovered"
   payload: "[finding]",
   session_id: "<your-session-id>",

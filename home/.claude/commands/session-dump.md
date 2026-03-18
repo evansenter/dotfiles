@@ -29,7 +29,7 @@ cross_session = ($ARGUMENTS == "cross")
 Skip this step if `cross_session` is true.
 
 ```
-sessions = mcp__event-bus__list_sessions()
+sessions = mcp__agent-event-bus__list_sessions()
 current_session = find session where cwd matches current working directory
 session_id = current_session.session_id
 ```

@@ -5,7 +5,7 @@
 alias ..="cd .."
 alias ...="cd ../.."
 alias -- -="cd -"
-alias src="cd ~/Documents/projects"
+alias src="cd ~/projects"
 
 # ==============================================================================
 # File Listing

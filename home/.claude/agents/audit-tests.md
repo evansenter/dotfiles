@@ -1,6 +1,6 @@
 ---
 name: audit-tests
-description: Audits test coverage for redundancy, staleness, and gaps. Use when you need comprehensive test quality analysis.
+description: Audits test coverage for redundancy, staleness, and gaps. Use when you need comprehensive test quality analysis, after adding features without tests, when tests feel slow or flaky, or when the user asks "do we have enough tests" or "are our tests good."
 model: opus
 ---
 
@@ -90,7 +90,7 @@ If you couldn't answer a question due to missing data, note what API/field would
 
 Share flaky tests or significant patterns:
 ```
-mcp__event-bus__publish_event(
+mcp__agent-event-bus__publish_event(
   event_type: "test_flaky",  // or "pattern_found"
   payload: "[finding]",
   session_id: "<your-session-id>",

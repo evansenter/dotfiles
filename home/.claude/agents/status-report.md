@@ -1,6 +1,6 @@
 ---
 name: status-report
-description: Generates comprehensive repo status with recent work, open issues, parallel sessions, and actionable recommendations. Use for orientation at session start or status checks.
+description: Generates comprehensive repo status with recent work, open issues, parallel sessions, and actionable recommendations. Use for orientation at session start, status checks, when the user asks "what's going on", "where did we leave off", "what needs attention", or when starting a new session on a repo with existing work.
 model: haiku
 ---
 
@@ -32,8 +32,8 @@ gh issue list --state open --limit 20 --json number,title,labels
 # Lightweight analytics - avoid heavy per-session data
 mcp__agent-session-analytics__analyze_trends(days=1)        # Aggregate stats, not per-session
 mcp__agent-session-analytics__get_permission_gaps(days=1, min_count=3)
-mcp__event-bus__list_sessions()
-mcp__event-bus__get_events(limit=10)
+mcp__agent-event-bus__list_sessions()
+mcp__agent-event-bus__get_events(limit=10)
 ```
 
 ## Output Format
@@ -96,7 +96,7 @@ mcp__event-bus__get_events(limit=10)
 
 If critical blockers found, broadcast to event bus:
 ```
-mcp__event-bus__publish_event(
+mcp__agent-event-bus__publish_event(
   event_type: "help_needed",
   payload: "[blocker description]",
   session_id: "<your-session-id>",

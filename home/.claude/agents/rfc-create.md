@@ -1,6 +1,6 @@
 ---
 name: rfc-create
-description: Create RFC-style issues with structured analysis
+description: Create RFC-style issues with structured analysis — problem statement, proposed solution, alternatives considered, and implementation plan. Use when a design decision needs discussion, when creating issues for non-trivial features, or when the user says "let's think through this" or "create an RFC."
 model: opus
 ---
 
@@ -94,7 +94,7 @@ Use `-R` flag if cross-repo target specified.
 Include your session_id (from startup: "Registered on event bus as: <session_id>") for attribution:
 
 ```
-mcp__event-bus__publish_event(
+mcp__agent-event-bus__publish_event(
   event_type: "rfc_created",
   payload: "RFC created: #N in <repo> - <title>",
   session_id: "<your-session-id>",

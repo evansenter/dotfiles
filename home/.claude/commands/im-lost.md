@@ -30,7 +30,7 @@ If PR body references an issue (`Fixes #N`), fetch it: `gh issue view <N> --json
 | PR open, CI passed, has comments | Process feedback |
 | PR open, CI passed, no comments | Ready to merge |
 | PR open, CI failed | Fix failures |
-| PR merged | Reflect (/improve-workflow) |
+| PR merged | Reflect (improve-workflow agent) |
 
 ### 3. Output
 
@@ -45,7 +45,7 @@ If PR body references an issue (`Fixes #N`), fetch it: `gh issue view <N> --json
 
 ### Workflow Position
 
-1. ○ Orient - `/status-report`
+1. ○ Orient - status-report agent
 2. ○ Start work - `/work`
 3. ○ Develop
 4. ○ Self-review - `/pr-review local`
@@ -54,7 +54,7 @@ If PR body references an issue (`Fixes #N`), fetch it: `gh issue view <N> --json
 7. ○ Monitor CI - `/watch-ci`
 8. ○ Process feedback - `/pr-review remote`
 9. ○ Merge & cleanup
-10. ○ Reflect - `/improve-workflow`
+10. ○ Reflect - improve-workflow agent
 
 ← YOU ARE HERE: [Step N - why]
 

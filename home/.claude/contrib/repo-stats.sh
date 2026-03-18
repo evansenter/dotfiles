@@ -15,7 +15,7 @@ set -euo pipefail
 DAYS=30
 SESSION_STATS=0
 OWNER="evansenter"
-LOCAL_DIR="$HOME/Documents/projects"
+LOCAL_DIR="$HOME/projects"
 DEFAULT_REPOS="dotfiles gemicro agent-event-bus agent-session-analytics rust-genai"
 REPOS=""
 
@@ -24,8 +24,8 @@ HAS_SCC=$(command -v scc >/dev/null 2>&1 && echo "1" || echo "0")
 
 # Check for session-analytics CLI
 SESSION_CLI=""
-if [[ -x "$HOME/Documents/projects/agent-session-analytics/.venv/bin/agent-session-analytics-cli" ]]; then
-    SESSION_CLI="$HOME/Documents/projects/agent-session-analytics/.venv/bin/agent-session-analytics-cli"
+if [[ -x "$HOME/projects/agent-session-analytics/.venv/bin/agent-session-analytics-cli" ]]; then
+    SESSION_CLI="$HOME/projects/agent-session-analytics/.venv/bin/agent-session-analytics-cli"
 elif command -v agent-session-analytics-cli >/dev/null 2>&1; then
     SESSION_CLI="agent-session-analytics-cli"
 fi
@@ -55,7 +55,7 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  --days N          Look back N days (default: 30)"
             echo "  --owner NAME      GitHub owner (default: evansenter)"
-            echo "  --local-dir DIR   Local repos directory (default: ~/Documents/projects)"
+            echo "  --local-dir DIR   Local repos directory (default: ~/projects)"
             echo "  --session-stats   Include Agent Session Analytics"
             echo ""
             echo "If repos are specified, uses those instead of defaults."

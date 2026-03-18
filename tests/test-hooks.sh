@@ -129,6 +129,14 @@ setup_mock_event_bus_cli() {
 # - session_id: UUID/client_id (for API calls)
 # - display_id: Human-readable name (for display)
 
+# Skip global flags before subcommand
+while [[ "$1" == --* ]]; do
+    case "$1" in
+        --url) shift 2 ;;
+        *) shift ;;
+    esac
+done
+
 case "$1" in
     register)
         # Parse --name and --client-id from args
@@ -633,6 +641,7 @@ MOCK_GH
     # Create agent-event-bus-cli mock that captures and validates payload
     cat > "$TEST_TMP/bin/agent-event-bus-cli" << 'MOCK_CLI'
 #!/bin/bash
+while [[ "$1" == --* ]]; do case "$1" in --url) shift 2 ;; *) shift ;; esac; done
 if [[ "$1" == "publish" ]]; then
     payload=""
     while [[ $# -gt 1 ]]; do
@@ -996,6 +1005,7 @@ test_session_start_cache_skipped_without_display_id() {
     # Create a mock that returns empty display_id
     cat > "$TEST_TMP/bin/agent-event-bus-cli" << 'MOCK_CLI'
 #!/bin/bash
+while [[ "$1" == --* ]]; do case "$1" in --url) shift 2 ;; *) shift ;; esac; done
 case "$1" in
     register)
         echo '{"session_id":"test-uuid","display_id":"","name":"test","client_id":"no-display-client","cursor":"c1"}'

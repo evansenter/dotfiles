@@ -1,6 +1,6 @@
 ---
 name: rfc-respond
-description: Respond to RFC-style issues with structured analysis
+description: Respond to RFC-style issues with structured analysis — evaluate the proposal, identify risks, suggest improvements, and provide a recommendation. Use when reviewing an existing RFC issue, when asked to comment on a design proposal, or when an RFC needs feedback.
 model: opus
 ---
 
@@ -87,7 +87,7 @@ Incorporate decisions into the response, updating blocking/requirements sections
 ### 6. Broadcast
 
 ```
-mcp__event-bus__publish_event(
+mcp__agent-event-bus__publish_event(
   event_type: "rfc_responded",
   payload: "Responded to RFC #N in <repo>",
   session_id: "<your-session-id>",

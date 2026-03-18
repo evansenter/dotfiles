@@ -59,7 +59,6 @@ Unless `--no-watch` was passed, run `/watch-ci` to monitor CI status in backgrou
 Skill(watch-ci)
 ```
 
-### 5. Suggest Next Step
+### 5. Done
 
-After CI passes, remind user:
-- "When CI passes, run `/pr-review remote` to process reviewer comments"
+`/watch-ci` will automatically run `/pr-review remote` when CI passes.

@@ -37,30 +37,20 @@ Non-obvious autonomy:
 ## Quality Gates
 
 - Run quality gates (linter, formatter, tests) before pushing.
-- **Coverage** - New code needs tests. User-facing features need examples. Flag gaps.
-- **Example validation** - Run examples with debug logging (check per-project CLAUDE.md for flags).
+- New code needs tests. User-facing features need examples. Flag gaps.
 
 ## Reflection
 
-After significant work, share with the user:
-- What was hard? What caused friction?
-- Where did user redirect you? (indicates missing guidance)
-- What's missing? (tools, docs, patterns that should exist)
-- What would you build if you had time?
-
-Publish insights to event bus so other sessions benefit:
-- `gotcha_discovered` - Non-obvious issues
-- `pattern_found` - Useful patterns
-- `improvement_suggested` - Tooling/workflow gaps identified
+After significant work: share what caused friction, where you were redirected (indicates missing guidance), and what's missing. Publish insights to event bus (`gotcha_discovered`, `pattern_found`, `improvement_suggested`).
 
 ## PR Workflow
 
 Use `/work <issue-number>` for guided development. `/work --attach` to join an existing PR.
 
 - **Before pushing**: `/pr-review local`, update docs if needed
-- **After push**: `/watch-ci <PR#>` immediately
-- **After CI passes**: `/pr-review remote`—automated reviewers post new comments each run
-- **On feedback**: Form your own opinion—you have context reviewers lack
+- **After push**: `/pr-create` (or just push) → auto-chains: `/watch-ci` → CI passes → `/pr-review remote`
+- **On feedback**: Present via AskUserQuestion. Form your own opinion—you have context reviewers lack
+- **After fixes**: Push → auto-cycle repeats until clean
 
 ## Event Bus
 
@@ -80,4 +70,3 @@ On each turn, scan incoming events *before* responding. For relevant events, bri
 
 - **Act on immediately**: DMs (`session:<your-id>`), `help_needed` to your repo, CI failures you caused, blockers
 - **Mention to user**: `help_response`, `gotcha_discovered`, `pattern_found`, `test_flaky`, `improvement_suggested`
-- **Ignore silently**: Routine `task_completed`, `wip_checkpoint`, `ci_completed` from unrelated work

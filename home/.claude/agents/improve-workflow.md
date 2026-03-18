@@ -1,6 +1,6 @@
 ---
 name: improve-workflow
-description: Suggests workflow improvements based on recent usage
+description: Suggests workflow improvements based on recent session analytics — tool frequency, error patterns, permission gaps, and sequence inefficiencies. Use after completing significant work, at the end of a PR cycle, when the user asks "how can we work better", or when spawned by the /work command's reflect phase.
 model: opus
 ---
 
@@ -30,7 +30,7 @@ Then ingest only what's needed:
 ```
 mcp__agent-session-analytics__ingest_logs(days=1)
 mcp__agent-session-analytics__ingest_git_history(days=1)
-mcp__agent-session-analytics__correlate_git_with_sessions(days=1)
+mcp__agent-session-analytics__find_related_sessions(days=1)
 ```
 
 Only expand to `days=3` if the 1-day window has < 3 sessions.
@@ -55,7 +55,7 @@ From insights, note:
 
 Only if `has_bus_events: true` AND you need context:
 ```
-mcp__event-bus__get_events(
+mcp__agent-event-bus__get_events(
   event_types=["gotcha_discovered", "pattern_found"],
   limit=5,
   order="desc"

@@ -25,6 +25,10 @@ if ! command -v agent-event-bus-cli &>/dev/null; then
     exit 0
 fi
 
+# Build URL args if AGENT_EVENT_BUS_URL is set (e.g., remote Tailscale endpoint)
+URL_ARGS=()
+[[ -n "${AGENT_EVENT_BUS_URL:-}" ]] && URL_ARGS=(--url "$AGENT_EVENT_BUS_URL")
+
 # Parse input
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // ""')
 CWD=$(echo "$INPUT" | jq -r '.cwd // ""')
@@ -94,7 +98,7 @@ PAYLOAD="[work:${WORK_ID:-unknown}] | branch: ${BRANCH:-unknown}"
 PAYLOAD="${PAYLOAD} | time: ${CHECKPOINT_TIME}"
 
 # Publish to session-specific channel
-RESULT=$(agent-event-bus-cli publish \
+RESULT=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} publish \
     --type "wip_checkpoint" \
     --payload "$PAYLOAD" \
     --session-id "$SESSION_ID" \

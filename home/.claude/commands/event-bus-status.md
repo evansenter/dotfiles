@@ -11,8 +11,8 @@ Action-oriented overview of cross-session coordination.
 ### 1. Gather Data
 
 ```
-mcp__event-bus__list_sessions()
-mcp__event-bus__get_events(limit=50)
+mcp__agent-event-bus__list_sessions()
+mcp__agent-event-bus__get_events(limit=50)
 ```
 
 ### 2. Identify Action Items

@@ -76,8 +76,8 @@ get_token_data() {
     # Find CLI - check common locations
     if command -v agent-session-analytics-cli &>/dev/null; then
         cli_path="agent-session-analytics-cli"
-    elif [[ -x "$HOME/Documents/projects/agent-session-analytics/.venv/bin/agent-session-analytics-cli" ]]; then
-        cli_path="$HOME/Documents/projects/agent-session-analytics/.venv/bin/agent-session-analytics-cli"
+    elif [[ -x "$HOME/projects/agent-session-analytics/.venv/bin/agent-session-analytics-cli" ]]; then
+        cli_path="$HOME/projects/agent-session-analytics/.venv/bin/agent-session-analytics-cli"
     elif [[ -x "$HOME/.local/bin/agent-session-analytics-cli" ]]; then
         cli_path="$HOME/.local/bin/agent-session-analytics-cli"
     else
