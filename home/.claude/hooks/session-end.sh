@@ -40,6 +40,17 @@ fi
 # Unregister by client_id - server looks up session by (machine, client_id)
 OUTPUT=$(agent-event-bus-cli unregister --client-id "$CLIENT_ID" 2>/dev/null) || true
 
+# Kill background event bus watcher
+INBOX_DIR="${TMPDIR:-/tmp}/claude-event-inbox"
+WATCHER_PID_FILE="$INBOX_DIR/$CLIENT_ID.inbox.pid"
+if [[ -f "$WATCHER_PID_FILE" ]]; then
+    WATCHER_PID=$(cat "$WATCHER_PID_FILE" 2>/dev/null)
+    if [[ -n "$WATCHER_PID" ]] && kill -0 "$WATCHER_PID" 2>/dev/null; then
+        kill "$WATCHER_PID" 2>/dev/null || true
+    fi
+    rm -f "$WATCHER_PID_FILE" "$INBOX_DIR/$CLIENT_ID.inbox"
+fi
+
 if echo "$OUTPUT" | jq -e '.success == true' >/dev/null 2>&1; then
     SESSION_ID=$(echo "$OUTPUT" | jq -r '.session_id // "unknown"')
     echo "Unregistered from event bus: $SESSION_ID"

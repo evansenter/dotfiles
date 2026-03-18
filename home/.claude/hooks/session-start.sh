@@ -108,6 +108,29 @@ if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]
     echo "</recent-events>"
 fi
 
+# Launch background event bus watcher
+# Keeps an inbox file fresh between prompts so events are pre-staged
+WATCHER_SCRIPT="$(dirname "$0")/event-bus-watcher.sh"
+INBOX_DIR="${TMPDIR:-/tmp}/claude-event-inbox"
+INBOX_PATH="$INBOX_DIR/$SESSION_ID.inbox"
+mkdir -p "$INBOX_DIR" && chmod 700 "$INBOX_DIR" 2>/dev/null
+
+# Kill any existing watcher for this session
+WATCHER_PID_FILE="${INBOX_PATH}.pid"
+if [[ -f "$WATCHER_PID_FILE" ]]; then
+    OLD_PID=$(cat "$WATCHER_PID_FILE" 2>/dev/null)
+    if [[ -n "$OLD_PID" ]] && kill -0 "$OLD_PID" 2>/dev/null; then
+        kill "$OLD_PID" 2>/dev/null || true
+    fi
+fi
+
+# Clear stale inbox and start fresh watcher
+rm -f "$INBOX_PATH"
+if [[ -x "$WATCHER_SCRIPT" ]]; then
+    nohup "$WATCHER_SCRIPT" "$SESSION_ID" "$INBOX_PATH" 5 >/dev/null 2>&1 &
+    disown
+fi
+
 # If resuming after compaction, fetch and display WIP checkpoint
 if [[ "$SOURCE" == "compact" ]]; then
     # Fetch the most recent wip_checkpoint event for this session
