@@ -1055,8 +1055,6 @@ MOCK_CLI
 
     # Note: transcript_path must be non-empty — bash `read` treats consecutive
     # tabs as one delimiter, so empty transcript_path shifts session_id out
-    # Note: transcript_path must be non-empty — bash `read` treats consecutive
-    # tabs as one delimiter, so empty transcript_path shifts session_id out
     local input='{"workspace":{"current_dir":"/tmp"},"context_window":{"current_usage":{"input_tokens":1000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0},"context_window_size":200000},"model":{"id":"test"},"transcript_path":"/tmp/fake.jsonl","session_id":"retry-test-uuid"}'
     local output
     # Statusline's complex @tsv jq query needs real jq, not the test mock.
