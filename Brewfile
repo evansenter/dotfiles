@@ -58,6 +58,7 @@ brew "whisper-cpp"              # Local speech-to-text
 
 # OpenClaw Agent Tools
 brew "spotify_player"             # Spotify CLI (OAuth device flow)
+brew "gogcli"                     # Google Suite CLI
 
 # Utilities
 brew "ffmpeg"
