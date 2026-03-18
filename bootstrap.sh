@@ -789,7 +789,6 @@ install_claude_mcp_servers() {
 			echo "    export GITHUB_TOKEN=\"ghp_your_token_here\""
 		fi
 	fi
-
 }
 
 sync_dotfiles() {
