@@ -57,8 +57,7 @@ brew "numpy"                  # IAP tunnel perf (gcloud)
 brew "whisper-cpp"              # Local speech-to-text
 
 # OpenClaw Agent Tools
-tap "steipete/tap"
-brew "steipete/tap/spogo"       # Spotify CLI control
+brew "spotify_player"             # Spotify CLI (OAuth device flow)
 
 # Utilities
 brew "ffmpeg"
