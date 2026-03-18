@@ -253,11 +253,6 @@ install_launch_agents() {
 }
 
 install_cron_jobs() {
-	# Cron jobs are Linux-only (macOS uses LaunchAgents)
-	if [[ "$(uname)" == "Darwin" ]]; then
-		return 0
-	fi
-
 	# Install cargo-sweep cron job (only if cargo is installed)
 	if command -v cargo >/dev/null 2>&1; then
 		local cron_entry="0 3 * * 0 $HOME/.bin/cargo-sweep-all"

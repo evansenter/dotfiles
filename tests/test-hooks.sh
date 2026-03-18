@@ -56,7 +56,9 @@ setup_test_env() {
 #!/bin/bash
 # Mock jq - minimal implementation for testing
 input=$(cat)
-if [[ "$*" == *".session_id"* ]]; then
+if [[ "$*" == *".display_id"* ]]; then
+    echo "$input" | grep -o '"display_id":"[^"]*"' | cut -d'"' -f4 || echo ""
+elif [[ "$*" == *".session_id"* ]]; then
     echo "$input" | grep -o '"session_id":"[^"]*"' | cut -d'"' -f4 || echo ""
 elif [[ "$*" == *".cwd"* ]]; then
     echo "$input" | grep -o '"cwd":"[^"]*"' | cut -d'"' -f4 || echo ""
@@ -971,6 +973,101 @@ test_tmux_status_consumes_stdin() {
 }
 
 # ============================================================================
+# session-start.sh cache pre-population tests
+# ============================================================================
+
+test_session_start_populates_cache() {
+    setup_mock_event_bus_cli
+
+    # Clear any existing cache
+    local cache_dir="${TMPDIR:-/tmp}/claude-statusline"
+    rm -rf "$cache_dir" 2>/dev/null
+
+    local output
+    output=$(echo '{"session_id":"test-client-uuid","cwd":"/tmp/test-repo"}' | \
+        bash "$HOOKS_DIR/session-start.sh" 2>&1)
+
+    # Cache file should be created with the display_id from registration
+    [[ -f "$cache_dir/test-client-uuid" ]] && \
+    [[ "$(cat "$cache_dir/test-client-uuid")" == "test-fox" ]]
+}
+
+test_session_start_cache_skipped_without_display_id() {
+    # Create a mock that returns empty display_id
+    cat > "$TEST_TMP/bin/agent-event-bus-cli" << 'MOCK_CLI'
+#!/bin/bash
+case "$1" in
+    register)
+        echo '{"session_id":"test-uuid","display_id":"","name":"test","client_id":"no-display-client","cursor":"c1"}'
+        ;;
+    events) echo "No events" ;;
+    *) echo '{}' ;;
+esac
+MOCK_CLI
+    chmod +x "$TEST_TMP/bin/agent-event-bus-cli"
+
+    local cache_dir="${TMPDIR:-/tmp}/claude-statusline"
+    rm -f "$cache_dir/no-display-client" 2>/dev/null
+
+    echo '{"session_id":"no-display-client","cwd":"/tmp"}' | \
+        bash "$HOOKS_DIR/session-start.sh" 2>&1 >/dev/null
+
+    # Cache file should NOT be created for empty display_id
+    [[ ! -f "$cache_dir/no-display-client" ]]
+}
+
+# ============================================================================
+# statusline retry logic tests
+# ============================================================================
+
+test_statusline_retry_finds_session() {
+    # Create a mock CLI that fails twice then succeeds (simulating race condition)
+    # Statusline uses hardcoded $HOME/.local/bin/agent-event-bus-cli, so we use a temp HOME
+    local mock_home="$TEST_TMP/mock-home"
+    mkdir -p "$mock_home/.local/bin"
+
+    local attempt_file="$TEST_TMP/attempt_count"
+    echo "0" > "$attempt_file"
+
+    cat > "$mock_home/.local/bin/agent-event-bus-cli" << MOCK_CLI
+#!/bin/bash
+case "\$1" in
+    sessions)
+        count=\$(cat "$attempt_file")
+        count=\$((count + 1))
+        echo "\$count" > "$attempt_file"
+        if [[ \$count -ge 2 ]]; then
+            echo "Active sessions (1):"
+            echo ""
+            echo "  retry-fox  dotfiles/main"
+            echo "    repo: dotfiles, machine: test"
+            echo "    client_id: retry-test-uuid"
+        fi
+        ;;
+    *) echo '{}' ;;
+esac
+MOCK_CLI
+    chmod +x "$mock_home/.local/bin/agent-event-bus-cli"
+
+    # Clear cache
+    local cache_dir="${TMPDIR:-/tmp}/claude-statusline"
+    rm -f "$cache_dir/retry-test-uuid" 2>/dev/null
+
+    # Note: transcript_path must be non-empty — bash `read` treats consecutive
+    # tabs as one delimiter, so empty transcript_path shifts session_id out
+    # Note: transcript_path must be non-empty — bash `read` treats consecutive
+    # tabs as one delimiter, so empty transcript_path shifts session_id out
+    local input='{"workspace":{"current_dir":"/tmp"},"context_window":{"current_usage":{"input_tokens":1000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0},"context_window_size":200000},"model":{"id":"test"},"transcript_path":"/tmp/fake.jsonl","session_id":"retry-test-uuid"}'
+    local output
+    # Statusline's complex @tsv jq query needs real jq, not the test mock.
+    # Prepend standard jq locations before $TEST_TMP/bin in PATH.
+    output=$(HOME="$mock_home" PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:$PATH" bash "$STATUSLINE_SCRIPT" <<< "$input" 2>/dev/null) || true
+
+    # Should find session after retry and show name (not warning)
+    [[ "$output" == *"retry-fox"* ]]
+}
+
+# ============================================================================
 # Run all tests
 # ============================================================================
 
@@ -988,6 +1085,8 @@ main() {
     run_test "integration: happy path" "test_session_start_happy_path"
     run_test "integration: parses session_id" "test_session_start_parses_session_id"
     run_test "integration: fetches events" "test_session_start_fetches_events"
+    run_test "integration: populates statusline cache" "test_session_start_populates_cache"
+    run_test "integration: skips cache without display_id" "test_session_start_cache_skipped_without_display_id"
     echo ""
 
     echo "=== session-end.sh ==="
@@ -1037,6 +1136,7 @@ main() {
     run_test "graceful degradation (malformed JSON)" "test_statusline_graceful_malformed_json"
     run_test "graceful degradation (null fields)" "test_statusline_graceful_null_fields"
     run_test "integration: client_id lookup" "test_statusline_client_id_lookup"
+    run_test "integration: retry finds session" "test_statusline_retry_finds_session"
     echo ""
 
     echo "=== tmux-status.sh ==="

@@ -60,20 +60,20 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version control of dotfiles while keeping them in their expected locations.
 
 **Adding new configs:**
-1. Create the file under `home/` mirroring the `~` path (e.g., `home/.moltbot/moltbot.json` → `~/.moltbot/moltbot.json`)
+1. Create the file under `home/` mirroring the `~` path (e.g., `home/.openclaw/openclaw.json` → `~/.openclaw/openclaw.json`)
 2. Run `./bootstrap.sh -f` to create the symlink
 3. The existing file will be replaced with a symlink to the dotfiles version
 
 **Handling sensitive data:**
 - Never commit secrets (tokens, API keys, passwords)
-- Use environment variable substitution if the tool supports it (e.g., `${MOLTBOT_GATEWAY_TOKEN}`)
+- Use environment variable substitution if the tool supports it (e.g., `${OPENCLAW_GATEWAY_TOKEN}`)
 - Store actual secrets in `~/.extra` (sourced by zsh, not tracked)
 
 **Examples:**
 | Tool | Tracked Config | Secrets Location |
 |------|---------------|------------------|
 | Claude Code | `home/.claude/settings.json` | `~/.claude/.credentials.json` (not tracked) |
-| Moltbot | `home/.moltbot/moltbot.json` | `~/.extra` via `${MOLTBOT_GATEWAY_TOKEN}` |
+| OpenClaw | `home/.openclaw/openclaw.json` | `~/.extra` via `${OPENCLAW_GATEWAY_TOKEN}` |
 
 ### Key Components
 
@@ -95,25 +95,25 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 | Trigger | Explicit | Context-based |
 | Examples | `/work`, `/pr-review` | `hook-authoring` |
 
-**Moltbot** (`home/.moltbot/`) - Personal AI assistant. The tracked config is for **remote clients** connecting to the gateway on speck-vm. Bootstrap symlinks config and installs the CLI automatically. Skipped if local gateway config exists.
+**OpenClaw** (`home/.openclaw/`) - Personal AI assistant. The tracked config is for **remote clients** connecting to the gateway on mac-mini. Bootstrap symlinks config and installs the CLI automatically. Skipped if local gateway config exists.
 
-- **Client machines**: Bootstrap handles everything. Just add `MOLTBOT_GATEWAY_TOKEN` to `~/.extra`. (Claude auth lives on gateway, not clients.)
-- **Gateway host** (speck-vm): Maintains its own `~/.moltbot/moltbot.json` with `mode: local`. Runs WhatsApp channel. Exposed via tailscale serve at `https://speck-vm.tailac7b3c.ts.net/`.
+- **Client machines**: Bootstrap handles everything. Just add `OPENCLAW_GATEWAY_TOKEN` to `~/.extra`. (Claude auth lives on gateway, not clients.)
+- **Gateway host** (mac-mini): Maintains its own `~/.openclaw/openclaw.json` with `mode: local`. Runs WhatsApp channel. Exposed via tailscale serve at `https://mac-mini.tailac7b3c.ts.net/`.
 
-Remote browsers require pairing: `moltbot devices approve <id>` (check `moltbot devices list`).
+Remote browsers require pairing: `openclaw devices approve <id>` (check `openclaw devices list`).
 
 **WhatsApp Channel Configuration** (on gateway host):
 ```bash
 # DM policies: pairing (default), allowlist, open, disabled
-moltbot config set channels.whatsapp.dmPolicy allowlist
+openclaw config set channels.whatsapp.dmPolicy allowlist
 
 # Add numbers to allowlist (E.164 format)
-moltbot config set channels.whatsapp.allowFrom '["+12025551234", "+441234567890"]'
+openclaw config set channels.whatsapp.allowFrom '["+12025551234", "+441234567890"]'
 
 # Restart to apply
-moltbot gateway restart
+openclaw daemon restart
 ```
-Note: WhatsApp shows "online" whenever moltbot is connected (WhatsApp Web limitation).
+Note: WhatsApp shows "online" whenever openclaw is connected (WhatsApp Web limitation).
 
 **iTerm2** (`preferences/`, `vendor/iterm-catppuccin/`) - Manual color preset import required.
 

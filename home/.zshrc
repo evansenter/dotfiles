@@ -132,3 +132,6 @@ fi
 if [ -f ~/.extra ]; then
     source ~/.extra
 fi
+
+# OpenClaw Completion
+[[ -f "$HOME/.openclaw/completions/openclaw.zsh" ]] && source "$HOME/.openclaw/completions/openclaw.zsh"

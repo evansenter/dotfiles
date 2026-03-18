@@ -34,7 +34,7 @@ alias g="git"
 # ==============================================================================
 
 # SSH to speck-vm
-alias ssh-speck='gcloud compute ssh speck-vm'
+alias ssh-speck='ssh speck-vm'
 
 # ==============================================================================
 # System
