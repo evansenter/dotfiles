@@ -99,6 +99,19 @@ gh_cache_dir="${TMPDIR:-/tmp}/claude-statusline-gh"
 mkdir -p "$gh_cache_dir" && chmod 700 "$gh_cache_dir" 2>/dev/null
 find "$gh_cache_dir" -type f -mtime +1 -delete 2>/dev/null
 
+# Helper: check if cache file is fresh (returns 0 if fresh, 1 if stale/missing)
+cache_fresh() {
+    local file="$1" ttl="$2"
+    [[ -f "$file" ]] || return 1
+    local mtime
+    if [[ "$(uname)" == "Darwin" ]]; then
+        mtime=$(stat -f %m "$file" 2>/dev/null || echo 0)
+    else
+        mtime=$(stat -c %Y "$file" 2>/dev/null || echo 0)
+    fi
+    (( $(date +%s) - mtime < ttl ))
+}
+
 # Get repo URL for hyperlinks (cached per cwd — never changes within a session)
 repo_url=""
 if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
@@ -163,14 +176,10 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     # Check for associated PRs (cached per branch, 60s TTL)
     pr_num=""
     if [[ -n "$branch" ]]; then
-        pr_cache_file="${gh_cache_dir}/pr_${branch}"
-        if [[ -f "$pr_cache_file" ]]; then
-            if [[ "$(uname)" == "Darwin" ]]; then
-                pr_cache_age=$(( $(date +%s) - $(stat -f %m "$pr_cache_file" 2>/dev/null || echo 0) ))
-            else
-                pr_cache_age=$(( $(date +%s) - $(stat -c %Y "$pr_cache_file" 2>/dev/null || echo 0) ))
-            fi
-            [[ $pr_cache_age -lt 60 ]] && pr_num=$(cat "$pr_cache_file")
+        branch_key=$(echo "$branch" | tr '/' '_')
+        pr_cache_file="${gh_cache_dir}/pr_${branch_key}"
+        if cache_fresh "$pr_cache_file" 60; then
+            pr_num=$(cat "$pr_cache_file")
         fi
         if [[ -z "$pr_num" ]]; then
             pr_num=$(cd "$cwd" && gh pr list --head "$branch" --json number -q '.[0].number' 2>/dev/null)
@@ -184,13 +193,8 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     if [[ -n "$pr_num" ]]; then
         body_cache_file="${gh_cache_dir}/body_${pr_num}"
         pr_body=""
-        if [[ -f "$body_cache_file" ]]; then
-            if [[ "$(uname)" == "Darwin" ]]; then
-                body_cache_age=$(( $(date +%s) - $(stat -f %m "$body_cache_file" 2>/dev/null || echo 0) ))
-            else
-                body_cache_age=$(( $(date +%s) - $(stat -c %Y "$body_cache_file" 2>/dev/null || echo 0) ))
-            fi
-            [[ $body_cache_age -lt 60 ]] && pr_body=$(cat "$body_cache_file")
+        if cache_fresh "$body_cache_file" 60; then
+            pr_body=$(cat "$body_cache_file")
         fi
         if [[ -z "$pr_body" ]]; then
             pr_body=$(cd "$cwd" && gh pr view "$pr_num" --json body -q '.body' 2>/dev/null)
@@ -228,13 +232,8 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
         ci_cache_file="${gh_cache_dir}/ci_${pr_num}"
 
         ci_status=""
-        if [[ -f "$ci_cache_file" ]]; then
-            if [[ "$(uname)" == "Darwin" ]]; then
-                ci_cache_age=$(( $(date +%s) - $(stat -f %m "$ci_cache_file" 2>/dev/null || echo 0) ))
-            else
-                ci_cache_age=$(( $(date +%s) - $(stat -c %Y "$ci_cache_file" 2>/dev/null || echo 0) ))
-            fi
-            [[ $ci_cache_age -lt 30 ]] && ci_status=$(cat "$ci_cache_file")
+        if cache_fresh "$ci_cache_file" 30; then
+            ci_status=$(cat "$ci_cache_file")
         fi
 
         if [[ -z "$ci_status" ]]; then
