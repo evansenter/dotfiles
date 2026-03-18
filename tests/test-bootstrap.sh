@@ -135,6 +135,33 @@ test_cargo_sweep_syntax() {
     bash -n "$SCRIPT_DIR/../home/.bin/cargo-sweep-all"
 }
 
+test_configure_claude_local_settings_exists() {
+    # bootstrap.sh should have the configure_claude_local_settings function
+    grep -q 'configure_claude_local_settings' "$BOOTSTRAP"
+}
+
+test_settings_local_skips_gateway_host() {
+    # The function should skip on mac-mini (gateway host)
+    grep -q 'mac-mini' "$BOOTSTRAP" && \
+    grep -q 'hostname' "$BOOTSTRAP"
+}
+
+test_no_documents_projects_refs() {
+    # No tracked source files should reference ~/Documents/projects/
+    # Exclude: .git, databases, logs, error files, backups, worktree settings, this test
+    ! find "$SCRIPT_DIR/.." -type f \
+        -not -path "*/.git/*" \
+        -not -path "*/tests/test-bootstrap.sh" \
+        -not -path "*/.claude/settings.local.json" \
+        -not -name "*.db" \
+        -not -name "*.db.*" \
+        -not -name "*.log" \
+        -not -name "*.err" \
+        -not -name "*.stdout" \
+        -print0 | \
+        xargs -0 grep -l 'Documents/projects' 2>/dev/null
+}
+
 # ============================================================================
 # Run all tests
 # ============================================================================
@@ -163,6 +190,9 @@ main() {
     run_test "installs cargo-sweep cron" "test_bootstrap_installs_cron"
     run_test "cargo-sweep script exists and executable" "test_cargo_sweep_script_exists"
     run_test "cargo-sweep script syntax" "test_cargo_sweep_syntax"
+    run_test "configure_claude_local_settings exists" "test_configure_claude_local_settings_exists"
+    run_test "settings.local.json skips gateway host" "test_settings_local_skips_gateway_host"
+    run_test "no ~/Documents/projects references" "test_no_documents_projects_refs"
     echo ""
 
     # Summary

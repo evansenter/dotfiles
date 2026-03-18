@@ -154,6 +154,53 @@ install_openclaw_cli() {
 	install_npm_package "openclaw" "OpenClaw CLI" "openclaw"
 }
 
+configure_claude_local_settings() {
+	# On remote clients, Claude Code's tracked settings.json has localhost MCP URLs
+	# (correct for mac-mini gateway host). Override with Tailscale URLs in the
+	# untracked settings.local.json so remote machines reach services over the network.
+	local settings_local="$HOME/.claude/settings.local.json"
+	local gateway_host="mac-mini.tailac7b3c.ts.net"
+
+	# Skip if this is the gateway host (services run locally)
+	if [[ "$(hostname -s)" == "mac-mini" ]]; then
+		return 0
+	fi
+
+	# Skip if settings.local.json already has MCP URLs configured
+	if [[ -f "$settings_local" ]] && grep -q "AGENT_EVENT_BUS_URL" "$settings_local" 2>/dev/null; then
+		return 0
+	fi
+
+	mkdir -p "$HOME/.claude"
+
+	if [[ -f "$settings_local" ]]; then
+		# Merge env into existing settings.local.json
+		if command -v jq &>/dev/null; then
+			local tmp
+			tmp=$(mktemp)
+			jq --arg bus "https://${gateway_host}/agent-event-bus/mcp" \
+			   --arg analytics "https://${gateway_host}/agent-session-analytics/mcp" \
+			   '.env = (.env // {}) + {"AGENT_EVENT_BUS_URL": $bus, "AGENT_SESSION_ANALYTICS_URL": $analytics}' \
+			   "$settings_local" > "$tmp" && mv "$tmp" "$settings_local"
+			echo "Updated: ~/.claude/settings.local.json (remote MCP URLs)"
+		else
+			echo "Warning: jq not found, cannot update settings.local.json"
+			echo "  Manually add AGENT_EVENT_BUS_URL and AGENT_SESSION_ANALYTICS_URL"
+		fi
+	else
+		# Create new settings.local.json
+		cat > "$settings_local" << EOF
+{
+  "env": {
+    "AGENT_EVENT_BUS_URL": "https://${gateway_host}/agent-event-bus/mcp",
+    "AGENT_SESSION_ANALYTICS_URL": "https://${gateway_host}/agent-session-analytics/mcp"
+  }
+}
+EOF
+		echo "Created: ~/.claude/settings.local.json (remote MCP URLs)"
+	fi
+}
+
 install_tmux_plugin_manager() {
 	local tpm_dir="$HOME/.tmux/plugins/tpm"
 
@@ -840,6 +887,9 @@ sync_dotfiles() {
 
 		# Install Claude Code MCP servers
 		install_claude_mcp_servers
+
+		# Configure settings.local.json with remote MCP URLs (skipped on gateway host)
+		configure_claude_local_settings
 	fi
 
 	# Install tmux plugin manager if needed
