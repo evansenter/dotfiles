@@ -189,11 +189,9 @@ Publish `feedback_addressed` to event bus.
 
 **Local**: If fixes made, run `/pr-review local` again.
 
-**Remote**:
+**Remote** (if fixes were made):
 1. Run quality gates (linter, formatter, tests)
 2. Commit with message referencing feedback addressed
 3. Push changes
-4. Run `/pr-review local` to verify clean
-5. Run `/watch-ci` to monitor CI
-6. Reshare PR URL to user
+4. Run `/watch-ci` — this auto-triggers another `/pr-review remote` cycle when CI passes
 
