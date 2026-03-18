@@ -21,6 +21,10 @@ if ! command -v agent-event-bus-cli &>/dev/null; then
     exit 0
 fi
 
+# Build URL args if AGENT_EVENT_BUS_URL is set (e.g., remote Tailscale endpoint)
+URL_ARGS=()
+[[ -n "${AGENT_EVENT_BUS_URL:-}" ]] && URL_ARGS=(--url "$AGENT_EVENT_BUS_URL")
+
 # Parse session-id - required for cursor tracking
 SESSION_ID=""
 if command -v jq &>/dev/null; then
@@ -35,7 +39,7 @@ fi
 # Fetch only NEW events since last prompt using --resume
 # --resume: incremental polling - server tracks cursor, only returns new events
 # --order asc: chronological order (oldest first, new events at end)
-EVENTS=$(agent-event-bus-cli events \
+EVENTS=$(agent-event-bus-cli "${URL_ARGS[@]}" events \
     --resume \
     --session-id "$SESSION_ID" \
     --order asc \

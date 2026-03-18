@@ -22,7 +22,7 @@ if [ -d "/usr/local/go/bin" ]; then
 fi
 
 # Default editor
-export EDITOR='vim'
+export EDITOR='hx'
 
 # Truecolor support - apps check this env var for 24-bit color capability
 export COLORTERM='truecolor'

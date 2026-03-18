@@ -17,7 +17,7 @@ fi
 
 # Find all Cargo.toml files and sweep their target directories
 # Limit to common project locations to avoid scanning entire filesystem
-for dir in "$HOME/Documents/projects" "$HOME/projects" "$HOME/src" "$HOME/code"; do
+for dir in "$HOME/projects" "$HOME/src" "$HOME/code"; do
     if [[ -d "$dir" ]]; then
         find "$dir" -name "Cargo.toml" -type f 2>/dev/null | while read -r cargo_file; do
             project_dir=$(dirname "$cargo_file")
