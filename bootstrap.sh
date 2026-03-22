@@ -169,6 +169,20 @@ symlink_claude_dir() {
 	echo "Linked: ~/.claude/$dir_name/"
 }
 
+ensure_openclaw_workspace() {
+	local dest_dir="$HOME/.openclaw/workspace"
+
+	if [[ -d "$dest_dir" ]]; then
+		return 0
+	fi
+
+	# Create the workspace directory so OpenClaw finds it on first run.
+	# Content files (SOUL.md, AGENTS.md, etc.) are personal and created
+	# locally via `openclaw configure`, not tracked in dotfiles.
+	mkdir -p "$dest_dir"
+	echo "Created: ~/.openclaw/workspace/"
+}
+
 symlink_openclaw_config() {
 	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 	local src_file="$dotfiles_dir/home/.openclaw/openclaw.json"
@@ -1076,6 +1090,9 @@ sync_dotfiles() {
 	fi
 
 	if [[ "$install_assistants" == true ]]; then
+		# Ensure OpenClaw workspace directory exists
+		ensure_openclaw_workspace
+
 		# Symlink OpenClaw config (skipped if local gateway config exists)
 		symlink_openclaw_config
 

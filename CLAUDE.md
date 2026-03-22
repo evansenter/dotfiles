@@ -61,6 +61,8 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 2. Run `./bootstrap.sh -f` to create the symlink
 3. The existing file will be replaced with a symlink to the dotfiles version
 
+**Scaffolded directories:** Some directories are created by bootstrap but not symlinked. Example: `~/.openclaw/workspace/` — content is personal, generated via `openclaw configure`.
+
 **Handling sensitive data:**
 - Never commit secrets (tokens, API keys, passwords)
 - Use environment variable substitution if the tool supports it (e.g., `${OPENCLAW_GATEWAY_TOKEN}`)
