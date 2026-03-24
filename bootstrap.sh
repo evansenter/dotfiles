@@ -119,6 +119,31 @@ symlink_openclaw_config() {
 	install_openclaw_cli
 }
 
+# Install Node.js via nvm when apt/brew are unavailable (e.g. Steam Deck / SteamOS)
+ensure_node() {
+	if command -v npm >/dev/null 2>&1; then
+		return 0
+	fi
+
+	echo "npm not found, installing Node.js via nvm..."
+
+	if [[ ! -f "$HOME/.nvm/nvm.sh" ]]; then
+		curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+	fi
+
+	export NVM_DIR="$HOME/.nvm"
+	# shellcheck disable=SC1091
+	[[ -f "$NVM_DIR/nvm.sh" ]] && source "$NVM_DIR/nvm.sh"
+
+	if ! command -v nvm >/dev/null 2>&1; then
+		echo "Warning: Failed to load nvm, skipping Node.js install"
+		return 1
+	fi
+
+	nvm install --lts
+	nvm use --lts
+}
+
 # Install an npm package globally with graceful error handling
 # Usage: install_npm_package "package-name" "Display Name" ["package@version"]
 install_npm_package() {
@@ -127,8 +152,7 @@ install_npm_package() {
 	local install_spec="${3:-$package}"
 
 	if ! command -v npm >/dev/null 2>&1; then
-		echo "Skipping $display_name (npm not installed)"
-		return 0
+		ensure_node || { echo "Skipping $display_name (npm not available)"; return 0; }
 	fi
 
 	# Check if already installed
@@ -162,7 +186,9 @@ configure_claude_local_settings() {
 	local gateway_host="mac-mini.tailac7b3c.ts.net"
 
 	# Skip if this is the gateway host (services run locally)
-	if [[ "$(hostname -s)" == "mac-mini" ]]; then
+	local current_host
+	current_host=$(hostname -s 2>/dev/null || { tr -d '[:space:]' < /etc/hostname 2>/dev/null | cut -d. -f1; } || echo "")
+	if [[ "$current_host" == "mac-mini" ]]; then
 		return 0
 	fi
 
@@ -392,11 +418,15 @@ install_packages() {
 			echo "Skipping package installation (apt not found)"
 		fi
 
-		# Install Node.js 22 via NodeSource
+		# Install Node.js 22 via NodeSource (apt) or fall back to nvm
 		if ! command -v node >/dev/null 2>&1; then
-			echo "Installing Node.js 22..."
-			curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-			sudo apt-get install -y nodejs
+			if command -v apt-get >/dev/null 2>&1; then
+				echo "Installing Node.js 22 via NodeSource..."
+				curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+				sudo apt-get install -y nodejs
+			else
+				ensure_node
+			fi
 		fi
 
 		# Install Helix editor via snap
@@ -550,7 +580,8 @@ install_packages() {
 		fi
 
 		# Configure npm to use user-owned global directory (avoids permission issues)
-		if command -v npm >/dev/null 2>&1; then
+		# Skip when using nvm, which manages its own global prefix
+		if command -v npm >/dev/null 2>&1 && [[ -z "${NVM_DIR:-}" ]]; then
 			mkdir -p "$HOME/.npm-global"
 			npm config set prefix "$HOME/.npm-global"
 		fi
