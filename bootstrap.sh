@@ -107,6 +107,8 @@ install_github_binary() {
 		mv "$found" "$HOME/.local/bin/$binary"
 	else
 		echo "  Warning: $binary not found in archive"
+		rm -rf "$tmp"
+		return 1
 	fi
 
 	rm -rf "$tmp"
@@ -545,11 +547,7 @@ install_apt_packages() {
 	# Install Tailscale via official apt repo
 	if ! command -v tailscale >/dev/null 2>&1; then
 		echo "Installing Tailscale..."
-		curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
-		curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list
-		sudo apt-get update
-		sudo apt-get install -y tailscale
-		echo "  Tailscale installed. Run: sudo tailscale up"
+		curl -fsSL https://tailscale.com/install.sh | sh
 	fi
 
 	# Install Node.js 22 via NodeSource
@@ -657,11 +655,6 @@ install_apt_packages() {
 		fc-cache -fv
 	fi
 
-	# Configure npm to use user-owned global directory (avoids permission issues)
-	if command -v npm >/dev/null 2>&1; then
-		mkdir -p "$HOME/.npm-global"
-		npm config set prefix "$HOME/.npm-global"
-	fi
 }
 
 # Packages common to all Linux distros (user-local installs, no sudo)
@@ -764,9 +757,7 @@ update_packages() {
 		fi
 	else
 		if is_steamos; then
-			echo "Updating SteamOS packages (re-downloading binaries)..."
-			# Remove existing binaries so install_steamos_packages re-downloads them
-			echo "  Run './bootstrap.sh -i' to re-install all binary packages"
+			echo "SteamOS packages are static binaries. Re-run with -i to reinstall."
 		elif command -v apt-get >/dev/null 2>&1; then
 			echo "Updating apt packages..."
 			sudo apt-get update
