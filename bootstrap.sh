@@ -458,7 +458,7 @@ install_steamos_packages() {
 		chmod +x "$HOME/.local/bin/direnv"
 	fi
 
-	# Install Tailscale (static binary + systemd user service)
+	# Install Tailscale (static binary + system service)
 	if ! command -v tailscale >/dev/null 2>&1; then
 		echo "Installing Tailscale..."
 		local ts_version
@@ -470,25 +470,7 @@ install_steamos_packages() {
 			cp "/tmp/tailscale_${ts_version}_amd64/tailscaled" "$HOME/.local/bin/tailscaled"
 			chmod +x "$HOME/.local/bin/tailscale" "$HOME/.local/bin/tailscaled"
 			rm -rf /tmp/tailscale.tgz "/tmp/tailscale_${ts_version}_amd64"
-
-			# Set up systemd user service for tailscaled
-			mkdir -p "$HOME/.config/systemd/user"
-			cat > "$HOME/.config/systemd/user/tailscaled.service" << TSEOF
-[Unit]
-Description=Tailscale daemon (userspace)
-After=network-online.target
-
-[Service]
-ExecStart=%h/.local/bin/tailscaled --tun=userspace-networking --state=%h/.local/share/tailscale/tailscaled.state --socket=%h/.local/share/tailscale/tailscaled.sock
-Restart=on-failure
-
-[Install]
-WantedBy=default.target
-TSEOF
-			mkdir -p "$HOME/.local/share/tailscale"
-			systemctl --user daemon-reload
-			systemctl --user enable --now tailscaled.service
-			echo "  Tailscale installed. Run: tailscale up"
+			echo "  Tailscale installed. Run: sudo tailscaled & && sudo tailscale up"
 		fi
 	fi
 
