@@ -143,7 +143,7 @@ test_configure_claude_local_settings_exists() {
 test_settings_local_skips_gateway_host() {
     # The function should skip on mac-mini (gateway host)
     grep -q 'mac-mini' "$BOOTSTRAP" && \
-    grep -q 'hostname' "$BOOTSTRAP"
+    grep -q 'HOSTNAME' "$BOOTSTRAP"
 }
 
 test_no_documents_projects_refs() {
@@ -160,6 +160,29 @@ test_no_documents_projects_refs() {
         -not -name "*.stdout" \
         -print0 | \
         xargs -0 grep -l 'Documents/projects' 2>/dev/null
+}
+
+# ============================================================================
+# SteamOS / Linux compatibility tests
+# ============================================================================
+
+test_steamos_detection() {
+    grep -q 'is_steamos' "$BOOTSTRAP"
+}
+
+test_steamos_packages() {
+    grep -q 'install_steamos_packages' "$BOOTSTRAP"
+}
+
+test_set_default_shell() {
+    grep -q 'set_default_shell' "$BOOTSTRAP"
+}
+
+test_steamos_no_usr_local() {
+    # install_steamos_packages should not write to /usr/local (comments ok)
+    local steamos_func
+    steamos_func=$(sed -n '/^install_steamos_packages()/,/^}/p' "$BOOTSTRAP")
+    ! echo "$steamos_func" | grep -v '^\s*#' | grep -q '/usr/local'
 }
 
 # ============================================================================
@@ -193,6 +216,10 @@ main() {
     run_test "configure_claude_local_settings exists" "test_configure_claude_local_settings_exists"
     run_test "settings.local.json skips gateway host" "test_settings_local_skips_gateway_host"
     run_test "no ~/Documents/projects references" "test_no_documents_projects_refs"
+    run_test "SteamOS detection function exists" "test_steamos_detection"
+    run_test "SteamOS package function exists" "test_steamos_packages"
+    run_test "set_default_shell function exists" "test_set_default_shell"
+    run_test "no hardcoded /usr/local in SteamOS path" "test_steamos_no_usr_local"
     echo ""
 
     # Summary

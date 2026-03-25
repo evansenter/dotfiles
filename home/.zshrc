@@ -133,5 +133,8 @@ if [ -f ~/.extra ]; then
     source ~/.extra
 fi
 
+# Atuin (shell history)
+[[ -f "$HOME/.atuin/bin/env" ]] && source "$HOME/.atuin/bin/env"
+
 # OpenClaw Completion
 [[ -f "$HOME/.openclaw/completions/openclaw.zsh" ]] && source "$HOME/.openclaw/completions/openclaw.zsh"

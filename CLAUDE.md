@@ -4,13 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-Minimal dotfiles for zsh, git, vim, and tmux. Primarily macOS with Linux graceful degradation. Dotfiles in `home/` are symlinked to `~` on install. External themes are git submodules in `vendor/`.
+Minimal dotfiles for zsh, git, vim, and tmux. Supports macOS (Homebrew), Debian/Ubuntu (apt), and SteamOS (binary downloads to `~/.local/bin`). Dotfiles in `home/` are symlinked to `~` on install. External themes are git submodules in `vendor/`.
 
 ## Commands
 
 ```bash
 ./bootstrap.sh           # Install/sync dotfiles (prompts for confirmation)
 ./bootstrap.sh -f        # Force install (skip confirmation)
+./bootstrap.sh -f -i     # Force install + install packages
 ./bootstrap.sh --pull    # Pull latest then install
 ./uninstall.sh           # Remove symlinks
 git submodule update --init --remote  # Update theme submodules
@@ -45,10 +46,11 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 2. Symlinks `.claude/{hooks,commands,contrib,agents,skills}/`
 3. Installs Claude Code MCP servers
 4. Configures `settings.local.json` with remote MCP URLs (skipped on gateway host)
-5. Installs Homebrew packages (macOS) and hooks
-6. Installs TPM (manual `prefix + I` for plugins)
-7. Installs bat/yazi/zellij themes from `vendor/`
-8. Installs LaunchAgents and cron jobs
+5. Sets default shell to zsh
+6. Installs packages: Homebrew (macOS), apt (Debian/Ubuntu), or binary downloads to `~/.local/bin` (SteamOS)
+7. Installs TPM (manual `prefix + I` for plugins)
+8. Installs bat/yazi/zellij themes from `vendor/`
+9. Installs LaunchAgents (macOS) and cron jobs
 
 ### Symlink Pattern
 
