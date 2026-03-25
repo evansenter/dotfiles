@@ -20,8 +20,16 @@ set_default_shell() {
 	local zsh_path
 	zsh_path="$(command -v zsh 2>/dev/null)" || return 0
 
-	# Skip if already using zsh
-	if [[ "$(getent passwd "$(whoami)" | cut -d: -f7)" == "$zsh_path" ]]; then
+	# Skip if already using zsh (getent on Linux, dscl on macOS)
+	local current_shell
+	if command -v getent >/dev/null 2>&1; then
+		current_shell="$(getent passwd "$(whoami)" | cut -d: -f7)"
+	elif command -v dscl >/dev/null 2>&1; then
+		current_shell="$(dscl . -read /Users/"$(whoami)" UserShell | awk '{print $2}')"
+	else
+		current_shell=""
+	fi
+	if [[ "$current_shell" == "$zsh_path" ]]; then
 		return 0
 	fi
 
@@ -50,8 +58,17 @@ install_github_binary() {
 		return 0
 	fi
 
+	# Use GITHUB_TOKEN if available to avoid API rate limits (60/hr unauthenticated)
+	local auth_header=()
+	if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+		auth_header=(-H "Authorization: token $GITHUB_TOKEN")
+	fi
+
 	local version
-	version=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" | grep -Po '"tag_name": "\K[^"]*') || return 1
+	version=$(curl -fsSL "${auth_header[@]}" "https://api.github.com/repos/$repo/releases/latest" | grep -Po '"tag_name": "\K[^"]*') || {
+		echo "  Warning: Failed to fetch latest version for $repo"
+		return 1
+	}
 
 	local url="https://github.com/$repo/releases/download/$version/$pattern"
 	# Substitute {version} and {version_no_v} in pattern
@@ -65,17 +82,21 @@ install_github_binary() {
 
 	mkdir -p "$tmp/extracted"
 	if [[ "$url" == *.zip ]]; then
-		curl -fsSL "$url" -o "$tmp/archive.zip"
+		curl -fsSL "$url" -o "$tmp/archive.zip" || { echo "  Warning: Download failed for $binary"; rm -rf "$tmp"; return 1; }
 		unzip -q "$tmp/archive.zip" -d "$tmp/extracted"
 	elif [[ "$url" == *.tar.xz ]] || [[ "$url" == *.txz ]]; then
-		curl -fsSL "$url" -o "$tmp/archive.tar.xz"
+		curl -fsSL "$url" -o "$tmp/archive.tar.xz" || { echo "  Warning: Download failed for $binary"; rm -rf "$tmp"; return 1; }
 		tar xf "$tmp/archive.tar.xz" -C "$tmp/extracted" --strip-components="$strip"
 	elif [[ "$url" == *.tar.gz ]] || [[ "$url" == *.tgz ]]; then
-		curl -fsSL "$url" -o "$tmp/archive.tar.gz"
+		curl -fsSL "$url" -o "$tmp/archive.tar.gz" || { echo "  Warning: Download failed for $binary"; rm -rf "$tmp"; return 1; }
 		tar xf "$tmp/archive.tar.gz" -C "$tmp/extracted" --strip-components="$strip"
 	elif [[ "$url" == *.tbz ]] || [[ "$url" == *.tar.bz2 ]]; then
-		curl -fsSL "$url" -o "$tmp/archive.tbz"
+		curl -fsSL "$url" -o "$tmp/archive.tbz" || { echo "  Warning: Download failed for $binary"; rm -rf "$tmp"; return 1; }
 		tar xf "$tmp/archive.tbz" -C "$tmp/extracted" --strip-components="$strip"
+	else
+		echo "  Warning: Unknown archive format for $url"
+		rm -rf "$tmp"
+		return 1
 	fi
 
 	# Find and install the binary
