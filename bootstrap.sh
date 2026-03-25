@@ -458,6 +458,40 @@ install_steamos_packages() {
 		chmod +x "$HOME/.local/bin/direnv"
 	fi
 
+	# Install Tailscale (static binary + systemd user service)
+	if ! command -v tailscale >/dev/null 2>&1; then
+		echo "Installing Tailscale..."
+		local ts_version
+		ts_version=$(curl -fsSL "https://pkgs.tailscale.com/stable/" | grep -oP 'tailscale_\K[0-9.]+(?=_amd64\.tgz)' | head -1)
+		if [[ -n "$ts_version" ]]; then
+			curl -fsSL "https://pkgs.tailscale.com/stable/tailscale_${ts_version}_amd64.tgz" -o /tmp/tailscale.tgz
+			tar xf /tmp/tailscale.tgz -C /tmp
+			cp "/tmp/tailscale_${ts_version}_amd64/tailscale" "$HOME/.local/bin/tailscale"
+			cp "/tmp/tailscale_${ts_version}_amd64/tailscaled" "$HOME/.local/bin/tailscaled"
+			chmod +x "$HOME/.local/bin/tailscale" "$HOME/.local/bin/tailscaled"
+			rm -rf /tmp/tailscale.tgz "/tmp/tailscale_${ts_version}_amd64"
+
+			# Set up systemd user service for tailscaled
+			mkdir -p "$HOME/.config/systemd/user"
+			cat > "$HOME/.config/systemd/user/tailscaled.service" << TSEOF
+[Unit]
+Description=Tailscale daemon (userspace)
+After=network-online.target
+
+[Service]
+ExecStart=%h/.local/bin/tailscaled --tun=userspace-networking --state=%h/.local/share/tailscale/tailscaled.state --socket=%h/.local/share/tailscale/tailscaled.sock
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+TSEOF
+			mkdir -p "$HOME/.local/share/tailscale"
+			systemctl --user daemon-reload
+			systemctl --user enable --now tailscaled.service
+			echo "  Tailscale installed. Run: tailscale up"
+		fi
+	fi
+
 	# Install Go to ~/.local (not /usr/local)
 	if ! command -v go >/dev/null 2>&1; then
 		echo "Installing Go..."
@@ -524,6 +558,16 @@ install_apt_packages() {
 		sudo apt-get install -y "${to_install[@]}"
 	else
 		echo "All apt packages already installed"
+	fi
+
+	# Install Tailscale via official apt repo
+	if ! command -v tailscale >/dev/null 2>&1; then
+		echo "Installing Tailscale..."
+		curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+		curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list
+		sudo apt-get update
+		sudo apt-get install -y tailscale
+		echo "  Tailscale installed. Run: sudo tailscale up"
 	fi
 
 	# Install Node.js 22 via NodeSource
