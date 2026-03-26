@@ -4,6 +4,9 @@
 
 set -euo pipefail
 
+# Add cargo to PATH (cron uses minimal PATH)
+export PATH="$HOME/.cargo/bin:$PATH"
+
 # Ensure cargo-sweep is installed
 if ! command -v cargo-sweep &>/dev/null; then
     if command -v cargo &>/dev/null; then

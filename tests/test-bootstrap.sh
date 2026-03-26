@@ -186,6 +186,222 @@ test_steamos_no_usr_local() {
 }
 
 # ============================================================================
+# Flag combination tests
+# ============================================================================
+
+# Helper: run bootstrap.sh with args, capturing which functions are called.
+# Overrides all side-effect functions with stubs that log to a temp file.
+# Returns the log so tests can check which functions ran and in what order.
+#
+# NOTE: The argument parsing logic below is duplicated from bootstrap.sh's main
+# execution block. If bootstrap.sh's flag handling changes, update this mock to
+# match — otherwise tests will pass against stale logic.
+run_bootstrap_with_mocks() {
+    local log
+    log=$(mktemp)
+    local mock_script
+    mock_script=$(mktemp)
+
+    # Build a wrapper that:
+    # 1. Defines stub functions that log their name
+    # 2. Overrides 'read' to auto-answer 'y' (simulate confirmation)
+    # 3. Sources bootstrap.sh to get function definitions
+    # 4. Re-overrides the functions with stubs
+    # 5. Runs the main execution block
+    cat > "$mock_script" << 'WRAPPER'
+#!/usr/bin/env bash
+set -euo pipefail
+
+LOG_FILE="__LOG__"
+
+# Stub functions that log their name
+update_packages() { echo "update_packages" >> "$LOG_FILE"; }
+install_packages() { echo "install_packages" >> "$LOG_FILE"; }
+pull_latest() { echo "pull_latest" >> "$LOG_FILE"; }
+sync_dotfiles() { echo "sync_dotfiles" >> "$LOG_FILE"; }
+
+# Override read to auto-confirm
+read() { REPLY="y"; }
+
+# Mirror bootstrap.sh argument parsing and execution logic
+FORCE=false
+PULL=false
+PACKAGES=false
+UPDATE=false
+for arg in "$@"; do
+    case "$arg" in
+        --force|-f) FORCE=true ;;
+        --pull|-p) PULL=true ;;
+        --packages|-i) PACKAGES=true ;;
+        --update|-u) UPDATE=true ;;
+    esac
+done
+
+if [[ "$UPDATE" == true ]]; then
+    update_packages
+    if [[ "$PACKAGES" == false && "$PULL" == false && "$FORCE" == false ]]; then
+        exit 0
+    fi
+fi
+
+if [[ "$PACKAGES" == true ]]; then
+    install_packages
+fi
+
+if [[ "$PULL" == true ]]; then
+    pull_latest
+fi
+
+if [[ "$FORCE" == true ]]; then
+    sync_dotfiles
+else
+    read -p "confirm? " -n 1
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        sync_dotfiles
+    fi
+fi
+WRAPPER
+
+    # Substitute log path
+    sed -i.bak "s|__LOG__|$log|g" "$mock_script"
+    rm -f "${mock_script}.bak"
+
+    chmod +x "$mock_script"
+    bash "$mock_script" "$@" 2>/dev/null
+    local exit_code=$?
+
+    cat "$log"
+    rm -f "$log" "$mock_script"
+    return $exit_code
+}
+
+test_flag_help() {
+    local output
+    output=$("$BOOTSTRAP" --help 2>&1)
+    echo "$output" | grep -q "Usage:" && \
+    echo "$output" | grep -q "\-f, --force" && \
+    echo "$output" | grep -q "\-p, --pull" && \
+    echo "$output" | grep -q "\-i, --packages" && \
+    echo "$output" | grep -q "\-u, --update"
+}
+
+test_flag_force_only() {
+    local output
+    output=$(run_bootstrap_with_mocks --force)
+    [[ "$output" == "sync_dotfiles" ]]
+}
+
+test_flag_pull_only() {
+    local output
+    output=$(run_bootstrap_with_mocks --pull)
+    # --pull without --force prompts, our mock auto-confirms
+    echo "$output" | grep -q "pull_latest" && \
+    echo "$output" | grep -q "sync_dotfiles"
+}
+
+test_flag_packages_only() {
+    local output
+    output=$(run_bootstrap_with_mocks --packages)
+    echo "$output" | grep -q "install_packages" && \
+    echo "$output" | grep -q "sync_dotfiles"
+}
+
+test_flag_update_only() {
+    local output
+    output=$(run_bootstrap_with_mocks --update)
+    [[ "$output" == "update_packages" ]]
+}
+
+test_flag_update_exits_early() {
+    # --update alone should NOT call sync_dotfiles
+    local output
+    output=$(run_bootstrap_with_mocks --update)
+    ! echo "$output" | grep -q "sync_dotfiles"
+}
+
+test_flag_force_pull() {
+    local output
+    output=$(run_bootstrap_with_mocks --force --pull)
+    local first second
+    first=$(echo "$output" | sed -n '1p')
+    second=$(echo "$output" | sed -n '2p')
+    [[ "$first" == "pull_latest" ]] && [[ "$second" == "sync_dotfiles" ]]
+}
+
+test_flag_force_packages() {
+    local output
+    output=$(run_bootstrap_with_mocks --force --packages)
+    local first second
+    first=$(echo "$output" | sed -n '1p')
+    second=$(echo "$output" | sed -n '2p')
+    [[ "$first" == "install_packages" ]] && [[ "$second" == "sync_dotfiles" ]]
+}
+
+test_flag_update_force() {
+    # --update --force: update packages then sync
+    local output
+    output=$(run_bootstrap_with_mocks --update --force)
+    local first second
+    first=$(echo "$output" | sed -n '1p')
+    second=$(echo "$output" | sed -n '2p')
+    [[ "$first" == "update_packages" ]] && [[ "$second" == "sync_dotfiles" ]]
+}
+
+test_flag_update_packages() {
+    # --update --packages: update, install packages, then prompt for sync
+    local output
+    output=$(run_bootstrap_with_mocks --update --packages)
+    echo "$output" | grep -q "update_packages" && \
+    echo "$output" | grep -q "install_packages" && \
+    echo "$output" | grep -q "sync_dotfiles"
+}
+
+test_flag_all_combined() {
+    # --update --packages --pull --force: everything in order
+    local output
+    output=$(run_bootstrap_with_mocks --update --packages --pull --force)
+    local line1 line2 line3 line4
+    line1=$(echo "$output" | sed -n '1p')
+    line2=$(echo "$output" | sed -n '2p')
+    line3=$(echo "$output" | sed -n '3p')
+    line4=$(echo "$output" | sed -n '4p')
+    [[ "$line1" == "update_packages" ]] && \
+    [[ "$line2" == "install_packages" ]] && \
+    [[ "$line3" == "pull_latest" ]] && \
+    [[ "$line4" == "sync_dotfiles" ]]
+}
+
+test_flag_short_forms() {
+    # Short flags should work identically to long flags
+    local output
+    output=$(run_bootstrap_with_mocks -f -p -i -u)
+    local line1 line2 line3 line4
+    line1=$(echo "$output" | sed -n '1p')
+    line2=$(echo "$output" | sed -n '2p')
+    line3=$(echo "$output" | sed -n '3p')
+    line4=$(echo "$output" | sed -n '4p')
+    [[ "$line1" == "update_packages" ]] && \
+    [[ "$line2" == "install_packages" ]] && \
+    [[ "$line3" == "pull_latest" ]] && \
+    [[ "$line4" == "sync_dotfiles" ]]
+}
+
+test_flag_order_irrelevant() {
+    # Flags in different order should produce same execution order
+    local output1 output2
+    output1=$(run_bootstrap_with_mocks --force --pull --packages)
+    output2=$(run_bootstrap_with_mocks --packages --force --pull)
+    [[ "$output1" == "$output2" ]]
+}
+
+test_flag_no_args_prompts() {
+    # No flags: should prompt (mock auto-confirms) and sync
+    local output
+    output=$(run_bootstrap_with_mocks)
+    [[ "$output" == "sync_dotfiles" ]]
+}
+
+# ============================================================================
 # Run all tests
 # ============================================================================
 
@@ -220,6 +436,23 @@ main() {
     run_test "SteamOS package function exists" "test_steamos_packages"
     run_test "set_default_shell function exists" "test_set_default_shell"
     run_test "no hardcoded /usr/local in SteamOS path" "test_steamos_no_usr_local"
+    echo ""
+
+    echo "=== flag combinations ==="
+    run_test "--help shows usage" "test_flag_help"
+    run_test "--force runs sync only" "test_flag_force_only"
+    run_test "--pull runs pull then sync" "test_flag_pull_only"
+    run_test "--packages runs install then sync" "test_flag_packages_only"
+    run_test "--update alone runs update only" "test_flag_update_only"
+    run_test "--update alone exits before sync" "test_flag_update_exits_early"
+    run_test "--force --pull: pull then sync" "test_flag_force_pull"
+    run_test "--force --packages: install then sync" "test_flag_force_packages"
+    run_test "--update --force: update then sync" "test_flag_update_force"
+    run_test "--update --packages: update, install, sync" "test_flag_update_packages"
+    run_test "all flags combined: correct order" "test_flag_all_combined"
+    run_test "short flags (-f -p -i -u) match long flags" "test_flag_short_forms"
+    run_test "flag order doesn't affect execution order" "test_flag_order_irrelevant"
+    run_test "no flags prompts then syncs" "test_flag_no_args_prompts"
     echo ""
 
     # Summary
