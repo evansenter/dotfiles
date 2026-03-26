@@ -1,0 +1,18 @@
+# Workspace content files are personal — create locally, don't track
+# OpenClaw generates defaults via `openclaw configure`
+*.md
+
+# Runtime state
+memory/
+.openclaw/
+
+# Temp / working dirs
+lego-tmp/
+canvas/
+voice-calls/
+
+# Credentials & secrets
+scripts/spotify-auth.sh
+
+# OS
+.DS_Store

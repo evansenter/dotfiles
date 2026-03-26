@@ -146,6 +146,17 @@ test_settings_local_skips_gateway_host() {
     grep -q 'HOSTNAME' "$BOOTSTRAP"
 }
 
+test_ensure_openclaw_workspace_exists() {
+    # bootstrap.sh should have the ensure_openclaw_workspace function
+    grep -q 'ensure_openclaw_workspace' "$BOOTSTRAP"
+}
+
+test_openclaw_workspace_gitignore() {
+    # .gitignore should exist and ignore *.md to prevent tracking personal content
+    [[ -f "$SCRIPT_DIR/../home/.openclaw/workspace/.gitignore" ]] && \
+    grep -q '\*.md' "$SCRIPT_DIR/../home/.openclaw/workspace/.gitignore"
+}
+
 test_no_documents_projects_refs() {
     # No tracked source files should reference ~/Documents/projects/
     # Exclude: .git, databases, logs, error files, backups, worktree settings, this test
@@ -432,6 +443,8 @@ main() {
     run_test "configure_claude_local_settings exists" "test_configure_claude_local_settings_exists"
     run_test "settings.local.json skips gateway host" "test_settings_local_skips_gateway_host"
     run_test "no ~/Documents/projects references" "test_no_documents_projects_refs"
+    run_test "ensure_openclaw_workspace function exists" "test_ensure_openclaw_workspace_exists"
+    run_test "openclaw workspace .gitignore ignores content" "test_openclaw_workspace_gitignore"
     run_test "SteamOS detection function exists" "test_steamos_detection"
     run_test "SteamOS package function exists" "test_steamos_packages"
     run_test "set_default_shell function exists" "test_set_default_shell"
