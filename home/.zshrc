@@ -138,3 +138,6 @@ fi
 
 # OpenClaw Completion
 [[ -f "$HOME/.openclaw/completions/openclaw.zsh" ]] && source "$HOME/.openclaw/completions/openclaw.zsh"
+
+# Added by Jetski - Insiders
+[[ -d "$HOME/.jetski-insiders/jetski-insiders/bin" ]] && export PATH="$HOME/.jetski-insiders/jetski-insiders/bin:$PATH"
