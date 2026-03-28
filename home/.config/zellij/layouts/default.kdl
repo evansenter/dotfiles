@@ -112,7 +112,7 @@ layout {
     swap_tiled_layout name="vertical" {
         tab max_panes=5 {
             pane size=1 borderless=true {
-                plugin location="file:~/.config/zellij/plugins/zjstatus.wasm"
+                plugin location="zellij:tab-bar"
             }
             pane split_direction="vertical" {
                 pane
@@ -124,7 +124,7 @@ layout {
         }
         tab max_panes=8 {
             pane size=1 borderless=true {
-                plugin location="file:~/.config/zellij/plugins/zjstatus.wasm"
+                plugin location="zellij:tab-bar"
             }
             pane split_direction="vertical" {
                 pane { children; }
@@ -139,7 +139,7 @@ layout {
     swap_tiled_layout name="horizontal" {
         tab max_panes=4 {
             pane size=1 borderless=true {
-                plugin location="file:~/.config/zellij/plugins/zjstatus.wasm"
+                plugin location="zellij:tab-bar"
             }
             pane
             pane
@@ -149,7 +149,7 @@ layout {
         }
         tab max_panes=8 {
             pane size=1 borderless=true {
-                plugin location="file:~/.config/zellij/plugins/zjstatus.wasm"
+                plugin location="zellij:tab-bar"
             }
             pane {
                 pane split_direction="vertical" { children; }
@@ -164,7 +164,7 @@ layout {
     swap_tiled_layout name="stacked" {
         tab min_panes=5 {
             pane size=1 borderless=true {
-                plugin location="file:~/.config/zellij/plugins/zjstatus.wasm"
+                plugin location="zellij:tab-bar"
             }
             pane split_direction="vertical" {
                 pane
