@@ -53,4 +53,4 @@ Skill(commit-commands:commit-push-pr)
 
 ### 4. Monitor CI (unless --no-watch)
 
-Unless `--no-watch` was passed, invoke `/watch-ci` to monitor CI status in background. It will automatically run `/pr-review remote` when CI passes.
+Unless `--no-watch` was passed, invoke `/watch-ci` to monitor CI status in background. It will automatically run `/pr-review remote` when CI completes.

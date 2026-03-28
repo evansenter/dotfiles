@@ -9,7 +9,7 @@ Session Start
     │
     ├── SessionStart hook (session-start.sh)
     │   - Registers with event bus
-    │   - Configures tmux window (disables allow-rename, sets window name)
+    │   - Renames zellij tab to directory name
     │   - Fetches recent events
     │
     ▼
@@ -18,13 +18,13 @@ Session Start
 │      │                              │
 │      ├── UserPromptSubmit hooks     │
 │      │   - prompt-events.sh         │
-│      │   - tmux-status.sh working   │
+│      │   - zj-status.sh working     │
 │      │                              │
 │      ▼                              │
 │  Claude processes...                │
 │      │                              │
 │      ├── Stop hook                  │
-│      │   - tmux-status.sh waiting   │
+│      │   - zj-status.sh waiting     │
 │      │                              │
 │      ▼                              │
 │  (repeat)                           │
@@ -39,7 +39,6 @@ Session End
     │
     └── SessionEnd hook (session-end.sh)
         - Unregisters from event bus
-        - Restores tmux automatic-rename
 ```
 
 ## Hook Details
@@ -50,10 +49,7 @@ Session End
 **Purpose:** Initialize session context and cross-session coordination.
 
 **Actions:**
-1. Configure tmux window (if in tmux):
-   - Disable `allow-rename` to prevent Claude from overwriting window name
-   - Disable `automatic-rename` to keep our custom name
-   - Set window name to directory (with worktree format: `repo (branch)`)
+1. Rename zellij tab to directory name (with worktree format: `repo (branch)`)
 2. Register with event bus using `agent-event-bus-cli`
 3. Fetch recent events (last 20, newest first)
 4. If resuming after compaction, restore WIP checkpoint
@@ -70,8 +66,7 @@ Session End
 **Purpose:** Clean up session resources.
 
 **Actions:**
-1. Restore tmux `automatic-rename` and `allow-rename` settings
-2. Unregister from event bus
+1. Unregister from event bus
 
 **Input JSON fields:** `session_id`, `transcript_path`, `cwd`, `permission_mode`, `reason`
 
@@ -94,20 +89,18 @@ Session End
 
 ---
 
-### tmux-status.sh
+### zj-status.sh
 **Trigger:** `UserPromptSubmit` (with arg `working`), `Stop` (with arg `waiting`)
 
-**Purpose:** Visual indicator of Claude's state in tmux window name.
+**Purpose:** Visual indicator of Claude's state via zjstatus notification pipe.
 
 **Actions:**
-- `working`: Rename window to `⏳ <dir>` (hourglass indicates processing)
-- `waiting`: Rename window to `<dir>` (no hourglass)
-
-**Worktree support:** Shows `repo (branch)` format for `.worktrees/` paths.
+- `working`: Send `⏳ working...` notification to zjstatus
+- `waiting`: Clear zjstatus notification
 
 **Input:** Consumes stdin (required) but doesn't use it. State passed as argument.
 
-**Output:** None (tmux commands only)
+**Output:** None (zellij pipe commands only)
 
 ---
 
@@ -132,7 +125,7 @@ Session End
 - Must be executable (`chmod +x`)
 - Must consume stdin (even if not used) to avoid broken pipe errors
 - Should use `set -euo pipefail` for safety
-- Should gracefully degrade if dependencies missing (jq, agent-event-bus-cli, tmux)
+- Should gracefully degrade if dependencies missing (jq, agent-event-bus-cli, zellij)
 - Source `~/.extra` if the hook needs user environment variables (e.g., `AGENT_EVENT_BUS_URL`)
 
 ### Input Format
@@ -165,9 +158,9 @@ In `settings.json`:
     "SessionEnd": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/session-end.sh" }] }],
     "UserPromptSubmit": [{ "hooks": [
       { "type": "command", "command": "~/.claude/hooks/prompt-events.sh" },
-      { "type": "command", "command": "~/.claude/hooks/tmux-status.sh working" }
+      { "type": "command", "command": "~/.claude/hooks/zj-status.sh working" }
     ] }],
-    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/tmux-status.sh waiting" }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/zj-status.sh waiting" }] }],
     "PreCompact": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/pre-compact.sh" }] }]
   }
 }

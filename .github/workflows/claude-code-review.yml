@@ -52,3 +52,20 @@ jobs:
             Use the REPO and PR_NUMBER variables provided above.
           # Tools required by the centralized prompt (see contrib/prompts/claude-review.md)
           claude_args: '--model opus --allowed-tools "Read,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh api:*)"'
+
+      - name: Check review verdict
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Fetch the most recent review comment posted by the action
+          VERDICT=$(gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+            --jq 'map(select(.body | test("Automated review by Claude Code"))) | last | .body' 2>/dev/null || echo "")
+
+          if echo "$VERDICT" | grep -q "REQUEST_CHANGES"; then
+            echo "::warning::Claude review requested changes — see PR comments for details"
+            exit 1
+          elif echo "$VERDICT" | grep -q "APPROVE"; then
+            echo "Claude review approved"
+          else
+            echo "::warning::Could not determine review verdict from comment"
+          fi

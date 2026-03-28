@@ -26,10 +26,10 @@ If PR body references an issue (`Fixes #N`), fetch it: `gh issue view <N> --json
 | On main, no changes | Orient/Pick work |
 | On branch, uncommitted | Develop |
 | Committed, no PR | Self-review → Create PR |
-| PR open, CI running | Monitor CI |
-| PR open, CI passed, has comments | Process feedback |
-| PR open, CI passed, no comments | Ready to merge |
-| PR open, CI failed | Fix failures |
+| PR open, CI running, no comments | Monitor CI |
+| PR open, has comments | Process feedback (independent of CI status) |
+| PR open, CI passed, no comments, review done | Ready to merge |
+| PR open, CI failed | Fix failures (review can proceed in parallel) |
 | PR merged | Reflect (improve-workflow agent) |
 
 ### 3. Output

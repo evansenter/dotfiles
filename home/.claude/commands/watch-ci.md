@@ -5,7 +5,7 @@ description: Monitor CI in background and notify when complete
 
 # Watch CI
 
-Monitor CI status for a PR in the background. On pass, automatically runs `/pr-review remote`.
+Monitor CI status for a PR in the background. When CI completes, automatically runs `/pr-review remote`.
 
 ## Usage
 
@@ -52,5 +52,5 @@ If PR_NUMBER is omitted, uses the current branch's PR.
        channel: "repo:<repo_name>"
      )
      ```
-   - If **passed**: Immediately spawn `/pr-review remote` as a background agent — do not wait for the user to ask. This is automatic.
-   - If **failed**: Investigate the failure and fix.
+   - **Always** spawn `/pr-review remote` — CI status and code review are independent concerns. Do not gate review on CI pass.
+   - If CI **failed**: Also investigate the failure and fix. Review and CI fixes can happen in parallel or any order.

@@ -33,7 +33,7 @@ Output 2-3 sentence summary of what changed and why.
 ### 2. Run Analysis
 
 ```
-Skill(pr-review-toolkit:review-pr)
+Skill(pr-review-toolkit:code-reviewer)
 ```
 
 ### 3. Check Coverage Gaps
@@ -193,5 +193,5 @@ Publish `feedback_addressed` to event bus.
 1. Run quality gates (linter, formatter, tests)
 2. Commit with message referencing feedback addressed
 3. Push changes
-4. Run `/watch-ci` — this auto-triggers another `/pr-review remote` cycle when CI passes
+4. Run `/watch-ci` — this auto-triggers another `/pr-review remote` cycle when CI completes
 

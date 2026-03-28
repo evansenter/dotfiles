@@ -48,7 +48,7 @@ After significant work: share what caused friction, where you were redirected (i
 Use `/work <issue-number>` for guided development. `/work --attach` to join an existing PR.
 
 - **Before pushing**: `/pr-review local`, update docs if needed
-- **After push**: `/pr-create` (or just push) → auto-chains: `/watch-ci` → CI passes → `/pr-review remote`
+- **After push**: `/pr-create` (or just push) → `/watch-ci` → CI completes → `/pr-review remote`
 - **On feedback**: Present via AskUserQuestion. Form your own opinion—you have context reviewers lack
 - **After fixes**: Push → auto-cycle repeats until clean
 
