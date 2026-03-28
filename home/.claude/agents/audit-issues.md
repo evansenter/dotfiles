@@ -60,6 +60,13 @@ Examine each issue for:
 - Requires version bump or breaking change
 - Deferred to future milestone but not labeled
 
+## Verification Protocol
+
+Before reporting a stale or outdated issue, verify the claim:
+- Before claiming a method/type was removed: `Grep` for it in the codebase
+- Before claiming an issue is resolved: Read the relevant code to confirm the fix exists
+- **Never fabricate** method names, file paths, or code state. If you haven't read it, don't claim it.
+
 ## Process
 
 Fetch all open issues via MCP, read full body + comments, verify against codebase, ensure every issue has a priority label.

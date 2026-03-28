@@ -68,8 +68,9 @@ Read each file systematically. Use Grep to find cross-references and potential c
 For each file:
 - Check internal consistency
 - Cross-reference with related files
-- Verify tool/command references exist
+- Verify tool/command references exist (use `Grep` to confirm before reporting)
 - Check for instruction conflicts
+- **Never fabricate** tool names, command names, or file contents — read before claiming
 
 ### 3. Categorize Findings
 

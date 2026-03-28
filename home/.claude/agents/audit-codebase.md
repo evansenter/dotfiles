@@ -75,13 +75,24 @@ Systematically examine the codebase for:
 - Missing or misleading code comments
 - Undocumented public APIs
 
+## Verification Protocol
+
+**Every finding must be verified against actual code before reporting.** Do not infer what "should" exist — read the file and confirm.
+
+- Before reporting a missing method/type: `Grep` for it across the codebase
+- Before reporting a missing annotation: `Read` the exact lines and confirm absence
+- Before reporting a naming violation: `Read` the method signature and its implementation to confirm the semantics
+- Before reporting a missing test: `Grep` for the function/type name in test files
+- **Never fabricate** struct fields, method names, enum variants, or file contents. If you haven't read it, don't claim it exists or doesn't exist.
+
 ## Process
 
 1. **Explore structure**: Use Glob to understand the codebase layout
 2. **Read key files**: README, CLAUDE.md, main entry points, configuration
 3. **Analyze patterns**: Use Grep to find patterns across the codebase
-4. **Check context**: Review recent commits, open issues, and PRs on GitHub for additional context
-5. **Synthesize findings**: Group issues by severity and effort
+4. **Verify each finding**: Read the exact file and line before including in report
+5. **Check context**: Review recent commits, open issues, and PRs on GitHub for additional context
+6. **Synthesize findings**: Group issues by severity and effort
 
 ## Output Format
 
