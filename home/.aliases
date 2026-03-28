@@ -24,6 +24,21 @@ else
 fi
 
 # ==============================================================================
+# Terminal Tools
+# ==============================================================================
+
+# bat (cat with syntax highlighting) — installed as "batcat" on Debian/Ubuntu
+if command -v bat &>/dev/null; then
+    alias cat="bat"
+elif command -v batcat &>/dev/null; then
+    alias cat="batcat"
+    alias bat="batcat"
+fi
+
+alias lg="lazygit"
+alias zj="zellij"
+
+# ==============================================================================
 # Git
 # ==============================================================================
 
