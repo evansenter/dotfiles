@@ -138,7 +138,49 @@ Keep output **concise**. Focus on actionable items only.
 - Historical patterns unrelated to current work
 - Full cross-session event dumps
 
-## Phase 5: Implement
+## Phase 5: Save to Memory
+
+After generating findings, save novel, cross-session insights to the project memory system. Not every finding is worth a memory — only save things that would be useful in **future conversations** (gotchas, validated patterns, workflow friction).
+
+### What to save
+
+| Finding type | Memory type | Example |
+|---|---|---|
+| Gotcha that caused wasted time | `feedback` | "Proptest roundtrip: use Value comparison, not string, when HashMap fields present" |
+| Validated pattern/convention | `feedback` | "Config structs + From<Config> for Tool is the preferred builder pattern" |
+| Tool/workflow friction | `feedback` | "CI clippy version is stricter than local — run with latest stable before pushing" |
+
+### What NOT to save
+
+- Findings that are already in CLAUDE.md or docs
+- Ephemeral issues (one-time CI flake, transient API error)
+- Findings with no concrete "next time, do X" takeaway
+
+### How to save
+
+1. Determine memory path: `<project_root>/.claude/projects/-<sanitized-cwd>/memory/`
+   - Find it by running: `ls ~/.claude/projects/*/memory/MEMORY.md 2>/dev/null` and matching the current working directory
+   - If no memory directory exists, skip this phase
+
+2. For each memory-worthy finding, write a file:
+   ```markdown
+   ---
+   name: <short name>
+   description: <one-line description for relevance matching>
+   type: feedback
+   ---
+
+   <rule/insight>
+
+   **Why:** <what happened that surfaced this>
+   **How to apply:** <when/where this guidance kicks in>
+   ```
+
+3. Add a pointer to `MEMORY.md` (one line, under 150 chars)
+
+4. Check for existing memories on the same topic before creating duplicates — update instead.
+
+## Phase 6: Implement
 
 For each finding with a concrete fix, use AskUserQuestion:
 - **Implement**: Make the change now
