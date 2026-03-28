@@ -87,9 +87,9 @@ if ! command -v agent-event-bus-cli &>/dev/null; then
     [[ -x "$cli_path" ]] || exit 0
 fi
 
-# Check for tmux
-if [[ -z "${TMUX:-}" ]]; then
-    exit 0  # Not in tmux, skip tmux operations
+# Check for zellij
+if [[ -z "${ZELLIJ:-}" ]]; then
+    exit 0  # Not in zellij, skip zellij operations
 fi
 ```
 
@@ -138,27 +138,29 @@ echo "Hook completed successfully"
 
 ### Silent Hooks
 
-For hooks that only have side effects (like tmux renaming):
+For hooks that only have side effects (like zjstatus notifications):
 
 ```bash
-# No output needed - tmux commands are the action
-tmux rename-window "name"
+# No output needed - zellij pipe is the action
+zellij pipe "zjstatus::notify::message" 2>/dev/null || true
 ```
 
-## Tmux Integration
+## Zellij Integration
 
-When modifying tmux state:
+When interacting with zellij:
 
 ```bash
-# Check if in tmux first
-[[ -z "${TMUX:-}" ]] && exit 0
+# Check if in zellij first
+[[ -z "${ZELLIJ:-}" ]] && exit 0
 
-# Disable automatic rename before setting custom name
-tmux set-window-option -q allow-rename off
-tmux set-window-option -q automatic-rename off
+# Rename tab
+zellij action rename-tab "$tab_name" 2>/dev/null || true
 
-# Now set custom name
-tmux rename-window "$window_name"
+# Send zjstatus notification (appears in statusbar)
+zellij pipe "zjstatus::notify::message" 2>/dev/null || true
+
+# Clear zjstatus notification
+zellij pipe "zjstatus::notify::" 2>/dev/null || true
 ```
 
 For worktree paths, show `repo (branch)` format:
@@ -167,7 +169,7 @@ For worktree paths, show `repo (branch)` format:
 if [[ "$cwd" == */.worktrees/* ]]; then
     repo=$(basename "$(dirname "$(dirname "$cwd")")")
     branch=$(basename "$cwd")
-    window_name="$repo ($branch)"
+    tab_name="$repo ($branch)"
 fi
 ```
 
@@ -226,8 +228,8 @@ Available triggers:
 ## Reference
 
 See existing hooks in `home/.claude/hooks/` for examples:
-- `session-start.sh` - Event bus registration, tmux setup
+- `session-start.sh` - Event bus registration, zellij tab rename
 - `session-end.sh` - Cleanup
 - `prompt-events.sh` - Incremental event polling
-- `tmux-status.sh` - Visual state indicator
+- `zj-status.sh` - Visual state indicator (zjstatus notification)
 - `pre-compact.sh` - WIP checkpointing

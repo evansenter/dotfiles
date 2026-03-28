@@ -982,6 +982,40 @@ test_tmux_status_consumes_stdin() {
 }
 
 # ============================================================================
+# zj-status.sh tests
+# ============================================================================
+
+test_zj_status_syntax() {
+    bash -n "$HOOKS_DIR/zj-status.sh"
+}
+
+test_zj_status_graceful_no_zellij_env() {
+    # Without ZELLIJ env var, should exit silently
+    local output
+    local exit_code=0
+    output=$(env -u ZELLIJ bash "$HOOKS_DIR/zj-status.sh" working 2>&1) || exit_code=$?
+
+    # Should exit cleanly with no output
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+test_zj_status_consumes_stdin() {
+    # Hook should consume stdin without blocking
+    local exit_code=0
+    (echo '{"session_id":"test"}' | env -u ZELLIJ bash "$HOOKS_DIR/zj-status.sh" working >/dev/null 2>&1) &
+    local pid=$!
+    sleep 1
+    if kill -0 "$pid" 2>/dev/null; then
+        kill "$pid" 2>/dev/null || true
+        exit_code=1
+    else
+        wait "$pid" || exit_code=$?
+    fi
+
+    [[ $exit_code -eq 0 ]]
+}
+
+# ============================================================================
 # session-start.sh cache pre-population tests
 # ============================================================================
 
@@ -1155,6 +1189,12 @@ main() {
     run_test "integration: waiting state" "test_tmux_status_waiting_state"
     run_test "integration: default to waiting" "test_tmux_status_default_waiting"
     run_test "consumes stdin" "test_tmux_status_consumes_stdin"
+    echo ""
+
+    echo "=== zj-status.sh ==="
+    run_test "syntax check" "test_zj_status_syntax"
+    run_test "graceful degradation (no ZELLIJ env)" "test_zj_status_graceful_no_zellij_env"
+    run_test "consumes stdin" "test_zj_status_consumes_stdin"
     echo ""
 
     # Summary

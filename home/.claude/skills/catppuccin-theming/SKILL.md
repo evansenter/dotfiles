@@ -52,7 +52,7 @@ Mantle     #181825    Crust      #11111b
 | helix | Config | `home/.config/helix/config.toml` → `theme = "catppuccin_mocha"` |
 | iTerm2 | Manual import | `vendor/iterm-catppuccin/` color preset |
 | lazygit | Inline colors | `home/.config/lazygit/config.yml` → custom theme block |
-| tmux | Plugin | `catppuccin/tmux` plugin in `.tmux.conf` |
+| tmux | Plugin | `catppuccin/tmux` plugin in `.tmux.conf` (legacy, kept for compatibility) |
 | yazi | Built-in | Uses flavor system (built-in catppuccin support) |
 | zellij | Built-in | `home/.config/zellij/config.kdl` → `theme "catppuccin-mocha"` |
 

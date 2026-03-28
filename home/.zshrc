@@ -36,7 +36,7 @@ setopt PUSHD_SILENT      # don't print directory stack
 setopt INTERACTIVE_COMMENTS  # allow comments in interactive shells
 setopt NO_BEEP              # disable beep
 
-# Disable flow control (Ctrl-S/Ctrl-Q) to free up Ctrl-Q for tmux prefix
+# Disable flow control (Ctrl-S/Ctrl-Q) to free up Ctrl-Q
 stty -ixon 2>/dev/null
 
 # Make / - . act as word delimiters (for Ctrl+W, Alt+B, Alt+F, etc.)
@@ -138,3 +138,6 @@ fi
 
 # OpenClaw Completion
 [[ -f "$HOME/.openclaw/completions/openclaw.zsh" ]] && source "$HOME/.openclaw/completions/openclaw.zsh"
+
+# Antigravity
+export PATH="$HOME/.antigravity/antigravity/bin:$PATH"

@@ -94,25 +94,27 @@ Write `.parallel-context.md` to the new worktree:
 
 ### 6. Launch Session
 
-Check if tmux is available. Ask user:
-- New tmux window (Recommended)
-- New tmux pane
+Check if zellij is available. Ask user:
+- New zellij tab (Recommended)
+- New zellij pane
 - Manual
 
-For tmux options:
+For zellij options:
 ```bash
-# Window (default):
-tmux new-window -c "[worktree-path]"
+# Tab (default):
+zellij action new-tab --cwd "[worktree-path]"
 # Pane:
-tmux split-window -h -c "[worktree-path]"
+zellij action new-pane --direction right --cwd "[worktree-path]"
 
 # Then launch based on issue (NEW session, not resume):
 if [ -n "$ISSUE_NUMBER" ]; then
   # Issue provided - use /work for guided development
-  tmux send-keys "claude '/work $ISSUE_NUMBER'" Enter
+  zellij action write-chars "claude '/work $ISSUE_NUMBER'"
+  zellij action write 10  # Enter key
 else
   # No issue - generic parallel work start
-  tmux send-keys "claude 'ultrathink: Starting parallel work. Read .parallel-context.md for context.'" Enter
+  zellij action write-chars "claude 'ultrathink: Starting parallel work. Read .parallel-context.md for context.'"
+  zellij action write 10  # Enter key
 fi
 ```
 

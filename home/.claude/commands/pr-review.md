@@ -33,7 +33,7 @@ Output 2-3 sentence summary of what changed and why.
 ### 2. Run Analysis
 
 ```
-Skill(pr-review-toolkit:review-pr)
+Skill(pr-review-toolkit:code-reviewer)
 ```
 
 ### 3. Check Coverage Gaps

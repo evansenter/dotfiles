@@ -12,12 +12,6 @@ set -euo pipefail
 # Read and parse session info
 INPUT=$(cat)
 
-# Restore tmux window rename settings if in tmux
-if [[ -n "${TMUX:-}" ]]; then
-    tmux set-window-option automatic-rename on 2>/dev/null || true
-    tmux set-window-option allow-rename on 2>/dev/null || true
-fi
-
 # Check for required dependencies
 if ! command -v jq &>/dev/null; then
     echo "Event bus unregistration skipped (jq not installed)"
