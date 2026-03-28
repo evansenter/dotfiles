@@ -231,9 +231,11 @@ WIP state is **automatically checkpointed** by the `pre-compact.sh` hook before 
 
 **Monitor CI**: Run `/watch-ci <PR#>` in background.
 
-**Process feedback**: Wait for CI, run `/pr-review remote`. If changes pushed, reset CI and feedback checkpoints, loop.
+**Process feedback**: Run `/pr-review remote` (do not gate on CI status — review and CI are independent). If changes pushed, reset CI and feedback checkpoints, loop.
 
-**Confirm merge**: Spawn summarize-work agent to show what's being merged:
+**Confirm merge**: First, verify that `/pr-review remote` was run against the latest pushed commit. Check the PR comments for a "Feedback Addressed" or "No reviewer feedback" comment posted after the most recent push. If no such comment exists, run `/pr-review remote` now before proceeding. Never skip this — CI pass alone is not sufficient for merge.
+
+Spawn summarize-work agent to show what's being merged:
 - `Task(subagent_type="summarize-work", prompt="Summarize work on this PR for merge review")`
 
 When showing the output from summarize-work, always highlight the key files to look at, and the PR URL. Include any other relevant data as well.
