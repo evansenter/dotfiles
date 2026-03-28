@@ -43,9 +43,12 @@ Join existing PR on current branch, restoring WIP context if available.
 
 | State | Already Completed |
 |-------|-------------------|
-| PR exists, CI not started | Implementation, pr-review local, pr-create |
-| PR exists, CI passed | Above + watch-ci |
-| PR exists, approved | Above + pr-review remote |
+| PR exists, no CI run | Implementation, pr-review local, pr-create |
+| PR exists, CI completed | Above + watch-ci |
+| PR exists, review completed | Above + pr-review remote |
+| PR exists, CI completed + review completed | Above + watch-ci + pr-review remote |
+
+Note: CI and review are independent tracks — check each separately.
 
 6. Create remaining todos only. Display resume plan showing what's done and what remains.
 
