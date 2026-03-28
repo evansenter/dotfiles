@@ -32,6 +32,14 @@ Claude already sees in the system prompt:
 
 If CLAUDE.md restates any of these, it's redundant and should be removed. CLAUDE.md should answer "what should I do?" not "what tools exist?"
 
+## Verification Protocol
+
+Before reporting any accuracy issue, verify the claim:
+- Before claiming a file path is wrong: `Glob` or `ls` to check it exists
+- Before claiming a command doesn't work: Read the Makefile or relevant config
+- Before claiming a method/type doesn't exist: `Grep` for it in the codebase
+- **Never fabricate** file paths, method names, or code state. If you haven't read it, don't claim it.
+
 ## Audit Checklist
 
 ### CLAUDE.md: Redundancy with System Prompt
