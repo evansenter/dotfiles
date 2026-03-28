@@ -44,11 +44,12 @@ Join existing PR on current branch, restoring WIP context if available.
 | State | Already Completed |
 |-------|-------------------|
 | PR exists, no CI run | Implementation, pr-review local, pr-create |
-| PR exists, CI completed | Above + watch-ci |
-| PR exists, review completed | Above + pr-review remote |
-| PR exists, CI completed + review completed | Above + watch-ci + pr-review remote |
+| PR exists, code CI passed, review CI pending | Above + watch-ci (partial) |
+| PR exists, code CI passed, review CI failed | Above + watch-ci, need pr-review remote |
+| PR exists, all CI passed | Above + watch-ci + pr-review remote |
 
-Note: CI and review are independent tracks — check each separately.
+Note: Code checks (lint, test, etc.) and claude-review are separate CI jobs.
+Review CI fails on REQUEST_CHANGES — address feedback, push, and re-run.
 
 6. Create remaining todos only. Display resume plan showing what's done and what remains.
 
