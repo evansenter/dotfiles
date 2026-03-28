@@ -70,7 +70,15 @@ For each file:
 - Cross-reference with related files
 - Verify tool/command references exist (use `Grep` to confirm before reporting)
 - Check for instruction conflicts
-- **Never fabricate** tool names, command names, or file contents — read before claiming
+
+## Verification Protocol
+
+**Every finding must be verified against actual code before reporting.** Do not infer what "should" exist — read the file and confirm.
+
+- Before reporting a missing tool/command: `Grep` for it across the codebase
+- Before reporting a stale reference: `Read` the referenced file and confirm it no longer matches
+- Before reporting a contradiction: `Read` both files and quote the conflicting text
+- **Never fabricate** tool names, command names, or file contents. If you haven't read it, don't claim it.
 
 ### 3. Categorize Findings
 
