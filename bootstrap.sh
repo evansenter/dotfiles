@@ -792,6 +792,26 @@ update_packages() {
 		fi
 	fi
 
+	# Update global npm packages
+	if command -v npm >/dev/null 2>&1; then
+		echo "Updating global npm packages..."
+		npm update -g
+	fi
+
+	# Update cargo packages
+	if command -v cargo >/dev/null 2>&1; then
+		if cargo install --list 2>/dev/null | grep -q '^[a-z]'; then
+			echo "Updating cargo packages..."
+			cargo install-update -a 2>/dev/null || echo "  Tip: install cargo-update for automatic updates (cargo install cargo-update)"
+		fi
+	fi
+
+	# Update pip packages (no safe "update all" — list managed packages explicitly)
+	if command -v pip3 >/dev/null 2>&1; then
+		echo "Updating pip packages..."
+		pip3 install --upgrade piper-tts 2>/dev/null || pip3 install --upgrade --break-system-packages piper-tts 2>/dev/null || true
+	fi
+
 	echo "Package updates complete."
 }
 
@@ -1146,48 +1166,30 @@ sync_dotfiles() {
 
 # Parse arguments
 FORCE=false
-PULL=false
-PACKAGES=false
-UPDATE=false
+SYNC=false
 for arg in "$@"; do
 	case "$arg" in
 		--force|-f) FORCE=true ;;
-		--pull|-p) PULL=true ;;
-		--packages|-i) PACKAGES=true ;;
-		--update|-u) UPDATE=true ;;
+		--sync|-s) SYNC=true ;;
 		--help|-h)
 			echo "Usage: ./bootstrap.sh [OPTIONS]"
 			echo ""
 			echo "Install dotfiles from home/ to ~"
 			echo ""
 			echo "Options:"
-			echo "  -f, --force     Skip confirmation prompt"
-			echo "  -p, --pull      Pull latest changes before installing"
-			echo "  -i, --packages  Install packages (brew on macOS, apt on Linux, binaries on SteamOS)"
-			echo "  -u, --update    Update/upgrade installed packages"
-			echo "  -h, --help      Show this help message"
+			echo "  -f, --force  Skip confirmation prompt"
+			echo "  -s, --sync   Pull latest, install/update packages, then sync dotfiles"
+			echo "  -h, --help   Show this help message"
 			exit 0
 			;;
 	esac
 done
 
-# Update packages if requested (standalone operation)
-if [[ "$UPDATE" == true ]]; then
-	update_packages
-	# If only --update was passed, exit without syncing dotfiles
-	if [[ "$PACKAGES" == false && "$PULL" == false && "$FORCE" == false ]]; then
-		exit 0
-	fi
-fi
-
-# Install packages if requested
-if [[ "$PACKAGES" == true ]]; then
-	install_packages
-fi
-
-# Pull if requested
-if [[ "$PULL" == true ]]; then
+# Pull, install, and update packages if requested
+if [[ "$SYNC" == true ]]; then
 	pull_latest
+	install_packages
+	update_packages
 fi
 
 # Run with or without confirmation

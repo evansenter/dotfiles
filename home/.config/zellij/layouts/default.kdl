@@ -1,36 +1,197 @@
-// Default layout with tab-bar, zjstatus, and status-bar
+// Default layout: zjstatus (top) + mode hints (bottom)
+// Replaces the old 3-bar setup (tab-bar + zjstatus + status-bar) with 2 bars.
+// Remove status-bar once comfortable with zellij keybindings.
 
 layout {
     default_tab_template {
         pane size=1 borderless=true {
-            plugin location="zellij:tab-bar"
-        }
-        children
-        pane size=1 borderless=true {
             plugin location="file:~/.config/zellij/plugins/zjstatus.wasm" {
-                format_left   "{command_host}"
+                // -- Catppuccin Mocha palette --
+                color_rosewater "#f5e0dc"
+                color_flamingo  "#f2cdcd"
+                color_pink      "#f5c2e7"
+                color_mauve     "#cba6f7"
+                color_red       "#f38ba8"
+                color_maroon    "#eba0ac"
+                color_peach     "#fab387"
+                color_yellow    "#f9e2af"
+                color_green     "#a6e3a1"
+                color_teal      "#94e2d5"
+                color_sky       "#89dceb"
+                color_sapphire  "#74c7ec"
+                color_blue      "#89b4fa"
+                color_lavender  "#b4befe"
+                color_text      "#cdd6f4"
+                color_subtext1  "#bac2de"
+                color_subtext0  "#a6adc8"
+                color_overlay2  "#9399b2"
+                color_overlay1  "#7f849c"
+                color_overlay0  "#6c7086"
+                color_surface2  "#585b70"
+                color_surface1  "#45475a"
+                color_surface0  "#313244"
+                color_base      "#1e1e2e"
+                color_mantle    "#181825"
+                color_crust     "#11111b"
+
+                // -- Layout --
+                format_left   "{mode}#[bg=$surface0,fg=$mantle]#[bg=$surface0,fg=$text,bold] {session} #[fg=$surface0,bg=$mantle]{tabs}"
                 format_center ""
-                format_right  "{datetime}"
-                format_space  ""
+                format_right  "#[fg=$surface0]{command_sysload}{swap_layout}{notifications}{datetime}{command_host}"
+                format_space  "#[bg=$mantle]"
+                format_hide_on_overlength "true"
+                format_precedence "lrc"
 
                 border_enabled  "false"
-
                 hide_frame_for_single_pane "true"
 
-                // Hostname (static, only runs once)
+                // -- Mode indicator (powerline style) --
+                mode_normal       "#[bg=$green,fg=$crust,bold]  NORMAL #[bg=$surface0,fg=$green]"
+                mode_locked       "#[bg=$red,fg=$crust,bold]  LOCKED #[bg=$surface0,fg=$red]"
+                mode_pane         "#[bg=$blue,fg=$crust,bold]  PANE #[bg=$surface0,fg=$blue]#[bg=$surface0,fg=$blue]  n:new r:right x:close f:zoom w:float #[fg=$surface0,bg=$mantle]"
+                mode_tab          "#[bg=$peach,fg=$crust,bold]  TAB #[bg=$surface0,fg=$peach]#[bg=$surface0,fg=$peach]  n:new x:close r:name h/l:nav b:break s:sync #[fg=$surface0,bg=$mantle]"
+                mode_resize       "#[bg=$yellow,fg=$crust,bold]  RESIZE #[bg=$surface0,fg=$yellow]#[bg=$surface0,fg=$yellow]  h/j/k/l:resize =/-:grow/shrink #[fg=$surface0,bg=$mantle]"
+                mode_move         "#[bg=$mauve,fg=$crust,bold]  MOVE #[bg=$surface0,fg=$mauve]#[bg=$surface0,fg=$mauve]  h/j/k/l:direction n:next #[fg=$surface0,bg=$mantle]"
+                mode_scroll       "#[bg=$teal,fg=$crust,bold]  SCROLL #[bg=$surface0,fg=$teal]#[bg=$surface0,fg=$teal]  j/k:line d/u:half s:search e:editor #[fg=$surface0,bg=$mantle]"
+                mode_search       "#[bg=$sky,fg=$crust,bold]  SEARCH #[bg=$surface0,fg=$sky]#[bg=$surface0,fg=$sky]  n/p:next/prev c:case w:wrap o:word #[fg=$surface0,bg=$mantle]"
+                mode_enter_search "#[bg=$sky,fg=$crust,bold]  SEARCH #[bg=$surface0,fg=$sky]#[bg=$surface0,fg=$sky]  type query, then Enter #[fg=$surface0,bg=$mantle]"
+                mode_session      "#[bg=$pink,fg=$crust,bold]  SESSION #[bg=$surface0,fg=$pink]#[bg=$surface0,fg=$pink]  d:detach w:manager ?:cheatsheet #[fg=$surface0,bg=$mantle]"
+                mode_rename_tab   "#[bg=$peach,fg=$crust,bold]  RENAME TAB #[bg=$surface0,fg=$peach]"
+                mode_rename_pane  "#[bg=$blue,fg=$crust,bold]  RENAME PANE #[bg=$surface0,fg=$blue]"
+                mode_prompt       "#[bg=$flamingo,fg=$crust,bold]  PROMPT #[bg=$surface0,fg=$flamingo]"
+                mode_tmux         "#[bg=$maroon,fg=$crust,bold]  TMUX #[bg=$surface0,fg=$maroon]"
+                mode_default_to_mode "normal"
+
+                // -- Tabs (powerline arrows between) --
+                tab_normal              "#[fg=$mantle,bg=$surface1]#[fg=$overlay1,bg=$surface1] {index} {name} {floating_indicator}{sync_indicator}{fullscreen_indicator}#[fg=$surface1,bg=$mantle]"
+                tab_normal_fullscreen   "#[fg=$mantle,bg=$surface1]#[fg=$overlay1,bg=$surface1] {index} {name} {fullscreen_indicator}#[fg=$surface1,bg=$mantle]"
+                tab_normal_sync         "#[fg=$mantle,bg=$surface1]#[fg=$overlay1,bg=$surface1] {index} {name} {sync_indicator}#[fg=$surface1,bg=$mantle]"
+                tab_active              "#[fg=$mantle,bg=$blue]#[fg=$crust,bg=$blue,bold] {index} {name} {floating_indicator}{sync_indicator}{fullscreen_indicator}#[fg=$blue,bg=$mantle]"
+                tab_active_fullscreen   "#[fg=$mantle,bg=$blue]#[fg=$crust,bg=$blue,bold] {index} {name} {fullscreen_indicator}#[fg=$blue,bg=$mantle]"
+                tab_active_sync         "#[fg=$mantle,bg=$blue]#[fg=$crust,bg=$blue,bold] {index} {name} {sync_indicator}#[fg=$blue,bg=$mantle]"
+                tab_separator           "#[bg=$mantle] "
+                tab_sync_indicator      "<> "
+                tab_fullscreen_indicator "[] "
+                tab_floating_indicator  "~ "
+
+                // -- System load (updates every 10s, macOS) --
+                command_sysload_command    "bash -c \"$HOME/.config/zellij/scripts/sysload.sh\""
+                command_sysload_format     "#[bg=$surface0,fg=$subtext0,bold] {stdout} "
+                command_sysload_interval   "10"
+                command_sysload_rendermode "static"
+
+                // -- Swap layout (clickable to cycle) --
+                swap_layout_format        "#[bg=$surface0,fg=$surface2] 󰕰 {name} "
+                swap_layout_hide_if_empty "true"
+
+                // -- Notifications (pipe: zellij pipe "zjstatus::notify::message") --
+                notification_format_unread           "#[bg=$surface0,fg=$blue,blink] 󰂚 #[bg=$surface0,fg=$blue] {message} "
+                notification_format_no_notifications ""
+                notification_show_interval           "10"
+
+                // -- Datetime --
+                datetime          "#[fg=$overlay0,bg=$surface0]#[fg=$mantle,bg=$overlay0,bold] {format} "
+                datetime_format   "%H:%M"
+                datetime_timezone "Local"
+
+                // -- Hostname (static, runs once) --
                 command_host_command    "hostname -s"
-                command_host_format     "#[fg=#6c7086]{stdout}"
+                command_host_format     "#[fg=$surface2,bg=$overlay0]#[fg=$mauve,bg=$surface2,bold] {stdout} "
                 command_host_interval   "0"
                 command_host_rendermode "static"
-
-                // Datetime
-                datetime          "#[fg=#6c7086]{format}"
-                datetime_format   "%Y-%m-%d %H:%M"
-                datetime_timezone "Local"
             }
         }
+        children
+        // Mode hints cheatsheet — remove this bar once comfortable with zellij
         pane size=1 borderless=true {
             plugin location="zellij:status-bar"
+        }
+    }
+
+    // Swap layouts — cycle with Alt+[ / Alt+] (like tmux prefix+space)
+    swap_tiled_layout name="vertical" {
+        tab max_panes=5 {
+            pane size=1 borderless=true {
+                plugin location="zellij:tab-bar"
+            }
+            pane split_direction="vertical" {
+                pane
+                pane { children; }
+            }
+            pane size=1 borderless=true {
+                plugin location="zellij:status-bar"
+            }
+        }
+        tab max_panes=8 {
+            pane size=1 borderless=true {
+                plugin location="zellij:tab-bar"
+            }
+            pane split_direction="vertical" {
+                pane { children; }
+                pane { pane; pane; pane; pane; }
+            }
+            pane size=1 borderless=true {
+                plugin location="zellij:status-bar"
+            }
+        }
+    }
+
+    swap_tiled_layout name="horizontal" {
+        tab max_panes=4 {
+            pane size=1 borderless=true {
+                plugin location="zellij:tab-bar"
+            }
+            pane
+            pane
+            pane size=1 borderless=true {
+                plugin location="zellij:status-bar"
+            }
+        }
+        tab max_panes=8 {
+            pane size=1 borderless=true {
+                plugin location="zellij:tab-bar"
+            }
+            pane {
+                pane split_direction="vertical" { children; }
+                pane split_direction="vertical" { pane; pane; pane; pane; }
+            }
+            pane size=1 borderless=true {
+                plugin location="zellij:status-bar"
+            }
+        }
+    }
+
+    swap_tiled_layout name="stacked" {
+        tab min_panes=5 {
+            pane size=1 borderless=true {
+                plugin location="zellij:tab-bar"
+            }
+            pane split_direction="vertical" {
+                pane
+                pane stacked=true { children; }
+            }
+            pane size=1 borderless=true {
+                plugin location="zellij:status-bar"
+            }
+        }
+    }
+
+    swap_floating_layout name="staggered" {
+        floating_panes { }
+    }
+
+    swap_floating_layout name="spread" {
+        floating_panes max_panes=1 {
+            pane { x "50%"; y "50%"; }
+        }
+        floating_panes max_panes=2 {
+            pane { width "45%"; x "1%"; y "25%"; }
+            pane { width "45%"; x "50%"; y "25%"; }
+        }
+        floating_panes max_panes=3 {
+            pane { height "45%"; width "45%"; y "55%"; }
+            pane { width "45%"; x "1%"; y "1%"; }
+            pane { width "45%"; x "50%"; y "1%"; }
         }
     }
 }
