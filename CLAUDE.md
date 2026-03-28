@@ -11,8 +11,8 @@ Minimal dotfiles for zsh, git, vim, and tmux. Supports macOS (Homebrew), Debian/
 ```bash
 ./bootstrap.sh           # Install/sync dotfiles (prompts for confirmation)
 ./bootstrap.sh -f        # Force install (skip confirmation)
-./bootstrap.sh -f -i     # Force install + install packages
-./bootstrap.sh --pull    # Pull latest then install
+./bootstrap.sh -s        # Full sync: pull latest, install/update packages, sync dotfiles
+./bootstrap.sh -f -s     # Full sync without confirmation
 ./uninstall.sh           # Remove symlinks
 git submodule update --init --remote  # Update theme submodules
 ```
