@@ -37,7 +37,7 @@ layout {
                 // -- Layout --
                 format_left   "{mode}#[bg=$surface0,fg=$mantle]#[bg=$surface0,fg=$text,bold] {session} #[fg=$surface0,bg=$mantle]{tabs}"
                 format_center ""
-                format_right  "#[fg=$surface0]{command_gitbranch}{command_sysload}{swap_layout}{notifications}{datetime}{command_host}"
+                format_right  "#[fg=$surface0]{command_sysload}{swap_layout}{notifications}{datetime}{command_host}"
                 format_space  "#[bg=$mantle]"
                 format_hide_on_overlength "true"
                 format_precedence "lrc"
@@ -74,15 +74,9 @@ layout {
                 tab_fullscreen_indicator "[] "
                 tab_floating_indicator  "~ "
 
-                // -- Git branch (updates every 10s) --
-                command_gitbranch_command    "bash -c \"$HOME/.config/zellij/scripts/git-branch.sh\""
-                command_gitbranch_format     "#[bg=$surface0,fg=$mauve,bold] {stdout} "
-                command_gitbranch_interval   "10"
-                command_gitbranch_rendermode "static"
-
                 // -- System load (updates every 10s, macOS) --
                 command_sysload_command    "bash -c \"$HOME/.config/zellij/scripts/sysload.sh\""
-                command_sysload_format     "#[bg=$surface0,fg=$subtext0] {stdout} "
+                command_sysload_format     "#[bg=$surface0,fg=$subtext0,bold] {stdout} "
                 command_sysload_interval   "10"
                 command_sysload_rendermode "static"
 
@@ -96,7 +90,7 @@ layout {
                 notification_show_interval           "10"
 
                 // -- Datetime --
-                datetime          "#[fg=$overlay0,bg=$surface0]#[fg=$mantle,bg=$overlay0] {format} "
+                datetime          "#[fg=$overlay0,bg=$surface0]#[fg=$mantle,bg=$overlay0,bold] {format} "
                 datetime_format   "%H:%M"
                 datetime_timezone "Local"
 
