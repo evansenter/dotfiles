@@ -28,7 +28,7 @@ scroll_buffer_size 50000          // Match tmux history-limit
 // Mouse support
 mouse_mode true
 
-// Borderless panes by default
+// Show pane borders
 pane_frames true
 
 // Copy to system clipboard

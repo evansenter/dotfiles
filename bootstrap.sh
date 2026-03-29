@@ -421,7 +421,7 @@ install_launch_agents() {
 	fi
 }
 
-install_cron_jobs() {
+cleanup_legacy_cron() {
 	# cargo-sweep is handled by LaunchAgent (com.user.cargo-sweep.plist)
 	# Remove legacy cron entry if present
 	if crontab -l 2>/dev/null | grep -qF "cargo-sweep-all"; then
@@ -1148,7 +1148,7 @@ sync_dotfiles() {
 
 	# Install LaunchAgents (macOS) or cron jobs (Linux)
 	install_launch_agents
-	install_cron_jobs
+	cleanup_legacy_cron
 
 	# Reload zsh configuration
 	if [[ -n "${ZSH_VERSION:-}" ]]; then
