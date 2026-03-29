@@ -732,6 +732,7 @@ install_packages() {
 		fi
 
 		if [[ -f "$dotfiles_dir/Brewfile" ]]; then
+			install_brew_prereq_casks
 			echo "Installing packages from Brewfile..."
 			brew bundle --file="$dotfiles_dir/Brewfile"
 		fi
@@ -911,6 +912,18 @@ install_bat_themes() {
 	fi
 }
 
+install_brew_prereq_casks() {
+	# Some brew formulae depend on casks (e.g., ntfs-3g-mac requires macfuse).
+	# Homebrew Bundle installs all brews before casks, so we pre-install these.
+	local prereqs=("macfuse")
+	for cask in "${prereqs[@]}"; do
+		if ! brew list --cask "$cask" &>/dev/null; then
+			echo "Pre-installing cask dependency: $cask..."
+			brew install --cask "$cask"
+		fi
+	done
+}
+
 install_brew_packages() {
 	if ! command -v brew >/dev/null 2>&1; then
 		echo "Skipping Homebrew packages (brew not installed)"
@@ -924,6 +937,8 @@ install_brew_packages() {
 	if [[ ! -f "$brewfile" ]]; then
 		return 0
 	fi
+
+	install_brew_prereq_casks
 
 	echo "Installing Homebrew packages..."
 	# Use --adopt to take ownership of existing apps instead of erroring
