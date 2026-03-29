@@ -9,11 +9,11 @@
 
 set -euo pipefail
 
+# Consume stdin (required for hooks — must be before any exit)
+cat > /dev/null
+
 # Skip if not in tmux
 [[ -z "${TMUX:-}" ]] && exit 0
-
-# Consume stdin (required for hooks)
-cat > /dev/null
 
 STATE="${1:-waiting}"
 
@@ -44,7 +44,10 @@ case "$STATE" in
         tmux rename-window -t "$WINDOW_ID" "⏳ $DIR_NAME" 2>/dev/null || true
         ;;
     waiting)
-        # Remove hourglass indicator (rename settings restored on session end)
+        # Remove hourglass indicator
         tmux rename-window -t "$WINDOW_ID" "$DIR_NAME" 2>/dev/null || true
+        ;;
+    *)
+        echo "tmux-status.sh: unknown state '$STATE', expected 'working' or 'waiting'" >&2
         ;;
 esac

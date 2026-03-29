@@ -18,7 +18,7 @@ if [[ -z "$input" ]]; then
     exit 1
 fi
 
-read -r cwd session_id < <(
+IFS=$'\t' read -r cwd session_id < <(
     echo "$input" | jq -r '[
         .workspace.current_dir,
         (.session_id // "")

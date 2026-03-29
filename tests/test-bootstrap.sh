@@ -236,11 +236,12 @@ read() { REPLY="y"; }
 
 # Mirror bootstrap.sh argument parsing and execution logic
 FORCE=false
-SYNC=false
+SYNC=true
 for arg in "$@"; do
     case "$arg" in
         --force|-f) FORCE=true ;;
         --sync|-s) SYNC=true ;;
+        --no-sync) SYNC=false ;;
     esac
 done
 
@@ -282,8 +283,24 @@ test_flag_help() {
 }
 
 test_flag_force_only() {
+    # --force: full sync (default) without prompt
     local output
     output=$(run_bootstrap_with_mocks --force)
+    local line1 line2 line3 line4
+    line1=$(echo "$output" | sed -n '1p')
+    line2=$(echo "$output" | sed -n '2p')
+    line3=$(echo "$output" | sed -n '3p')
+    line4=$(echo "$output" | sed -n '4p')
+    [[ "$line1" == "pull_latest" ]] && \
+    [[ "$line2" == "install_packages" ]] && \
+    [[ "$line3" == "update_packages" ]] && \
+    [[ "$line4" == "sync_dotfiles" ]]
+}
+
+test_flag_no_sync() {
+    # --no-sync --force: just sync dotfiles, skip pull and packages
+    local output
+    output=$(run_bootstrap_with_mocks --no-sync --force)
     [[ "$output" == "sync_dotfiles" ]]
 }
 
@@ -332,10 +349,18 @@ test_flag_short_forms() {
 }
 
 test_flag_no_args_prompts() {
-    # No flags: should prompt (mock auto-confirms) and sync
+    # No flags: full sync with prompt (mock auto-confirms)
     local output
     output=$(run_bootstrap_with_mocks)
-    [[ "$output" == "sync_dotfiles" ]]
+    local line1 line2 line3 line4
+    line1=$(echo "$output" | sed -n '1p')
+    line2=$(echo "$output" | sed -n '2p')
+    line3=$(echo "$output" | sed -n '3p')
+    line4=$(echo "$output" | sed -n '4p')
+    [[ "$line1" == "pull_latest" ]] && \
+    [[ "$line2" == "install_packages" ]] && \
+    [[ "$line3" == "update_packages" ]] && \
+    [[ "$line4" == "sync_dotfiles" ]]
 }
 
 # ============================================================================
@@ -379,11 +404,12 @@ main() {
 
     echo "=== flag combinations ==="
     run_test "--help shows usage" "test_flag_help"
-    run_test "--force runs sync only" "test_flag_force_only"
+    run_test "--force runs full sync without prompt" "test_flag_force_only"
+    run_test "--no-sync --force skips pull and packages" "test_flag_no_sync"
     run_test "--sync runs pull+install+update+sync" "test_flag_sync_only"
     run_test "--force --sync: full pipeline no prompt" "test_flag_force_sync"
     run_test "short flags (-f -s) match long flags" "test_flag_short_forms"
-    run_test "no flags prompts then syncs" "test_flag_no_args_prompts"
+    run_test "no flags: full sync with prompt" "test_flag_no_args_prompts"
     echo ""
 
     # Summary

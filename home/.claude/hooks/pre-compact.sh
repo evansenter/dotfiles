@@ -43,7 +43,7 @@ WORKTREE=""
 GIT_STATUS=""
 if command -v git &>/dev/null && git -C "$CWD" rev-parse --git-dir &>/dev/null; then
     BRANCH=$(git -C "$CWD" branch --show-current 2>/dev/null || echo "")
-    GIT_STATUS=$(git -C "$CWD" status --porcelain 2>/dev/null | head -20 || echo "")
+    GIT_STATUS=$(git -C "$CWD" status --porcelain 2>/dev/null | head -3 || echo "")
 
     # Detect if we're in a worktree (using custom .worktrees/ directory structure)
     # Note: This matches the repo's worktree layout in .worktrees/<branch-name>/
@@ -72,7 +72,7 @@ fi
 # Get PR number if gh CLI available and we're on a feature branch
 PR_NUMBER=""
 if command -v gh &>/dev/null && [[ -n "$BRANCH" && "$BRANCH" != "main" && "$BRANCH" != "master" ]]; then
-    PR_NUMBER=$(gh pr view --json number -q .number 2>/dev/null || echo "")
+    PR_NUMBER=$(timeout 5 gh pr view --json number -q .number 2>/dev/null || echo "")
 fi
 
 # Get repo name (use git-common-dir to handle worktrees correctly)

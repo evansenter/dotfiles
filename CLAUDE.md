@@ -9,10 +9,9 @@ Minimal dotfiles for zsh, git, vim, and tmux. Supports macOS (Homebrew), Debian/
 ## Commands
 
 ```bash
-./bootstrap.sh           # Install/sync dotfiles (prompts for confirmation)
-./bootstrap.sh -f        # Force install (skip confirmation)
-./bootstrap.sh -s        # Full sync: pull latest, install/update packages, sync dotfiles
-./bootstrap.sh -f -s     # Full sync without confirmation
+./bootstrap.sh           # Full sync: pull, install/update packages, sync dotfiles (prompts)
+./bootstrap.sh -f        # Full sync without confirmation
+./bootstrap.sh --no-sync # Just sync dotfiles (skip pull and packages)
 ./uninstall.sh           # Remove symlinks
 git submodule update --init --remote  # Update theme submodules
 ```
@@ -91,15 +90,7 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 
 **OpenClaw** (`home/.openclaw/`) - Personal AI assistant gateway. Client config is tracked; gateway host (mac-mini) keeps its own. Bootstrap handles setup — just add `OPENCLAW_GATEWAY_TOKEN` to `~/.extra`.
 
-**Infrastructure Services** — LaunchAgents on mac-mini, exposed via tailscale serve:
-| Service | Port | Tailscale Path |
-|---------|------|---------------|
-| OpenClaw gateway | 18789 | `/` |
-| agent-event-bus | 8080 | `/agent-event-bus` |
-| agent-session-analytics | 8081 | `/agent-session-analytics` |
-| agent-memory-store | 8083 | `/agent-memory-store` |
-
-Each service repo has `make install-server`. Never place projects in `~/Documents/` — macOS TCC blocks LaunchAgents from accessing it.
+**Zellij** (`home/.config/zellij/`) - Terminal multiplexer config with Catppuccin Mocha theme, zjstatus bar, autolock plugin. Swap layouts in `default.swap.kdl`. Config changes require killing the session (`zellij kill-all-sessions`) — hot-reload doesn't work with symlinked configs (zellij-org/zellij#3992).
 
 **Statusline** (`home/.claude/statusline-command.sh`) - Single-line custom statusline for Claude Code.
 - Format: `[repo/session]:branch ✓/✗/↻ →#issues ●` (CI status hidden when dirty)

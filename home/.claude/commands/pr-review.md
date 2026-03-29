@@ -102,7 +102,9 @@ mcp__github__get_pull_request_reviews(owner, repo, pull_number)   # review summa
 gh api "repos/${REPO}/issues/${PR_NUM}/comments"                  # general PR conversation
 ```
 
-**If no feedback found:** "No reviewer feedback found. PR is ready for merge or awaiting review." Exit early.
+**Important:** An APPROVED review can still have inline suggestions. Always check `get_pull_request_comments` for inline comments even when the review verdict is APPROVE. Present any suggestions found — they're non-blocking but the user should see them before merging.
+
+**If no feedback found (no reviews, no inline comments, no PR comments):** "No reviewer feedback found. PR is ready for merge or awaiting review." Exit early.
 
 ### 3. Filter Resolved Items
 
