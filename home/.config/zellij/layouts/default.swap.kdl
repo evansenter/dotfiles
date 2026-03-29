@@ -1,0 +1,177 @@
+// Swap layouts for default.kdl — cycle with Alt+[ / Alt+]
+//
+// max_panes counts ALL panes including template bars (zjstatus + status-bar = 2).
+// So for N content panes, use max_panes = N + 2.
+// Ranges modeled after Zellij's built-in defaults: small (1-3), medium (4-6), large (7-10).
+
+tab_template name="ui" {
+    pane size=1 borderless=true {
+        plugin location="file:~/.config/zellij/plugins/zjstatus.wasm"
+    }
+    children
+    pane size=1 borderless=true {
+        plugin location="zellij:status-bar"
+    }
+}
+
+swap_tiled_layout name="vertical" {
+    // Equal columns
+    ui max_panes=5 {
+        pane split_direction="vertical" {
+            pane
+            pane { children; }
+        }
+    }
+    ui max_panes=8 {
+        pane split_direction="vertical" {
+            pane
+            pane
+            pane
+            pane { children; }
+        }
+    }
+    ui max_panes=12 {
+        pane split_direction="vertical" {
+            pane
+            pane
+            pane
+            pane
+            pane
+            pane { children; }
+        }
+    }
+}
+
+swap_tiled_layout name="horizontal" {
+    // Equal rows
+    ui max_panes=5 {
+        pane
+        pane { children; }
+    }
+    ui max_panes=8 {
+        pane
+        pane
+        pane
+        pane { children; }
+    }
+    ui max_panes=12 {
+        pane
+        pane
+        pane
+        pane
+        pane
+        pane { children; }
+    }
+}
+
+swap_tiled_layout name="main-vertical" {
+    // Large left pane, others stacked on right
+    ui max_panes=5 {
+        pane split_direction="vertical" {
+            pane size="60%"
+            pane { children; }
+        }
+    }
+    ui max_panes=8 {
+        pane split_direction="vertical" {
+            pane size="60%"
+            pane {
+                pane
+                pane
+                pane { children; }
+            }
+        }
+    }
+    ui max_panes=12 {
+        pane split_direction="vertical" {
+            pane size="60%"
+            pane {
+                pane
+                pane
+                pane
+                pane
+                pane { children; }
+            }
+        }
+    }
+}
+
+swap_tiled_layout name="main-horizontal" {
+    // Large top pane, others in columns below
+    ui max_panes=5 {
+        pane size="60%"
+        pane { children; }
+    }
+    ui max_panes=8 {
+        pane size="60%"
+        pane split_direction="vertical" {
+            pane
+            pane
+            pane { children; }
+        }
+    }
+    ui max_panes=12 {
+        pane size="60%"
+        pane split_direction="vertical" {
+            pane
+            pane
+            pane
+            pane
+            pane { children; }
+        }
+    }
+}
+
+swap_tiled_layout name="tiled" {
+    // Grid layout — cols x rows, landscape-oriented
+    // 1-3 panes → side by side
+    ui max_panes=5 {
+        pane split_direction="vertical" {
+            pane
+            pane { children; }
+        }
+    }
+    // 4 panes → 2x2
+    ui max_panes=6 {
+        pane split_direction="vertical" {
+            pane { pane; pane { children; } }
+            pane { pane; pane; }
+        }
+    }
+    // 5-6 panes → 3x2
+    ui max_panes=8 {
+        pane split_direction="vertical" {
+            pane { pane; pane { children; } }
+            pane { pane; pane; }
+            pane { pane; pane; }
+        }
+    }
+    // 7-10 panes → 4x2 then 4x3
+    ui max_panes=12 {
+        pane split_direction="vertical" {
+            pane { pane; pane { children; } }
+            pane { pane; pane; }
+            pane { pane; pane; }
+            pane { pane; pane; }
+        }
+    }
+}
+
+swap_floating_layout name="staggered" {
+    floating_panes { }
+}
+
+swap_floating_layout name="spread" {
+    floating_panes max_panes=1 {
+        pane { x "50%"; y "50%"; }
+    }
+    floating_panes max_panes=2 {
+        pane { width "45%"; x "1%"; y "25%"; }
+        pane { width "45%"; x "50%"; y "25%"; }
+    }
+    floating_panes max_panes=3 {
+        pane { height "45%"; width "45%"; y "55%"; }
+        pane { width "45%"; x "1%"; y "1%"; }
+        pane { width "45%"; x "50%"; y "1%"; }
+    }
+}
