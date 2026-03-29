@@ -172,14 +172,22 @@ If your draft says "APPROVE" but you listed any issues above, STOP and change th
 
 ### 9. Output Format
 
-Submit your review as a **native GitHub review** using `gh api`. This posts inline comments on specific files/lines AND sets the review status (approve/request-changes) in one call.
+**MANDATORY: Use `gh api` to submit reviews.** Do NOT use `gh pr review` or `gh pr comment`. The `gh api` endpoint is the ONLY way to post inline comments on specific files and lines.
 
-**Build your review as a JSON file**, then submit it:
+**Step 1: Get the latest commit SHA** (required by the API):
 
 ```bash
-# 1. Build the review JSON
+COMMIT_SHA=$(gh pr view $PR_NUMBER --json headRefOid -q .headRefOid)
+```
+
+**Step 2: Build the review JSON with inline comments:**
+
+For each finding, create an entry in the `comments` array with the exact `path` and `line` from the diff. Write the JSON to a file, then submit.
+
+```bash
 cat > /tmp/review.json << 'REVIEW_EOF'
 {
+  "commit_id": "$COMMIT_SHA",
   "event": "REQUEST_CHANGES",
   "body": "> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)\n\n## Code Review\n\n### Summary\n[1-2 sentences]\n\n### Previously Addressed (Filtered)\n[if any]\n\n### Verdict\nREQUEST_CHANGES - [brief reason]\n\n---\n*Automated review by Claude Code*",
   "comments": [
@@ -192,41 +200,35 @@ cat > /tmp/review.json << 'REVIEW_EOF'
       "path": "src/api.rs",
       "line": 89,
       "body": "**[Important]** Description of important issue"
-    },
-    {
-      "path": "src/utils.rs",
-      "line": 120,
-      "body": "**[Suggestion]** Description of suggestion"
     }
   ]
 }
 REVIEW_EOF
 
-# 2. Submit the review
+# IMPORTANT: Replace $COMMIT_SHA in the JSON before submitting
+sed -i "s/\$COMMIT_SHA/$COMMIT_SHA/" /tmp/review.json
+
 gh api repos/$REPO/pulls/$PR_NUMBER/reviews --input /tmp/review.json
 ```
 
-**Key rules for the JSON:**
-- `event`: `"APPROVE"` or `"REQUEST_CHANGES"`
-- `body`: The review summary (appears as the main review comment). Include prompt source, summary, previously addressed items, and verdict.
-- `comments`: Array of inline comments. Each needs `path` (relative to repo root), `line` (line number in the diff's new file), and `body` (the feedback). **Omit `comments` array entirely for APPROVE with no findings.**
-- Use `line` for the ending line of the relevant code. For multi-line ranges, add `start_line`.
-- The `line` must be within the diff hunk — only comment on changed lines or lines visible in the diff context.
+**Rules for inline comments:**
+- `path`: File path relative to repo root (e.g., `src/file.rs`)
+- `line`: Line number in the **new version** of the file (right side of the diff). Must be within a diff hunk.
+- `body`: The feedback. Prefix with severity: `**[Critical]**`, `**[Important]**`, or `**[Suggestion]**`
+- For multi-line ranges, add `start_line` alongside `line`
+- Every finding MUST be an inline comment. Do NOT put findings only in the review body.
 
-**If no issues found:**
+**If no issues found** (no `comments` array needed):
 
 ```bash
-cat > /tmp/review.json << 'REVIEW_EOF'
-{
+echo '{
+  "commit_id": "'$COMMIT_SHA'",
   "event": "APPROVE",
   "body": "> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)\n\n## Code Review\n\n### Summary\n[1-2 sentences]\n\n### Verdict\nAPPROVE - Code looks good, no issues found.\n\n---\n*Automated review by Claude Code*"
-}
-REVIEW_EOF
-
-gh api repos/$REPO/pulls/$PR_NUMBER/reviews --input /tmp/review.json
+}' | gh api repos/$REPO/pulls/$PR_NUMBER/reviews --input -
 ```
 
-**Fallback:** If the `gh api` call fails (e.g., a `line` is outside the diff), fall back to `gh pr comment` for the summary and `gh pr review --request-changes` for the status. Do not silently swallow the error.
+**If `gh api` fails** (e.g., a line number is outside the diff hunk): fix the line number and retry. If it still fails, use `gh pr review` as a last resort and note the failure in the review body.
 
 ## Important Notes
 
