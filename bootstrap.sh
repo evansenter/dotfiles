@@ -1177,20 +1177,22 @@ sync_dotfiles() {
 
 # Parse arguments
 FORCE=false
-SYNC=false
+SYNC=true
 for arg in "$@"; do
 	case "$arg" in
 		--force|-f) FORCE=true ;;
 		--sync|-s) SYNC=true ;;
+		--no-sync) SYNC=false ;;
 		--help|-h)
 			echo "Usage: ./bootstrap.sh [OPTIONS]"
 			echo ""
-			echo "Install dotfiles from home/ to ~"
+			echo "Pull latest, install/update packages, and sync dotfiles"
 			echo ""
 			echo "Options:"
-			echo "  -f, --force  Skip confirmation prompt"
-			echo "  -s, --sync   Pull latest, install/update packages, then sync dotfiles"
-			echo "  -h, --help   Show this help message"
+			echo "  -f, --force    Skip confirmation prompt"
+			echo "  -s, --sync     Pull latest, install/update packages (default)"
+			echo "  --no-sync      Skip pull and package install, just sync dotfiles"
+			echo "  -h, --help     Show this help message"
 			exit 0
 			;;
 	esac
