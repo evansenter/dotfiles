@@ -108,3 +108,5 @@
 [credential "https://gist.github.com"]
 	helper =
 	helper = !gh auth git-credential
+[safe]
+	directory = /Volumes/My Passport/.sortbox
