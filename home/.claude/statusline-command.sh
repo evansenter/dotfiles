@@ -258,60 +258,6 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     fi
 fi
 
-# Context window percentage
-context_display=""
-if [[ "$pct" =~ ^[0-9]+$ ]] && [ "$pct" -gt 0 ]; then
-    context_display=" ${GRAY}${pct}%${RESET}"
-fi
-
-# Last user message context (truncated to 40 chars)
-user_context=""
-if [[ -n "$transcript_path" ]] && [[ -r "$transcript_path" ]]; then
-    # Get last user message with string content (not tool result or system message)
-    # User messages are infrequent (mostly tool results), so scan more lines
-    # but still limit for performance on very long sessions
-    # Use jq slurp to get the actual last string message, avoiding line-based issues
-    # Filter out continuation summaries which start with "This session is being continued"
-    last_user_msg=$(tail -n 500 "$transcript_path" 2>/dev/null | \
-        jq -rs '[.[] | select(.type == "user") | .message.content | select(type == "string") | select(startswith("This session is being continued") | not)] | last // empty' 2>/dev/null)
-
-    if [[ -n "$last_user_msg" ]]; then
-        # Handle slash commands: extract args or command name
-        cleaned_msg=""
-        if [[ "$last_user_msg" == *"<command-args>"* ]]; then
-            # Extract content between <command-args> and </command-args>
-            cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed -n 's/.*<command-args>\(.*\)<\/command-args>.*/\1/p')
-        fi
-        # If no args (empty or missing), try command name
-        if [[ -z "$cleaned_msg" ]] && [[ "$last_user_msg" == *"<command-name>"* ]]; then
-            cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed -n 's/.*<command-name>\(.*\)<\/command-name>.*/\1/p')
-        fi
-        # If still empty, use plain message (strip XML tags and system preambles)
-        if [[ -z "$cleaned_msg" ]]; then
-            cleaned_msg=$(printf '%s\n' "$last_user_msg" | sed 's/<[^>]*>//g' | sed '/^Caveat:/d' | sed '/^$/d' | tail -1)
-        fi
-
-        # Truncate to 40 chars, lowercase, add ellipsis if truncated
-        truncated=$(printf '%s\n' "$cleaned_msg" | awk '{
-            gsub(/\n/, " ")
-            msg = tolower($0)
-            if (length(msg) > 40) {
-                print substr(msg, 1, 40) "..."
-            } else {
-                print msg
-            }
-        }')
-        user_context=" ${GRAY}(${truncated})${RESET}"
-    fi
-fi
-
-# Model display from input JSON
-if [[ -n "$model_id" ]]; then
-    model_display="${GRAY}${model_id}${RESET}"
-else
-    model_display="${GRAY}(unknown model)${RESET}"
-fi
-
 # Branch display (show if not on default branch)
 branch_display=""
 if [[ -n "$branch" ]] && [[ "$branch" != "main" ]] && [[ "$branch" != "master" ]]; then
@@ -321,22 +267,12 @@ fi
 # Final hyperlink reset to ensure no unclosed hyperlinks leak
 LINK_RESET=$'\e]8;;\e\\'
 
-# Build the complete statusline (two lines)
-# Line 1: navigation context (repo, session, branch, PRs, issues)
-# Line 2: model info and user context
-# This gives CC room to append its own status on line 2
-# LINK_RESET on each line ensures hyperlinks don't capture CC's injected output
-line1=$(printf "%s%s%s%s%s%s" \
+# Build the statusline (single line)
+# Shows: [repo/session]:branch ✓/✗/↻ →#issues ●
+output=$(printf "%s%s%s%s%s%s" \
     "$repo_session_display" "$branch_display" \
     "$ci_display" "$issue_display" \
     "$git_status" "$LINK_RESET")
-
-line2=$(printf "%s%s%s%s" \
-    "$model_display" \
-    "$context_display" "$user_context" \
-    "$LINK_RESET")
-
-output=$(printf "%s\n%s" "$line1" "$line2")
 
 # Restore stdout and print atomically
 exec 1>&3 3>&-

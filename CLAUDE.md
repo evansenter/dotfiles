@@ -101,9 +101,8 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 
 Each service repo has `make install-server`. Never place projects in `~/Documents/` — macOS TCC blocks LaunchAgents from accessing it.
 
-**Statusline** (`home/.claude/statusline-command.sh`) - Two-line custom statusline for Claude Code.
-- Line 1: `[repo/session]:branch ✓/✗/↻ →#issues ●` (CI status hidden when dirty)
-- Line 2: `model_id N% (last user message...)`
+**Statusline** (`home/.claude/statusline-command.sh`) - Single-line custom statusline for Claude Code.
+- Format: `[repo/session]:branch ✓/✗/↻ →#issues ●` (CI status hidden when dirty)
 - GitHub API calls (repo URL, PR number, PR body, CI status) are cached in `$TMPDIR/claude-statusline-gh/` with per-call TTLs
 - Session name cached in `$TMPDIR/claude-statusline/` (pre-populated by session-start hook)
 
