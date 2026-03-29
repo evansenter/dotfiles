@@ -75,7 +75,7 @@ if [[ -n "$SESSION_ID" ]]; then
     if [[ -n "$DISPLAY_ID" && -n "$CLIENT_ID" ]]; then
         CACHE_DIR="${TMPDIR:-/tmp}/claude-statusline"
         mkdir -p "$CACHE_DIR" && chmod 700 "$CACHE_DIR" 2>/dev/null
-        echo "$DISPLAY_ID" > "$CACHE_DIR/$CLIENT_ID" 2>/dev/null
+        echo "$DISPLAY_ID" > "$CACHE_DIR/$CLIENT_ID" 2>/dev/null || true
     fi
     echo "Registered on event bus as: $SESSION_ID ($SESSION_NAME)"
 else

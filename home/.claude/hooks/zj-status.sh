@@ -9,11 +9,11 @@
 
 set -euo pipefail
 
+# Consume stdin (required for hooks — must be before any exit)
+cat > /dev/null
+
 # Skip if not in zellij
 [[ -z "${ZELLIJ:-}" ]] && exit 0
-
-# Consume stdin (required for hooks)
-cat > /dev/null
 
 STATE="${1:-waiting}"
 
