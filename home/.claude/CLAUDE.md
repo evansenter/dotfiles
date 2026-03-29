@@ -43,6 +43,8 @@ Non-obvious autonomy:
 
 After significant work: share what caused friction, where you were redirected (indicates missing guidance), and what's missing. Publish insights to event bus (`gotcha_discovered`, `pattern_found`, `improvement_suggested`).
 
+**Insight → Event Bus bridge:** When you generate an Insight (★) that represents a reusable gotcha or cross-session pattern — not just a local explanation of code — publish it to the event bus as `pattern_found` or `gotcha_discovered` on `repo:<name>`. This lets other sessions benefit from discoveries without duplicating investigation.
+
 ## PR Workflow
 
 Use `/work <issue-number>` for guided development. `/work --attach` to join an existing PR.
