@@ -15,9 +15,11 @@ The prompt will contain:
 
 ## Process
 
-### 1. Gather Context
+### 1. Gather Context & Brainstorm
 
-Analyze the provided context for:
+Use `superpowers:brainstorming` to structure the design exploration. Feed it the topic and any provided context. This surfaces intent, requirements, edge cases, and alternative approaches before committing to a proposal.
+
+Also analyze the provided context for:
 - Problem identified
 - Relevant code/files (explore codebase if references are vague)
 - Decisions already made

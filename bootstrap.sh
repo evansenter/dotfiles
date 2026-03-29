@@ -422,15 +422,11 @@ install_launch_agents() {
 }
 
 install_cron_jobs() {
-	# Install cargo-sweep cron job (only if cargo and crontab are available)
-	if command -v cargo >/dev/null 2>&1 && command -v crontab >/dev/null 2>&1; then
-		local cron_entry="0 3 * * 0 $HOME/.bin/cargo-sweep-all"
-
-		# Check if already installed
-		if ! crontab -l 2>/dev/null | grep -qF "cargo-sweep-all"; then
-			echo "Installing cargo-sweep cron job (weekly Sunday 3am)..."
-			(crontab -l 2>/dev/null || true; echo "$cron_entry") | crontab -
-		fi
+	# cargo-sweep is handled by LaunchAgent (com.user.cargo-sweep.plist)
+	# Remove legacy cron entry if present
+	if crontab -l 2>/dev/null | grep -qF "cargo-sweep-all"; then
+		echo "Removing legacy cargo-sweep cron job (now a LaunchAgent)..."
+		crontab -l 2>/dev/null | grep -vF "cargo-sweep-all" | crontab -
 	fi
 }
 

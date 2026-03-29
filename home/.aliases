@@ -37,6 +37,7 @@ fi
 
 alias lg="lazygit"
 alias zj="zellij"
+alias claude-yolo="claude --dangerously-skip-permissions"
 
 # ==============================================================================
 # Git
