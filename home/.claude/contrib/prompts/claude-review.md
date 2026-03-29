@@ -5,10 +5,11 @@ Required tools (must be in workflow's claude_args --allowed-tools):
 - Read                      - Read prompt file and CLAUDE.md
 - Bash(gh pr view:*)        - Get PR details and comments
 - Bash(gh pr diff:*)        - Get PR diff
-- Bash(gh pr comment:*)     - Post review comments
+- Bash(gh pr comment:*)     - Post review comments (fallback)
+- Bash(gh pr review:*)      - Submit review verdict (fallback)
 - Bash(gh issue view:*)     - Read linked issues for context
 - Bash(gh issue comment:*)  - Comment on issue if PR incomplete (use sparingly)
-- Bash(gh api:*)            - Fetch "Feedback Addressed" comments
+- Bash(gh api:*)            - Submit reviews with inline comments, fetch prior feedback
 -->
 
 You are reviewing a pull request. Be thorough and constructive.
@@ -171,68 +172,61 @@ If your draft says "APPROVE" but you listed any issues above, STOP and change th
 
 ### 9. Output Format
 
-Post your review as a PR comment using `gh pr comment`.
+Submit your review as a **native GitHub review** using `gh api`. This posts inline comments on specific files/lines AND sets the review status (approve/request-changes) in one call.
 
-**Include prompt source** at the top so users know which review configuration was used:
+**Build your review as a JSON file**, then submit it:
 
 ```bash
-gh pr comment $PR_NUMBER --body "$(cat <<'EOF'
-> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)
+# 1. Build the review JSON
+cat > /tmp/review.json << 'REVIEW_EOF'
+{
+  "event": "REQUEST_CHANGES",
+  "body": "> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)\n\n## Code Review\n\n### Summary\n[1-2 sentences]\n\n### Previously Addressed (Filtered)\n[if any]\n\n### Verdict\nREQUEST_CHANGES - [brief reason]\n\n---\n*Automated review by Claude Code*",
+  "comments": [
+    {
+      "path": "src/file.rs",
+      "line": 42,
+      "body": "**[Critical]** Description of critical issue"
+    },
+    {
+      "path": "src/api.rs",
+      "line": 89,
+      "body": "**[Important]** Description of important issue"
+    },
+    {
+      "path": "src/utils.rs",
+      "line": 120,
+      "body": "**[Suggestion]** Description of suggestion"
+    }
+  ]
+}
+REVIEW_EOF
 
-## Code Review
-
-### Summary
-[1-2 sentences on what this PR does]
-
-### Issues Found
-
-#### Critical
-- [ ] `file.rs:42` - Description of critical issue
-
-#### Important
-- [ ] `file.rs:89` - Description of important issue
-
-#### Suggestions
-- [ ] `file.rs:120` - Description of suggestion
-
-### Previously Addressed (Filtered)
-<!-- Include this section if any items matched previous "Feedback Addressed" comments. Omit if none. -->
-- `utils.rs:15` - Extract helper function (Skipped: adds complexity)
-- `auth.rs:42` - Missing null check (Implemented in prior round)
-
-> 2 items from prior feedback rounds were not re-raised.
-
-### Verdict
-<!-- REMEMBER: If ANY items listed above, you MUST say REQUEST_CHANGES. APPROVE only if all sections are empty. -->
-[APPROVE / REQUEST_CHANGES] - [brief reason]
-
----
-*Automated review by Claude Code*
-EOF
-)"
+# 2. Submit the review
+gh api repos/$REPO/pulls/$PR_NUMBER/reviews --input /tmp/review.json
 ```
 
-If no issues found (include Previously Addressed section if items were filtered):
+**Key rules for the JSON:**
+- `event`: `"APPROVE"` or `"REQUEST_CHANGES"`
+- `body`: The review summary (appears as the main review comment). Include prompt source, summary, previously addressed items, and verdict.
+- `comments`: Array of inline comments. Each needs `path` (relative to repo root), `line` (line number in the diff's new file), and `body` (the feedback). **Omit `comments` array entirely for APPROVE with no findings.**
+- Use `line` for the ending line of the relevant code. For multi-line ranges, add `start_line`.
+- The `line` must be within the diff hunk — only comment on changed lines or lines visible in the diff context.
+
+**If no issues found:**
+
 ```bash
-gh pr comment $PR_NUMBER --body "> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)
+cat > /tmp/review.json << 'REVIEW_EOF'
+{
+  "event": "APPROVE",
+  "body": "> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)\n\n## Code Review\n\n### Summary\n[1-2 sentences]\n\n### Verdict\nAPPROVE - Code looks good, no issues found.\n\n---\n*Automated review by Claude Code*"
+}
+REVIEW_EOF
 
-## Code Review
-
-### Summary
-[1-2 sentences on what this PR does]
-
-### Previously Addressed (Filtered)
-<!-- Include only if items were filtered. Omit entire section if none. -->
-- `auth.rs:42` - Missing null check (Implemented in prior round)
-
-> 1 item from prior feedback rounds was not re-raised.
-
-### Verdict
-APPROVE - Code looks good, no issues found.
-
----
-*Automated review by Claude Code*"
+gh api repos/$REPO/pulls/$PR_NUMBER/reviews --input /tmp/review.json
 ```
+
+**Fallback:** If the `gh api` call fails (e.g., a `line` is outside the diff), fall back to `gh pr comment` for the summary and `gh pr review --request-changes` for the status. Do not silently swallow the error.
 
 ## Important Notes
 

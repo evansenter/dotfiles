@@ -44,12 +44,12 @@ Join existing PR on current branch, restoring WIP context if available.
 | State | Already Completed |
 |-------|-------------------|
 | PR exists, no CI run | Implementation, pr-review local, pr-create |
-| PR exists, code CI passed, review CI pending | Above + watch-ci (partial) |
-| PR exists, code CI passed, review CI failed | Above + watch-ci, need pr-review remote |
-| PR exists, all CI passed | Above + watch-ci + pr-review remote |
+| PR exists, CI pending | Above + watch-ci (partial) |
+| PR exists, CI passed, review requests changes | Above + watch-ci, need pr-review remote |
+| PR exists, CI passed, review approved | Above + watch-ci + pr-review remote |
 
 Note: Code checks (lint, test, etc.) and claude-review are separate CI jobs.
-Review CI fails on REQUEST_CHANGES — address feedback, push, and re-run.
+claude-review posts a native GitHub review (approve/request-changes) — check review status with `gh pr view --json reviews`.
 
 6. Create remaining todos only. Display resume plan showing what's done and what remains.
 
