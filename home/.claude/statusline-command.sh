@@ -18,12 +18,9 @@ if [[ -z "$input" ]]; then
     exit 1
 fi
 
-read -r cwd pct model_id transcript_path session_id < <(
+read -r cwd session_id < <(
     echo "$input" | jq -r '[
         .workspace.current_dir,
-        (.context_window.used_percentage // 0 | round),
-        (.model.id // ""),
-        (.transcript_path // ""),
         (.session_id // "")
     ] | @tsv'
 )
