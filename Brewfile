@@ -76,7 +76,7 @@ cask "lm-studio"
 cask "claude"
 cask "google-chrome"
 cask "iina"                   # Video player
-cask "macfuse"                 # FUSE filesystem support (required by ntfs-3g)
+cask "macfuse"                 # FUSE filesystem support (pre-installed by bootstrap, required by ntfs-3g)
 cask "mounty"                  # NTFS re-mount in read-write
 cask "obsidian"               # Note-taking
 cask "spotify"
