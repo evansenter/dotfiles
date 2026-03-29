@@ -10,7 +10,7 @@ Claude Code has shipped Agent Teams (experimental), worktree lifecycle hooks, an
 
 ## Design Decisions
 
-1. **MCP scoping:** `mcpServers` frontmatter is **additive** (adds servers), not restrictive. To deny MCP access, use `disallowedTools`. Only `summarize-work` needs restriction (it has no MCP usage).
+1. **No MCP scoping:** `mcpServers` frontmatter is **additive** (adds servers), not restrictive. `disallowedTools` could deny tools but requires exact names (no wildcards confirmed), making it fragile. Agent prompts already constrain tool usage — skipping MCP restriction entirely.
 2. **Isolation:** Only audit agents get `isolation: worktree` (they scan the full repo and benefit from clean snapshots). Other agents don't touch files.
 3. **No worktree hooks:** `WorktreeCreate`/`WorktreeRemove` hooks **replace** default git behavior entirely — the hook must create/remove the worktree itself, handle `.worktreeinclude` copying, and return the path. The risk of breaking all worktree creation outweighs the benefit of event bus notifications. Dropped from scope.
 4. **Hook implementation:** Follow existing standalone-script pattern. Each hook is self-contained with its own boilerplate.
@@ -43,16 +43,15 @@ Copies matching gitignored files into new worktrees created by `isolation: workt
 
 ### 2. Agent Frontmatter
 
-| Agent | `memory` | `isolation` | `disallowedTools` |
-|-------|----------|-------------|--------------------|
-| audit-codebase | `user` | `worktree` | -- |
-| audit-docs | `user` | `worktree` | -- |
-| audit-issues | `user` | `worktree` | -- |
-| audit-tests | `user` | `worktree` | -- |
-| audit-workflows | `user` | `worktree` | -- |
-| summarize-work | -- | -- | all `mcp__*` tools |
+| Agent | `memory` | `isolation` |
+|-------|----------|-------------|
+| audit-codebase | `user` | `worktree` |
+| audit-docs | `user` | `worktree` |
+| audit-issues | `user` | `worktree` |
+| audit-tests | `user` | `worktree` |
+| audit-workflows | `user` | `worktree` |
 
-Other agents (`improve-workflow`, `rfc-create`, `rfc-respond`, `status-report`) keep defaults — they actively use MCP tools and don't need isolation or memory.
+All other agents unchanged — they actively use MCP tools and don't need isolation or memory.
 
 ### 3. `settings.json`
 
@@ -126,7 +125,7 @@ A standalone guide for adopting Agent Teams and subagent features in other repos
 
 - Enabling the Agent Teams experimental flag
 - Adding hook scripts (what to copy from dotfiles)
-- Agent frontmatter configuration (`memory`, `isolation`, `disallowedTools`)
+- Agent frontmatter configuration (`memory`, `isolation`)
 - Creating per-repo `.worktreeinclude`
 - Gotchas: WorktreeCreate replaces default behavior, mcpServers is additive, exit codes matter
 - Troubleshooting (common issues, graceful degradation)
@@ -134,7 +133,7 @@ A standalone guide for adopting Agent Teams and subagent features in other repos
 ## Implementation Order
 
 1. `.worktreeinclude` -- no dependencies
-2. `memory: user` + `isolation: worktree` + `disallowedTools` on agents -- frontmatter only
+2. `memory: user` + `isolation: worktree` on audit agents -- frontmatter only
 3. Settings.json -- env flag + hook wiring
 4. Agent Teams hooks (3 scripts) -- notification-only, must exit 0
 5. Tests -- after all hooks exist
@@ -147,4 +146,4 @@ A standalone guide for adopting Agent Teams and subagent features in other repos
 - Shared hook library extraction (separate refactoring concern)
 - Per-repo `.worktreeinclude` for other repos (add as needed)
 - Agent Teams orchestration strategies (iterate after flag is enabled)
-- Broad MCP scoping (only summarize-work needs restriction)
+- MCP scoping via `disallowedTools` (no wildcard support confirmed, fragile for many tools)
