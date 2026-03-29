@@ -182,7 +182,7 @@ This produces a bite-sized plan with task structure that feeds directly into Pha
 
 ##### Phase 4b: Context Check
 
-Before starting implementation, check context window usage from system info (the `context_window.used_percentage` field is available in your context). If >70% full, proactively inform the user: "Context is at X% — consider compacting before implementation to avoid mid-work compaction." The pre-compact hook will checkpoint WIP state if compaction happens, but it's better to compact at a clean boundary.
+Before starting implementation, check how much of the context window has been used. If >70% full, proactively inform the user: "Context is high — consider compacting before implementation to avoid mid-work compaction." The pre-compact hook will checkpoint WIP state if compaction happens, but it's better to compact at a clean boundary.
 
 ##### Phase 5: Derive Tasks
 
@@ -284,19 +284,9 @@ Suggest `/commit-commands:clean_gone`.
 
 Publish insights to event bus with session_id (`gotcha_discovered`, `pattern_found`).
 
-If any gotcha or pattern is repo-specific and likely to recur, save it to the file-based memory system (`~/.claude/projects/<project>/memory/`) so it persists across sessions. Event bus events scroll off over time — memory is durable.
+Spawn improve-workflow agent — it handles memory persistence, session analytics, and workflow improvement suggestions:
 
-**Pull session metrics** for grounded reflection (if session-analytics MCP is available):
-
-```
-mcp__agent-session-analytics__get_session_efficiency(session_id: "<your-session-id>")
-```
-
-Include relevant metrics (turns, token usage, error rate) in your reflection to ground it in data rather than impressions.
-
-Run `/revise-claude-md` to capture any session learnings into CLAUDE.md.
-
-Spawn improve-workflow agent: `Task(subagent_type="improve-workflow", prompt="Analyze this session for workflow improvements")`
+`Task(subagent_type="improve-workflow", prompt="Analyze this session for workflow improvements")`
 
 ---
 
