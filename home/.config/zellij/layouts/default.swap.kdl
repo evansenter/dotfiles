@@ -134,25 +134,25 @@ swap_tiled_layout name="tiled" {
     // 4 panes → 2x2
     ui max_panes=6 {
         pane split_direction="vertical" {
-            pane { pane; pane { children; } }
             pane { pane; pane; }
+            pane { pane; children; }
         }
     }
     // 5-6 panes → 3x2
     ui max_panes=8 {
         pane split_direction="vertical" {
-            pane { pane; pane { children; } }
             pane { pane; pane; }
             pane { pane; pane; }
+            pane { pane; children; }
         }
     }
     // 7-10 panes → 4x2 then 4x3
     ui max_panes=12 {
         pane split_direction="vertical" {
-            pane { pane; pane { children; } }
             pane { pane; pane; }
             pane { pane; pane; }
             pane { pane; pane; }
+            pane { pane; children; }
         }
     }
 }
