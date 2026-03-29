@@ -132,7 +132,7 @@ Ask: **Yes, explore first (Recommended)** / No, proceed directly
 
 #### Guided Development Phases
 
-**Effort guidance:** Vary reasoning depth by phase. Explore and implement at normal depth. Clarify and architect deserve deep thinking (ultrathink). Review feedback that disagrees with your opinion deserves maximum scrutiny.
+**Effort guidance:** Vary reasoning depth by phase. Explore and implement at normal depth. Clarify and architect deserve deep, thorough thinking. Review feedback that disagrees with your opinion deserves maximum scrutiny.
 
 ##### Phase 1: Explore
 
@@ -179,9 +179,9 @@ Use `superpowers:writing-plans` to create a structured implementation plan. Feed
 
 This produces a bite-sized plan with task structure that feeds directly into Phase 5.
 
-##### Context Check
+##### Phase 4b: Context Check
 
-Before starting implementation, check context usage. If context is >70% full, proactively inform the user: "Context is at X% — consider compacting before implementation to avoid mid-work compaction." The pre-compact hook will checkpoint WIP state if compaction happens, but it's better to compact at a clean boundary.
+Before starting implementation, check context window usage from system info (the `context_window.used_percentage` field is available in your context). If >70% full, proactively inform the user: "Context is at X% — consider compacting before implementation to avoid mid-work compaction." The pre-compact hook will checkpoint WIP state if compaction happens, but it's better to compact at a clean boundary.
 
 ##### Phase 5: Derive Tasks
 
@@ -288,7 +288,7 @@ If any gotcha or pattern is repo-specific and likely to recur, also save it to a
 **Pull session metrics** for grounded reflection (if session-analytics MCP is available):
 
 ```
-mcp__agent-session-analytics__get_session_efficiency(session_id: "<current-session-id>")
+mcp__agent-session-analytics__get_session_efficiency(session_id: "<your-session-id>")
 ```
 
 Include relevant metrics (turns, token usage, error rate) in your reflection to ground it in data rather than impressions.

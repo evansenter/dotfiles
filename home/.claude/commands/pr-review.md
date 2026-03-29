@@ -61,14 +61,14 @@ For significant changes, run examples with debug logging (check CLAUDE.md for fl
 Check if the diff touches security-sensitive patterns:
 
 ```bash
-git diff --name-only HEAD~1 2>/dev/null || git diff --name-only main...HEAD
+git diff --name-only main...HEAD 2>/dev/null || git diff --name-only HEAD~1
 ```
 
 Flag for extra scrutiny if changed files match:
 - Auth/crypto: `*auth*`, `*crypt*`, `*token*`, `*secret*`, `*password*`, `*credential*`
 - User input: `*handler*`, `*endpoint*`, `*route*`, `*api*`, `*input*`, `*form*`
 - Config: `*.env*`, `*config*`, `*settings*`, `Dockerfile`, `docker-compose*`
-- Dependencies: `*lock*`, `Cargo.toml`, `package.json`, `requirements*.txt`, `Gemfile`
+- Dependencies: `*.lock`, `*lockfile*`, `Cargo.toml`, `package.json`, `requirements*.txt`, `Gemfile`
 
 If any match, scan those files specifically for:
 - Hardcoded secrets or API keys
