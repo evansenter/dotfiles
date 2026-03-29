@@ -151,24 +151,20 @@ Evaluate the code for:
 **HARD CONSTRAINT - You MUST follow these rules with NO exceptions:**
 - If there are ANY Critical issues: REQUEST_CHANGES
 - If there are ANY Important issues: REQUEST_CHANGES
-- If there are ANY Suggestions: REQUEST_CHANGES
-- Only APPROVE if you found ZERO issues of any kind
+- If there are ONLY Suggestions (no Critical or Important): APPROVE
 
-**APPROVE is only valid when all three sections (Critical, Important, Suggestions) are empty or say "None".**
+Suggestions are valuable feedback but should not block merge. Post them as inline comments — the author will see them and can address them at their discretion.
 
-Do NOT rationalize approving with suggestions by saying they are "minor" or "optional". If you wrote it down as feedback, it requires REQUEST_CHANGES. No exceptions. No judgment calls. This is a mechanical rule.
-
-**Never LGTM with caveats.** If you have feedback, request changes.
+**Never suppress findings to achieve a particular verdict.** Report everything you find. The verdict follows mechanically from the severity classification.
 
 ### 8. Verify Before Posting
 
 **Before posting your review, perform this check:**
 
 1. Count your issues: Critical=?, Important=?, Suggestions=?
-2. If ANY count > 0, your verdict MUST be REQUEST_CHANGES
-3. APPROVE is only allowed when Critical=0 AND Important=0 AND Suggestions=0
-
-If your draft says "APPROVE" but you listed any issues above, STOP and change the verdict to REQUEST_CHANGES.
+2. If Critical > 0 OR Important > 0: verdict MUST be REQUEST_CHANGES
+3. If only Suggestions: verdict MUST be APPROVE (suggestions are posted as inline comments)
+4. If no issues at all: verdict MUST be APPROVE
 
 ### 9. Output Format
 
