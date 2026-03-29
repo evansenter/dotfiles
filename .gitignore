@@ -19,4 +19,5 @@ home/.claude/contrib/agent-memory-store/
 # Zellij saved layouts (machine-specific snapshots, but keep default.kdl)
 home/.config/zellij/layouts/*
 !home/.config/zellij/layouts/default.kdl
+!home/.config/zellij/layouts/default.swap.kdl
 home/.config/zellij/layouts/saved-layout.kdl

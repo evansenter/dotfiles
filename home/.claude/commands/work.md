@@ -132,6 +132,8 @@ Ask: **Yes, explore first (Recommended)** / No, proceed directly
 
 #### Guided Development Phases
 
+**Effort guidance:** Vary reasoning depth by phase. Explore and implement at normal depth. Clarify and architect deserve deep, thorough thinking. Review feedback that disagrees with your opinion deserves maximum scrutiny.
+
 ##### Phase 1: Explore
 
 Launch 2-3 `feature-dev:code-explorer` agents in parallel, each targeting different aspects:
@@ -177,6 +179,10 @@ Use `superpowers:writing-plans` to create a structured implementation plan. Feed
 
 This produces a bite-sized plan with task structure that feeds directly into Phase 5.
 
+##### Phase 4b: Context Check
+
+Before starting implementation, check context window usage from system info (the `context_window.used_percentage` field is available in your context). If >70% full, proactively inform the user: "Context is at X% — consider compacting before implementation to avoid mid-work compaction." The pre-compact hook will checkpoint WIP state if compaction happens, but it's better to compact at a clean boundary.
+
 ##### Phase 5: Derive Tasks
 
 Based on the architecture plan, derive final implementation tasks. These replace the initial tasks from step 4.
@@ -197,6 +203,12 @@ Based on the architecture plan, derive final implementation tasks. These replace
 ```
 
 ### 9. Broadcast & Begin
+
+Rename the zellij tab to reflect the work ID (if in zellij):
+
+```bash
+zellij action rename-tab "${ID}: <short title>" 2>/dev/null || true
+```
 
 Publish `task_started` with your session_id (from startup: "Registered on event bus as: <session_id>"):
 
@@ -270,6 +282,16 @@ Suggest `/commit-commands:clean_gone`.
 - **Improvements**: What would make this easier?
 
 Publish insights to event bus with session_id (`gotcha_discovered`, `pattern_found`).
+
+If any gotcha or pattern is repo-specific and likely to recur, also save it to auto-memory so it persists across sessions (event bus events scroll off over time).
+
+**Pull session metrics** for grounded reflection (if session-analytics MCP is available):
+
+```
+mcp__agent-session-analytics__get_session_efficiency(session_id: "<your-session-id>")
+```
+
+Include relevant metrics (turns, token usage, error rate) in your reflection to ground it in data rather than impressions.
 
 Run `/revise-claude-md` to capture any session learnings into CLAUDE.md.
 

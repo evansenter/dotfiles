@@ -39,6 +39,7 @@ If PR body references an issue (`Fixes #N`), fetch it: `gh issue view <N> --json
 
 **Branch:** [name]
 **Status:** [changes or "clean"]
+**Context:** [X% used — <50% low, 50-70% moderate, >70% high]
 **PR:** [#N - title (CI status)] or "none"
 **Issue:** [#N - title] or "none"
 **Labels:** [priority, type, etc.]

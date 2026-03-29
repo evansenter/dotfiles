@@ -67,7 +67,7 @@ REGISTER_ARGS=(--name "$SESSION_NAME")
 [[ -n "$CLIENT_ID" ]] && REGISTER_ARGS+=(--client-id "$CLIENT_ID")
 
 OUTPUT=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} register "${REGISTER_ARGS[@]}" 2>/dev/null) || true
-SESSION_ID=$(echo "$OUTPUT" | jq -r '.session_id // ""')
+SESSION_ID=$(echo "$OUTPUT" | jq -r '.session_id // ""' 2>/dev/null)
 
 if [[ -n "$SESSION_ID" ]]; then
     # Pre-populate statusline cache so it doesn't need to query the event bus
