@@ -255,10 +255,22 @@ layout {
                 pane { children; }
             }
         }
+        tab max_panes=3 {
+            pane split_direction="vertical" {
+                pane { pane; pane { children; } }
+                pane
+            }
+        }
         tab max_panes=4 {
             pane split_direction="vertical" {
                 pane { pane; pane { children; } }
                 pane { pane; pane; }
+            }
+        }
+        tab max_panes=5 {
+            pane split_direction="vertical" {
+                pane { pane; pane { children; } }
+                pane { pane; pane; pane; }
             }
         }
         tab max_panes=6 {

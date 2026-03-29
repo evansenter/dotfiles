@@ -121,8 +121,8 @@ test_bootstrap_excludes_openclaw_from_symlinks() {
     grep -q '\.openclaw' "$BOOTSTRAP"
 }
 
-test_bootstrap_installs_cron() {
-    # bootstrap.sh should install the cargo-sweep cron job
+test_bootstrap_handles_cargo_sweep() {
+    # bootstrap.sh should handle cargo-sweep (LaunchAgent install + legacy cron removal)
     grep -q 'cargo-sweep' "$BOOTSTRAP"
 }
 
@@ -363,7 +363,7 @@ main() {
     echo "=== bootstrap structure ==="
     run_test "syntax check" "test_bootstrap_syntax"
     run_test "excludes openclaw from generic symlinks" "test_bootstrap_excludes_openclaw_from_symlinks"
-    run_test "installs cargo-sweep cron" "test_bootstrap_installs_cron"
+    run_test "handles cargo-sweep setup" "test_bootstrap_handles_cargo_sweep"
     run_test "cargo-sweep script exists and executable" "test_cargo_sweep_script_exists"
     run_test "cargo-sweep script syntax" "test_cargo_sweep_syntax"
     run_test "configure_claude_local_settings exists" "test_configure_claude_local_settings_exists"
