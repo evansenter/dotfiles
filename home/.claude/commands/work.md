@@ -186,7 +186,7 @@ Before starting implementation, check context window usage from system info (the
 
 ##### Phase 5: Derive Tasks
 
-Based on the architecture plan, derive final implementation tasks. These replace the initial tasks from step 4.
+Based on the architecture plan, derive final implementation tasks. These replace the initial tasks from step 5.
 
 ---
 
@@ -284,7 +284,7 @@ Suggest `/commit-commands:clean_gone`.
 
 Publish insights to event bus with session_id (`gotcha_discovered`, `pattern_found`).
 
-If any gotcha or pattern is repo-specific and likely to recur, also save it to auto-memory so it persists across sessions (event bus events scroll off over time).
+If any gotcha or pattern is repo-specific and likely to recur, save it to the file-based memory system (`~/.claude/projects/<project>/memory/`) so it persists across sessions. Event bus events scroll off over time — memory is durable.
 
 **Pull session metrics** for grounded reflection (if session-analytics MCP is available):
 

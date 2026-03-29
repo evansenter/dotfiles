@@ -51,7 +51,6 @@ Minimal macOS/Linux dotfiles for a modern terminal setup with Catppuccin Mocha t
 | `/event-bus-status` | Overview of active sessions and recent events |
 | `/broadcast` | Send message to other Claude Code sessions |
 | `/session-dump` | Dump recent conversation to file |
-| `/clemini-work` | Delegate work to clemini with supervised review |
 
 **Agents** (invoked via Task tool for background/complex work):
 | Agent | Description |
@@ -124,7 +123,7 @@ Pull latest and sync:
 
 ```bash
 cd dotfiles
-./bootstrap.sh -f --pull
+./bootstrap.sh -f -s
 git submodule update --init --remote
 ```
 
