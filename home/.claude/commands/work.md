@@ -145,13 +145,10 @@ After agents return, read all identified files to build deep understanding.
 
 **CRITICAL: Do not skip this phase.**
 
-Review exploration findings + issue details. Identify:
-- Edge cases and error handling
-- Integration points and dependencies
-- Scope boundaries and backward compatibility
-- Performance requirements
-
-Present questions to user. Wait for answers before proceeding.
+Use `superpowers:brainstorming` to structure the design conversation. Feed it the exploration findings + issue details. This skill will:
+- Explore user intent and requirements
+- Identify edge cases, integration points, and scope boundaries
+- Propose approaches and get approval before proceeding
 
 If user says "whatever you think is best", provide your recommendation and get explicit confirmation.
 
@@ -173,13 +170,12 @@ Ask which approach they prefer.
 
 ##### Phase 4: Document
 
-Use `EnterPlanMode` to document:
-- Key files to modify/create
-- Implementation sequence
+Use `superpowers:writing-plans` to create a structured implementation plan. Feed it:
+- Key files to modify/create (from architecture phase)
 - Decisions made from clarifying questions
 - Chosen architecture approach
 
-Use `ExitPlanMode` when complete.
+This produces a bite-sized plan with task structure that feeds directly into Phase 5.
 
 ##### Phase 5: Derive Tasks
 
@@ -274,6 +270,8 @@ Suggest `/commit-commands:clean_gone`.
 - **Improvements**: What would make this easier?
 
 Publish insights to event bus with session_id (`gotcha_discovered`, `pattern_found`).
+
+Run `/revise-claude-md` to capture any session learnings into CLAUDE.md.
 
 Spawn improve-workflow agent: `Task(subagent_type="improve-workflow", prompt="Analyze this session for workflow improvements")`
 

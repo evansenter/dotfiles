@@ -96,6 +96,10 @@ Condense JSON examples, abbreviate templates, remove obvious steps. Target 50%+ 
 - Critical/Important/Suggestions tiers for output
 - Consistent terminology across documents
 
+## CLAUDE.md Quality Scoring
+
+For CLAUDE.md files, use `claude-md-management:claude-md-improver` to get a structured quality score and targeted improvement suggestions. This handles CLAUDE.md-specific auditing (quality metrics, template alignment, missing context detection). Use the results alongside your own analysis for the final report.
+
 ## Priority
 
 1. **CLAUDE.md** (global then project) - Directly affects Claude behavior

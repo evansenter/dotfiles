@@ -40,7 +40,11 @@ If main has new commits:
 - Ask via AskUserQuestion: **Rebase onto main (Recommended)** / Continue without rebase
 - If rebase: `git rebase origin/main`, resolve conflicts if needed
 
-### 3. Create PR
+### 3. Verify Before Pushing
+
+Use `superpowers:verification-before-completion` to confirm quality gates pass (linter, formatter, tests) before committing. Evidence before assertions — don't assume they pass.
+
+### 4. Create PR
 
 Invoke the commit-push-pr skill:
 
@@ -51,6 +55,6 @@ Skill(commit-commands:commit-push-pr)
 **Handle failures:**
 - Report the error and suggest manual steps
 
-### 4. Monitor CI (unless --no-watch)
+### 5. Monitor CI (unless --no-watch)
 
 Unless `--no-watch` was passed, invoke `/watch-ci` to monitor CI status in background. It will automatically run `/pr-review remote` when CI completes.

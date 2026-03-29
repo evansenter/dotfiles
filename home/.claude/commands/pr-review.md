@@ -151,7 +151,9 @@ Continue until ALL items have answers, including Suggestions.
 
 ### 7. Act on Decisions
 
-- **Implement**: Fix immediately
+For **Implement** decisions, use `superpowers:receiving-code-review` before making changes. This ensures you verify the reviewer's suggestion is technically correct and won't introduce regressions — don't blindly implement feedback.
+
+- **Implement**: Verify via receiving-code-review, then fix
 - **Skip**: Note and move on
 - **Defer**: Create GitHub issue with appropriate label:
   - `priority:high` - Blocks other work, critical bug
