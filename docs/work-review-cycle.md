@@ -125,32 +125,57 @@ Sessions register on startup. Other sessions can see active work via `/event-bus
 
 ## Porting to Other Projects
 
-### Required files
+### What's shared vs repo-specific
 
-Copy from `home/.claude/`:
+Most of the workflow lives in `~/.claude/` which is symlinked by `bootstrap.sh` from the dotfiles repo. This means commands, hooks, skills, agents, and plugins are **shared across all repos automatically**.
 
-```
-commands/
-  work.md           # Main workflow orchestrator
-  pr-review.md      # Local + remote review
-  pr-create.md      # Commit, push, PR creation
-  watch-ci.md       # Background CI monitoring
-  im-lost.md        # Show workflow position
-```
+| Component | Location | Shared? |
+|-----------|----------|---------|
+| Commands (`/work`, `/pr-review`, etc.) | `~/.claude/commands/` | Yes — via dotfiles symlink |
+| Hooks (session-start, pre-compact, etc.) | `~/.claude/hooks/` | Yes — via dotfiles symlink |
+| Skills (shell-scripting, hook-authoring, etc.) | `~/.claude/skills/` | Yes — via dotfiles symlink |
+| Agents (audit-*, rfc-*, etc.) | `~/.claude/agents/` | Yes — via dotfiles symlink |
+| Plugins (superpowers, feature-dev, etc.) | `~/.claude/settings.json` | Yes — via dotfiles symlink |
+| Review prompt (`claude-review.md`) | Fetched from dotfiles GitHub URL | Yes — centralized |
+| `claude-code-review.yml` workflow | `.github/workflows/` per repo | **No — must copy** |
+| `claude.yml` workflow (@claude mentions) | `.github/workflows/` per repo | **No — must copy** |
+| Branch protection rules | GitHub repo settings | **No — must configure** |
+| `CLAUDE.md` | Repo root | **No — project-specific** |
 
-### Required CI
+### Per-repo setup checklist
 
-Copy from `.github/workflows/`:
+After running `bootstrap.sh` (which sets up the shared components):
 
-```
-claude-code-review.yml    # Automated review workflow
-```
+1. **Copy the CI workflow** to `.github/workflows/claude-code-review.yml`:
+   ```yaml
+   # Fetches review prompt from dotfiles — no need to copy the prompt itself
+   env:
+     PROMPT_URL: https://raw.githubusercontent.com/evansenter/dotfiles/main/home/.claude/contrib/prompts/claude-review.md
+   ```
+   Use the version from dotfiles as a template. Key: include `Bash(gh pr review:*)` and `Bash(gh api:*)` in allowed tools for native reviews with inline comments.
 
-And the review prompt:
+2. **Add the `CLAUDE_CODE_OAUTH_TOKEN` secret** to the repo (Settings > Secrets > Actions).
 
-```
-contrib/prompts/claude-review.md    # Review instructions
-```
+3. **Configure branch protection** on `main`:
+   - Require 1 approving review (bot counts)
+   - Dismiss stale reviews on push
+   - Don't enforce for admins (escape hatch if bot is down)
+
+4. **Write a project-specific `CLAUDE.md`** covering:
+   - Build/test/lint commands
+   - Architecture overview
+   - Project conventions Claude wouldn't infer
+
+### Updating existing repos
+
+If a repo already has `claude-code-review.yml` from before the native review migration, update it:
+- Add `Bash(gh pr review:*)` to `claude_args --allowed-tools`
+- Remove the "Check review verdict" step (if present) — the review status is the signal now
+- The centralized prompt is fetched from `main` on dotfiles, so prompt changes apply to all repos automatically
+
+### Example: genai-rs
+
+genai-rs already has most of this set up. The only gap is the `claude-code-review.yml` still has the old comment-parsing verdict step. Updating that one file brings it fully in line.
 
 ### Required infrastructure
 
@@ -161,22 +186,10 @@ contrib/prompts/claude-review.md    # Review instructions
 | `claude-code-action` | CI review bot | Required for automated review |
 | Branch protection | Review gating | Recommended |
 
-### Required plugins
-
-```json
-{
-  "enabledPlugins": {
-    "feature-dev@claude-plugins-official": true,
-    "pr-review-toolkit@claude-plugins-official": true,
-    "commit-commands@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
-  }
-}
-```
-
 ### Customization points
 
-- **Review prompt** (`claude-review.md`) — adjust review standards, severity rules, output format
+- **Review prompt** (`claude-review.md`) — centralized in dotfiles, changes apply to all repos
 - **Guided development phases** — skip/add phases in `work.md` based on project complexity
 - **Security patterns** — customize file globs in `pr-review.md` security spot-check
 - **Effort guidance** — tune reasoning depth per phase in `work.md`
+- **Project CLAUDE.md** — repo-specific conventions, commands, architecture
