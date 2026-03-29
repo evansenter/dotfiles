@@ -65,8 +65,9 @@ If incomplete `[work:*]` todos exist, block new work.
 
 ### 2. Parse Input
 
-- Number → `issue-N`
+- Number → check if it's a GitHub issue first (`gh issue view <N>`). If not found, try event bus (`mcp__agent-event-bus__get_events(cursor: "<N>", limit: 1)`). If event found, use its payload as context for ad-hoc work.
 - GitHub URL → extract issue number
+- `event:<ID>` → fetch event bus event by ID, use payload as work context
 - Other → `adhoc`
 
 ### 3. Check for Parallel Context

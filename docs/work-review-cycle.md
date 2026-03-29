@@ -29,7 +29,7 @@ A guided development workflow for Claude Code that takes a task from issue to me
 
 ### 1. Start Work (`/work <issue>`)
 
-Parses the input (issue number, URL, or description), fetches context, and presents a scope proposal. Optionally runs **guided development** — a multi-phase process:
+Parses the input (issue number, URL, event bus ID, or description), fetches context, and presents a scope proposal. Numbers are checked as GitHub issues first, then event bus events — so `/work 2883` on a `test_flaky` event works without manually explaining context. Optionally runs **guided development** — a multi-phase process:
 
 1. **Explore** — Launch parallel `code-explorer` agents to understand the codebase
 2. **Clarify** — Structured design conversation (edge cases, integration points, scope)
