@@ -56,7 +56,30 @@ For significant changes, run examples with debug logging (check CLAUDE.md for fl
 
 **Skip if:** Documentation-only changes.
 
-### 5. If Clean
+### 5. Security Spot-Check
+
+Check if the diff touches security-sensitive patterns:
+
+```bash
+git diff --name-only HEAD~1 2>/dev/null || git diff --name-only main...HEAD
+```
+
+Flag for extra scrutiny if changed files match:
+- Auth/crypto: `*auth*`, `*crypt*`, `*token*`, `*secret*`, `*password*`, `*credential*`
+- User input: `*handler*`, `*endpoint*`, `*route*`, `*api*`, `*input*`, `*form*`
+- Config: `*.env*`, `*config*`, `*settings*`, `Dockerfile`, `docker-compose*`
+- Dependencies: `*lock*`, `Cargo.toml`, `package.json`, `requirements*.txt`, `Gemfile`
+
+If any match, scan those files specifically for:
+- Hardcoded secrets or API keys
+- Missing input validation
+- Unsafe deserialization
+- SQL/command injection vectors
+- Overly permissive CORS/permissions
+
+Report as Critical or Important findings. Skip this step for documentation-only changes.
+
+### 6. If Clean
 
 "No issues found. Ready to create PR? Run `/pr-create`"
 
