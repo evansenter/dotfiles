@@ -6,6 +6,7 @@ Required tools (must be in workflow's claude_args --allowed-tools):
 - Bash(gh pr view:*)        - Get PR details and comments
 - Bash(gh pr diff:*)        - Get PR diff
 - Bash(gh pr comment:*)     - Post review comments
+- Bash(gh pr review:*)      - Submit review verdict (approve/request-changes)
 - Bash(gh issue view:*)     - Read linked issues for context
 - Bash(gh issue comment:*)  - Comment on issue if PR incomplete (use sparingly)
 - Bash(gh api:*)            - Fetch "Feedback Addressed" comments
@@ -233,6 +234,20 @@ APPROVE - Code looks good, no issues found.
 ---
 *Automated review by Claude Code*"
 ```
+
+### 10. Submit Review Verdict
+
+After posting the comment, submit a GitHub review to set the PR's review status:
+
+```bash
+# If verdict is APPROVE:
+gh pr review $PR_NUMBER --approve --body "Automated review: APPROVE — no issues found."
+
+# If verdict is REQUEST_CHANGES:
+gh pr review $PR_NUMBER --request-changes --body "Automated review: REQUEST_CHANGES — see review comment for details."
+```
+
+This sets the native GitHub review status (visible in the PR sidebar), enabling branch protection rules to gate on the bot's review.
 
 ## Important Notes
 
