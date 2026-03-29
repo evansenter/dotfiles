@@ -69,7 +69,10 @@ Runs `gh pr checks --watch` in the background. When CI completes:
 
 ### 6. Process Feedback (`/pr-review remote`)
 
+**Always runs after CI completes**, regardless of review verdict. An APPROVED review can still have inline suggestions that should be presented to the user before merging.
+
 Fetches reviewer comments and bot reviews (inline + summary):
+- Checks both review status AND inline comments (APPROVE with suggestions is common)
 - Filters already-resolved items via "Feedback Addressed" comment history
 - Forms opinions on each finding (Agree/Disagree/Uncertain)
 - Presents findings via `AskUserQuestion` with options: Implement / Skip / Defer / Elaborate
