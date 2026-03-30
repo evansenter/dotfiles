@@ -29,7 +29,7 @@ URL_ARGS=()
 
 # Parse input
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // ""')
-TEAMMATE_NAME=$(echo "$INPUT" | jq -r '.teammate_name // "unknown"')
+TEAMMATE_NAME=$(echo "$INPUT" | jq -r '.teammate_name // ""')
 TEAM_NAME=$(echo "$INPUT" | jq -r '.team_name // ""')
 CWD=$(echo "$INPUT" | jq -r '.cwd // ""')
 
@@ -50,7 +50,8 @@ else
 fi
 
 # Build payload
-PAYLOAD="Teammate '${TEAMMATE_NAME}' is idle"
+PAYLOAD="Teammate idle"
+[[ -n "$TEAMMATE_NAME" ]] && PAYLOAD="Teammate '${TEAMMATE_NAME}' is idle"
 [[ -n "$TEAM_NAME" ]] && PAYLOAD="${PAYLOAD} (team: ${TEAM_NAME})"
 
 # Publish to event bus (|| true ensures exit 0)
