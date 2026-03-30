@@ -41,7 +41,9 @@ Non-obvious autonomy:
 
 ## Reflection
 
-After significant work: share what caused friction, where you were redirected (indicates missing guidance), and what's missing. Publish insights to event bus (`gotcha_discovered`, `pattern_found`, `improvement_suggested`). When an Insight (★) is a reusable gotcha or cross-session pattern — not just a local code explanation — publish it too.
+After significant work: share what caused friction, where you were redirected (indicates missing guidance), and what's missing. Publish insights to event bus (`gotcha_discovered`, `pattern_found`, `improvement_suggested`).
+
+**★ Insight → Event Bus rule:** Every `★ Insight` block MUST be immediately followed by a `publish_event` call in the same response. Only skip if the insight is purely about a specific line in a specific file with zero cross-session value (rare). Default: publish.
 
 ## PR Workflow
 
