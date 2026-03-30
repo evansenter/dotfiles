@@ -66,6 +66,22 @@ elif [[ "$*" == *".trigger"* ]]; then
     echo "$input" | grep -o '"trigger":"[^"]*"' | cut -d'"' -f4 || echo "auto"
 elif [[ "$*" == *".source"* ]]; then
     echo "$input" | grep -o '"source":"[^"]*"' | cut -d'"' -f4 || echo "startup"
+elif [[ "$*" == *".tool_name"* ]]; then
+    echo "$input" | grep -o '"tool_name":"[^"]*"' | cut -d'"' -f4 || echo ""
+elif [[ "$*" == *".error"* ]]; then
+    echo "$input" | grep -o '"error":"[^"]*"' | cut -d'"' -f4 || echo ""
+elif [[ "$*" == *".is_interrupt"* ]]; then
+    echo "$input" | grep -o '"is_interrupt":[a-z]*' | cut -d':' -f2 || echo "false"
+elif [[ "$*" == *".task_id"* ]]; then
+    echo "$input" | grep -o '"task_id":"[^"]*"' | cut -d'"' -f4 || echo ""
+elif [[ "$*" == *".task_subject"* ]]; then
+    echo "$input" | grep -o '"task_subject":"[^"]*"' | cut -d'"' -f4 || echo ""
+elif [[ "$*" == *".task_description"* ]]; then
+    echo "$input" | grep -o '"task_description":"[^"]*"' | cut -d'"' -f4 || echo ""
+elif [[ "$*" == *".teammate_name"* ]]; then
+    echo "$input" | grep -o '"teammate_name":"[^"]*"' | cut -d'"' -f4 || echo ""
+elif [[ "$*" == *".team_name"* ]]; then
+    echo "$input" | grep -o '"team_name":"[^"]*"' | cut -d'"' -f4 || echo ""
 elif [[ "$*" == *"-e"* ]] && [[ "$*" == *".event_id"* ]]; then
     # For jq -e '.event_id' checks - return success if event_id exists
     if echo "$input" | grep -q '"event_id"'; then
@@ -1221,6 +1237,105 @@ test_task_completed_happy_path() {
 }
 
 # ============================================================================
+# post-tool-failure.sh tests
+# ============================================================================
+
+test_post_tool_failure_syntax() {
+    bash -n "$HOOKS_DIR/post-tool-failure.sh"
+}
+
+test_post_tool_failure_graceful_no_jq() {
+    local MINIMAL_PATH="/bin:/usr/bin"
+    local exit_code=0
+    echo '{"session_id":"test-123","cwd":"/tmp","tool_name":"Bash","error":"failed"}' | \
+        env -i PATH="$MINIMAL_PATH" HOME="$HOME" \
+        bash "$HOOKS_DIR/post-tool-failure.sh" >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]]
+}
+
+test_post_tool_failure_graceful_no_cli() {
+    local exit_code=0
+    echo '{"session_id":"test-123","cwd":"/tmp","tool_name":"Bash","error":"failed"}' | \
+        bash "$HOOKS_DIR/post-tool-failure.sh" >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]]
+}
+
+test_post_tool_failure_skips_interrupt() {
+    setup_mock_event_bus_cli
+
+    local output
+    local exit_code=0
+    output=$(echo '{"session_id":"test-session","cwd":"/tmp","tool_name":"Bash","error":"interrupted","is_interrupt":true}' | \
+        bash "$HOOKS_DIR/post-tool-failure.sh" 2>&1) || exit_code=$?
+
+    # Should exit silently for interrupts — no output, no publish
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+test_post_tool_failure_skips_benign_grep() {
+    setup_mock_event_bus_cli
+
+    local output
+    local exit_code=0
+    output=$(echo '{"session_id":"test-session","cwd":"/tmp","tool_name":"Grep","error":"No files found matching pattern"}' | \
+        bash "$HOOKS_DIR/post-tool-failure.sh" 2>&1) || exit_code=$?
+
+    # Should exit silently for benign grep errors
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+test_post_tool_failure_happy_path() {
+    setup_mock_event_bus_cli
+
+    local exit_code=0
+    echo '{"session_id":"test-session","cwd":"/tmp","tool_name":"Bash","error":"Command exited with non-zero status code 1"}' | \
+        bash "$HOOKS_DIR/post-tool-failure.sh" >/dev/null 2>&1 || exit_code=$?
+
+    # Should exit 0 (publishes event, but mock events won't hit threshold)
+    [[ $exit_code -eq 0 ]]
+}
+
+test_post_tool_failure_outputs_context_at_threshold() {
+    # Create a mock that returns 3+ matching events for the signature
+    cat > "$TEST_TMP/bin/agent-event-bus-cli" << 'MOCK_CLI'
+#!/bin/bash
+while [[ "$1" == --* ]]; do case "$1" in --url) shift 2 ;; *) shift ;; esac; done
+case "$1" in
+    publish)
+        echo '{"event_id":999}'
+        ;;
+    events)
+        # Return 3 matching events with the same signature
+        echo "[101] error_pattern (repo:dotfiles)"
+        echo "    Bash:Command exited with non-zero status code 1"
+        echo "    from: session-1 at 2026-03-30T10:00:00"
+        echo "[102] error_pattern (repo:dotfiles)"
+        echo "    Bash:Command exited with non-zero status code 1"
+        echo "    from: session-2 at 2026-03-30T11:00:00"
+        echo "[103] error_pattern (repo:dotfiles)"
+        echo "    Bash:Command exited with non-zero status code 1"
+        echo "    from: session-3 at 2026-03-30T12:00:00"
+        ;;
+    *) echo '{}' ;;
+esac
+MOCK_CLI
+    chmod +x "$TEST_TMP/bin/agent-event-bus-cli"
+
+    local output
+    local exit_code=0
+    output=$(echo '{"session_id":"test-session","cwd":"/tmp","tool_name":"Bash","error":"Command exited with non-zero status code 1"}' | \
+        bash "$HOOKS_DIR/post-tool-failure.sh" 2>&1) || exit_code=$?
+
+    # Should output additionalContext JSON when threshold met
+    [[ $exit_code -eq 0 ]] && \
+    [[ "$output" == *"hookSpecificOutput"* ]] && \
+    [[ "$output" == *"additionalContext"* ]] && \
+    [[ "$output" == *"Recurring error"* ]]
+}
+
+# ============================================================================
 # Run all tests
 # ============================================================================
 
@@ -1327,6 +1442,16 @@ main() {
     run_test "graceful degradation (no jq)" "test_task_completed_graceful_no_jq"
     run_test "graceful degradation (no agent-event-bus-cli)" "test_task_completed_graceful_no_cli"
     run_test "integration: happy path" "test_task_completed_happy_path"
+    echo ""
+
+    echo "=== post-tool-failure.sh ==="
+    run_test "syntax check" "test_post_tool_failure_syntax"
+    run_test "graceful degradation (no jq)" "test_post_tool_failure_graceful_no_jq"
+    run_test "graceful degradation (no agent-event-bus-cli)" "test_post_tool_failure_graceful_no_cli"
+    run_test "skips interrupt errors" "test_post_tool_failure_skips_interrupt"
+    run_test "skips benign grep errors" "test_post_tool_failure_skips_benign_grep"
+    run_test "integration: happy path (below threshold)" "test_post_tool_failure_happy_path"
+    run_test "integration: outputs additionalContext at threshold" "test_post_tool_failure_outputs_context_at_threshold"
     echo ""
 
     # Summary
