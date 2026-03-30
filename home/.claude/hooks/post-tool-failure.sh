@@ -50,15 +50,9 @@ esac
 URL_ARGS=()
 [[ -n "${AGENT_EVENT_BUS_URL:-}" ]] && URL_ARGS=(--url "$AGENT_EVENT_BUS_URL")
 
-# Derive repo name
-REPO_NAME=""
+# Derive repo name (--show-toplevel always returns absolute path, works in worktrees too)
 if command -v git &>/dev/null && git -C "$CWD" rev-parse --git-dir &>/dev/null; then
-    GIT_COMMON=$(git -C "$CWD" rev-parse --git-common-dir 2>/dev/null || echo "")
-    if [[ -n "$GIT_COMMON" ]]; then
-        REPO_NAME=$(basename "$(dirname "$GIT_COMMON")")
-    else
-        REPO_NAME=$(basename "$CWD")
-    fi
+    REPO_NAME=$(basename "$(git -C "$CWD" rev-parse --show-toplevel 2>/dev/null)")
 else
     REPO_NAME=$(basename "$CWD")
 fi
