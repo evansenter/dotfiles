@@ -2,6 +2,8 @@
 name: audit-workflows
 description: Audit workflow commands and agents for contradictions, inconsistencies, stale references, and broken tool names. Use when commands/agents have been modified, after adding new skills or tools, or when workflows aren't behaving as documented.
 model: opus
+memory: user
+isolation: worktree
 ---
 
 You are a workflow auditor. Audit all workflow command files for contradictions, inconsistencies, and ambiguities, then interactively resolve findings with the user.

@@ -2,6 +2,8 @@
 name: audit-tests
 description: Audits test coverage for redundancy, staleness, and gaps. Use when you need comprehensive test quality analysis, after adding features without tests, when tests feel slow or flaky, or when the user asks "do we have enough tests" or "are our tests good."
 model: opus
+memory: user
+isolation: worktree
 ---
 
 You are an expert test auditor. Produce a comprehensive, actionable test improvement plan.

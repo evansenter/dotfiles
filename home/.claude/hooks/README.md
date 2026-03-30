@@ -23,6 +23,14 @@ Session Start
 │      ▼                              │
 │  Claude processes...                │
 │      │                              │
+│      ├── TaskCreated hook           │
+│      │   - task-created.sh          │
+│      │   (publishes to event bus)   │
+│      │                              │
+│      ├── TaskCompleted hook         │
+│      │   - task-completed.sh        │
+│      │   (publishes to event bus)   │
+│      │                              │
 │      ├── Stop hook                  │
 │      │   - zj-status.sh waiting     │
 │      │                              │
@@ -35,7 +43,11 @@ Session Start
     │   - Checkpoints WIP state to event bus
     │
     ▼
-Session End
+Session End / Agent Teams
+    │
+    ├── TeammateIdle hook (teammate-idle.sh)
+    │   - Publishes teammate_idle to event bus
+    │   - Fires when a teammate has no work
     │
     └── SessionEnd hook (session-end.sh)
         - Unregisters from event bus
@@ -119,6 +131,57 @@ Session End
 
 **Output:** Confirmation message
 
+---
+
+### teammate-idle.sh
+**Trigger:** `TeammateIdle` (Agent Teams)
+
+**Purpose:** Broadcast when a teammate agent has no work, enabling coordination visibility.
+
+**Actions:**
+1. Parse teammate name and team from stdin JSON
+2. Publish `teammate_idle` event to event bus on `repo:<name>` channel
+
+**Input JSON fields:** `session_id`, `transcript_path`, `cwd`, `permission_mode`, `teammate_name`, `team_name`
+
+**Output:** None (side-effect only)
+
+**Exit code:** Must be 0. Exit code 2 would keep the teammate working instead of going idle.
+
+---
+
+### task-created.sh
+**Trigger:** `TaskCreated` (Agent Teams)
+
+**Purpose:** Broadcast task creation for cross-agent visibility.
+
+**Actions:**
+1. Parse task subject and teammate from stdin JSON
+2. Publish `task_created` event to event bus on `repo:<name>` channel
+
+**Input JSON fields:** `session_id`, `transcript_path`, `cwd`, `permission_mode`, `task_id`, `task_subject`, `task_description`, `teammate_name`, `team_name`
+
+**Output:** None (side-effect only)
+
+**Exit code:** Must be 0. Exit code 2 would prevent the task from being created.
+
+---
+
+### task-completed.sh
+**Trigger:** `TaskCompleted` (Agent Teams)
+
+**Purpose:** Broadcast task completion for coordination.
+
+**Actions:**
+1. Parse task subject and teammate from stdin JSON
+2. Publish `task_completed` event to event bus on `repo:<name>` channel
+
+**Input JSON fields:** `session_id`, `transcript_path`, `cwd`, `permission_mode`, `task_id`, `task_subject`, `task_description`, `teammate_name`, `team_name`
+
+**Output:** None (side-effect only)
+
+**Exit code:** Must be 0. Exit code 2 would prevent the task from being marked complete.
+
 ## Writing Hooks
 
 ### Requirements
@@ -161,7 +224,10 @@ In `settings.json`:
       { "type": "command", "command": "~/.claude/hooks/zj-status.sh working" }
     ] }],
     "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/zj-status.sh waiting" }] }],
-    "PreCompact": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/pre-compact.sh" }] }]
+    "PreCompact": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/pre-compact.sh" }] }],
+    "TeammateIdle": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/teammate-idle.sh" }] }],
+    "TaskCreated": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/task-created.sh" }] }],
+    "TaskCompleted": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/task-completed.sh" }] }]
   }
 }
 ```
