@@ -89,13 +89,13 @@ The `mcpServers` field in agent frontmatter **adds** MCP servers — it doesn't 
 |-----------|--------|
 | 0 | Allow the action to proceed |
 | 2 | Block the action, feed stderr back as feedback |
-| Other | Logged but action proceeds |
+| Other | Non-blocking error. stderr shown in verbose mode only. Action proceeds |
 
 For notification-only hooks (like ours), always exit 0. A stray `exit 2` in a `TaskCreated` hook would silently prevent all task creation.
 
 ### Agent Teams limitations
 
-- **No session resumption with teammates**: `/resume` and `/rewind` don't restore in-process teammates
+- **No session resumption with in-process teammates**: `/resume` and `/rewind` don't restore in-process teammates. The lead may try to message teammates that no longer exist — tell it to spawn new ones
 - **Experimental**: Monitor for stability issues; disable with `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0`
 - **Sweet spot**: 3-5 teammates with 5-6 tasks each
 
