@@ -40,16 +40,22 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 
 ### Bootstrap Process
 
-`sync_dotfiles` in `bootstrap.sh` (see script for full details):
-1. Symlinks `home/` files to `~`
-2. Symlinks `.claude/{hooks,commands,contrib,agents,skills}/`
-3. Installs Claude Code MCP servers
-4. Configures `settings.local.json` with remote MCP URLs (skipped on gateway host)
-5. Sets default shell to zsh
-6. Installs packages: Homebrew (macOS), apt (Debian/Ubuntu), or binary downloads to `~/.local/bin` (SteamOS)
-7. Installs TPM (manual `prefix + I` for plugins)
-8. Installs bat/yazi/zellij themes from `vendor/`
-9. Installs LaunchAgents (macOS) and cron jobs
+`bootstrap.sh` runs two phases (see script for full details):
+
+**Phase 1 — Pull & packages** (skipped with `--no-sync`):
+1. Pulls latest from git
+2. Installs packages: Homebrew (macOS), apt (Debian/Ubuntu), or binary downloads to `~/.local/bin` (SteamOS)
+3. Updates existing packages
+
+**Phase 2 — Sync dotfiles** (always runs):
+1. Sets default shell to zsh
+2. Symlinks `home/` files to `~`
+3. Symlinks `.claude/{hooks,commands,contrib,agents,skills}/`
+4. Installs Claude Code MCP servers
+5. Configures `settings.local.json` with remote MCP URLs (skipped on gateway host)
+6. Installs TPM (manual `prefix + I` for plugins)
+7. Installs bat/yazi/zellij themes from `vendor/`
+8. Installs LaunchAgents (macOS) and cron jobs
 
 ### Symlink Pattern
 
@@ -59,6 +65,8 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 1. Create the file under `home/` mirroring the `~` path (e.g., `home/.openclaw/openclaw.json` → `~/.openclaw/openclaw.json`)
 2. Run `./bootstrap.sh -f` to create the symlink
 3. The existing file will be replaced with a symlink to the dotfiles version
+
+**Symlink-breaking tools:** Some tools (CC, btop, zellij) do atomic writes that replace symlinks with regular files. Re-running `./bootstrap.sh --no-sync -f` restores them.
 
 **Scaffolded directories:** Some directories are created by bootstrap but not symlinked. Example: `~/.openclaw/workspace/` — content is personal, generated via `openclaw configure`.
 
@@ -92,8 +100,8 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 
 **Zellij** (`home/.config/zellij/`) - Terminal multiplexer config with Catppuccin Mocha theme, zjstatus bar, autolock plugin. Swap layouts in `default.swap.kdl`. Config changes require killing the session (`zellij kill-all-sessions`) — hot-reload doesn't work with symlinked configs (zellij-org/zellij#3992).
 
-**Statusline** (`home/.claude/statusline-command.sh`) - Single-line custom statusline for Claude Code.
-- Format: `[repo/session]:branch ✓/✗/↻ →#issues ●` (CI status hidden when dirty)
+**Statusline** (`home/.claude/statusline-command.sh`) - Custom statusline for Claude Code.
+- Format: `[repo/session]:branch ✓/✗/↻ →#issues ● model context%` (CI status hidden when dirty)
 - GitHub API calls (repo URL, PR number, PR body, CI status) are cached in `$TMPDIR/claude-statusline-gh/` with per-call TTLs
 - Session name cached in `$TMPDIR/claude-statusline/` (pre-populated by session-start hook)
 

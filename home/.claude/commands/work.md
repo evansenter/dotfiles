@@ -114,6 +114,16 @@ Ask via AskUserQuestion:
 - **Modify scope** - Adjust tasks before starting
 - **Cancel** - Abort without creating todos
 
+### 6b. Create Feature Branch
+
+After scope is confirmed, create the feature branch **immediately** — before any exploration or design work that might produce committable artifacts (specs, docs).
+
+```bash
+git checkout -b issue-<N>   # or adhoc-<slug>
+```
+
+This prevents design specs or other artifacts from being committed to main, which causes merge conflicts on squash-merge.
+
 ### 7. Guided Development (Optional)
 
 Ask: **Yes, explore first (Recommended)** / No, proceed directly

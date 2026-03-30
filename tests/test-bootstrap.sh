@@ -157,6 +157,14 @@ test_openclaw_workspace_gitignore() {
     grep -q '\*.md' "$SCRIPT_DIR/../home/.openclaw/workspace/.gitignore"
 }
 
+test_sync_dotfiles_no_package_install() {
+    # sync_dotfiles must not call package installers directly — packages are
+    # handled by the SYNC guard so --no-sync skips them
+    local sync_body
+    sync_body=$(sed -n '/^sync_dotfiles()/,/^}/p' "$BOOTSTRAP")
+    ! echo "$sync_body" | grep -v '^\s*#' | grep -qE 'install_brew_packages|install_packages|install_apt_packages|install_steamos_packages'
+}
+
 test_no_documents_projects_refs() {
     # No tracked source files should reference ~/Documents/projects/
     # Exclude: .git, databases, logs, error files, backups, worktree settings, this test
@@ -393,6 +401,7 @@ main() {
     run_test "cargo-sweep script syntax" "test_cargo_sweep_syntax"
     run_test "configure_claude_local_settings exists" "test_configure_claude_local_settings_exists"
     run_test "settings.local.json skips gateway host" "test_settings_local_skips_gateway_host"
+    run_test "sync_dotfiles has no package installers" "test_sync_dotfiles_no_package_install"
     run_test "no ~/Documents/projects references" "test_no_documents_projects_refs"
     run_test "ensure_openclaw_workspace function exists" "test_ensure_openclaw_workspace_exists"
     run_test "openclaw workspace .gitignore ignores content" "test_openclaw_workspace_gitignore"
