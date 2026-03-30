@@ -34,13 +34,14 @@ In `settings.json`, the env section enables the experimental feature:
 
 ### 2. Hook Scripts
 
-Three hooks publish events to the event bus when Agent Teams events occur:
+Four hooks publish events to the event bus when Agent Teams events occur:
 
 | Hook Event | Script | Event Published | Exit Code Behavior |
 |------------|--------|-----------------|-------------------|
 | `TeammateIdle` | `teammate-idle.sh` | `teammate_idle` | Exit 2 = keep working |
 | `TaskCreated` | `task-created.sh` | `task_created` | Exit 2 = block creation |
 | `TaskCompleted` | `task-completed.sh` | `task_completed` | Exit 2 = block completion |
+| `PostToolUseFailure` | `post-tool-failure.sh` | `error_pattern` | Exit 2 = block (unused) |
 
 All hooks are notification-only (always exit 0). They degrade gracefully when `jq` or `agent-event-bus-cli` is missing.
 

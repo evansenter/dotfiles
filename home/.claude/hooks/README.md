@@ -31,6 +31,10 @@ Session Start
 │      │   - task-completed.sh        │
 │      │   (publishes to event bus)   │
 │      │                              │
+│      ├── PostToolUseFailure hook    │
+│      │   - post-tool-failure.sh     │
+│      │   (detects recurring errors) │
+│      │                              │
 │      ├── Stop hook                  │
 │      │   - zj-status.sh waiting     │
 │      │                              │
@@ -182,6 +186,26 @@ Session End / Agent Teams
 
 **Exit code:** Must be 0. Exit code 2 would prevent the task from being marked complete.
 
+---
+
+### post-tool-failure.sh
+**Trigger:** `PostToolUseFailure`
+
+**Purpose:** Detect recurring tool error patterns via event bus and inject context back to Claude.
+
+**Actions:**
+1. Skip benign errors (interrupts, expected exploration failures)
+2. Build pattern signature from tool name + error prefix (80 chars)
+3. Publish `error_pattern` event to event bus on `repo:<name>` channel
+4. Query event bus for matching recent events
+5. If ≥3 matches: output JSON with `additionalContext` for Claude
+
+**Input JSON fields:** `session_id`, `cwd`, `tool_name`, `tool_input`, `error`, `is_interrupt`
+
+**Output:** JSON with `hookSpecificOutput.additionalContext` when recurring pattern detected. Silent otherwise.
+
+**Exit code:** Always 0. Uses `additionalContext` for feedback, not exit codes.
+
 ## Writing Hooks
 
 ### Requirements
@@ -227,7 +251,8 @@ In `settings.json`:
     "PreCompact": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/pre-compact.sh" }] }],
     "TeammateIdle": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/teammate-idle.sh" }] }],
     "TaskCreated": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/task-created.sh" }] }],
-    "TaskCompleted": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/task-completed.sh" }] }]
+    "TaskCompleted": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/task-completed.sh" }] }],
+    "PostToolUseFailure": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/post-tool-failure.sh" }] }]
   }
 }
 ```
