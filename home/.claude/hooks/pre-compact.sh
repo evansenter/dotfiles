@@ -75,9 +75,14 @@ if command -v gh &>/dev/null && [[ -n "$BRANCH" && "$BRANCH" != "main" && "$BRAN
     PR_NUMBER=$(timeout 5 gh pr view --json number -q .number 2>/dev/null || echo "")
 fi
 
-# Get repo name (--show-toplevel always returns absolute path, works in worktrees too)
+# Derive repo name (git-common-dir returns absolute path in worktrees, relative in regular repos)
 if command -v git &>/dev/null && git -C "$CWD" rev-parse --git-dir &>/dev/null; then
-    REPO_NAME=$(basename "$(git -C "$CWD" rev-parse --show-toplevel 2>/dev/null)")
+    COMMON_DIR=$(git -C "$CWD" rev-parse --git-common-dir 2>/dev/null)
+    if [[ "$COMMON_DIR" == /* ]]; then
+        REPO_NAME=$(basename "$(dirname "$COMMON_DIR")")
+    else
+        REPO_NAME=$(basename "$(git -C "$CWD" rev-parse --show-toplevel 2>/dev/null)")
+    fi
 else
     REPO_NAME=$(basename "$CWD")
 fi
