@@ -159,7 +159,7 @@ test_openclaw_workspace_gitignore() {
 
 test_sync_dotfiles_no_package_install() {
     # sync_dotfiles must not call package installers directly — packages are
-    # handled by the SYNC guard so --no-sync skips them
+    # handled by the PULL guard so they only run with --pull
     local sync_body
     sync_body=$(sed -n '/^sync_dotfiles()/,/^}/p' "$BOOTSTRAP")
     ! echo "$sync_body" | grep -v '^\s*#' | grep -qE 'install_brew_packages|install_packages|install_apt_packages|install_steamos_packages'
@@ -244,16 +244,15 @@ read() { REPLY="y"; }
 
 # Mirror bootstrap.sh argument parsing and execution logic
 FORCE=false
-SYNC=true
+PULL=false
 for arg in "$@"; do
     case "$arg" in
         --force|-f) FORCE=true ;;
-        --sync|-s) SYNC=true ;;
-        --no-sync) SYNC=false ;;
+        --pull|-p) PULL=true ;;
     esac
 done
 
-if [[ "$SYNC" == true ]]; then
+if [[ "$PULL" == true ]]; then
     pull_latest
     install_packages
     update_packages
@@ -287,35 +286,20 @@ test_flag_help() {
     output=$("$BOOTSTRAP" --help 2>&1)
     echo "$output" | grep -q "Usage:" && \
     echo "$output" | grep -q "\-f, --force" && \
-    echo "$output" | grep -q "\-s, --sync"
+    echo "$output" | grep -q "\-p, --pull"
 }
 
 test_flag_force_only() {
-    # --force: full sync (default) without prompt
+    # --force: just sync dotfiles without prompt (no pull by default)
     local output
     output=$(run_bootstrap_with_mocks --force)
-    local line1 line2 line3 line4
-    line1=$(echo "$output" | sed -n '1p')
-    line2=$(echo "$output" | sed -n '2p')
-    line3=$(echo "$output" | sed -n '3p')
-    line4=$(echo "$output" | sed -n '4p')
-    [[ "$line1" == "pull_latest" ]] && \
-    [[ "$line2" == "install_packages" ]] && \
-    [[ "$line3" == "update_packages" ]] && \
-    [[ "$line4" == "sync_dotfiles" ]]
-}
-
-test_flag_no_sync() {
-    # --no-sync --force: just sync dotfiles, skip pull and packages
-    local output
-    output=$(run_bootstrap_with_mocks --no-sync --force)
     [[ "$output" == "sync_dotfiles" ]]
 }
 
-test_flag_sync_only() {
-    # --sync without --force prompts, our mock auto-confirms
+test_flag_pull_force() {
+    # --pull --force: pull, install packages, and sync dotfiles without prompt
     local output
-    output=$(run_bootstrap_with_mocks --sync)
+    output=$(run_bootstrap_with_mocks --pull --force)
     local line1 line2 line3 line4
     line1=$(echo "$output" | sed -n '1p')
     line2=$(echo "$output" | sed -n '2p')
@@ -327,9 +311,10 @@ test_flag_sync_only() {
     [[ "$line4" == "sync_dotfiles" ]]
 }
 
-test_flag_force_sync() {
+test_flag_pull_only() {
+    # --pull without --force prompts, our mock auto-confirms
     local output
-    output=$(run_bootstrap_with_mocks --force --sync)
+    output=$(run_bootstrap_with_mocks --pull)
     local line1 line2 line3 line4
     line1=$(echo "$output" | sed -n '1p')
     line2=$(echo "$output" | sed -n '2p')
@@ -342,9 +327,9 @@ test_flag_force_sync() {
 }
 
 test_flag_short_forms() {
-    # -s should work identically to --sync
+    # -p should work identically to --pull
     local output
-    output=$(run_bootstrap_with_mocks -f -s)
+    output=$(run_bootstrap_with_mocks -f -p)
     local line1 line2 line3 line4
     line1=$(echo "$output" | sed -n '1p')
     line2=$(echo "$output" | sed -n '2p')
@@ -357,18 +342,10 @@ test_flag_short_forms() {
 }
 
 test_flag_no_args_prompts() {
-    # No flags: full sync with prompt (mock auto-confirms)
+    # No flags: just sync dotfiles with prompt (mock auto-confirms), no pull
     local output
     output=$(run_bootstrap_with_mocks)
-    local line1 line2 line3 line4
-    line1=$(echo "$output" | sed -n '1p')
-    line2=$(echo "$output" | sed -n '2p')
-    line3=$(echo "$output" | sed -n '3p')
-    line4=$(echo "$output" | sed -n '4p')
-    [[ "$line1" == "pull_latest" ]] && \
-    [[ "$line2" == "install_packages" ]] && \
-    [[ "$line3" == "update_packages" ]] && \
-    [[ "$line4" == "sync_dotfiles" ]]
+    [[ "$output" == "sync_dotfiles" ]]
 }
 
 # ============================================================================
@@ -413,12 +390,11 @@ main() {
 
     echo "=== flag combinations ==="
     run_test "--help shows usage" "test_flag_help"
-    run_test "--force runs full sync without prompt" "test_flag_force_only"
-    run_test "--no-sync --force skips pull and packages" "test_flag_no_sync"
-    run_test "--sync runs pull+install+update+sync" "test_flag_sync_only"
-    run_test "--force --sync: full pipeline no prompt" "test_flag_force_sync"
-    run_test "short flags (-f -s) match long flags" "test_flag_short_forms"
-    run_test "no flags: full sync with prompt" "test_flag_no_args_prompts"
+    run_test "--force syncs dotfiles without prompt" "test_flag_force_only"
+    run_test "--pull --force: full pipeline no prompt" "test_flag_pull_force"
+    run_test "--pull runs pull+install+update+sync" "test_flag_pull_only"
+    run_test "short flags (-f -p) match long flags" "test_flag_short_forms"
+    run_test "no flags: sync dotfiles with prompt" "test_flag_no_args_prompts"
     echo ""
 
     # Summary

@@ -123,7 +123,7 @@ Pull latest and sync:
 
 ```bash
 cd dotfiles
-./bootstrap.sh -f -s
+./bootstrap.sh -f -p
 git submodule update --init --remote
 ```
 
