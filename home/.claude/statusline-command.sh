@@ -5,7 +5,7 @@
 
 # Claude Code status line script
 # Usage: Called automatically by Claude Code with JSON on stdin
-# Example: echo '{"workspace":{"current_dir":"/path"},"context_window":{"used_percentage":42},"model":{"id":"claude-opus-4-6"}}' | ~/.claude/statusline-command.sh
+# Example: echo '{"workspace":{"current_dir":"/path"},"context_window":{"current_usage":{"input_tokens":50000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0},"context_window_size":1000000},"model":{"id":"claude-opus-4-6"}}' | ~/.claude/statusline-command.sh
 
 # Collect all output in a buffer to avoid interleaving with CC status messages
 exec 3>&1  # Save stdout
@@ -18,10 +18,15 @@ if [[ -z "$input" ]]; then
     exit 1
 fi
 
-IFS=$'\t' read -r cwd session_id < <(
+IFS=$'\t' read -r cwd session_id model_id input_tokens cache_create_tokens cache_read_tokens context_size < <(
     echo "$input" | jq -r '[
         .workspace.current_dir,
-        (.session_id // "")
+        (.session_id // ""),
+        (.model.id // ""),
+        (.context_window.current_usage.input_tokens // 0),
+        (.context_window.current_usage.cache_creation_input_tokens // 0),
+        (.context_window.current_usage.cache_read_input_tokens // 0),
+        (.context_window.context_window_size // 0)
     ] | @tsv'
 )
 
@@ -264,12 +269,36 @@ fi
 # Final hyperlink reset to ensure no unclosed hyperlinks leak
 LINK_RESET=$'\e]8;;\e\\'
 
+# Model name
+model_display="${model_id:-}"
+
+# Context window usage percentage
+context_display=""
+if [[ "${context_size:-0}" -gt 0 ]]; then
+    total_tokens=$(( ${input_tokens:-0} + ${cache_create_tokens:-0} + ${cache_read_tokens:-0} ))
+    context_pct=$(( total_tokens * 100 / context_size ))
+    # Color by usage: green <50%, yellow 50-79%, red 80%+
+    if [[ "$context_pct" -ge 80 ]]; then
+        context_display=" ${RED}${context_pct}%${RESET}"
+    elif [[ "$context_pct" -ge 50 ]]; then
+        context_display=" ${YELLOW}${context_pct}%${RESET}"
+    else
+        context_display=" ${GRAY}${context_pct}%${RESET}"
+    fi
+fi
+
+# Combine model + context
+model_context=""
+if [[ -n "$model_display" ]]; then
+    model_context=" ${GRAY}${model_display}${RESET}${context_display}"
+fi
+
 # Build the statusline (single line)
-# Shows: [repo/session]:branch ✓/✗/↻ →#issues ●
-output=$(printf "%s%s%s%s%s%s" \
+# Shows: [repo/session]:branch ✓/✗/↻ →#issues ● model context%
+output=$(printf "%s%s%s%s%s%s%s" \
     "$repo_session_display" "$branch_display" \
     "$ci_display" "$issue_display" \
-    "$git_status" "$LINK_RESET")
+    "$git_status" "$model_context" "$LINK_RESET")
 
 # Restore stdout and print atomically
 exec 1>&3 3>&-
