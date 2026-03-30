@@ -9,9 +9,10 @@ Minimal dotfiles for zsh, git, vim, and tmux. Supports macOS (Homebrew), Debian/
 ## Commands
 
 ```bash
-./bootstrap.sh           # Full sync: pull, install/update packages, sync dotfiles (prompts)
-./bootstrap.sh -f        # Full sync without confirmation
-./bootstrap.sh --no-sync # Just sync dotfiles (skip pull and packages)
+./bootstrap.sh           # Sync dotfiles (symlink home/ to ~, prompts for confirmation)
+./bootstrap.sh -f        # Sync dotfiles without confirmation
+./bootstrap.sh -p        # Also pull latest and install/update packages
+./bootstrap.sh -f -p     # Full sync without confirmation
 ./uninstall.sh           # Remove symlinks
 git submodule update --init --remote  # Update theme submodules
 ```
@@ -42,7 +43,7 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 
 `bootstrap.sh` runs two phases (see script for full details):
 
-**Phase 1 — Pull & packages** (skipped with `--no-sync`):
+**Phase 1 — Pull & packages** (only with `--pull`/`-p`):
 1. Pulls latest from git
 2. Installs packages: Homebrew (macOS), apt (Debian/Ubuntu), or binary downloads to `~/.local/bin` (SteamOS)
 3. Updates existing packages

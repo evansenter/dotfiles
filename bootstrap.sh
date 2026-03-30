@@ -1149,21 +1149,19 @@ sync_dotfiles() {
 
 # Parse arguments
 FORCE=false
-SYNC=true
+PULL=false
 for arg in "$@"; do
 	case "$arg" in
 		--force|-f) FORCE=true ;;
-		--sync|-s) SYNC=true ;;
-		--no-sync) SYNC=false ;;
+		--pull|-p) PULL=true ;;
 		--help|-h)
 			echo "Usage: ./bootstrap.sh [OPTIONS]"
 			echo ""
-			echo "Pull latest, install/update packages, and sync dotfiles"
+			echo "Sync dotfiles (symlink home/ to ~)"
 			echo ""
 			echo "Options:"
 			echo "  -f, --force    Skip confirmation prompt"
-			echo "  -s, --sync     Pull latest, install/update packages (default)"
-			echo "  --no-sync      Skip pull and package install, just sync dotfiles"
+			echo "  -p, --pull     Also pull latest and install/update packages"
 			echo "  -h, --help     Show this help message"
 			exit 0
 			;;
@@ -1171,7 +1169,7 @@ for arg in "$@"; do
 done
 
 # Pull, install, and update packages if requested
-if [[ "$SYNC" == true ]]; then
+if [[ "$PULL" == true ]]; then
 	pull_latest
 	install_packages
 	update_packages
