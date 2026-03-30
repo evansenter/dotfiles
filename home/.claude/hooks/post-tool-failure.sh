@@ -69,15 +69,16 @@ SIGNATURE="${TOOL_NAME}:${ERROR_PREFIX}"
 
 # Publish error_pattern event to event bus
 agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} publish \
-    --type "error_pattern" \
-    --payload "$SIGNATURE" \
-    --session-id "$SESSION_ID" \
-    --channel "repo:${REPO_NAME}" \
+    --type="error_pattern" \
+    --payload="$SIGNATURE" \
+    --session-id="$SESSION_ID" \
+    --channel="repo:${REPO_NAME}" \
     2>/dev/null || true
 
-# Query event bus for matching error_pattern events in last 24h
+# Query event bus for matching error_pattern events across ALL sessions
+# Uses --channel (not --session-id) to get cross-session results
 EVENTS=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} events \
-    --session-id "$SESSION_ID" \
+    --channel="repo:${REPO_NAME}" \
     --include "error_pattern" \
     --limit 50 \
     --timeout 200 \
@@ -89,15 +90,9 @@ if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]
     MATCH_COUNT=$(echo "$EVENTS" | grep -cF "$SIGNATURE" || true)
 fi
 
-# If threshold met, inject additionalContext
+# If threshold met, inject additionalContext (use jq for safe JSON escaping)
 THRESHOLD=3
 if [[ "$MATCH_COUNT" -ge "$THRESHOLD" ]]; then
-    # Output JSON that Claude Code reads as additionalContext
-    cat <<CONTEXT_JSON
-{
-  "hookSpecificOutput": {
-    "additionalContext": "⚠️ Recurring error (${MATCH_COUNT} occurrences in recent sessions): ${TOOL_NAME} — ${ERROR_PREFIX}. This pattern keeps happening. Consider investigating the root cause or creating a memory entry to prevent it."
-  }
-}
-CONTEXT_JSON
+    MESSAGE="Recurring error (${MATCH_COUNT} occurrences in recent sessions): ${TOOL_NAME} -- ${ERROR_PREFIX}. This pattern keeps happening. Consider investigating the root cause or creating a memory entry to prevent it."
+    jq -n --arg msg "$MESSAGE" '{"hookSpecificOutput": {"additionalContext": $msg}}'
 fi

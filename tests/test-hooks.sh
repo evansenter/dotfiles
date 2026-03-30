@@ -1298,7 +1298,7 @@ test_post_tool_failure_happy_path() {
 }
 
 test_post_tool_failure_outputs_context_at_threshold() {
-    # Create a mock that returns 3+ matching events for the signature
+    # Create a mock CLI that returns 3+ matching events for the signature
     cat > "$TEST_TMP/bin/agent-event-bus-cli" << 'MOCK_CLI'
 #!/bin/bash
 while [[ "$1" == --* ]]; do case "$1" in --url) shift 2 ;; *) shift ;; esac; done
@@ -1323,12 +1323,15 @@ esac
 MOCK_CLI
     chmod +x "$TEST_TMP/bin/agent-event-bus-cli"
 
+    # This test needs real jq for JSON construction (jq -n --arg).
+    # Prepend standard jq locations before $TEST_TMP/bin in PATH.
     local output
     local exit_code=0
     output=$(echo '{"session_id":"test-session","cwd":"/tmp","tool_name":"Bash","error":"Command exited with non-zero status code 1"}' | \
+        PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:$PATH" \
         bash "$HOOKS_DIR/post-tool-failure.sh" 2>&1) || exit_code=$?
 
-    # Should output additionalContext JSON when threshold met
+    # Should output valid JSON with additionalContext when threshold met
     [[ $exit_code -eq 0 ]] && \
     [[ "$output" == *"hookSpecificOutput"* ]] && \
     [[ "$output" == *"additionalContext"* ]] && \
