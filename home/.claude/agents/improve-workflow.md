@@ -49,6 +49,39 @@ mcp__agent-session-analytics__get_error_details(days=1, limit=10)
 
 Focus on: what specific commands/hooks/scripts are failing? Are they fixable?
 
+### Auto-Create Error Memories
+
+Only if error analysis found recurring patterns (3+ occurrences of the same tool+error):
+
+```
+mcp__agent-session-analytics__get_error_details(days=7, limit=20)
+```
+
+For each error pattern with 3+ occurrences across sessions:
+
+1. Check if MEMORY.md already has a memory covering this error (search for tool name + error substring)
+2. If not already covered, create a `feedback` memory file:
+
+   ```markdown
+   ---
+   name: <tool-name>-<error-slug>
+   description: <one-line description of recurring error pattern>
+   type: feedback
+   ---
+
+   <Tool name> frequently fails with: <error description>
+
+   **Why:** Occurred <N> times across sessions in the last 7 days.
+   **How to apply:** <Suggested fix or avoidance strategy based on error context>
+   ```
+
+3. Add entry to MEMORY.md index
+4. Publish `gotcha_discovered` to event bus with memory details
+
+**Cap:** Create at most 3 error memories per invocation. Prioritize by occurrence count.
+
+**Skip if:** Error rate is ≤ 5% (Phase 2 already gates this).
+
 ### Cross-Session Gotchas
 
 Only if insights show `has_bus_events: true`:
