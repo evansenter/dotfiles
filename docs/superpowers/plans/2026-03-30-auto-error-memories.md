@@ -8,6 +8,20 @@
 
 **Tech Stack:** Bash (hooks), Markdown (agent/docs), event bus CLI, session analytics MCP
 
+**Execution:** Agent Teams with 3 teammates working in parallel on a shared task list.
+
+---
+
+## Agent Teams Execution
+
+| Teammate | Tasks | Files | Dependencies |
+|----------|-------|-------|-------------|
+| Hook builder | Task 1 (hook script) + Task 2 (settings.json) | `post-tool-failure.sh`, `settings.json` | None — starts immediately |
+| Agent enhancer | Task 3 (improve-workflow) | `improve-workflow.md` | None — starts immediately |
+| Test/doc integrator | Task 5 (docs, can start immediately) + Task 4 (tests, needs hook) | `test-hooks.sh`, `README.md`, `agent-teams-setup.md` | Task 4 blocked on Task 1 |
+
+After all teammates complete, lead runs Task 6 (quality gates) and the PR checkpoint workflow.
+
 ---
 
 ## File Map
