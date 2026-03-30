@@ -1110,6 +1110,117 @@ MOCK_CLI
 }
 
 # ============================================================================
+# teammate-idle.sh tests
+# ============================================================================
+
+test_teammate_idle_syntax() {
+    bash -n "$HOOKS_DIR/teammate-idle.sh"
+}
+
+test_teammate_idle_graceful_no_jq() {
+    local MINIMAL_PATH="/bin:/usr/bin"
+    local exit_code=0
+    echo '{"session_id":"test-123","cwd":"/tmp"}' | \
+        env -i PATH="$MINIMAL_PATH" HOME="$HOME" \
+        bash "$HOOKS_DIR/teammate-idle.sh" >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]]
+}
+
+test_teammate_idle_graceful_no_cli() {
+    local exit_code=0
+    echo '{"session_id":"test-123","cwd":"/tmp"}' | \
+        bash "$HOOKS_DIR/teammate-idle.sh" >/dev/null 2>&1 || exit_code=$?
+
+    # Must always exit 0 (exit 2 would keep teammate working)
+    [[ $exit_code -eq 0 ]]
+}
+
+test_teammate_idle_happy_path() {
+    setup_mock_event_bus_cli
+
+    local exit_code=0
+    echo '{"session_id":"test-session","cwd":"/tmp","teammate_name":"worker","team_name":"my-team"}' | \
+        bash "$HOOKS_DIR/teammate-idle.sh" >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]]
+}
+
+# ============================================================================
+# task-created.sh tests
+# ============================================================================
+
+test_task_created_syntax() {
+    bash -n "$HOOKS_DIR/task-created.sh"
+}
+
+test_task_created_graceful_no_jq() {
+    local MINIMAL_PATH="/bin:/usr/bin"
+    local exit_code=0
+    echo '{"session_id":"test-123","cwd":"/tmp"}' | \
+        env -i PATH="$MINIMAL_PATH" HOME="$HOME" \
+        bash "$HOOKS_DIR/task-created.sh" >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]]
+}
+
+test_task_created_graceful_no_cli() {
+    local exit_code=0
+    echo '{"session_id":"test-123","cwd":"/tmp"}' | \
+        bash "$HOOKS_DIR/task-created.sh" >/dev/null 2>&1 || exit_code=$?
+
+    # Must always exit 0 (exit 2 would prevent task creation)
+    [[ $exit_code -eq 0 ]]
+}
+
+test_task_created_happy_path() {
+    setup_mock_event_bus_cli
+
+    local exit_code=0
+    echo '{"session_id":"test-session","cwd":"/tmp","task_id":"task-1","task_subject":"Fix auth bug","teammate_name":"implementer"}' | \
+        bash "$HOOKS_DIR/task-created.sh" >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]]
+}
+
+# ============================================================================
+# task-completed.sh tests
+# ============================================================================
+
+test_task_completed_syntax() {
+    bash -n "$HOOKS_DIR/task-completed.sh"
+}
+
+test_task_completed_graceful_no_jq() {
+    local MINIMAL_PATH="/bin:/usr/bin"
+    local exit_code=0
+    echo '{"session_id":"test-123","cwd":"/tmp"}' | \
+        env -i PATH="$MINIMAL_PATH" HOME="$HOME" \
+        bash "$HOOKS_DIR/task-completed.sh" >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]]
+}
+
+test_task_completed_graceful_no_cli() {
+    local exit_code=0
+    echo '{"session_id":"test-123","cwd":"/tmp"}' | \
+        bash "$HOOKS_DIR/task-completed.sh" >/dev/null 2>&1 || exit_code=$?
+
+    # Must always exit 0 (exit 2 would prevent task completion)
+    [[ $exit_code -eq 0 ]]
+}
+
+test_task_completed_happy_path() {
+    setup_mock_event_bus_cli
+
+    local exit_code=0
+    echo '{"session_id":"test-session","cwd":"/tmp","task_id":"task-1","task_subject":"Fix auth bug","teammate_name":"implementer"}' | \
+        bash "$HOOKS_DIR/task-completed.sh" >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]]
+}
+
+# ============================================================================
 # Run all tests
 # ============================================================================
 
@@ -1195,6 +1306,27 @@ main() {
     run_test "syntax check" "test_zj_status_syntax"
     run_test "graceful degradation (no ZELLIJ env)" "test_zj_status_graceful_no_zellij_env"
     run_test "consumes stdin" "test_zj_status_consumes_stdin"
+    echo ""
+
+    echo "=== teammate-idle.sh ==="
+    run_test "syntax check" "test_teammate_idle_syntax"
+    run_test "graceful degradation (no jq)" "test_teammate_idle_graceful_no_jq"
+    run_test "graceful degradation (no agent-event-bus-cli)" "test_teammate_idle_graceful_no_cli"
+    run_test "integration: happy path" "test_teammate_idle_happy_path"
+    echo ""
+
+    echo "=== task-created.sh ==="
+    run_test "syntax check" "test_task_created_syntax"
+    run_test "graceful degradation (no jq)" "test_task_created_graceful_no_jq"
+    run_test "graceful degradation (no agent-event-bus-cli)" "test_task_created_graceful_no_cli"
+    run_test "integration: happy path" "test_task_created_happy_path"
+    echo ""
+
+    echo "=== task-completed.sh ==="
+    run_test "syntax check" "test_task_completed_syntax"
+    run_test "graceful degradation (no jq)" "test_task_completed_graceful_no_jq"
+    run_test "graceful degradation (no agent-event-bus-cli)" "test_task_completed_graceful_no_cli"
+    run_test "integration: happy path" "test_task_completed_happy_path"
     echo ""
 
     # Summary
