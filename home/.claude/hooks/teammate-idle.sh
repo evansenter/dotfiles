@@ -36,9 +36,14 @@ CWD=$(echo "$INPUT" | jq -r '.cwd // ""')
 [[ -z "$SESSION_ID" ]] && exit 0
 [[ -z "$CWD" ]] && CWD="$PWD"
 
-# Derive repo name (--show-toplevel always returns absolute path, works in worktrees too)
+# Derive repo name (git-common-dir returns absolute path in worktrees, relative in regular repos)
 if command -v git &>/dev/null && git -C "$CWD" rev-parse --git-dir &>/dev/null; then
-    REPO_NAME=$(basename "$(git -C "$CWD" rev-parse --show-toplevel 2>/dev/null)")
+    COMMON_DIR=$(git -C "$CWD" rev-parse --git-common-dir 2>/dev/null)
+    if [[ "$COMMON_DIR" == /* ]]; then
+        REPO_NAME=$(basename "$(dirname "$COMMON_DIR")")
+    else
+        REPO_NAME=$(basename "$(git -C "$CWD" rev-parse --show-toplevel 2>/dev/null)")
+    fi
 else
     REPO_NAME=$(basename "$CWD")
 fi

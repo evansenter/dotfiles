@@ -38,8 +38,13 @@ SOURCE=$(echo "$INPUT" | jq -r '.source // "startup"')
 
 # Derive session name (graceful fallback if git unavailable)
 if command -v git &>/dev/null && git -C "$CWD" rev-parse --git-dir &>/dev/null; then
-    # Use --show-toplevel for absolute path (works in worktrees too)
-    REPO_NAME=$(basename "$(git -C "$CWD" rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null || basename "$CWD")
+    # git-common-dir returns absolute path in worktrees, relative in regular repos
+    COMMON_DIR=$(git -C "$CWD" rev-parse --git-common-dir 2>/dev/null)
+    if [[ "$COMMON_DIR" == /* ]]; then
+        REPO_NAME=$(basename "$(dirname "$COMMON_DIR")")
+    else
+        REPO_NAME=$(basename "$(git -C "$CWD" rev-parse --show-toplevel 2>/dev/null)" 2>/dev/null || basename "$CWD")
+    fi
     BRANCH=$(git -C "$CWD" branch --show-current 2>/dev/null || echo "")
     [[ -n "$BRANCH" ]] && SESSION_NAME="${REPO_NAME}/${BRANCH}" || SESSION_NAME="$REPO_NAME"
 else

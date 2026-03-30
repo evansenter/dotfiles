@@ -248,11 +248,11 @@ WIP state is **automatically checkpointed** by the `pre-compact.sh` hook before 
 
 ## Checkpoint Handling
 
-**Run /pr-review local**: Run, fix issues if found, loop until clean.
+**Run /pr-review local**: Run, fix issues if found, loop until clean. Proceed autonomously — do not pause for user confirmation.
 
-**Create PR**: Run `/pr-create`. If adhoc, update remaining todos to `[work:pr-N]`.
+**Create PR**: Run `/pr-create`. If adhoc, update remaining todos to `[work:pr-N]`. Proceed autonomously.
 
-**Monitor CI**: Run `/watch-ci <PR#>` in background.
+**Monitor CI**: Run `/watch-ci <PR#>` in background. Proceed autonomously.
 
 **Process feedback**: Run `/pr-review remote` (do not gate on CI status — review and CI are independent). If changes pushed, reset CI and feedback checkpoints, loop.
 
