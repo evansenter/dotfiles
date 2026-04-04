@@ -138,6 +138,7 @@ symlink_dotfiles() {
 
 		# Skip if destination resolves back to the source (parent dir is symlinked into repo)
 		if [[ "$resolved_dest" == "$src_file" ]]; then
+			echo "Skipped: ~/$rel_path (parent dir symlinked into repo)"
 			continue
 		fi
 
@@ -159,7 +160,7 @@ symlink_dotfiles() {
 
 symlink_claude_dir() {
 	local dir_name="$1"
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local src_dir="$dotfiles_dir/home/.claude/$dir_name"
 	local dest_dir="$HOME/.claude/$dir_name"
 
