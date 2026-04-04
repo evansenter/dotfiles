@@ -115,7 +115,7 @@ install_github_binary() {
 }
 
 symlink_dotfiles() {
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 	# Find all files in home/ directory and create symlinks
 	# Exclude .claude/{hooks,commands,contrib,agents,skills}/ since we symlink those directories separately
@@ -124,8 +124,22 @@ symlink_dotfiles() {
 		local rel_path="${src_file#$dotfiles_dir/home/}"
 		local dest_file="$HOME/$rel_path"
 
-		# Create parent directory if needed
-		mkdir -p "$(dirname "$dest_file")"
+		# Create parent directory if needed, then resolve through symlinks to detect
+		# when a parent dir is symlinked back into the repo
+		local dest_parent
+		dest_parent="$(dirname "$dest_file")"
+		mkdir -p "$dest_parent"
+		local dest_dir
+		dest_dir="$(cd "$dest_parent" && pwd -P)" || {
+			echo "  Warning: cannot resolve $dest_parent, skipping ~/$rel_path"
+			continue
+		}
+		local resolved_dest="$dest_dir/$(basename "$dest_file")"
+
+		# Skip if destination resolves back to the source (parent dir is symlinked into repo)
+		if [[ "$resolved_dest" == "$src_file" ]]; then
+			continue
+		fi
 
 		# Skip if already correctly symlinked
 		if [[ -L "$dest_file" && "$(readlink "$dest_file")" == "$src_file" ]]; then
