@@ -273,10 +273,10 @@ local no_jq_dir="$TEST_TMP/no-jq"
 mkdir -p "$no_jq_dir"
 ln -sf "$(type -P cat)"  "$no_jq_dir/cat"
 ln -sf "$(type -P bash)" "$no_jq_dir/bash"
-PATH="$no_jq_dir" bash "$HOOKS_DIR/your-hook.sh"
+env -i PATH="$no_jq_dir" HOME="$HOME" bash "$HOOKS_DIR/your-hook.sh"
 ```
 
-Use `type -P`, not `command -v` — it bypasses shell aliases (your outer zsh may have `alias cat=bat` etc. that would break the symlink).
+`env -i` is load-bearing: without it, PATH inherits from the test shell, and on Debian/Ubuntu CI runners `/usr/bin/jq` would be found — the test then passes via an unrelated code path and masks regressions. Use `type -P`, not `command -v` — it bypasses shell aliases (your outer zsh may have `alias cat=bat` etc. that would break the symlink).
 
 ## Configuration
 
