@@ -17,7 +17,7 @@ Don't wait to be asked. When you notice these patterns, surface them unprompted:
 - Documentation drifted from reality
 - Workflow friction you experienced during the session
 
-Propose concrete solutions, not just observations.
+Propose concrete solutions, not just observations. For low-trigger-rate fixes, prefer memory/event-bus/docs over skill-prompt edits — skill edits tax every invocation across all sessions.
 
 ### Autonomous Decisions
 

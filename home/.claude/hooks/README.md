@@ -262,6 +262,22 @@ Additional fields vary by hook type.
 ### Testing
 Run `make test-hooks` to test all hooks. Add tests for new hooks in `tests/test-hooks.sh`.
 
+### Gotchas
+
+**jq multiline regex: prefer explicit alternation over `^`+`m` flag.** In jq 1.8.1, `scan("^pattern"; "m")` can silently fail to match at line starts, especially when `^` is near a character class. Use `match("(?:^|\\n)pattern"; "g")` instead — explicit newline alternation behaves reliably. See `enforce-insight-publish.sh` for a working example.
+
+**"No-jq" tests: symlink `cat` + `bash` into a fake PATH, not an empty dir.** Every hook reads stdin via `cat`, which needs PATH to resolve before the `command -v jq` check runs. A truly empty PATH fails with `cat: command not found` (exit 127) before the graceful-degradation branch is reached. Fix:
+
+```bash
+local no_jq_dir="$TEST_TMP/no-jq"
+mkdir -p "$no_jq_dir"
+ln -sf "$(type -P cat)"  "$no_jq_dir/cat"
+ln -sf "$(type -P bash)" "$no_jq_dir/bash"
+env -i PATH="$no_jq_dir" HOME="$HOME" bash "$HOOKS_DIR/your-hook.sh"
+```
+
+`env -i` is load-bearing: without it, PATH inherits from the test shell, and on Debian/Ubuntu CI runners `/usr/bin/jq` would be found — the test then passes via an unrelated code path and masks regressions. Use `type -P`, not `command -v` — it bypasses shell aliases (your outer zsh may have `alias cat=bat` etc. that would break the symlink).
+
 ## Configuration
 
 In `settings.json`:
