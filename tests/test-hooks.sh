@@ -1347,10 +1347,18 @@ test_enforce_insight_publish_syntax() {
 }
 
 test_enforce_insight_publish_graceful_no_jq() {
-    local MINIMAL_PATH="/bin:/usr/bin"
+    # Build a PATH that has the hook's non-jq deps (cat, bash) but NOT jq.
+    # Using /bin:/usr/bin would find /usr/bin/jq on Debian/Ubuntu CI runners
+    # and cause the test to pass via the missing-transcript branch instead —
+    # masking a regression in the no-jq path.
+    local no_jq_dir="$TEST_TMP/no-jq"
+    mkdir -p "$no_jq_dir"
+    ln -sf "$(type -P cat)" "$no_jq_dir/cat"
+    ln -sf "$(type -P bash)" "$no_jq_dir/bash"
+
     local exit_code=0
     echo '{"transcript_path":"/tmp/fake.jsonl"}' | \
-        env -i PATH="$MINIMAL_PATH" HOME="$HOME" \
+        env -i PATH="$no_jq_dir" HOME="$HOME" \
         bash "$HOOKS_DIR/enforce-insight-publish.sh" >/dev/null 2>&1 || exit_code=$?
 
     # Must exit 0 when jq is missing (cannot enforce, must not block)
