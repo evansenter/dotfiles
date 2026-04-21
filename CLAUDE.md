@@ -117,6 +117,10 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 
 LaunchAgent plists live in `~/Library/LaunchAgents/`. Each service repo has `make install-server` to set up. Reload with `launchctl unload` + `launchctl load`. The obsidian-mcp LaunchAgent is managed by this repo (plist in `LaunchAgents/`, wrapper in `home/.bin/obsidian-mcp-start`). Requires Obsidian with the Local REST API plugin running.
 
+**Adding new LaunchAgents:** Plists go in the top-level `LaunchAgents/` directory (NOT `home/Library/LaunchAgents/`). Use `__HOME__` as a placeholder for the user's home directory — `install_launch_agent()` in bootstrap does `sed` substitution at install time. Logs go to `~/.local/log/`. Add an `install_launch_agent` call in `install_launch_agents()`, gated on the binary being present.
+
+**Host-gating:** Services that only run on mac-mini (LaunchAgents, npm installs for server-side packages) must be gated with `[[ "${HOSTNAME%%.*}" == "mac-mini" ]]`. Remote machines should only get MCP registration pointing at the Tailscale URL. The `GATEWAY_HOST` constant at the top of bootstrap.sh holds the Tailscale hostname.
+
 **Important:** Never place projects in `~/Documents/` — macOS TCC blocks LaunchAgents from accessing it, causing silent `PermissionError` failures.
 
 **iTerm2** (`preferences/`, `vendor/iterm-catppuccin/`) - Manual color preset import required.
