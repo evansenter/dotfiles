@@ -9,6 +9,12 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE}")";
 
 # ==============================================================================
+# Constants
+# ==============================================================================
+
+GATEWAY_HOST="mac-mini.tailac7b3c.ts.net"
+
+# ==============================================================================
 # Functions
 # ==============================================================================
 
@@ -268,6 +274,12 @@ install_npm_package() {
 	fi
 
 	echo "Installing $display_name..."
+	# Clean up stale npm temp directories that cause install failures
+	local npm_prefix
+	npm_prefix="$(npm config get prefix 2>/dev/null)"
+	if [[ -n "$npm_prefix" && -d "$npm_prefix/lib/node_modules" ]]; then
+		find "$npm_prefix/lib/node_modules" -maxdepth 1 -name ".${package}-*" -type d -mmin +60 -exec rm -rf {} + 2>/dev/null || true
+	fi
 	# Use explicit registry to avoid custom registry misconfigurations
 	if ! npm install -g --registry https://registry.npmjs.org/ "$install_spec" 2>&1; then
 		echo ""
@@ -290,7 +302,6 @@ configure_claude_local_settings() {
 	# (correct for mac-mini gateway host). Override with Tailscale URLs in the
 	# untracked settings.local.json so remote machines reach services over the network.
 	local settings_local="$HOME/.claude/settings.local.json"
-	local gateway_host="mac-mini.tailac7b3c.ts.net"
 
 	# Skip if this is the gateway host (services run locally)
 	if [[ "${HOSTNAME%%.*}" == "mac-mini" ]]; then
@@ -309,8 +320,8 @@ configure_claude_local_settings() {
 		if command -v jq &>/dev/null; then
 			local tmp
 			tmp=$(mktemp)
-			if jq --arg bus "https://${gateway_host}/agent-event-bus/mcp" \
-			   --arg analytics "https://${gateway_host}/agent-session-analytics/mcp" \
+			if jq --arg bus "https://${GATEWAY_HOST}/agent-event-bus/mcp" \
+			   --arg analytics "https://${GATEWAY_HOST}/agent-session-analytics/mcp" \
 			   '.env = (.env // {}) + {"AGENT_EVENT_BUS_URL": $bus, "AGENT_SESSION_ANALYTICS_URL": $analytics}' \
 			   "$settings_local" > "$tmp" 2>/dev/null; then
 				mv "$tmp" "$settings_local"
@@ -329,8 +340,8 @@ configure_claude_local_settings() {
 		cat > "$settings_local" << EOF
 {
   "env": {
-    "AGENT_EVENT_BUS_URL": "https://${gateway_host}/agent-event-bus/mcp",
-    "AGENT_SESSION_ANALYTICS_URL": "https://${gateway_host}/agent-session-analytics/mcp"
+    "AGENT_EVENT_BUS_URL": "https://${GATEWAY_HOST}/agent-event-bus/mcp",
+    "AGENT_SESSION_ANALYTICS_URL": "https://${GATEWAY_HOST}/agent-session-analytics/mcp"
   }
 }
 EOF
@@ -433,6 +444,11 @@ install_launch_agents() {
 	# Install cargo-sweep LaunchAgent (only if cargo is installed)
 	if command -v cargo >/dev/null 2>&1; then
 		install_launch_agent "com.user.cargo-sweep.plist"
+	fi
+
+	# Install Obsidian MCP LaunchAgent (only on gateway host where the server runs)
+	if [[ "${HOSTNAME%%.*}" == "mac-mini" ]] && command -v obsidian-mcp-server >/dev/null 2>&1; then
+		install_launch_agent "com.evansenter.obsidian-mcp.plist"
 	fi
 }
 
@@ -1063,6 +1079,21 @@ install_claude_mcp_servers() {
 		if [[ -z "${GITHUB_TOKEN:-}" ]]; then
 			echo "  Warning: GITHUB_TOKEN not set. Add to ~/.extra:"
 			echo "    export GITHUB_TOKEN=\"ghp_your_token_here\""
+		fi
+	fi
+
+	# Install Obsidian MCP server if not configured
+	if ! echo "$mcp_list" | grep -q "obsidian"; then
+		if [[ "${HOSTNAME%%.*}" == "mac-mini" ]]; then
+			install_npm_package "obsidian-mcp-server" "Obsidian MCP Server"
+			claude mcp add --transport http -s user obsidian http://localhost:3010/mcp
+
+			if [[ -z "${OBSIDIAN_API_KEY:-}" ]]; then
+				echo "  Warning: OBSIDIAN_API_KEY not set. Add to ~/.extra:"
+				echo "    export OBSIDIAN_API_KEY=\"your-api-key-here\""
+			fi
+		else
+			claude mcp add --transport http -s user obsidian "https://${GATEWAY_HOST}/obsidian-mcp/mcp"
 		fi
 	fi
 }

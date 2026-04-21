@@ -113,8 +113,9 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 | agent-event-bus | 8080 | `/agent-event-bus` | `com.evansenter.agent-event-bus` |
 | agent-session-analytics | 8081 | `/agent-session-analytics` | `com.evansenter.agent-session-analytics` |
 | agent-memory-store | 8083 | `/agent-memory-store` | `com.evansenter.agent-memory-store` |
+| obsidian-mcp | 3010 | `/obsidian-mcp` | `com.evansenter.obsidian-mcp` |
 
-LaunchAgent plists live in `~/Library/LaunchAgents/`. Each service repo has `make install-server` to set up. Reload with `launchctl unload` + `launchctl load`.
+LaunchAgent plists live in `~/Library/LaunchAgents/`. Each service repo has `make install-server` to set up. Reload with `launchctl unload` + `launchctl load`. The obsidian-mcp LaunchAgent is managed by this repo (plist in `LaunchAgents/`, wrapper in `home/.bin/obsidian-mcp-start`). Requires Obsidian with the Local REST API plugin running.
 
 **Important:** Never place projects in `~/Documents/` — macOS TCC blocks LaunchAgents from accessing it, causing silent `PermissionError` failures.
 
