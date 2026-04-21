@@ -1339,6 +1339,198 @@ MOCK_CLI
 }
 
 # ============================================================================
+# enforce-insight-publish.sh tests
+# ============================================================================
+
+test_enforce_insight_publish_syntax() {
+    bash -n "$HOOKS_DIR/enforce-insight-publish.sh"
+}
+
+test_enforce_insight_publish_graceful_no_jq() {
+    local MINIMAL_PATH="/bin:/usr/bin"
+    local exit_code=0
+    echo '{"transcript_path":"/tmp/fake.jsonl"}' | \
+        env -i PATH="$MINIMAL_PATH" HOME="$HOME" \
+        bash "$HOOKS_DIR/enforce-insight-publish.sh" >/dev/null 2>&1 || exit_code=$?
+
+    # Must exit 0 when jq is missing (cannot enforce, must not block)
+    [[ $exit_code -eq 0 ]]
+}
+
+test_enforce_insight_publish_graceful_no_transcript() {
+    local exit_code=0
+    echo '{}' | bash "$HOOKS_DIR/enforce-insight-publish.sh" >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]]
+}
+
+test_enforce_insight_publish_graceful_missing_transcript_file() {
+    local exit_code=0
+    echo '{"transcript_path":"/nonexistent/path.jsonl"}' | \
+        bash "$HOOKS_DIR/enforce-insight-publish.sh" >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]]
+}
+
+test_enforce_insight_publish_respects_stop_hook_active() {
+    # When stop_hook_active=true, must not block (prevents infinite loop)
+    local transcript="$TEST_TMP/insight-no-publish.jsonl"
+    cat > "$transcript" <<'EOF'
+{"type":"user","message":{"role":"user","content":"hi"}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"★ Insight ─────\nfoo"}]}}
+EOF
+
+    local output
+    local exit_code=0
+    output=$(echo "{\"transcript_path\":\"$transcript\",\"stop_hook_active\":true}" | \
+        bash "$HOOKS_DIR/enforce-insight-publish.sh" 2>&1) || exit_code=$?
+
+    # Must be silent when stop_hook_active is true
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+# The mock jq in setup_test_env doesn't implement -s/slurp or match()/scan()
+# with complex queries. Tests that exercise the real jq pipeline discover the
+# real jq binary and prepend its directory, so they work both locally and on
+# CI runners regardless of where jq is installed (/opt/homebrew, /usr, etc.).
+_real_jq_path() {
+    local real_jq
+    real_jq=$(PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin" command -v jq 2>/dev/null || true)
+    [[ -n "$real_jq" ]] && dirname "$real_jq" || echo "/usr/bin"
+}
+
+test_enforce_insight_publish_blocks_insight_without_publish() {
+    local transcript="$TEST_TMP/insight-no-publish.jsonl"
+    cat > "$transcript" <<'EOF'
+{"type":"user","message":{"role":"user","content":"tell me something"}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"Here you go.\n★ Insight ─────\nAn observation."}]}}
+EOF
+
+    local output
+    local exit_code=0
+    output=$(echo "{\"transcript_path\":\"$transcript\"}" | \
+        PATH="$(_real_jq_path):$PATH" \
+        bash "$HOOKS_DIR/enforce-insight-publish.sh" 2>&1) || exit_code=$?
+
+    # Must emit a block decision JSON
+    [[ $exit_code -eq 0 ]] && \
+    [[ "$output" == *"\"decision\": \"block\""* ]] && \
+    [[ "$output" == *"★ Insight"* ]]
+}
+
+test_enforce_insight_publish_allows_insight_with_publish() {
+    local transcript="$TEST_TMP/insight-with-publish.jsonl"
+    cat > "$transcript" <<'EOF'
+{"type":"user","message":{"role":"user","content":"tell me something"}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"★ Insight ─────\nAn observation."}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__agent-event-bus__publish_event","input":{"event_type":"pattern_found","payload":"x"}}]}}
+EOF
+
+    local output
+    local exit_code=0
+    output=$(echo "{\"transcript_path\":\"$transcript\"}" | \
+        PATH="$(_real_jq_path):$PATH" \
+        bash "$HOOKS_DIR/enforce-insight-publish.sh" 2>&1) || exit_code=$?
+
+    # Must be silent when a publish_event accompanies the insight
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+test_enforce_insight_publish_allows_no_insight() {
+    local transcript="$TEST_TMP/no-insight.jsonl"
+    cat > "$transcript" <<'EOF'
+{"type":"user","message":{"role":"user","content":"hi"}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"hello"}]}}
+EOF
+
+    local output
+    local exit_code=0
+    output=$(echo "{\"transcript_path\":\"$transcript\"}" | \
+        PATH="$(_real_jq_path):$PATH" \
+        bash "$HOOKS_DIR/enforce-insight-publish.sh" 2>&1) || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+test_enforce_insight_publish_ignores_prior_turn_insights() {
+    # Insight in a prior turn (before the last user message) should not
+    # affect the current turn's enforcement.
+    local transcript="$TEST_TMP/prior-insight.jsonl"
+    cat > "$transcript" <<'EOF'
+{"type":"user","message":{"role":"user","content":"first"}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"★ Insight ─────\nold insight (already dealt with)."}]}}
+{"type":"user","message":{"role":"user","content":"second"}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"just a reply, no insight"}]}}
+EOF
+
+    local output
+    local exit_code=0
+    output=$(echo "{\"transcript_path\":\"$transcript\"}" | \
+        PATH="$(_real_jq_path):$PATH" \
+        bash "$HOOKS_DIR/enforce-insight-publish.sh" 2>&1) || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+test_enforce_insight_publish_blocks_heavy_divider_variant() {
+    # ★ Insight ━ (U+2501 heavy) and ═ (U+2550 double) are valid variants
+    # some output styles use. Must also trigger enforcement.
+    local transcript="$TEST_TMP/heavy-divider.jsonl"
+    cat > "$transcript" <<'EOF'
+{"type":"user","message":{"role":"user","content":"tell me something"}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"★ Insight ━━━━━━━\nHeavy divider.\n━━━━━━━"}]}}
+EOF
+
+    local output
+    local exit_code=0
+    output=$(echo "{\"transcript_path\":\"$transcript\"}" | \
+        PATH="$(_real_jq_path):$PATH" \
+        bash "$HOOKS_DIR/enforce-insight-publish.sh" 2>&1) || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ "$output" == *"\"decision\": \"block\""* ]]
+}
+
+test_enforce_insight_publish_ignores_inline_mentions() {
+    # Casual inline mentions ("the ★ Insight ─ marker") should not trigger.
+    # Required: line-start + 3+ divider chars filters these out.
+    local transcript="$TEST_TMP/inline-mention.jsonl"
+    cat > "$transcript" <<'EOF'
+{"type":"user","message":{"role":"user","content":"explain the format"}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"The ★ Insight ─ marker is how we write insights. Use `★ Insight ─` inline."}]}}
+EOF
+
+    local output
+    local exit_code=0
+    output=$(echo "{\"transcript_path\":\"$transcript\"}" | \
+        PATH="$(_real_jq_path):$PATH" \
+        bash "$HOOKS_DIR/enforce-insight-publish.sh" 2>&1) || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+test_enforce_insight_publish_tool_results_stay_in_turn() {
+    # A tool_result is a user-typed event but must not be treated as a
+    # turn boundary. An insight after a tool result (same turn) still
+    # requires a publish_event.
+    local transcript="$TEST_TMP/tool-result-mid-turn.jsonl"
+    cat > "$transcript" <<'EOF'
+{"type":"user","message":{"role":"user","content":"do something"}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","content":"ok"}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"★ Insight ─────\npost-tool observation."}]}}
+EOF
+
+    local output
+    local exit_code=0
+    output=$(echo "{\"transcript_path\":\"$transcript\"}" | \
+        PATH="$(_real_jq_path):$PATH" \
+        bash "$HOOKS_DIR/enforce-insight-publish.sh" 2>&1) || exit_code=$?
+
+    # Must still block: tool_result doesn't reset the turn.
+    [[ $exit_code -eq 0 ]] && [[ "$output" == *"\"decision\": \"block\""* ]]
+}
+
+# ============================================================================
 # Run all tests
 # ============================================================================
 
@@ -1445,6 +1637,21 @@ main() {
     run_test "graceful degradation (no jq)" "test_task_completed_graceful_no_jq"
     run_test "graceful degradation (no agent-event-bus-cli)" "test_task_completed_graceful_no_cli"
     run_test "integration: happy path" "test_task_completed_happy_path"
+    echo ""
+
+    echo "=== enforce-insight-publish.sh ==="
+    run_test "syntax check" "test_enforce_insight_publish_syntax"
+    run_test "graceful degradation (no jq)" "test_enforce_insight_publish_graceful_no_jq"
+    run_test "graceful degradation (no transcript_path)" "test_enforce_insight_publish_graceful_no_transcript"
+    run_test "graceful degradation (transcript file missing)" "test_enforce_insight_publish_graceful_missing_transcript_file"
+    run_test "respects stop_hook_active (loop guard)" "test_enforce_insight_publish_respects_stop_hook_active"
+    run_test "blocks insight without publish" "test_enforce_insight_publish_blocks_insight_without_publish"
+    run_test "allows insight with publish" "test_enforce_insight_publish_allows_insight_with_publish"
+    run_test "allows turns with no insight" "test_enforce_insight_publish_allows_no_insight"
+    run_test "ignores insights from prior turns" "test_enforce_insight_publish_ignores_prior_turn_insights"
+    run_test "blocks heavy/double divider variants" "test_enforce_insight_publish_blocks_heavy_divider_variant"
+    run_test "ignores inline marker mentions" "test_enforce_insight_publish_ignores_inline_mentions"
+    run_test "tool_result does not reset turn" "test_enforce_insight_publish_tool_results_stay_in_turn"
     echo ""
 
     echo "=== post-tool-failure.sh ==="
