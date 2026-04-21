@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Wrapper script for obsidian-mcp-server LaunchAgent.
+# Sources ~/.extra to pick up OBSIDIAN_API_KEY, then execs the server in HTTP mode.
+
+set -euo pipefail
+
+# Source secrets (OBSIDIAN_API_KEY lives here)
+if [[ -f "$HOME/.extra" ]]; then
+	# shellcheck source=/dev/null
+	source "$HOME/.extra"
+fi
+
+if [[ -z "${OBSIDIAN_API_KEY:-}" ]]; then
+	echo "Error: OBSIDIAN_API_KEY not set. Add to ~/.extra:" >&2
+	echo "  export OBSIDIAN_API_KEY=\"your-api-key-here\"" >&2
+	exit 1
+fi
+
+export MCP_TRANSPORT_TYPE="http"
+export MCP_HTTP_PORT="3010"
+export MCP_HTTP_HOST="127.0.0.1"
+export OBSIDIAN_BASE_URL="${OBSIDIAN_BASE_URL:-https://127.0.0.1:27124}"
+export OBSIDIAN_VERIFY_SSL="${OBSIDIAN_VERIFY_SSL:-false}"
+
+exec obsidian-mcp-server
