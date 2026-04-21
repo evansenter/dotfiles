@@ -278,7 +278,7 @@ install_npm_package() {
 	local npm_prefix
 	npm_prefix="$(npm config get prefix 2>/dev/null)"
 	if [[ -n "$npm_prefix" && -d "$npm_prefix/lib/node_modules" ]]; then
-		find "$npm_prefix/lib/node_modules" -maxdepth 1 -name ".${package}-*" -type d -mmin +60 -exec rm -rf {} + 2>/dev/null
+		find "$npm_prefix/lib/node_modules" -maxdepth 1 -name ".${package}-*" -type d -mmin +60 -exec rm -rf {} + 2>/dev/null || true
 	fi
 	# Use explicit registry to avoid custom registry misconfigurations
 	if ! npm install -g --registry https://registry.npmjs.org/ "$install_spec" 2>&1; then
@@ -446,8 +446,8 @@ install_launch_agents() {
 		install_launch_agent "com.user.cargo-sweep.plist"
 	fi
 
-	# Install Obsidian MCP LaunchAgent (only if obsidian-mcp-server is installed)
-	if command -v obsidian-mcp-server >/dev/null 2>&1; then
+	# Install Obsidian MCP LaunchAgent (only on gateway host where the server runs)
+	if [[ "${HOSTNAME%%.*}" == "mac-mini" ]] && command -v obsidian-mcp-server >/dev/null 2>&1; then
 		install_launch_agent "com.evansenter.obsidian-mcp.plist"
 	fi
 }
@@ -1084,18 +1084,16 @@ install_claude_mcp_servers() {
 
 	# Install Obsidian MCP server if not configured
 	if ! echo "$mcp_list" | grep -q "obsidian"; then
-		install_npm_package "obsidian-mcp-server" "Obsidian MCP Server"
-
-		echo "Installing Obsidian MCP server..."
 		if [[ "${HOSTNAME%%.*}" == "mac-mini" ]]; then
+			install_npm_package "obsidian-mcp-server" "Obsidian MCP Server"
 			claude mcp add --transport http -s user obsidian http://localhost:3010/mcp
+
+			if [[ -z "${OBSIDIAN_API_KEY:-}" ]]; then
+				echo "  Warning: OBSIDIAN_API_KEY not set. Add to ~/.extra:"
+				echo "    export OBSIDIAN_API_KEY=\"your-api-key-here\""
+			fi
 		else
 			claude mcp add --transport http -s user obsidian "https://${GATEWAY_HOST}/obsidian-mcp/mcp"
-		fi
-
-		if [[ -z "${OBSIDIAN_API_KEY:-}" ]]; then
-			echo "  Warning: OBSIDIAN_API_KEY not set. Add to ~/.extra:"
-			echo "    export OBSIDIAN_API_KEY=\"your-api-key-here\""
 		fi
 	fi
 }
