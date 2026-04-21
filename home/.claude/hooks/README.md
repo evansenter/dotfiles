@@ -35,8 +35,11 @@ Session Start
 │      │   - post-tool-failure.sh     │
 │      │   (detects recurring errors) │
 │      │                              │
-│      ├── Stop hook                  │
-│      │   - zj-status.sh waiting     │
+│      ├── Stop hooks (run in order): │
+│      │   1. zj-status.sh waiting    │
+│      │   2. enforce-insight-publish │
+│      │      (blocks if ★ Insight    │
+│      │       without publish_event) │
 │      │                              │
 │      ▼                              │
 │  (repeat)                           │
@@ -188,6 +191,30 @@ Session End / Agent Teams
 
 ---
 
+### enforce-insight-publish.sh
+**Trigger:** `Stop`
+
+**Purpose:** Enforce the "★ Insight → publish_event" rule from global CLAUDE.md. Blocks turn end if the assistant emitted one or more `★ Insight` blocks but made no `mcp__agent-event-bus__publish_event` tool calls in the same turn.
+
+**Actions:**
+1. Exit 0 if `stop_hook_active` is true (prevents infinite loop after a prior block)
+2. Exit 0 if `transcript_path` is missing or the file doesn't exist
+3. Parse the JSONL transcript to find the last "real" user message (string content, or array without `tool_result` blocks)
+4. Count `★ Insight ─` markers in assistant text blocks after that point
+5. Count `mcp__agent-event-bus__publish_event` tool_use blocks after that point
+6. If insights > 0 and publishes == 0, emit `{"decision": "block", "reason": "..."}` to force Claude to publish before the turn ends
+7. Otherwise exit silently
+
+Counting is lenient: one `publish_event` covers all insights in the turn (matches how insights are often batched into a single cross-session event).
+
+**Input JSON fields:** `session_id`, `transcript_path`, `stop_hook_active`, `cwd`
+
+**Output:** `{"decision": "block", "reason": "..."}` when the rule is violated. Silent otherwise.
+
+**Exit code:** Always 0. Blocking is signaled via the JSON `decision` field, not the exit code.
+
+---
+
 ### post-tool-failure.sh
 **Trigger:** `PostToolUseFailure`
 
@@ -247,7 +274,10 @@ In `settings.json`:
       { "type": "command", "command": "~/.claude/hooks/prompt-events.sh" },
       { "type": "command", "command": "~/.claude/hooks/zj-status.sh working" }
     ] }],
-    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/zj-status.sh waiting" }] }],
+    "Stop": [{ "hooks": [
+      { "type": "command", "command": "~/.claude/hooks/zj-status.sh waiting" },
+      { "type": "command", "command": "~/.claude/hooks/enforce-insight-publish.sh" }
+    ] }],
     "PreCompact": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/pre-compact.sh" }] }],
     "TeammateIdle": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/teammate-idle.sh" }] }],
     "TaskCreated": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/task-created.sh" }] }],

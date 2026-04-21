@@ -43,7 +43,7 @@ Non-obvious autonomy:
 
 After significant work: share what caused friction, where you were redirected (indicates missing guidance), and what's missing. Publish insights to event bus (`gotcha_discovered`, `pattern_found`, `improvement_suggested`).
 
-**★ Insight → Event Bus rule:** Every `★ Insight` block MUST be immediately followed by a `publish_event` call in the same response. Only skip if the insight is purely about a specific line in a specific file with zero cross-session value (rare). Default: publish.
+**★ Insight → Event Bus:** Insights worth emitting are worth publishing. When you emit an `★ Insight` block, publish it via `mcp__agent-event-bus__publish_event` in the same response. Exception: if the insight is purely about a specific line in a specific file with zero cross-session value, don't emit the block at all. A Stop hook (`enforce-insight-publish.sh`) enforces this — violations block the turn until you publish.
 
 ## PR Workflow
 
