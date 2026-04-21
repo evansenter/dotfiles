@@ -19,6 +19,7 @@ fi
 export MCP_TRANSPORT_TYPE="http"
 export MCP_HTTP_PORT="3010"
 export MCP_HTTP_HOST="127.0.0.1"
-export OBSIDIAN_BASE_URL="${OBSIDIAN_BASE_URL:-http://127.0.0.1:27123}"
+export OBSIDIAN_BASE_URL="${OBSIDIAN_BASE_URL:-https://127.0.0.1:27124}"
+export OBSIDIAN_VERIFY_SSL="${OBSIDIAN_VERIFY_SSL:-false}"
 
 exec obsidian-mcp-server

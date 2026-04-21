@@ -1088,9 +1088,9 @@ install_claude_mcp_servers() {
 
 		echo "Installing Obsidian MCP server..."
 		if [[ "${HOSTNAME%%.*}" == "mac-mini" ]]; then
-			claude mcp add obsidian -s user --url http://localhost:3010/mcp
+			claude mcp add --transport http -s user obsidian http://localhost:3010/mcp
 		else
-			claude mcp add obsidian -s user --url "https://${GATEWAY_HOST}/obsidian-mcp/mcp"
+			claude mcp add --transport http -s user obsidian "https://${GATEWAY_HOST}/obsidian-mcp/mcp"
 		fi
 
 		if [[ -z "${OBSIDIAN_API_KEY:-}" ]]; then
