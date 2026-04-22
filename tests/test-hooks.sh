@@ -1519,9 +1519,9 @@ EOF
 }
 
 test_enforce_insight_publish_blocks_bare_format() {
-    # Regression: earlier versions of the regex required a backtick. The
-    # current form allows (but does not require) a leading backtick, so a
-    # bare `★ Insight ─────` (no backticks) should still trigger.
+    # Regression: guards against a future tightening that makes the leading
+    # backtick required. The current regex treats it as optional, so the
+    # bare `★ Insight ─────` form (no backticks) must still trigger.
     local transcript="$TEST_TMP/bare-format.jsonl"
     cat > "$transcript" <<'EOF'
 {"type":"user","message":{"role":"user","content":"tell me something"}}
