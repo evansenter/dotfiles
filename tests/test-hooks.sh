@@ -1385,7 +1385,7 @@ test_enforce_insight_publish_respects_stop_hook_active() {
     local transcript="$TEST_TMP/insight-no-publish.jsonl"
     cat > "$transcript" <<'EOF'
 {"type":"user","message":{"role":"user","content":"hi"}}
-{"type":"assistant","message":{"content":[{"type":"text","text":"★ Insight ─────\nfoo"}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"`★ Insight ─────────────────────────────────────`\nfoo"}]}}
 EOF
 
     local output
@@ -1408,10 +1408,12 @@ _real_jq_path() {
 }
 
 test_enforce_insight_publish_blocks_insight_without_publish() {
+    # Fixture mirrors the real explanatory-output-style format: the decorator
+    # line is wrapped in literal backticks.
     local transcript="$TEST_TMP/insight-no-publish.jsonl"
     cat > "$transcript" <<'EOF'
 {"type":"user","message":{"role":"user","content":"tell me something"}}
-{"type":"assistant","message":{"content":[{"type":"text","text":"Here you go.\n★ Insight ─────\nAn observation."}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"Here you go.\n`★ Insight ─────────────────────────────────────`\nAn observation.\n`─────────────────────────────────────────────────`"}]}}
 EOF
 
     local output
@@ -1430,7 +1432,7 @@ test_enforce_insight_publish_allows_insight_with_publish() {
     local transcript="$TEST_TMP/insight-with-publish.jsonl"
     cat > "$transcript" <<'EOF'
 {"type":"user","message":{"role":"user","content":"tell me something"}}
-{"type":"assistant","message":{"content":[{"type":"text","text":"★ Insight ─────\nAn observation."}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"`★ Insight ─────────────────────────────────────`\nAn observation.\n`─────────────────────────────────────────────────`"}]}}
 {"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__agent-event-bus__publish_event","input":{"event_type":"pattern_found","payload":"x"}}]}}
 EOF
 
@@ -1466,7 +1468,7 @@ test_enforce_insight_publish_ignores_prior_turn_insights() {
     local transcript="$TEST_TMP/prior-insight.jsonl"
     cat > "$transcript" <<'EOF'
 {"type":"user","message":{"role":"user","content":"first"}}
-{"type":"assistant","message":{"content":[{"type":"text","text":"★ Insight ─────\nold insight (already dealt with)."}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"`★ Insight ─────────────────────────────────────`\nold insight (already dealt with)."}]}}
 {"type":"user","message":{"role":"user","content":"second"}}
 {"type":"assistant","message":{"content":[{"type":"text","text":"just a reply, no insight"}]}}
 EOF
@@ -1486,7 +1488,7 @@ test_enforce_insight_publish_blocks_heavy_divider_variant() {
     local transcript="$TEST_TMP/heavy-divider.jsonl"
     cat > "$transcript" <<'EOF'
 {"type":"user","message":{"role":"user","content":"tell me something"}}
-{"type":"assistant","message":{"content":[{"type":"text","text":"★ Insight ━━━━━━━\nHeavy divider.\n━━━━━━━"}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"`★ Insight ━━━━━━━`\nHeavy divider.\n`━━━━━━━`"}]}}
 EOF
 
     local output
@@ -1516,6 +1518,25 @@ EOF
     [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
 }
 
+test_enforce_insight_publish_blocks_bare_format() {
+    # Regression: guards against a future tightening that makes the leading
+    # backtick required. The current regex treats it as optional, so the
+    # bare `★ Insight ─────` form (no backticks) must still trigger.
+    local transcript="$TEST_TMP/bare-format.jsonl"
+    cat > "$transcript" <<'EOF'
+{"type":"user","message":{"role":"user","content":"tell me something"}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"intro\n★ Insight ─────────────────────────────────────\nBare format without backticks."}]}}
+EOF
+
+    local output
+    local exit_code=0
+    output=$(echo "{\"transcript_path\":\"$transcript\"}" | \
+        PATH="$(_real_jq_path):$PATH" \
+        bash "$HOOKS_DIR/enforce-insight-publish.sh" 2>&1) || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ "$output" == *"\"decision\": \"block\""* ]]
+}
+
 test_enforce_insight_publish_tool_results_stay_in_turn() {
     # A tool_result is a user-typed event but must not be treated as a
     # turn boundary. An insight after a tool result (same turn) still
@@ -1525,7 +1546,7 @@ test_enforce_insight_publish_tool_results_stay_in_turn() {
 {"type":"user","message":{"role":"user","content":"do something"}}
 {"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{}}]}}
 {"type":"user","message":{"role":"user","content":[{"type":"tool_result","content":"ok"}]}}
-{"type":"assistant","message":{"content":[{"type":"text","text":"★ Insight ─────\npost-tool observation."}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"`★ Insight ─────────────────────────────────────`\npost-tool observation."}]}}
 EOF
 
     local output
@@ -1659,6 +1680,7 @@ main() {
     run_test "ignores insights from prior turns" "test_enforce_insight_publish_ignores_prior_turn_insights"
     run_test "blocks heavy/double divider variants" "test_enforce_insight_publish_blocks_heavy_divider_variant"
     run_test "ignores inline marker mentions" "test_enforce_insight_publish_ignores_inline_mentions"
+    run_test "blocks bare format (no backticks)" "test_enforce_insight_publish_blocks_bare_format"
     run_test "tool_result does not reset turn" "test_enforce_insight_publish_tool_results_stay_in_turn"
     echo ""
 

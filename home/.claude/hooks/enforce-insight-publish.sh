@@ -38,8 +38,12 @@ STOP_HOOK_ACTIVE=$(jq -r '.stop_hook_active // false' <<<"$INPUT")
 #
 # Marker regex: matches "★ Insight" followed by whitespace and 3+ divider
 # characters (U+2500 light, U+2501 heavy, U+2550 double) anchored at line
-# start. This excludes casual inline references like `the ★ Insight ─ marker`.
-# Code-fenced examples at column 0 will still match — accepted trade-off.
+# start, with an optional leading backtick. The backtick is there because
+# the explanatory-output-style plugin wraps the decorator line in backticks:
+#   `★ Insight ─────────`
+# This excludes casual inline references like `the ★ Insight ─ marker` (only
+# one divider char). Code-fenced examples at column 0 will still match —
+# accepted trade-off.
 ANALYSIS=$(jq -s '
   def is_real_user:
     .type == "user" and
@@ -58,7 +62,7 @@ ANALYSIS=$(jq -s '
           | .message.content[]?
           | select(.type == "text")
           | .text
-          | match("(?:^|\\n)★ Insight[ \\t]+[─━═]{3,}"; "g")
+          | match("(?:^|\\n)`?★ Insight[ \\t]+[─━═]{3,}"; "g")
         ] | length
       ),
       publishes: (
