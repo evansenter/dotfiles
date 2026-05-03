@@ -199,11 +199,12 @@ Session End / Agent Teams
 **Actions:**
 1. Exit 0 if `stop_hook_active` is true (prevents infinite loop after a prior block)
 2. Exit 0 if `transcript_path` is missing or the file doesn't exist
-3. Parse the JSONL transcript to find the last "real" user message (string content, or array without `tool_result` blocks)
-4. Count `★ Insight ─` markers in assistant text blocks after that point
-5. Count `mcp__agent-event-bus__publish_event` tool_use blocks after that point
-6. If insights > 0 and publishes == 0, emit `{"decision": "block", "reason": "..."}` to force Claude to publish before the turn ends
-7. Otherwise exit silently
+3. **Wait for transcript to stabilize** — poll line count every 100ms until unchanged across two samples (hard cap: 1s). This handles a race with Claude Code's transcript writer: the current turn's `text` block can be flushed after the Stop hook starts, so reading too early sees only the preceding `thinking` event.
+4. Parse the JSONL transcript to find the last "real" user message (string content, or array without `tool_result` blocks)
+5. Count `★ Insight ─` markers in assistant text blocks after that point
+6. Count `mcp__agent-event-bus__publish_event` tool_use blocks after that point
+7. If insights > 0 and publishes == 0, emit `{"decision": "block", "reason": "..."}` to force Claude to publish before the turn ends
+8. Otherwise exit silently
 
 Counting is lenient: one `publish_event` covers all insights in the turn (matches how insights are often batched into a single cross-session event).
 
@@ -277,6 +278,8 @@ env -i PATH="$no_jq_dir" HOME="$HOME" bash "$HOOKS_DIR/your-hook.sh"
 ```
 
 `env -i` is load-bearing: without it, PATH inherits from the test shell, and on Debian/Ubuntu CI runners `/usr/bin/jq` would be found — the test then passes via an unrelated code path and masks regressions. Use `type -P`, not `command -v` — it bypasses shell aliases (your outer zsh may have `alias cat=bat` etc. that would break the symlink).
+
+**Stop hooks race Claude Code's transcript writer.** If your Stop hook reads `transcript_path` and inspects the current turn's assistant output, the last `text` block may not be flushed yet when the hook runs. Empirically: 3 of 4 firings lose the race on a fast machine, with the hook seeing only the preceding `thinking` event. Any content-inspecting Stop hook needs quiescence detection before reading. The pattern used in `enforce-insight-publish.sh`: poll `wc -l` every 100ms, break when unchanged for two samples, hard-cap at 1s.
 
 ## Configuration
 

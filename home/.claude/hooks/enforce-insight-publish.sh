@@ -29,6 +29,28 @@ STOP_HOOK_ACTIVE=$(jq -r '.stop_hook_active // false' <<<"$INPUT")
 # No transcript to inspect → nothing to enforce.
 [[ -z "$TRANSCRIPT_PATH" || ! -f "$TRANSCRIPT_PATH" ]] && exit 0
 
+# Wait for the transcript to stabilize. Stop hooks race Claude Code's
+# transcript writer — at hook-start time, the current turn's final `text`
+# block is often not yet flushed (only the preceding `thinking` block is
+# visible). If we read too early we miss the insight and fail to block.
+#
+# Poll line count until it's unchanged across two 100ms samples. Typical
+# latency is 100-200ms (100ms for turns that are already stable); hard
+# cap is 1s. See the "Stop hooks race Claude Code's transcript writer"
+# entry in hooks/README.md Gotchas for empirical data and design rationale.
+#
+# Known limitation: a writer that pauses >=100ms between consecutive
+# flushes can fool this detector (two equal samples look like stability).
+# Observed race window is well under 100ms, so this is an acceptable
+# trade-off; widen the interval if a slow-writer regression ever hits.
+prev_lines=$(wc -l < "$TRANSCRIPT_PATH" 2>/dev/null || echo 0)
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+    sleep 0.1
+    cur_lines=$(wc -l < "$TRANSCRIPT_PATH" 2>/dev/null || echo 0)
+    [[ "$cur_lines" -eq "$prev_lines" ]] && break
+    prev_lines=$cur_lines
+done
+
 # Parse the transcript: find the last "real" user event (string content or
 # array without tool_result blocks), then count insight markers in text blocks
 # and publish_event calls in tool_use blocks that come after it.
