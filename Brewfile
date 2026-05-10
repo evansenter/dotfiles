@@ -57,10 +57,6 @@ brew "numpy"                  # IAP tunnel perf (gcloud)
 # AI/ML
 brew "whisper-cpp"              # Local speech-to-text
 
-# OpenClaw Agent Tools
-brew "spotify_player"             # Spotify CLI (OAuth device flow)
-brew "gogcli"                     # Google Suite CLI
-
 # Utilities
 brew "ffmpeg"
 brew "scc"                    # Code line counter
@@ -73,7 +69,6 @@ cask "iterm2"                 # Requires: post-install config
 cask "lm-studio"
 
 # Casks - Apps
-cask "claude"
 cask "google-chrome"
 cask "iina"                   # Video player
 cask "macfuse"                 # FUSE filesystem support (pre-installed by bootstrap, required by ntfs-3g)

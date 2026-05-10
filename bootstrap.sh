@@ -13,6 +13,7 @@ cd "$(dirname "${BASH_SOURCE}")";
 # ==============================================================================
 
 GATEWAY_HOST="mac-mini.tailac7b3c.ts.net"
+INSTALL_AI=""
 
 # ==============================================================================
 # Functions
@@ -464,6 +465,40 @@ cleanup_legacy_cron() {
 pull_latest() {
 	echo "Pulling latest changes from origin/main..."
 	git pull origin main
+}
+
+prompt_ai_install() {
+	# Ask once whether to install AI assistant packages (Claude, OpenClaw).
+	# Result is cached in INSTALL_AI for the rest of the run.
+	if [[ -n "$INSTALL_AI" ]]; then
+		return 0
+	fi
+
+	# Non-interactive: default to install
+	if [[ ! -t 0 ]]; then
+		INSTALL_AI=true
+		return 0
+	fi
+
+	# Skip prompt if already fully configured
+	# (command -v doesn't execute the binary, so Santa won't block it)
+	if command -v claude >/dev/null 2>&1 && [[ -e "$HOME/.openclaw/openclaw.json" ]]; then
+		INSTALL_AI=true
+		return 0
+	fi
+
+	echo ""
+	echo "AI assistant setup (Claude, MCP servers, OpenClaw):"
+	echo "  1) Install (default)"
+	echo "  2) Skip"
+	read -p "Choose [1/2]: " -n 1 -r ai_choice
+	echo ""
+
+	if [[ "$ai_choice" == "2" ]]; then
+		INSTALL_AI=false
+	else
+		INSTALL_AI=true
+	fi
 }
 
 install_steamos_packages() {
@@ -953,6 +988,16 @@ install_brew_packages() {
 	echo "Installing Homebrew packages..."
 	# Use --adopt to take ownership of existing apps instead of erroring
 	HOMEBREW_CASK_OPTS="--adopt" brew bundle --file="$brewfile"
+
+	# Conditionally install AI assistant packages (Claude, OpenClaw tools)
+	prompt_ai_install
+	if [[ "$INSTALL_AI" == true ]]; then
+		local ai_brewfile="$dotfiles_dir/Brewfile.ai"
+		if [[ -f "$ai_brewfile" ]]; then
+			echo "Installing AI assistant packages..."
+			HOMEBREW_CASK_OPTS="--adopt" brew bundle --file="$ai_brewfile"
+		fi
+	fi
 }
 
 run_brew_hooks() {
@@ -1105,43 +1150,16 @@ sync_dotfiles() {
 	# Symlink dotfiles from home/ directory to ~
 	symlink_dotfiles
 
-	# Symlink Claude Code directories
-	symlink_claude_dir "hooks"
-	symlink_claude_dir "commands"
-	symlink_claude_dir "contrib"
-	symlink_claude_dir "agents"
-	symlink_claude_dir "skills"
+	# AI assistant setup (Claude dirs, MCP servers, OpenClaw)
+	prompt_ai_install
+	if [[ "$INSTALL_AI" == true ]]; then
+		# Symlink Claude Code directories
+		symlink_claude_dir "hooks"
+		symlink_claude_dir "commands"
+		symlink_claude_dir "contrib"
+		symlink_claude_dir "agents"
+		symlink_claude_dir "skills"
 
-	# Ask about AI assistant setup (Claude MCP servers + OpenClaw)
-	# Skip prompt if already configured or in non-interactive mode
-	local install_assistants=true
-	if [[ -t 0 ]]; then
-		# Check if either is already set up
-		local claude_configured=false
-		local openclaw_configured=false
-		if command -v claude >/dev/null 2>&1 && claude mcp list 2>/dev/null | grep -q "github"; then
-			claude_configured=true
-		fi
-		if [[ -e "$HOME/.openclaw/openclaw.json" ]]; then
-			openclaw_configured=true
-		fi
-
-		# Ask if not fully configured
-		if [[ "$claude_configured" != true || "$openclaw_configured" != true ]]; then
-			echo ""
-			echo "AI assistant setup (Claude MCP servers + OpenClaw):"
-			echo "  1) Install (default)"
-			echo "  2) Skip"
-			read -p "Choose [1/2]: " -n 1 -r assistant_choice
-			echo ""
-
-			if [[ "$assistant_choice" == "2" ]]; then
-				install_assistants=false
-			fi
-		fi
-	fi
-
-	if [[ "$install_assistants" == true ]]; then
 		# Ensure OpenClaw workspace directory exists
 		ensure_openclaw_workspace
 
