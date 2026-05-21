@@ -206,7 +206,7 @@ Run `make test-hooks` to test all hooks. Tests verify:
 
 Add new test cases in `tests/test-hooks.sh`.
 
-**Fixture realism.** When writing a regex or string match against transcript content, sample one real `~/.claude/projects/*/<id>.jsonl` message and paste the literal bytes (or `jq -r` output) into the fixture. Don't hand-write the expected format from a mental model — Claude's output styles include details like backtick-wrapped decorators that are easy to miss until production. See `hooks/README.md` Gotchas for the empirical case study (regex shipped without backtick support, hook never fired in production until rediscovered via deliberate-violation test).
+**Fixture realism.** When writing a regex or string match against transcript content, sample one real `~/.claude/projects/*/<id>.jsonl` message and paste the literal bytes (or `jq -r` output) into the fixture. Don't hand-write the expected format from a mental model — Claude's output styles include details like backtick-wrapped decorators that are easy to miss until production. See `home/.claude/hooks/enforce-insight-publish.sh` (the `match("(?:^|\\n)`?★ Insight…` regex and its inline comment) for the empirical case study: regex shipped without backtick support, hook never fired in production until rediscovered via deliberate-violation test.
 
 ## Configuration
 

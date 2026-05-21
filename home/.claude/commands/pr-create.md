@@ -46,7 +46,13 @@ Use `superpowers:verification-before-completion` to confirm quality gates pass (
 
 ### 4. Live-validate runtime behavior (if applicable)
 
-If `git diff --name-only main...HEAD` matches `home/.claude/hooks/`, `home/.claude/plugins/`, or `home/.claude/settings.json`, propose a live-validation step via AskUserQuestion before creating the PR — CI tests static fixtures, not actual behavior in a real Claude session. For **behavioral guards** (hooks/lints/policies that BLOCK or enforce something), acceptance requires performing the violation in a fresh session and observing the guard fires. Memory: `feedback_behavioral_guard_acceptance.md`.
+If this returns a match, propose a live-validation step via AskUserQuestion before creating the PR:
+
+```bash
+git diff --name-only main...HEAD | grep -qE '^home/\.claude/(hooks/|settings\.json$)'
+```
+
+CI tests static fixtures, not actual behavior in a real Claude session. For **behavioral guards** (hooks/lints/policies that BLOCK or enforce something), acceptance requires performing the violation in a fresh session and observing the guard fires. Memory: `feedback_behavioral_guard_acceptance.md`.
 
 ### 5. Create PR
 
