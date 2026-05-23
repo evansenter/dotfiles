@@ -4,7 +4,6 @@
 
 # Taps
 tap "cormacrelf/tap"
-tap "gromgit/fuse"
 
 # CLI Tools
 brew "bat"                    # Cat with syntax highlighting
@@ -61,7 +60,6 @@ brew "whisper-cpp"              # Local speech-to-text
 brew "ffmpeg"
 brew "scc"                    # Code line counter
 brew "testdisk"               # Data recovery
-brew "gromgit/fuse/ntfs-3g-mac" # NTFS read-write support (requires macfuse)
 
 # Casks - Dev Tools
 cask "codex"
@@ -71,8 +69,6 @@ cask "lm-studio"
 # Casks - Apps
 cask "google-chrome"
 cask "iina"                   # Video player
-cask "macfuse"                 # FUSE filesystem support (pre-installed by bootstrap, required by ntfs-3g)
-cask "mounty"                  # NTFS re-mount in read-write
 cask "obsidian"               # Note-taking
 cask "spotify"
 cask "stats"                  # Menu bar system monitor
