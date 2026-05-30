@@ -8,13 +8,20 @@ set -u
 CACHE="$HOME/.cache/sysload"
 mkdir -p "$(dirname "$CACHE")"
 
-output=$(top -l 1 -s 0 2>/dev/null) || exit 0
+# Don't swallow top's stderr: a failure here should land in ~/.local/log/sysload.err
+# (wired by the LaunchAgent) rather than silently freezing the widget on stale data.
+output=$(top -l 1 -s 0) || exit 0
 cpu=$(echo "$output" | awk '/CPU usage/ { printf "%d%%", 100 - $7 }')
 mem=$(echo "$output" | awk '/PhysMem/ {
     # Format: "PhysMem: 20G used (2759M wired, 3222M compressor), 2949M unused."
-    # $2 = total used, $8 = unused. $6 is compressor (already counted as used).
-    used = $2; unused = $8
-    if (index(used,"G")) { u = used * 1024 } else { u = used + 0 }
+    # Match by keyword, not field position: the compressor parenthetical is optional
+    # on older macOS, which would shift positional indices. "used"/"unused." each
+    # follow their value field.
+    for (i = 2; i <= NF; i++) {
+        if ($i == "used")        used   = $(i-1)
+        else if ($i ~ /^unused/) unused = $(i-1)
+    }
+    if (index(used,"G"))   { u = used * 1024 }   else { u = used + 0 }
     if (index(unused,"G")) { f = unused * 1024 } else { f = unused + 0 }
     if (u + f > 0) printf "%d%%", (u / (u + f)) * 100
 }')

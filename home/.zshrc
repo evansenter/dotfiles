@@ -142,9 +142,5 @@ fi
 # Antigravity
 export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
-
-# Added by Antigravity CLI installer
-export PATH="/Users/evansenter/.local/bin:$PATH"
-
-# Added by Antigravity IDE
-export PATH="/Users/evansenter/.antigravity-ide/antigravity-ide/bin:$PATH"
+# Antigravity IDE (installer's ~/.local/bin export omitted — .exports already adds it)
+export PATH="$HOME/.antigravity-ide/antigravity-ide/bin:$PATH"
