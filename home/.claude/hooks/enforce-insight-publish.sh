@@ -29,26 +29,62 @@ STOP_HOOK_ACTIVE=$(jq -r '.stop_hook_active // false' <<<"$INPUT")
 # No transcript to inspect → nothing to enforce.
 [[ -z "$TRANSCRIPT_PATH" || ! -f "$TRANSCRIPT_PATH" ]] && exit 0
 
+# Returns 0 if the current turn (events after the last real user message) already
+# contains an assistant `text` block — i.e. the turn's visible response has been
+# flushed, not just a leading `thinking` block.
+turn_has_assistant_text() {
+    local out
+    out=$(jq -s '
+      def is_real_user:
+        .type == "user" and
+        ((.message.content | type) == "string"
+         or ((.message.content | type) == "array"
+             and all(.message.content[]; .type != "tool_result")));
+      . as $events
+      | [range(0; length) | select($events[.] | is_real_user)] as $user_idxs
+      | (if ($user_idxs | length) == 0 then 0 else ($user_idxs | last) + 1 end) as $start
+      | ([ $events[$start:][]
+           | select(.type == "assistant")
+           | .message.content[]?
+           | select(.type == "text") ] | length) > 0
+    ' "$TRANSCRIPT_PATH" 2>/dev/null) || return 1
+    [[ "$out" == "true" ]]
+}
+
 # Wait for the transcript to stabilize. Stop hooks race Claude Code's
 # transcript writer — at hook-start time, the current turn's final `text`
 # block is often not yet flushed (only the preceding `thinking` block is
 # visible). If we read too early we miss the insight and fail to block.
 #
-# Poll line count until it's unchanged across two 100ms samples. Typical
-# latency is 100-200ms (100ms for turns that are already stable); hard
-# cap is 1s. See the "Stop hooks race Claude Code's transcript writer"
-# entry in hooks/README.md Gotchas for empirical data and design rationale.
-#
-# Known limitation: a writer that pauses >=100ms between consecutive
-# flushes can fool this detector (two equal samples look like stability).
-# Observed race window is well under 100ms, so this is an acceptable
-# trade-off; widen the interval if a slow-writer regression ever hits.
+# Content-aware wait: poll until the line count is stable across two 100ms
+# samples AND the turn's final assistant `text` block has landed. The earlier
+# line-count-only check could be fooled by a writer that hadn't started
+# flushing yet (two equal samples before any append look like stability), so
+# a not-yet-written text block read as "stable & empty" → missed insight.
+# The content gate fixes that. A turn that legitimately ends without a text
+# block (e.g. pure tool_use) can never trip the content gate, so it would pay
+# the full cap every time; we instead let it proceed once the file has been
+# quiescent for ~500ms (5 stable samples), with a ~2s absolute cap. See
+# hooks/README.md Gotchas.
 prev_lines=$(wc -l < "$TRANSCRIPT_PATH" 2>/dev/null || echo 0)
-for _ in 1 2 3 4 5 6 7 8 9 10; do
+stable=0
+for _ in $(seq 1 20); do
     sleep 0.1
     cur_lines=$(wc -l < "$TRANSCRIPT_PATH" 2>/dev/null || echo 0)
-    [[ "$cur_lines" -eq "$prev_lines" ]] && break
-    prev_lines=$cur_lines
+    if [[ "$cur_lines" -eq "$prev_lines" ]]; then
+        stable=$((stable + 1))
+    else
+        stable=0
+        prev_lines=$cur_lines
+    fi
+    # Break when the turn's text block has landed (stable + content present),
+    # or once the file has been quiescent long enough that a textless turn
+    # clearly isn't racing the writer. The `stable -ge 5` test is ordered first
+    # so the quiescent path short-circuits the costlier jq content check (which
+    # therefore runs only on stable samples 2–4).
+    if [[ "$stable" -ge 5 ]] || { [[ "$stable" -ge 2 ]] && turn_has_assistant_text; }; then
+        break
+    fi
 done
 
 # Parse the transcript: find the last "real" user event (string content or
