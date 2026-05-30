@@ -112,9 +112,11 @@ brew install cormacrelf/tap/dark-notify
 ./bootstrap.sh  # Symlinks commands/, hooks/, settings.json, CLAUDE.md
 ```
 
-Also installs GitHub MCP server and enables plugins (feature-dev, pr-review-toolkit, commit-commands, code-simplifier, LSP integrations). Set `GITHUB_TOKEN` in `~/.extra`:
+Also installs the GitHub MCP server and enables a curated set of official plugins (see `enabledPlugins` in `home/.claude/settings.json`). Several integrations read secrets from `~/.extra` (not tracked):
 ```bash
-export GITHUB_TOKEN="ghp_your_token_here"
+export GITHUB_TOKEN="ghp_your_token_here"   # GitHub MCP / gh
+export OPENCLAW_GATEWAY_TOKEN="..."         # OpenClaw gateway client
+export OBSIDIAN_API_KEY="..."               # obsidian-mcp (gateway host only; wrapper exits without it)
 ```
 
 ## Updating

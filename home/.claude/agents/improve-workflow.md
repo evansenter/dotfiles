@@ -157,7 +157,7 @@ Save novel, cross-session insights to the project memory system. Only save thing
 For each finding with a concrete fix, use AskUserQuestion:
 - **Implement**: Make the change now
 - **Skip**: Move on
-- **Defer**: Create issue with `gh issue create --title "DX: [finding]" --label "improvement"`
+- **Defer**: Create issue with `gh issue create --label "improvement"`, passing the title and body via `--body-file -` + a heredoc — a bare `--title "DX: [finding]"` shell-evaluates the `[finding]` brackets.
 
 Only broadcast to event bus if you discovered something novel and actionable.
 

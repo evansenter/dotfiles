@@ -115,11 +115,13 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 | agent-memory-store | 8083 | `/agent-memory-store` | `com.evansenter.agent-memory-store` |
 | obsidian-mcp | 3010 | `/obsidian-mcp` | `com.evansenter.obsidian-mcp` |
 
-LaunchAgent plists live in `~/Library/LaunchAgents/`. Each service repo has `make install-server` to set up. Reload with `launchctl unload` + `launchctl load`. The obsidian-mcp LaunchAgent is managed by this repo (plist in `LaunchAgents/`, wrapper in `home/.bin/obsidian-mcp-start`). Requires Obsidian with the Local REST API plugin running.
+LaunchAgent plists live in `~/Library/LaunchAgents/`. The external service repos (event-bus, session-analytics, memory-store) have their own `make install-server`; obsidian-mcp is set up by *this* repo's bootstrap (`claude mcp add` + plist in `LaunchAgents/`, wrapper in `home/.bin/obsidian-mcp-start`, requires Obsidian with the Local REST API plugin running). Reload with `launchctl unload` + `launchctl load`.
+
+Note: `agent-memory-store` is documented infra but is **not** provisioned by bootstrap (no `claude mcp add`, no `AGENT_MEMORY_STORE_URL` in `settings.local.json`) — it's registered out-of-band where used. The repo-managed LaunchAgents are: `com.evansenter.obsidian-mcp` (gateway only), `com.evansenter.sysload` (zellij CPU/RAM widget, if zellij installed), `com.user.dark-notify` (btop dark-mode switching, if dark-notify installed), and `com.user.cargo-sweep` (periodic `cargo sweep`, if cargo installed).
 
 **Adding new LaunchAgents:** Plists go in the top-level `LaunchAgents/` directory (NOT `home/Library/LaunchAgents/`). Use `__HOME__` as a placeholder for the user's home directory — `install_launch_agent()` in bootstrap does `sed` substitution at install time. Logs go to `~/.local/log/`. Add an `install_launch_agent` call in `install_launch_agents()`, gated on the binary being present.
 
-**Host-gating:** Services that only run on mac-mini (LaunchAgents, npm installs for server-side packages) must be gated with `[[ "${HOSTNAME%%.*}" == "mac-mini" ]]`. Remote machines should only get MCP registration pointing at the Tailscale URL. The `GATEWAY_HOST` constant at the top of bootstrap.sh holds the Tailscale hostname.
+**Host-gating:** Services that only run on mac-mini (LaunchAgents, npm installs for server-side packages) must be gated with the `is_gateway_host` helper in bootstrap.sh. It matches `^mac-mini(-[0-9]+)?$`, so the gate still holds if macOS Bonjour appends a `-N` LocalHostName suffix on an mDNS collision (e.g. `mac-mini-2`) — a bare `== "mac-mini"` match silently fails there and the gateway stops behaving as the gateway. Remote machines should only get MCP registration pointing at the Tailscale URL. The `GATEWAY_HOST` constant at the top of bootstrap.sh holds the Tailscale hostname.
 
 **Important:** Never place projects in `~/Documents/` — macOS TCC blocks LaunchAgents from accessing it, causing silent `PermissionError` failures.
 

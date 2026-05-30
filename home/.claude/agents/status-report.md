@@ -78,7 +78,7 @@ mcp__agent-event-bus__get_events(limit=10)
 
 #### Important
 
-**Run `/audit-issues`**
+**Run the `audit-issues` agent** (via Task)
 - Evidence: N issues missing priority labels
 - Action: Triage and label backlog
 
@@ -90,7 +90,7 @@ mcp__agent-event-bus__get_events(limit=10)
 
 **Review permission gaps**
 - Evidence: `some-command` used N times without approval
-- Action: `/improve-workflow`
+- Action: run the `improve-workflow` agent (via Task)
 
 ## Broadcast
 

@@ -32,8 +32,11 @@ Output 2-3 sentence summary of what changed and why.
 
 ### 2. Run Analysis
 
+`code-reviewer` is an agent, not a skill — invoke it with the Task tool:
+
 ```
-Skill(pr-review-toolkit:code-reviewer)
+Task(subagent_type="pr-review-toolkit:code-reviewer",
+     prompt="Review the local diff (git diff against the base branch) for bugs, security issues, and convention violations. Report findings by severity.")
 ```
 
 ### 3. Check Coverage Gaps

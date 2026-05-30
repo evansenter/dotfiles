@@ -85,7 +85,7 @@ Required: exactly one `priority:high/medium/low` label. Add relevant type labels
 
 ### 6. Create or Present
 
-**If `--post` flag**: Create immediately with `gh issue create`.
+**If `--post` flag**: Create immediately with `gh issue create` (pass the body via `--body-file -` + a single-quoted heredoc so markdown tables/`[refs]`/parens aren't shell-evaluated).
 
 **Otherwise**: Display the complete draft RFC, ask "Create this RFC?" via AskUserQuestion.
 

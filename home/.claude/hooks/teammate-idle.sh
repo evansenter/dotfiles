@@ -9,7 +9,14 @@
 set -euo pipefail
 
 # Source user's environment for AGENT_EVENT_BUS_URL
-[[ -f ~/.extra ]] && source ~/.extra
+if [[ -f ~/.extra ]]; then
+    # ~/.extra is user-edited and untracked; a stray unset var or non-zero
+    # line must not abort the hook under set -euo pipefail.
+    set +eu
+    # shellcheck source=/dev/null
+    source ~/.extra
+    set -eu
+fi
 
 # Read input (must consume stdin before any exit)
 INPUT=$(cat)

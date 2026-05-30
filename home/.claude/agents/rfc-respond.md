@@ -80,7 +80,7 @@ Before posting, use AskUserQuestion for blocking decisions (max 4 at a time). In
 
 Incorporate decisions into the response, updating blocking/requirements sections.
 
-**If `--post` flag**: Post with `gh issue comment` and broadcast.
+**If `--post` flag**: Post with `gh issue comment` (body via `--body-file -` + single-quoted heredoc, so `[Question]`/parens/tables aren't shell-evaluated) and broadcast.
 
 **Otherwise**: Display final response and ask "Post this response?" via AskUserQuestion.
 

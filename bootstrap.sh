@@ -23,6 +23,13 @@ is_steamos() {
 	[[ -f /etc/os-release ]] && grep -q '^ID=steamos' /etc/os-release
 }
 
+# Returns 0 on the gateway host (mac-mini). Tolerates the macOS Bonjour "-N"
+# LocalHostName suffix appended on mDNS name collisions (e.g. "mac-mini-2"),
+# which a bare `== "mac-mini"` match would silently fail. See event-bus gotcha-4099.
+is_gateway_host() {
+	[[ "${HOSTNAME%%.*}" =~ ^mac-mini(-[0-9]+)?$ ]]
+}
+
 set_default_shell() {
 	local zsh_path
 	zsh_path="$(command -v zsh 2>/dev/null)" || return 0
@@ -305,7 +312,7 @@ configure_claude_local_settings() {
 	local settings_local="$HOME/.claude/settings.local.json"
 
 	# Skip if this is the gateway host (services run locally)
-	if [[ "${HOSTNAME%%.*}" == "mac-mini" ]]; then
+	if is_gateway_host; then
 		return 0
 	fi
 
@@ -391,7 +398,7 @@ install_launch_agent() {
 
 		# Reload the agent
 		launchctl bootout "gui/$(id -u)/$label" 2>/dev/null || true
-		launchctl bootstrap "gui/$(id -u)" "$dest_plist"
+		launchctl bootstrap "gui/$(id -u)" "$dest_plist" || true
 	else
 		rm -f "$tmp_plist"
 	fi
@@ -431,7 +438,7 @@ install_launch_agents() {
 			mv "$tmp_plist" "$dest_plist"
 
 			launchctl bootout "gui/$(id -u)/com.user.dark-notify" 2>/dev/null || true
-			launchctl bootstrap "gui/$(id -u)" "$dest_plist"
+			launchctl bootstrap "gui/$(id -u)" "$dest_plist" || true
 
 			"$HOME/.bin/toggle-btop-theme"
 		else
@@ -448,7 +455,7 @@ install_launch_agents() {
 	fi
 
 	# Install Obsidian MCP LaunchAgent (only on gateway host where the server runs)
-	if [[ "${HOSTNAME%%.*}" == "mac-mini" ]] && command -v obsidian-mcp-server >/dev/null 2>&1; then
+	if is_gateway_host && command -v obsidian-mcp-server >/dev/null 2>&1; then
 		install_launch_agent "com.evansenter.obsidian-mcp.plist"
 	fi
 
@@ -1122,7 +1129,7 @@ install_claude_mcp_servers() {
 
 	# Install Obsidian MCP server if not configured
 	if ! echo "$mcp_list" | grep -q "obsidian"; then
-		if [[ "${HOSTNAME%%.*}" == "mac-mini" ]]; then
+		if is_gateway_host; then
 			install_npm_package "obsidian-mcp-server" "Obsidian MCP Server"
 			claude mcp add --transport http -s user obsidian http://localhost:3010/mcp
 
