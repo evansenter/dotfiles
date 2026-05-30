@@ -8,7 +8,7 @@ if [[ ! -d "/Applications/iTerm.app" ]]; then
 	exit 0
 fi
 
-dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 profile_src="$dotfiles_dir/preferences/iTerm Profile.json"
 dynamic_profiles_dir="$HOME/Library/Application Support/iTerm2/DynamicProfiles"
 

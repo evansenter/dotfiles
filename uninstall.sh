@@ -5,7 +5,7 @@ set -euo pipefail
 # Uninstall Script - Remove Dotfiles
 # ==============================================================================
 
-DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 # Find all symlinks pointing to this repo
 SYMLINKS=()
