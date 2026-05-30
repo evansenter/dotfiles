@@ -1459,6 +1459,28 @@ EOF
     [[ "$output" == *"★ Insight"* ]]
 }
 
+test_enforce_insight_publish_no_block_on_tool_only_turn() {
+    # A turn that ends without any assistant text block (pure tool_use) can never
+    # trip the content gate. It must still exit promptly (the ~500ms quiescence
+    # early-out, well under the 2s cap) and emit NO block decision — pinning the
+    # trade-off so a future refactor can't turn the cap into a hang or false block.
+    local transcript="$TEST_TMP/tool-only-turn.jsonl"
+    cat > "$transcript" <<'EOF'
+{"type":"user","message":{"role":"user","content":"run a tool"}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"ls"}}]}}
+EOF
+
+    local output exit_code=0 start end
+    start=$(date +%s)
+    output=$(echo "{\"transcript_path\":\"$transcript\"}" | \
+        PATH="$(_real_jq_path):$PATH" \
+        bash "$HOOKS_DIR/enforce-insight-publish.sh" 2>&1) || exit_code=$?
+    end=$(date +%s)
+
+    # Clean exit, no block decision, and bounded by the hard cap.
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]] && (( end - start <= 3 ))
+}
+
 test_enforce_insight_publish_allows_insight_with_publish() {
     local transcript="$TEST_TMP/insight-with-publish.jsonl"
     cat > "$transcript" <<'EOF'
@@ -1707,6 +1729,7 @@ main() {
     run_test "respects stop_hook_active (loop guard)" "test_enforce_insight_publish_respects_stop_hook_active"
     run_test "blocks insight without publish" "test_enforce_insight_publish_blocks_insight_without_publish"
     run_test "waits for lagged text block (writer race)" "test_enforce_insight_publish_waits_for_lagged_text_block"
+    run_test "no block on tool-only turn (no text block)" "test_enforce_insight_publish_no_block_on_tool_only_turn"
     run_test "allows insight with publish" "test_enforce_insight_publish_allows_insight_with_publish"
     run_test "allows turns with no insight" "test_enforce_insight_publish_allows_no_insight"
     run_test "ignores insights from prior turns" "test_enforce_insight_publish_ignores_prior_turn_insights"

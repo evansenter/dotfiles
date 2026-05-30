@@ -61,9 +61,11 @@ turn_has_assistant_text() {
 # line-count-only check could be fooled by a writer that hadn't started
 # flushing yet (two equal samples before any append look like stability), so
 # a not-yet-written text block read as "stable & empty" → missed insight.
-# The content gate fixes that. Hard cap ~2s so a turn that legitimately ends
-# without a text block (e.g. pure tool_use) isn't penalized — proceed and
-# enforce on whatever is present. See hooks/README.md Gotchas.
+# The content gate fixes that. A turn that legitimately ends without a text
+# block (e.g. pure tool_use) can never trip the content gate, so it would pay
+# the full cap every time; we instead let it proceed once the file has been
+# quiescent for ~500ms (5 stable samples), with a ~2s absolute cap. See
+# hooks/README.md Gotchas.
 prev_lines=$(wc -l < "$TRANSCRIPT_PATH" 2>/dev/null || echo 0)
 stable=0
 for _ in $(seq 1 20); do
@@ -75,8 +77,12 @@ for _ in $(seq 1 20); do
         stable=0
         prev_lines=$cur_lines
     fi
-    # Only run the (costlier) content check once the file looks settled.
-    if [[ "$stable" -ge 2 ]] && turn_has_assistant_text; then
+    # Break when the turn's text block has landed (stable + content present),
+    # or once the file has been quiescent long enough that a textless turn
+    # clearly isn't racing the writer. The `stable -ge 5` test is ordered first
+    # so the quiescent path short-circuits the costlier jq content check (which
+    # therefore runs only on stable samples 2–4).
+    if [[ "$stable" -ge 5 ]] || { [[ "$stable" -ge 2 ]] && turn_has_assistant_text; }; then
         break
     fi
 done
