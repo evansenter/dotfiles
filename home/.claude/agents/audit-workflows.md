@@ -50,9 +50,9 @@ Analyze `.md` files in:
 
 Cross-check consistency within groups:
 - **Work flow**: /work, /pr-create, /pr-review, /watch-ci
-- **Audits**: /audit-codebase, /audit-tests, /audit-issues, /audit-workflows
-- **Coordination**: /parallel-work, /broadcast, /event-bus-status
-- **RFC**: /rfc-create, /rfc-respond
+- **Audits** (agents, via Task): audit-codebase, audit-tests, audit-issues, audit-workflows
+- **Coordination** (commands): /parallel-work, /broadcast, /event-bus-status
+- **RFC** (agents, via Task): rfc-create, rfc-respond
 
 ## Process
 
@@ -127,7 +127,7 @@ Options for each:
 
 - **Implement**: Make the fix using Edit tool
 - **Skip**: Record as skipped in final summary
-- **Defer**: Create issue with `gh issue create --label "docs"`
+- **Defer**: Create issue with `gh issue create --label "docs"` (pass title/body via `--body-file -` + heredoc; bracketed titles and markdown shell-evaluate under a bare `--body`/`--title "..."`)
 
 ### 5. Final Summary
 

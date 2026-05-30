@@ -124,4 +124,4 @@ If stale/missing, use AskUserQuestion: "Post summary to PR #N?" with "Post (Reco
 
 ### 4. Post Summary
 
-If approved, use `gh pr comment` with "## Work Summary" header as marker for future staleness detection.
+If approved, use `gh pr comment` with "## Work Summary" header as marker for future staleness detection. Pass the body via `--body-file -` and a single-quoted heredoc — a bare `--body "..."` lets the shell evaluate `[[`, `==`, and parens in the markdown.
