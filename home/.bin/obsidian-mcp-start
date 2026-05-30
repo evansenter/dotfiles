@@ -22,4 +22,16 @@ export MCP_HTTP_HOST="127.0.0.1"
 export OBSIDIAN_BASE_URL="${OBSIDIAN_BASE_URL:-https://127.0.0.1:27124}"
 export OBSIDIAN_VERIFY_SSL="${OBSIDIAN_VERIFY_SSL:-false}"
 
+# Pre-flight: obsidian-mcp-server is useless unless the Obsidian Local REST API
+# is reachable. That API only listens while the Obsidian GUI app is running, so
+# if Obsidian is closed the server would start, fail every request, and exit --
+# and launchd's KeepAlive would restart it in a tight loop. Instead, probe the
+# upstream first; if it's down, sleep and exit non-zero so launchd's
+# ThrottleInterval backs off and retries calmly until Obsidian is up again.
+if ! curl -sk --max-time 5 -o /dev/null "$OBSIDIAN_BASE_URL"; then
+	echo "Obsidian REST API not reachable at $OBSIDIAN_BASE_URL; is the Obsidian app running? Backing off." >&2
+	sleep 15
+	exit 1
+fi
+
 exec obsidian-mcp-server
