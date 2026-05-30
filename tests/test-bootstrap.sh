@@ -349,6 +349,67 @@ test_flag_no_args_prompts() {
 }
 
 # ============================================================================
+# New-machine readiness (behavioral)
+# ============================================================================
+
+# Load the REAL is_gateway_host definition from bootstrap.sh (not a copy),
+# without executing bootstrap's unguarded main.
+_load_is_gateway_host() {
+    eval "$(sed -n '/^is_gateway_host() {/,/^}/p' "$BOOTSTRAP")"
+}
+
+test_gateway_host_matches_plain() {
+    _load_is_gateway_host
+    HOSTNAME="mac-mini" is_gateway_host
+}
+
+test_gateway_host_matches_bonjour_suffix() {
+    # macOS Bonjour appends -N on mDNS collision; the gate must still match.
+    _load_is_gateway_host
+    HOSTNAME="mac-mini-2" is_gateway_host
+}
+
+test_gateway_host_matches_fqdn() {
+    _load_is_gateway_host
+    HOSTNAME="mac-mini-2.tailac7b3c.ts.net" is_gateway_host
+}
+
+test_gateway_host_rejects_other() {
+    _load_is_gateway_host
+    ! HOSTNAME="steamdeck" is_gateway_host && ! HOSTNAME="mac-mini-laptop" is_gateway_host
+}
+
+# obsidian-mcp-start must NOT exec the server when the Obsidian REST API is down
+# (the KeepAlive crash-loop). It should back off and exit non-zero instead.
+test_obsidian_preflight_backs_off_when_upstream_down() {
+    local wrapper="$SCRIPT_DIR/../home/.bin/obsidian-mcp-start"
+    [[ -f "$wrapper" ]] || return 1
+    local stub home; stub=$(mktemp -d); home=$(mktemp -d)
+    printf '#!/bin/bash\nexit 1\n' > "$stub/curl"                      # upstream down
+    printf '#!/bin/bash\nexit 0\n' > "$stub/sleep"                     # don't actually wait 15s
+    printf '#!/bin/bash\ntouch "%s/server_ran"\n' "$home" > "$stub/obsidian-mcp-server"
+    chmod +x "$stub"/*
+    local rc=0
+    PATH="$stub:$PATH" HOME="$home" OBSIDIAN_API_KEY="test" bash "$wrapper" >/dev/null 2>&1 || rc=$?
+    local ran=1; [[ -e "$home/server_ran" ]] && ran=0
+    rm -rf "$stub" "$home"
+    [[ "$rc" -ne 0 && "$ran" -ne 0 ]]   # non-zero exit AND server did not run
+}
+
+test_obsidian_preflight_starts_when_upstream_up() {
+    local wrapper="$SCRIPT_DIR/../home/.bin/obsidian-mcp-start"
+    [[ -f "$wrapper" ]] || return 1
+    local stub home; stub=$(mktemp -d); home=$(mktemp -d)
+    printf '#!/bin/bash\nexit 0\n' > "$stub/curl"                      # upstream up
+    printf '#!/bin/bash\ntouch "%s/server_ran"\nexit 0\n' "$home" > "$stub/obsidian-mcp-server"
+    chmod +x "$stub"/*
+    PATH="$stub:$PATH" HOME="$home" OBSIDIAN_API_KEY="test" bash "$wrapper" >/dev/null 2>&1 || true
+    local ran=1; [[ -e "$home/server_ran" ]] && ran=0
+    rm -rf "$stub" "$home"
+    [[ "$ran" -eq 0 ]]   # server was exec'd
+}
+
+# ============================================================================
 # Run all tests
 # ============================================================================
 
@@ -395,6 +456,15 @@ main() {
     run_test "--pull runs pull+install+update+sync" "test_flag_pull_only"
     run_test "short flags (-f -p) match long flags" "test_flag_short_forms"
     run_test "no flags: sync dotfiles with prompt" "test_flag_no_args_prompts"
+    echo ""
+
+    echo "=== new-machine readiness ==="
+    run_test "host-gating matches mac-mini" "test_gateway_host_matches_plain"
+    run_test "host-gating tolerates Bonjour -N suffix" "test_gateway_host_matches_bonjour_suffix"
+    run_test "host-gating matches FQDN with suffix" "test_gateway_host_matches_fqdn"
+    run_test "host-gating rejects non-gateway hosts" "test_gateway_host_rejects_other"
+    run_test "obsidian preflight backs off when upstream down" "test_obsidian_preflight_backs_off_when_upstream_down"
+    run_test "obsidian preflight starts server when upstream up" "test_obsidian_preflight_starts_when_upstream_up"
     echo ""
 
     # Summary
