@@ -19,6 +19,10 @@ jobs:
 
     steps:
       - name: Checkout repository
+        # Pinned to v4 (Node20). A v5 bump here can't be CI-verified: the claude-review
+        # action requires this workflow file to match main, so its check fails on any PR
+        # that edits it (the action says to ignore that). dotfiles.yml is bumped to v5
+        # (verified green); revisit these two once v5 is confirmed safe for the action.
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
