@@ -18,11 +18,12 @@ if [[ -z "$input" ]]; then
     exit 1
 fi
 
-IFS=$'\t' read -r cwd session_id model_id input_tokens cache_create_tokens cache_read_tokens context_size < <(
+IFS=$'\t' read -r cwd session_id model_id model_name input_tokens cache_create_tokens cache_read_tokens context_size < <(
     echo "$input" | jq -r '[
         .workspace.current_dir,
         (.session_id // ""),
         (.model.id // ""),
+        (.model.display_name // ""),
         (.context_window.current_usage.input_tokens // 0),
         (.context_window.current_usage.cache_creation_input_tokens // 0),
         (.context_window.current_usage.cache_read_input_tokens // 0),
@@ -55,8 +56,13 @@ if [[ -n "$session_id" ]]; then
         # Clean up stale cache files (older than 24 hours)
         find "$cache_dir" -type f -mtime +1 -delete 2>/dev/null
 
+        nosession_sentinel="${cache_file}.miss"
         if [[ -f "$cache_file" ]]; then
             session_name=$(cat "$cache_file")
+        elif find "$nosession_sentinel" -mmin -1 2>/dev/null | grep -q .; then
+            # Recently failed to find this session; skip the retry loop so an
+            # unregistered/bus-down session doesn't pay ~0.6s on every render.
+            session_name=""
         else
             # Query event bus for session matching this client_id
             # Retry briefly: statusline can fire before session-start hook registers
@@ -70,10 +76,12 @@ if [[ -n "$session_id" ]]; then
                 sleep 0.2
             done
 
-            # Cache only successful lookups (empty = session not registered yet)
+            mkdir -p "$cache_dir" && chmod 700 "$cache_dir" 2>/dev/null
             if [[ -n "$session_name" ]]; then
-                mkdir -p "$cache_dir" && chmod 700 "$cache_dir" 2>/dev/null
                 echo "$session_name" > "$cache_file" 2>/dev/null
+            else
+                # Negative-cache the miss (~60s) to avoid re-running the retry loop every render.
+                : > "$nosession_sentinel" 2>/dev/null
             fi
         fi
 
@@ -116,20 +124,59 @@ cache_fresh() {
     (( $(date +%s) - mtime < ttl ))
 }
 
+# Atomic cache write: temp + rename, so a concurrent render never reads a torn file.
+cache_write() {
+    local file="$1" val="$2"
+    printf '%s' "$val" > "${file}.tmp.$$" 2>/dev/null && mv -f "${file}.tmp.$$" "$file" 2>/dev/null
+}
+
+# Bounded GitHub calls: the statusline renders on every prompt, so a hung gh
+# (unauthenticated, offline, slow DNS/TLS) must never block. Wrap calls with a
+# timeout (timeout on Linux, gtimeout from coreutils on macOS; no-op if neither)
+# and short-circuit the whole GitHub section unless gh is installed AND authed.
+if command -v timeout >/dev/null 2>&1; then
+    GH_TIMEOUT=(timeout 3)
+elif command -v gtimeout >/dev/null 2>&1; then
+    GH_TIMEOUT=(gtimeout 3)
+else
+    GH_TIMEOUT=()
+fi
+
+gh_ok=false
+if command -v gh >/dev/null 2>&1; then
+    gh_auth_cache="${gh_cache_dir}/gh_auth_ok"
+    if cache_fresh "$gh_auth_cache" 300; then
+        [[ "$(cat "$gh_auth_cache" 2>/dev/null)" == "yes" ]] && gh_ok=true
+    elif "${GH_TIMEOUT[@]}" gh auth status >/dev/null 2>&1; then
+        gh_ok=true
+        cache_write "$gh_auth_cache" "yes"
+    else
+        cache_write "$gh_auth_cache" "no"
+    fi
+fi
+
 # Get repo URL for hyperlinks (cached per cwd — never changes within a session)
 repo_url=""
 if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     repo_cache_key=$(echo "$cwd" | tr '/' '_')
     repo_cache_file="${gh_cache_dir}/repo_${repo_cache_key}"
 
-    if [[ -f "$repo_cache_file" ]]; then
+    if cache_fresh "$repo_cache_file" 3600; then
         repo_url=$(cat "$repo_cache_file")
-    else
-        repo_url=$(cd "$cwd" && gh repo view --json url -q .url 2>/dev/null)
-        if [[ -n "$repo_url" ]]; then
-            echo "$repo_url" > "$repo_cache_file" 2>/dev/null
-        fi
+        [[ "$repo_url" == "none" ]] && repo_url=""
+    elif [[ "$gh_ok" == true ]]; then
+        repo_url=$(cd "$cwd" && "${GH_TIMEOUT[@]}" gh repo view --json url -q .url 2>/dev/null)
+        # Negative-cache empties so a transient failure doesn't re-block every render.
+        cache_write "$repo_cache_file" "${repo_url:-none}"
     fi
+fi
+
+# Repo slug (owner_repo) for cache keys that must not collide across repos —
+# PR #5 exists in nearly every repo, so body_/ci_ keyed on pr_num alone would
+# serve repo A's PR data for repo B.
+repo_slug="${repo_cache_key:-$(echo "${cwd:-}" | tr '/' '_')}"
+if [[ -n "$repo_url" ]]; then
+    repo_slug=$(echo "$repo_url" | sed -E 's#^https?://[^/]+/##; s#/#_#g')
 fi
 
 # Build combined [repo/session] display
@@ -181,28 +228,27 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
     pr_num=""
     if [[ -n "$branch" ]]; then
         branch_key=$(echo "$branch" | tr '/' '_')
-        pr_cache_file="${gh_cache_dir}/pr_${branch_key}"
+        pr_cache_file="${gh_cache_dir}/pr_${repo_slug}_${branch_key}"
         if cache_fresh "$pr_cache_file" 60; then
             cached_val=$(cat "$pr_cache_file")
             [[ "$cached_val" != "none" ]] && pr_num="$cached_val"
-        else
-            pr_num=$(cd "$cwd" && gh pr list --head "$branch" --json number -q '.[0].number' 2>/dev/null)
-            echo "${pr_num:-none}" > "$pr_cache_file" 2>/dev/null
+        elif [[ "$gh_ok" == true ]]; then
+            pr_num=$(cd "$cwd" && "${GH_TIMEOUT[@]}" gh pr list --head "$branch" --json number -q '.[0].number' 2>/dev/null)
+            cache_write "$pr_cache_file" "${pr_num:-none}"
         fi
     fi
 
     # Check for linked issues - from PR body (cached with PR) or branch name
     if [[ -n "$pr_num" ]]; then
-        body_cache_file="${gh_cache_dir}/body_${pr_num}"
+        body_cache_file="${gh_cache_dir}/body_${repo_slug}_${pr_num}"
         pr_body=""
         if cache_fresh "$body_cache_file" 60; then
             pr_body=$(cat "$body_cache_file")
-        fi
-        if [[ -z "$pr_body" ]]; then
-            pr_body=$(cd "$cwd" && gh pr view "$pr_num" --json body -q '.body' 2>/dev/null)
-            if [[ -n "$pr_body" ]]; then
-                echo "$pr_body" > "$body_cache_file" 2>/dev/null
-            fi
+            [[ "$pr_body" == "__EMPTY__" ]] && pr_body=""
+        elif [[ "$gh_ok" == true ]]; then
+            pr_body=$(cd "$cwd" && "${GH_TIMEOUT[@]}" gh pr view "$pr_num" --json body -q '.body' 2>/dev/null)
+            # Negative-cache empty bodies (PR may legitimately have none) so we don't refetch every render.
+            cache_write "$body_cache_file" "${pr_body:-__EMPTY__}"
         fi
         if [[ -n "$pr_body" ]]; then
             issue_nums=$(echo "$pr_body" | grep -oiE '(fixes|closes|resolves|addresses) #[0-9]+' | grep -oE '[0-9]+' | sort -u)
@@ -231,15 +277,13 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
 
     # CI status indicator (cached for 30s, hidden when dirty — result is stale)
     if [[ -n "$pr_num" ]] && [[ "$git_dirty" == false ]]; then
-        ci_cache_file="${gh_cache_dir}/ci_${pr_num}"
+        ci_cache_file="${gh_cache_dir}/ci_${repo_slug}_${pr_num}"
 
         ci_status=""
         if cache_fresh "$ci_cache_file" 30; then
             ci_status=$(cat "$ci_cache_file")
-        fi
-
-        if [[ -z "$ci_status" ]]; then
-            checks_output=$(cd "$cwd" && gh pr checks "$pr_num" 2>/dev/null || true)
+        elif [[ "$gh_ok" == true ]]; then
+            checks_output=$(cd "$cwd" && "${GH_TIMEOUT[@]}" gh pr checks "$pr_num" 2>/dev/null || true)
             if [[ -n "$checks_output" ]]; then
                 if echo "$checks_output" | awk -F'\t' '{print $2}' | grep -q "fail"; then
                     ci_status="fail"
@@ -248,7 +292,7 @@ if [[ -n "$cwd" ]] && git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
                 else
                     ci_status="pass"
                 fi
-                echo "$ci_status" > "$ci_cache_file" 2>/dev/null
+                cache_write "$ci_cache_file" "$ci_status"
             fi
         fi
 
@@ -269,8 +313,8 @@ fi
 # Final hyperlink reset to ensure no unclosed hyperlinks leak
 LINK_RESET=$'\e]8;;\e\\'
 
-# Model name
-model_display="${model_id:-}"
+# Model name — prefer the friendly display_name (e.g. "Opus 4.8") over the raw id
+model_display="${model_name:-$model_id}"
 
 # Context window usage percentage
 context_display=""
