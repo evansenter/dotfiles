@@ -1,12 +1,11 @@
 #!/bin/bash
-# macOS system load: CPU% + RAM%
-output=$(top -l 1 -s 0 2>/dev/null)
-cpu=$(echo "$output" | awk '/CPU usage/ { printf "%d%%", 100 - $7 }')
-mem=$(echo "$output" | awk '/PhysMem/ {
-    used = $2; unused = $6
-    # Strip G/M suffix and normalize to MB
-    if (index(used,"G")) { u = used * 1024 } else { u = used + 0 }
-    if (index(unused,"G")) { f = unused * 1024 } else { f = unused + 0 }
-    printf "%d%%", (u / (u + f)) * 100
-}')
-[ -n "$cpu" ] && printf '󰒼 %s  󰍛 %s' "$cpu" "$mem"
+# Print cached system load for the zjstatus sysload widget.
+# Cache is populated by the com.evansenter.sysload LaunchAgent every 10s
+# (~/.bin/sysload-writer). Synchronous `top` here would stack up under load
+# because zjstatus spawns command widgets per tab — see CLAUDE.md.
+CACHE="$HOME/.cache/sysload"
+# Blank the widget if the writer LaunchAgent has gone silent (cache older than
+# ~2min) so an outage is visible instead of showing forever-stale numbers.
+if [ -s "$CACHE" ] && find "$CACHE" -mmin -2 2>/dev/null | grep -q .; then
+    cat "$CACHE"
+fi

@@ -141,3 +141,6 @@ fi
 
 # Antigravity
 export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
+
+# Antigravity IDE (installer's ~/.local/bin export omitted — .exports already adds it)
+export PATH="$HOME/.antigravity-ide/antigravity-ide/bin:$PATH"

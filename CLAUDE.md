@@ -99,7 +99,7 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 
 **OpenClaw** (`home/.openclaw/`) - Personal AI assistant gateway. Client config is tracked; gateway host (mac-mini) keeps its own. Bootstrap handles setup — just add `OPENCLAW_GATEWAY_TOKEN` to `~/.extra`.
 
-**Zellij** (`home/.config/zellij/`) - Terminal multiplexer config with Catppuccin Mocha theme, zjstatus bar, autolock plugin. Swap layouts in `default.swap.kdl`. Config changes require killing the session (`zellij kill-all-sessions`) — hot-reload doesn't work with symlinked configs (zellij-org/zellij#3992).
+**Zellij** (`home/.config/zellij/`) - Terminal multiplexer config with Catppuccin Mocha theme, zjstatus bar, autolock plugin. Swap layouts in `default.swap.kdl`. Config changes require killing the session (`zellij kill-all-sessions`) — hot-reload doesn't work with symlinked configs (zellij-org/zellij#3992). The sysload widget reads from `~/.cache/sysload`, populated by the `com.evansenter.sysload` LaunchAgent every 10s — zjstatus's `command_*` widgets spawn per zjstatus-plugin-instance (one per tab), so calling `top` synchronously inside the widget piles up under load and causes pane-frame flicker via `hide_frame_for_single_pane`.
 
 **Statusline** (`home/.claude/statusline-command.sh`) - Custom statusline for Claude Code.
 - Format: `[repo/session]:branch ✓/✗/↻ →#issues ● model context%` (CI status hidden when dirty)
