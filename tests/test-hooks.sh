@@ -1428,6 +1428,37 @@ EOF
     [[ "$output" == *"★ Insight"* ]]
 }
 
+test_enforce_insight_publish_waits_for_lagged_text_block() {
+    # Regression: the writer may flush the turn's final text block AFTER the
+    # Stop hook fires. A line-count-only wait could see the not-yet-appended
+    # file as "stable & empty" and miss the insight. The content-aware wait
+    # must block until the text block actually lands.
+    local transcript="$TEST_TMP/insight-lagged.jsonl"
+    # Initial state: real user msg + assistant THINKING only (no text/insight yet).
+    cat > "$transcript" <<'EOF'
+{"type":"user","message":{"role":"user","content":"tell me something"}}
+{"type":"assistant","message":{"content":[{"type":"thinking","thinking":"considering..."}]}}
+EOF
+
+    # Simulate the writer lagging: append the final text block (insight, no
+    # publish) ~300ms after the hook starts reading.
+    ( sleep 0.3
+      printf '%s\n' '{"type":"assistant","message":{"content":[{"type":"text","text":"Done.\n`★ Insight ─────────────────────────────────────`\nA late observation.\n`─────────────────────────────────────────────────`"}]}}' >> "$transcript"
+    ) &
+    local appender=$!
+
+    local output exit_code=0
+    output=$(echo "{\"transcript_path\":\"$transcript\"}" | \
+        PATH="$(_real_jq_path):$PATH" \
+        bash "$HOOKS_DIR/enforce-insight-publish.sh" 2>&1) || exit_code=$?
+    wait "$appender" 2>/dev/null || true
+
+    # The hook must have waited for the lagged text, then blocked on it.
+    [[ $exit_code -eq 0 ]] && \
+    [[ "$output" == *"\"decision\": \"block\""* ]] && \
+    [[ "$output" == *"★ Insight"* ]]
+}
+
 test_enforce_insight_publish_allows_insight_with_publish() {
     local transcript="$TEST_TMP/insight-with-publish.jsonl"
     cat > "$transcript" <<'EOF'
@@ -1675,6 +1706,7 @@ main() {
     run_test "graceful degradation (transcript file missing)" "test_enforce_insight_publish_graceful_missing_transcript_file"
     run_test "respects stop_hook_active (loop guard)" "test_enforce_insight_publish_respects_stop_hook_active"
     run_test "blocks insight without publish" "test_enforce_insight_publish_blocks_insight_without_publish"
+    run_test "waits for lagged text block (writer race)" "test_enforce_insight_publish_waits_for_lagged_text_block"
     run_test "allows insight with publish" "test_enforce_insight_publish_allows_insight_with_publish"
     run_test "allows turns with no insight" "test_enforce_insight_publish_allows_no_insight"
     run_test "ignores insights from prior turns" "test_enforce_insight_publish_ignores_prior_turn_insights"
