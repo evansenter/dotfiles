@@ -206,7 +206,7 @@ ensure_openclaw_workspace() {
 }
 
 symlink_openclaw_config() {
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local src_file="$dotfiles_dir/home/.openclaw/openclaw.json"
 	local dest_file="$HOME/.openclaw/openclaw.json"
 
@@ -370,7 +370,7 @@ install_tmux_plugin_manager() {
 install_launch_agent() {
 	local plist="$1"
 	local label="${plist%.plist}"
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local launch_agents_dir="$HOME/Library/LaunchAgents"
 
 	mkdir -p "$launch_agents_dir"
@@ -403,7 +403,7 @@ install_launch_agents() {
 		return 0
 	fi
 
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 	# Install dark-notify LaunchAgent (only if dark-notify is installed)
 	if command -v dark-notify >/dev/null 2>&1; then
@@ -788,7 +788,7 @@ install_linux_common_packages() {
 }
 
 install_packages() {
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 	if [[ "$(uname)" == "Darwin" ]]; then
 		# macOS - use Homebrew
@@ -876,7 +876,7 @@ update_packages() {
 }
 
 init_submodules() {
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 	# Check if any submodule is missing
 	if [[ -d "$dotfiles_dir/vendor/btop-catppuccin/themes" ]] && \
@@ -901,7 +901,7 @@ init_submodules() {
 
 install_btop_themes() {
 	local btop_themes_dir="$HOME/.config/btop/themes"
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local vendor_theme="$dotfiles_dir/vendor/btop-catppuccin/themes/catppuccin_mocha.theme"
 
 	if [[ ! -f "$vendor_theme" ]]; then
@@ -924,7 +924,7 @@ install_btop_themes() {
 
 install_bat_themes() {
 	local bat_themes_dir="$HOME/.config/bat/themes"
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local vendor_theme="$dotfiles_dir/vendor/bat-catppuccin/themes/Catppuccin Mocha.tmTheme"
 
 	if [[ ! -f "$vendor_theme" ]]; then
@@ -964,7 +964,7 @@ install_brew_packages() {
 		return 0
 	fi
 
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local brewfile="$dotfiles_dir/Brewfile"
 
 	if [[ ! -f "$brewfile" ]]; then
@@ -987,7 +987,7 @@ install_brew_packages() {
 }
 
 run_brew_hooks() {
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local hooks_dir="$dotfiles_dir/brew-hooks"
 
 	if [[ ! -d "$hooks_dir" ]]; then
@@ -1003,7 +1003,7 @@ run_brew_hooks() {
 
 install_eza_theme() {
 	local eza_config_dir="$HOME/.config/eza"
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local vendor_theme="$dotfiles_dir/vendor/eza-catppuccin/themes/mocha/catppuccin-mocha-mauve.yml"
 
 	if [[ ! -f "$vendor_theme" ]]; then
@@ -1025,7 +1025,7 @@ install_eza_theme() {
 
 install_glamour_theme() {
 	local glamour_dir="$HOME/.config/glamour"
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local vendor_theme="$dotfiles_dir/vendor/glamour-catppuccin/themes/catppuccin-mocha.json"
 
 	if [[ ! -f "$vendor_theme" ]]; then

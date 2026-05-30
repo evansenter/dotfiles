@@ -80,6 +80,16 @@ if ! command -v foo &>/dev/null; then
 fi
 ```
 
+## Paths
+
+Resolve symlinks when capturing the script's own location — use `pwd -P`, not `pwd`. Plain `pwd` returns the logical path, so a script run via a symlink ends up with a directory string that doesn't match its physical location. If any subsequent code does a same-path guard (`[ "$src" = "$dest" ]`), it fails to fire and the script can overwrite its own source.
+
+```bash
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+dest_dir="$(cd "$(dirname "$dest_file")" && pwd -P)"
+[ "$script_dir" = "$dest_dir" ] && return  # same file, skip
+```
+
 ## Variables
 
 - Quote all variable expansions: `"$var"`, `"${var}"`, `"$@"`
