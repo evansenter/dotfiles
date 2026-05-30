@@ -451,6 +451,13 @@ install_launch_agents() {
 	if [[ "${HOSTNAME%%.*}" == "mac-mini" ]] && command -v obsidian-mcp-server >/dev/null 2>&1; then
 		install_launch_agent "com.evansenter.obsidian-mcp.plist"
 	fi
+
+	# Install sysload writer LaunchAgent (only if zellij is installed)
+	# Caches `top` output to ~/.cache/sysload every 10s so the zjstatus
+	# sysload widget can read it without spawning `top` per-tab-per-redraw.
+	if command -v zellij >/dev/null 2>&1; then
+		install_launch_agent "com.evansenter.sysload.plist"
+	fi
 }
 
 cleanup_legacy_cron() {

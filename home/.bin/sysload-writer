@@ -1,0 +1,26 @@
+#!/bin/bash
+# Writes macOS system load (CPU% + RAM%) to ~/.cache/sysload.
+# Run periodically by com.evansenter.sysload LaunchAgent; the zellij
+# zjstatus sysload widget reads the cache. See dotfiles CLAUDE.md
+# "Zellij" section for why this isn't called synchronously from zjstatus.
+set -u
+
+CACHE="$HOME/.cache/sysload"
+mkdir -p "$(dirname "$CACHE")"
+
+output=$(top -l 1 -s 0 2>/dev/null) || exit 0
+cpu=$(echo "$output" | awk '/CPU usage/ { printf "%d%%", 100 - $7 }')
+mem=$(echo "$output" | awk '/PhysMem/ {
+    # Format: "PhysMem: 20G used (2759M wired, 3222M compressor), 2949M unused."
+    # $2 = total used, $8 = unused. $6 is compressor (already counted as used).
+    used = $2; unused = $8
+    if (index(used,"G")) { u = used * 1024 } else { u = used + 0 }
+    if (index(unused,"G")) { f = unused * 1024 } else { f = unused + 0 }
+    if (u + f > 0) printf "%d%%", (u / (u + f)) * 100
+}')
+
+{ [ -z "$cpu" ] || [ -z "$mem" ]; } && exit 0
+
+tmp="$CACHE.tmp.$$"
+printf '󰒼 %s  󰍛 %s' "$cpu" "$mem" > "$tmp"
+mv -f "$tmp" "$CACHE"
