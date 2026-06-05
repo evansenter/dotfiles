@@ -1019,8 +1019,12 @@ install_brew_packages() {
 	fi
 
 	echo "Installing Homebrew packages..."
-	# Use --adopt to take ownership of existing apps instead of erroring
-	HOMEBREW_CASK_OPTS="--adopt" brew bundle --file="$brewfile"
+	# Use --adopt to take ownership of existing apps instead of erroring.
+	# Tolerate a non-zero exit (e.g. a `mas` entry failing because the machine
+	# isn't signed into the App Store) so Phase 1 doesn't abort before
+	# sync_dotfiles runs — brew bundle already reports which packages failed.
+	HOMEBREW_CASK_OPTS="--adopt" brew bundle --file="$brewfile" \
+		|| echo "  Warning: some Homebrew packages failed to install (continuing)."
 
 	# Conditionally install AI assistant packages (Claude, OpenClaw tools)
 	prompt_ai_install
@@ -1028,7 +1032,8 @@ install_brew_packages() {
 		local ai_brewfile="$dotfiles_dir/Brewfile.ai"
 		if [[ -f "$ai_brewfile" ]]; then
 			echo "Installing AI assistant packages..."
-			HOMEBREW_CASK_OPTS="--adopt" brew bundle --file="$ai_brewfile"
+			HOMEBREW_CASK_OPTS="--adopt" brew bundle --file="$ai_brewfile" \
+				|| echo "  Warning: some AI Homebrew packages failed to install (continuing)."
 		fi
 	fi
 
@@ -1211,7 +1216,9 @@ configure_npm_registry() {
 		# Note: print-settings embeds a short-lived OAuth _authToken that is not
 		# refreshed here (the guard above skips re-running once ah-3p-staging-npm
 		# is present in ~/.npmrc). Re-run this step if npm auth starts failing.
-		echo "$settings" | { grep -v "always-auth" || true; } >> "$HOME/.npmrc"
+		# Prepend a newline so the first appended line can't concatenate onto an
+		# existing ~/.npmrc entry that lacks a trailing newline.
+		{ printf '\n'; echo "$settings" | { grep -v "always-auth" || true; }; } >> "$HOME/.npmrc"
 		echo "NPM registry credentials configured in ~/.npmrc"
 	else
 		echo "  Warning: Failed to configure NPM credentials automatically"
