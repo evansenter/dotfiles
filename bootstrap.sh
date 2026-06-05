@@ -832,6 +832,9 @@ install_packages() {
 			elif [[ -f "/usr/local/bin/brew" ]]; then
 				eval "$(/usr/local/bin/brew shellenv)"
 			fi
+		else
+			echo "Updating Homebrew..."
+			brew update
 		fi
 
 		install_brew_packages
@@ -853,15 +856,6 @@ install_packages() {
 
 update_packages() {
 	if [[ "$(uname)" == "Darwin" ]]; then
-		if command -v brew >/dev/null 2>&1; then
-			echo "Updating Homebrew and upgrading packages..."
-			brew update
-			brew upgrade
-			brew cleanup
-		else
-			echo "Homebrew not installed, skipping"
-		fi
-
 		if command -v softwareupdate >/dev/null 2>&1; then
 			echo "Checking for macOS software updates..."
 			softwareupdate --list
