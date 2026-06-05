@@ -1002,6 +1002,17 @@ install_brew_packages() {
 		return 0
 	fi
 
+	local temp_pip_conf=false
+	# Check if we need to temporarily override pip.conf to bypass corporate mirror issues for gcloud-cli
+	if [[ "$(uname)" == "Darwin" ]] && [[ -f "/Library/Application Support/pip/pip.conf" ]]; then
+		if [[ ! -f "$HOME/.config/pip/pip.conf" ]]; then
+			echo "Temporarily configuring PyPI mirror for Homebrew Python dependencies..."
+			mkdir -p "$HOME/.config/pip"
+			echo -e "[global]\nindex-url = https://pypi.org/simple" > "$HOME/.config/pip/pip.conf"
+			temp_pip_conf=true
+		fi
+	fi
+
 	echo "Installing Homebrew packages..."
 	# Use --adopt to take ownership of existing apps instead of erroring
 	HOMEBREW_CASK_OPTS="--adopt" brew bundle --file="$brewfile"
@@ -1014,6 +1025,12 @@ install_brew_packages() {
 			echo "Installing AI assistant packages..."
 			HOMEBREW_CASK_OPTS="--adopt" brew bundle --file="$ai_brewfile"
 		fi
+	fi
+
+	# Restore/cleanup temporary pip.conf
+	if [[ "$temp_pip_conf" == true ]]; then
+		rm -f "$HOME/.config/pip/pip.conf"
+		echo "Restored corporate Pip configuration."
 	fi
 }
 
