@@ -1737,6 +1737,218 @@ EOF
 }
 
 # ============================================================================
+# drain-directed-events.sh tests (Stop hook)
+# ============================================================================
+#
+# This hook peeks the bus (non-consuming), classifies DIRECTED events
+# (channel == session:<id>, or help_needed on repo:<name>), and blocks once
+# surfacing all peeked events when any directed event waits. It uses the
+# eventbus-collect.sh lib (shared with prompt-events.sh).
+#
+# Its jq classification filter (select/length over .events[]) needs REAL jq,
+# not the setup_test_env mock. Tests that exercise the block path therefore
+# prepend $(_real_jq_path) like the enforce-insight-publish tests do.
+#
+# A purpose-built mock agent-event-bus-cli is installed per-test. It honors
+# --peek (non-consuming) vs consuming reads via a marker file, and emits JSON
+# (--json) or text. Fixtures are supplied through env vars so each test can
+# control what the bus "returns" without touching the network.
+
+# Install a channel-aware mock agent-event-bus-cli for the drain hook.
+# Reads fixtures from env:
+#   MOCK_EVENTS_JSON  JSON object string for `events --json --peek`
+#   MOCK_EVENTS_TEXT  text rendering for `events --peek` (no --json)
+#   MOCK_CONSUME_MARK file path; a consuming read (no --peek) touches it so a
+#                     test can assert the cursor advanced.
+setup_mock_drain_cli() {
+    cat > "$TEST_TMP/bin/agent-event-bus-cli" << 'MOCK_CLI'
+#!/bin/bash
+# Mock agent-event-bus-cli for drain-directed-events.sh tests.
+# Skip global flags (e.g. --url VALUE) before the subcommand.
+while [[ "${1:-}" == --* ]]; do
+    case "$1" in
+        --url) shift 2 ;;
+        *) shift ;;
+    esac
+done
+
+case "${1:-}" in
+    events)
+        peek=0
+        json=0
+        shift
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                --peek) peek=1; shift ;;
+                --json) json=1; shift ;;
+                --session-id|--order|--exclude|--timeout|--limit|--url) shift 2 ;;
+                --resume) shift ;;
+                *) shift ;;
+            esac
+        done
+        # Consuming read (not peek): record that the cursor advanced.
+        if [[ $peek -eq 0 && -n "${MOCK_CONSUME_MARK:-}" ]]; then
+            : > "$MOCK_CONSUME_MARK"
+        fi
+        if [[ $json -eq 1 ]]; then
+            printf '%s\n' "${MOCK_EVENTS_JSON:-{\"events\":[]\}}"
+        else
+            printf '%s\n' "${MOCK_EVENTS_TEXT:-}"
+        fi
+        ;;
+    *)
+        echo "Unknown command: ${1:-}" >&2
+        exit 1
+        ;;
+esac
+MOCK_CLI
+    chmod +x "$TEST_TMP/bin/agent-event-bus-cli"
+}
+
+test_drain_directed_syntax() {
+    bash -n "$HOOKS_DIR/drain-directed-events.sh"
+}
+
+test_drain_directed_graceful_no_jq() {
+    # No jq -> the loop guard can't read stop_hook_active and eb_have_deps fails;
+    # must exit 0 with no output (never block). Curate a bin without jq but with
+    # the hook's other deps so we don't accidentally pick up /usr/bin/jq.
+    local no_jq_dir="$TEST_TMP/no-jq"
+    mkdir -p "$no_jq_dir"
+    ln -sf "$(type -P cat)" "$no_jq_dir/cat"
+    ln -sf "$(type -P bash)" "$no_jq_dir/bash"
+    ln -sf "$(type -P dirname)" "$no_jq_dir/dirname"
+    [[ -n "$(type -P git)" ]] && ln -sf "$(type -P git)" "$no_jq_dir/git"
+    [[ -n "$(type -P basename)" ]] && ln -sf "$(type -P basename)" "$no_jq_dir/basename"
+
+    local output exit_code=0
+    output=$(echo '{"session_id":"sess-1","cwd":"/tmp"}' | \
+        env -i PATH="$no_jq_dir" HOME="$HOME" \
+        bash "$HOOKS_DIR/drain-directed-events.sh" 2>&1) || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+test_drain_directed_graceful_no_cli() {
+    # jq present but agent-event-bus-cli absent -> eb_have_deps fails -> exit 0,
+    # silent. Build a PATH with jq's dir but NOT the real CLI's dir.
+    local output exit_code=0
+    output=$(echo '{"session_id":"sess-1","cwd":"/tmp"}' | \
+        env -i PATH="$(_real_jq_path):/usr/bin:/bin" HOME="$HOME" \
+        bash "$HOOKS_DIR/drain-directed-events.sh" 2>&1) || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+test_drain_directed_graceful_no_session_id() {
+    setup_mock_drain_cli
+    local output exit_code=0
+    output=$(echo '{"cwd":"/tmp"}' | \
+        PATH="$(_real_jq_path):$PATH" \
+        bash "$HOOKS_DIR/drain-directed-events.sh" 2>&1) || exit_code=$?
+
+    # No session_id -> can't track cursor -> exit 0 silent.
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+test_drain_directed_respects_stop_hook_active() {
+    # Loop guard: stop_hook_active=true must short-circuit BEFORE any bus call.
+    setup_mock_drain_cli
+    local mark="$TEST_TMP/consume-loopguard"
+    rm -f "$mark"
+
+    local output exit_code=0
+    output=$(MOCK_EVENTS_JSON='{"events":[{"event_id":1,"event_type":"help_needed","payload":"x","channel":"session:sess-1"}]}' \
+        MOCK_CONSUME_MARK="$mark" \
+        bash -c 'echo "{\"session_id\":\"sess-1\",\"cwd\":\"/tmp\",\"stop_hook_active\":true}" | PATH="'"$(_real_jq_path)"':$PATH" bash "'"$HOOKS_DIR"'/drain-directed-events.sh"' 2>&1) || exit_code=$?
+
+    # Silent exit 0, and no consume happened (cursor untouched).
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]] && [[ ! -e "$mark" ]]
+}
+
+test_drain_directed_blocks_on_dm() {
+    # A DM on session:<id> is DIRECTED -> hook must emit a block decision JSON
+    # surfacing the event, and must consume (advance cursor) when it blocks.
+    setup_mock_drain_cli
+    local mark="$TEST_TMP/consume-dm"
+    rm -f "$mark"
+
+    local dm_json='{"events":[{"event_id":7,"event_type":"help_needed","payload":"please review PR #99","channel":"session:sess-1"}]}'
+    local dm_text='[7] help_needed (session:sess-1)
+    please review PR #99'
+
+    local output exit_code=0
+    output=$(MOCK_EVENTS_JSON="$dm_json" \
+        MOCK_EVENTS_TEXT="$dm_text" \
+        MOCK_CONSUME_MARK="$mark" \
+        bash -c 'echo "{\"session_id\":\"sess-1\",\"cwd\":\"/tmp\"}" | PATH="'"$(_real_jq_path)"':$PATH" bash "'"$HOOKS_DIR"'/drain-directed-events.sh"' 2>&1) || exit_code=$?
+
+    # Block JSON emitted, event surfaced, and a consuming read happened.
+    [[ $exit_code -eq 0 ]] && \
+    [[ "$output" == *"\"decision\": \"block\""* ]] && \
+    [[ "$output" == *"help_needed"* ]] && \
+    [[ "$output" == *"<recent-events>"* ]] && \
+    [[ -e "$mark" ]]
+}
+
+test_drain_directed_silent_on_ambient_only() {
+    # An ambient event (gotcha_discovered on "all") is NOT directed -> hook must
+    # exit 0 silently and must NOT consume (leave it for prompt-events.sh).
+    setup_mock_drain_cli
+    local mark="$TEST_TMP/consume-ambient"
+    rm -f "$mark"
+
+    local amb_json='{"events":[{"event_id":3,"event_type":"gotcha_discovered","payload":"watch out","channel":"all"}]}'
+    local amb_text='[3] gotcha_discovered (all)
+    watch out'
+
+    local output exit_code=0
+    output=$(MOCK_EVENTS_JSON="$amb_json" \
+        MOCK_EVENTS_TEXT="$amb_text" \
+        MOCK_CONSUME_MARK="$mark" \
+        bash -c 'echo "{\"session_id\":\"sess-1\",\"cwd\":\"/tmp\"}" | PATH="'"$(_real_jq_path)"':$PATH" bash "'"$HOOKS_DIR"'/drain-directed-events.sh"' 2>&1) || exit_code=$?
+
+    # Silent exit 0, no block, no consume.
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]] && [[ ! -e "$mark" ]]
+}
+
+test_drain_directed_silent_on_no_events() {
+    # Empty bus -> peek returns empty events array -> exit 0 silent, no consume.
+    setup_mock_drain_cli
+    local mark="$TEST_TMP/consume-empty"
+    rm -f "$mark"
+
+    local output exit_code=0
+    output=$(MOCK_EVENTS_JSON='{"events":[]}' \
+        MOCK_EVENTS_TEXT='' \
+        MOCK_CONSUME_MARK="$mark" \
+        bash -c 'echo "{\"session_id\":\"sess-1\",\"cwd\":\"/tmp\"}" | PATH="'"$(_real_jq_path)"':$PATH" bash "'"$HOOKS_DIR"'/drain-directed-events.sh"' 2>&1) || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]] && [[ ! -e "$mark" ]]
+}
+
+test_drain_directed_blocks_on_help_needed_repo() {
+    # help_needed on this session's repo:<name> channel is DIRECTED. Repo is
+    # derived from cwd basename; use a cwd whose basename is "myrepo".
+    setup_mock_drain_cli
+    local repo_dir="$TEST_TMP/myrepo"
+    mkdir -p "$repo_dir"
+
+    local hn_json='{"events":[{"event_id":9,"event_type":"help_needed","payload":"need a hand","channel":"repo:myrepo"}]}'
+    local hn_text='[9] help_needed (repo:myrepo)
+    need a hand'
+
+    local output exit_code=0
+    output=$(MOCK_EVENTS_JSON="$hn_json" \
+        MOCK_EVENTS_TEXT="$hn_text" \
+        bash -c 'echo "{\"session_id\":\"sess-1\",\"cwd\":\"'"$repo_dir"'\"}" | PATH="'"$(_real_jq_path)"':$PATH" bash "'"$HOOKS_DIR"'/drain-directed-events.sh"' 2>&1) || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && \
+    [[ "$output" == *"\"decision\": \"block\""* ]] && \
+    [[ "$output" == *"help_needed"* ]]
+}
+
+# ============================================================================
 # Run all tests
 # ============================================================================
 
@@ -1884,6 +2096,18 @@ main() {
     run_test "skips benign grep errors" "test_post_tool_failure_skips_benign_grep"
     run_test "integration: happy path (below threshold)" "test_post_tool_failure_happy_path"
     run_test "integration: outputs additionalContext at threshold" "test_post_tool_failure_outputs_context_at_threshold"
+    echo ""
+
+    echo "=== drain-directed-events.sh ==="
+    run_test "syntax check" "test_drain_directed_syntax"
+    run_test "graceful degradation (no jq)" "test_drain_directed_graceful_no_jq"
+    run_test "graceful degradation (no agent-event-bus-cli)" "test_drain_directed_graceful_no_cli"
+    run_test "graceful degradation (no session_id)" "test_drain_directed_graceful_no_session_id"
+    run_test "respects stop_hook_active (loop guard, no consume)" "test_drain_directed_respects_stop_hook_active"
+    run_test "blocks on DM (session channel), consumes" "test_drain_directed_blocks_on_dm"
+    run_test "blocks on help_needed (repo channel)" "test_drain_directed_blocks_on_help_needed_repo"
+    run_test "silent on ambient-only (no consume)" "test_drain_directed_silent_on_ambient_only"
+    run_test "silent on no events (no consume)" "test_drain_directed_silent_on_no_events"
     echo ""
 
     # Summary
