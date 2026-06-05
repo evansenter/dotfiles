@@ -892,7 +892,7 @@ update_packages() {
 	# Update global npm packages
 	if command -v npm >/dev/null 2>&1; then
 		echo "Updating global npm packages..."
-		npm update -g
+		npm update -g || true
 	fi
 
 	# Update cargo packages
