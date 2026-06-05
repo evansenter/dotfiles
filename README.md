@@ -99,6 +99,33 @@ cd dotfiles
 
 Restart your terminal or run `source ~/.zshrc` to apply changes.
 
+### Setting up a new machine (from scratch)
+
+On a bare macOS install, in order:
+
+1. **Install the Xcode Command Line Tools** (provides `git`, needed before anything else):
+   ```bash
+   xcode-select --install
+   ```
+2. **Clone with submodules:**
+   ```bash
+   git clone --recursive https://github.com/evansenter/dotfiles.git ~/projects/dotfiles
+   cd ~/projects/dotfiles
+   ```
+3. **Create `~/.extra`** with any secrets *before* the full bootstrap, so package/MCP setup can use them (see the env vars under [Customization](#customization) — `GITHUB_TOKEN`, and on the gateway host `OPENCLAW_GATEWAY_TOKEN` / `OBSIDIAN_API_KEY`).
+4. **Run the full bootstrap** (installs Homebrew if missing, installs packages, inits submodules + themes, symlinks dotfiles, registers MCP servers, installs LaunchAgents):
+   ```bash
+   ./bootstrap.sh -p          # -p = pull + install/update packages, then sync
+   ```
+   Re-running `./bootstrap.sh -f` later is safe and idempotent (and restores symlinks that atomic-writing tools like btop/zellij/CC replace).
+5. **Restart the terminal** (or `source ~/.zshrc`).
+6. **Manual post-install steps** (bootstrap can't automate these):
+   - **tmux:** press `prefix + I` to install TPM plugins.
+   - **iTerm2:** import the Catppuccin color preset (`preferences/` / `vendor/iterm-catppuccin/`).
+   - **zellij:** `zellij kill-all-sessions` so the symlinked config is picked up (hot-reload doesn't work with symlinks).
+   - **btop dark-mode switching (optional):** `brew install cormacrelf/tap/dark-notify` then re-run `./bootstrap.sh -f`.
+   - **Gateway host only:** open Obsidian with the Local REST API plugin enabled (obsidian-mcp's wrapper backs off until it's reachable).
+
 ### Optional dependencies
 
 **Dark mode theme switching** (btop):
