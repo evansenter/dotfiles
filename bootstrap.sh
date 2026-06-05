@@ -1010,6 +1010,11 @@ install_brew_packages() {
 			mkdir -p "$HOME/.config/pip"
 			echo -e "[global]\nindex-url = https://pypi.org/simple" > "$HOME/.config/pip/pip.conf"
 			temp_pip_conf=true
+			# Guarantee cleanup even if a brew bundle below aborts under set -euo
+			# pipefail. A leftover temp file would otherwise mask the corporate
+			# pip.conf on every subsequent run (the guard above skips re-creating
+			# it once $HOME/.config/pip/pip.conf exists).
+			trap 'rm -f "$HOME/.config/pip/pip.conf"' EXIT
 		fi
 	fi
 
@@ -1027,10 +1032,12 @@ install_brew_packages() {
 		fi
 	fi
 
-	# Restore/cleanup temporary pip.conf
+	# Remove the temporary pip.conf on the success path and clear the
+	# safety-net trap (cleanup only ran via the trap on an early abort).
 	if [[ "$temp_pip_conf" == true ]]; then
 		rm -f "$HOME/.config/pip/pip.conf"
-		echo "Restored corporate Pip configuration."
+		trap - EXIT
+		echo "Removed temporary PyPI mirror override."
 	fi
 }
 
@@ -1198,7 +1205,13 @@ configure_npm_registry() {
 	echo "Configuring NPM registry credentials via gcloud..."
 	local settings
 	if settings=$(gcloud artifacts print-settings npm --project=artifact-foundry-prod --repository=ah-3p-staging-npm --location=us 2>/dev/null); then
-		echo "$settings" | grep -v "always-auth" >> "$HOME/.npmrc"
+		# Strip the deprecated always-auth line. The trailing `|| true` keeps a
+		# fully-filtered output (grep exit 1) from aborting bootstrap under
+		# `set -euo pipefail`.
+		# Note: print-settings embeds a short-lived OAuth _authToken that is not
+		# refreshed here (the guard above skips re-running once ah-3p-staging-npm
+		# is present in ~/.npmrc). Re-run this step if npm auth starts failing.
+		echo "$settings" | { grep -v "always-auth" || true; } >> "$HOME/.npmrc"
 		echo "NPM registry credentials configured in ~/.npmrc"
 	else
 		echo "  Warning: Failed to configure NPM credentials automatically"

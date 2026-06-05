@@ -13,9 +13,6 @@ cask "lm-studio"
 # Local speech-to-text
 brew "whisper-cpp"
 
-# Tailscale Mesh VPN (event bus, openclaw)
-cask "tailscale-app"
-
 # OpenClaw Agent Tools
 brew "spotify_player"             # Spotify CLI (OAuth device flow)
 brew "gogcli"                     # Google Suite CLI
