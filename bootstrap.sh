@@ -898,7 +898,7 @@ update_packages() {
 	fi
 
 	# Update pip packages (no safe "update all" — list managed packages explicitly)
-	if command -v pip3 >/dev/null 2>&1; then
+	if [[ "$INSTALL_AI" == true ]] && command -v pip3 >/dev/null 2>&1; then
 		echo "Updating pip packages..."
 		pip3 install --upgrade piper-tts 2>/dev/null || pip3 install --upgrade --break-system-packages piper-tts 2>/dev/null || true
 	fi
