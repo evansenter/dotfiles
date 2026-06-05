@@ -1166,6 +1166,32 @@ install_claude_mcp_servers() {
 	fi
 }
 
+configure_npm_registry() {
+	# Skip if ~/.npmrc already contains the registry auth configurations
+	if [[ -f "$HOME/.npmrc" ]] && grep -q "ah-3p-staging-npm" "$HOME/.npmrc" 2>/dev/null; then
+		return 0
+	fi
+
+	# Require gcloud and npm to be installed
+	if ! command -v gcloud >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
+		return 0
+	fi
+
+	# Check if user has an active gcloud account
+	local active_account
+	active_account=$(gcloud config get-value account 2>/dev/null) || return 0
+	if [[ -z "$active_account" ]]; then
+		return 0
+	fi
+
+	echo "Configuring NPM registry credentials via gcloud..."
+	if gcloud artifacts print-settings npm --project=artifact-foundry-prod --repository=ah-3p-staging-npm --location=us >> "$HOME/.npmrc" 2>/dev/null; then
+		echo "NPM registry credentials configured in ~/.npmrc"
+	else
+		echo "  Warning: Failed to configure NPM credentials automatically"
+	fi
+}
+
 sync_dotfiles() {
 	# Set default shell to zsh
 	set_default_shell
@@ -1223,6 +1249,9 @@ sync_dotfiles() {
 	# Install LaunchAgents (macOS) or cron jobs (Linux)
 	install_launch_agents
 	cleanup_legacy_cron
+
+	# Configure NPM registry auth if authenticated with gcloud
+	configure_npm_registry
 
 	# Reload zsh configuration
 	if [[ -n "${ZSH_VERSION:-}" ]]; then
