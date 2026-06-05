@@ -15,6 +15,16 @@ cd "$(dirname "${BASH_SOURCE}")";
 GATEWAY_HOST="mac-mini.tailac7b3c.ts.net"
 INSTALL_AI=""
 
+# Set up Homebrew environment variables
+if [[ "$(uname)" == "Darwin" ]]; then
+	if [[ -f "/opt/homebrew/bin/brew" ]]; then
+		eval "$(/opt/homebrew/bin/brew shellenv)"
+	elif [[ -f "/usr/local/bin/brew" ]]; then
+		eval "$(/usr/local/bin/brew shellenv)"
+	fi
+fi
+
+
 # ==============================================================================
 # Functions
 # ==============================================================================
@@ -44,6 +54,14 @@ set_default_shell() {
 		current_shell=""
 	fi
 	if [[ "$current_shell" == "$zsh_path" ]]; then
+		return 0
+	fi
+
+	# chsh requires manual password entry on macOS unless run as root.
+	# Skip in non-interactive sessions to avoid hanging.
+	if [[ ! -t 0 ]]; then
+		echo "Warning: Cannot change default shell to zsh automatically in non-interactive mode."
+		echo "  Please run manually: chsh -s $zsh_path"
 		return 0
 	fi
 
@@ -368,9 +386,9 @@ install_tmux_plugin_manager() {
 	mkdir -p "$tpm_dir"
 	git clone https://github.com/tmux-plugins/tpm "$tpm_dir"
 
-	# Source tmux config if tmux is installed
-	if command -v tmux >/dev/null 2>&1 && [[ -e "$HOME/.tmux.conf" ]]; then
-		tmux source "$HOME/.tmux.conf"
+	# Source tmux config if tmux is installed and running
+	if command -v tmux >/dev/null 2>&1 && tmux info &>/dev/null && [[ -e "$HOME/.tmux.conf" ]]; then
+		tmux source "$HOME/.tmux.conf" || true
 	fi
 }
 
@@ -488,9 +506,9 @@ prompt_ai_install() {
 		return 0
 	fi
 
-	# Non-interactive: default to install
+	# Non-interactive: default to skip
 	if [[ ! -t 0 ]]; then
-		INSTALL_AI=true
+		INSTALL_AI=false
 		return 0
 	fi
 
@@ -809,6 +827,11 @@ install_packages() {
 		if ! command -v brew >/dev/null 2>&1; then
 			echo "Installing Homebrew..."
 			/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+			if [[ -f "/opt/homebrew/bin/brew" ]]; then
+				eval "$(/opt/homebrew/bin/brew shellenv)"
+			elif [[ -f "/usr/local/bin/brew" ]]; then
+				eval "$(/usr/local/bin/brew shellenv)"
+			fi
 		fi
 
 		install_brew_packages
@@ -1072,7 +1095,7 @@ install_yazi_flavor() {
 	# Install catppuccin-mocha flavor if not present
 	if ! $ya_cmd pkg list 2>/dev/null | grep -q "catppuccin-mocha"; then
 		echo "Installing yazi catppuccin-mocha flavor..."
-		$ya_cmd pkg add yazi-rs/flavors:catppuccin-mocha
+		$ya_cmd pkg add yazi-rs/flavors:catppuccin-mocha || true
 	fi
 }
 

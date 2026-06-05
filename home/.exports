@@ -7,6 +7,15 @@
 #   GEMINI_API_KEY - Required for Gemini API access
 #   AGENT_EVENT_BUS_URL - URL for event bus MCP server (e.g., https://host/agent-event-bus/mcp)
 
+# Set up Homebrew PATH for macOS
+if [[ "$(uname)" == "Darwin" ]]; then
+	if [[ -f "/opt/homebrew/bin/brew" ]]; then
+		eval "$(/opt/homebrew/bin/brew shellenv)"
+	elif [[ -f "/usr/local/bin/brew" ]]; then
+		eval "$(/usr/local/bin/brew shellenv)"
+	fi
+fi
+
 # PATH configuration
 if [ -d "$HOME/.local/bin" ]; then
     export PATH="$HOME/.local/bin:$PATH"
