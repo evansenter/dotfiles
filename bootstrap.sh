@@ -1179,7 +1179,9 @@ configure_npm_registry() {
 	fi
 
 	echo "Configuring NPM registry credentials via gcloud..."
-	if gcloud artifacts print-settings npm --project=artifact-foundry-prod --repository=ah-3p-staging-npm --location=us >> "$HOME/.npmrc" 2>/dev/null; then
+	local settings
+	if settings=$(gcloud artifacts print-settings npm --project=artifact-foundry-prod --repository=ah-3p-staging-npm --location=us 2>/dev/null); then
+		echo "$settings" | grep -v "always-auth" >> "$HOME/.npmrc"
 		echo "NPM registry credentials configured in ~/.npmrc"
 	else
 		echo "  Warning: Failed to configure NPM credentials automatically"
