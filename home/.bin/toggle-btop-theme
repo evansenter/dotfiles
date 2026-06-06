@@ -30,6 +30,11 @@ else
 fi
 
 # Update btop config (macOS sed requires '' after -i; Linux would use -i alone)
+if [[ -L "$BTOP_CONF" ]]; then
+    TARGET="$(readlink "$BTOP_CONF")"
+    rm -f "$BTOP_CONF"
+    cp "$TARGET" "$BTOP_CONF"
+fi
 sed -i '' "s/^color_theme = .*/color_theme = \"$THEME\"/" "$BTOP_CONF"
 
 # Signal btop to reload config (if running)

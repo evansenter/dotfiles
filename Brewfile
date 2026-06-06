@@ -21,6 +21,7 @@ brew "ripgrep"                # Fast grep
 brew "shellcheck"             # Shell script linting
 brew "tmux"                   # Terminal multiplexer
 brew "terminal-notifier" if OS.mac?  # macOS notifications
+brew "mas" if OS.mac?               # Mac App Store CLI
 brew "vim"                    # Text editor
 brew "yazi"                   # Terminal file manager
 brew "zellij"                 # Terminal workspace
@@ -53,8 +54,6 @@ end
 # Python Libraries
 brew "numpy"                  # IAP tunnel perf (gcloud)
 
-# AI/ML
-brew "whisper-cpp"              # Local speech-to-text
 
 # Utilities
 brew "ffmpeg"
@@ -62,9 +61,8 @@ brew "scc"                    # Code line counter
 brew "testdisk"               # Data recovery
 
 # Casks - Dev Tools
-cask "codex"
 cask "iterm2"                 # Requires: post-install config
-cask "lm-studio"
+
 
 # Casks - Apps
 cask "google-chrome"
@@ -80,7 +78,11 @@ cask "whatsapp"
 cask "font-jetbrains-mono-nerd-font"
 
 # Casks - Networking
-cask "tailscale-app"          # Mesh VPN (event bus, openclaw)
+cask "tailscale-app"          # Mesh VPN (event bus, openclaw) — infra, not AI-gated
 
 # Casks - Cloud
 cask "gcloud-cli"             # Requires: gcloud init
+
+# Mac App Store Apps
+mas "Amphetamine", id: 937984704 if OS.mac?
+mas "Infuse", id: 1136220934 if OS.mac?
