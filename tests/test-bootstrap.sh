@@ -409,6 +409,48 @@ test_obsidian_preflight_starts_when_upstream_up() {
     [[ "$ran" -eq 0 ]]   # server was exec'd
 }
 
+# configure_npm_registry must only touch the internal Artifact Registry when the
+# active gcloud account is a corp account. A personal account (gmail.com) should
+# no-op silently instead of printing a PERMISSION_DENIED warning every -p run.
+#
+# Loads the REAL constant + function from bootstrap.sh, stubs gcloud/npm on PATH,
+# and asserts via a marker file whether print-settings was reached.
+_run_configure_npm_registry() {
+    local account="$1" home="$2" stub="$3"
+    eval "$(grep '^CORP_NPM_DOMAIN=' "$BOOTSTRAP")"
+    eval "$(sed -n '/^configure_npm_registry() {/,/^}/p' "$BOOTSTRAP")"
+    # gcloud stub: report the account; mark + emit settings on print-settings.
+    {
+        printf '#!/bin/bash\n'
+        printf 'if [[ "$1" == config ]]; then echo "%s"; exit 0; fi\n' "$account"
+        printf 'if [[ "$1" == artifacts ]]; then touch "%s/print_settings_called"; echo "//registry=x"; exit 0; fi\n' "$home"
+        printf 'exit 0\n'
+    } > "$stub/gcloud"
+    printf '#!/bin/bash\nexit 0\n' > "$stub/npm"
+    chmod +x "$stub/gcloud" "$stub/npm"
+    PATH="$stub:$PATH" HOME="$home" configure_npm_registry >/dev/null 2>&1
+}
+
+test_npm_registry_skips_personal_account() {
+    local home stub; home=$(mktemp -d); stub=$(mktemp -d)
+    _run_configure_npm_registry "evansenter@gmail.com" "$home" "$stub"
+    local called=1 wrote=1
+    [[ -e "$home/print_settings_called" ]] && called=0
+    [[ -e "$home/.npmrc" ]] && wrote=0
+    rm -rf "$home" "$stub"
+    [[ "$called" -ne 0 && "$wrote" -ne 0 ]]   # never reached print-settings, never wrote .npmrc
+}
+
+test_npm_registry_runs_for_corp_account() {
+    local home stub; home=$(mktemp -d); stub=$(mktemp -d)
+    _run_configure_npm_registry "someone@anthropic.com" "$home" "$stub"
+    local called=1 wrote=1
+    [[ -e "$home/print_settings_called" ]] && called=0
+    [[ -e "$home/.npmrc" ]] && wrote=0
+    rm -rf "$home" "$stub"
+    [[ "$called" -eq 0 && "$wrote" -eq 0 ]]   # reached print-settings AND wrote .npmrc
+}
+
 # ============================================================================
 # Run all tests
 # ============================================================================
@@ -465,6 +507,8 @@ main() {
     run_test "host-gating rejects non-gateway hosts" "test_gateway_host_rejects_other"
     run_test "obsidian preflight backs off when upstream down" "test_obsidian_preflight_backs_off_when_upstream_down"
     run_test "obsidian preflight starts server when upstream up" "test_obsidian_preflight_starts_when_upstream_up"
+    run_test "npm registry skips personal gcloud account" "test_npm_registry_skips_personal_account"
+    run_test "npm registry runs for corp gcloud account" "test_npm_registry_runs_for_corp_account"
     echo ""
 
     # Summary

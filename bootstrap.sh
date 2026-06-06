@@ -15,6 +15,11 @@ cd "$(dirname "${BASH_SOURCE}")";
 GATEWAY_HOST="mac-mini.tailac7b3c.ts.net"
 INSTALL_AI=""
 
+# Domain of the gcloud account that can reach the internal npm Artifact Registry.
+# configure_npm_registry no-ops unless the active account ends in this domain, so
+# personal-account machines don't print a spurious PERMISSION_DENIED warning.
+CORP_NPM_DOMAIN="@anthropic.com"
+
 # Set up Homebrew environment variables
 if [[ "$(uname)" == "Darwin" ]]; then
 	if [[ -f "/opt/homebrew/bin/brew" ]]; then
@@ -1204,6 +1209,14 @@ configure_npm_registry() {
 	local active_account
 	active_account=$(gcloud config get-value account 2>/dev/null) || return 0
 	if [[ -z "$active_account" ]]; then
+		return 0
+	fi
+
+	# The Artifact Registry repo is corp-internal. A personal account (e.g.
+	# gmail.com) gets PERMISSION_DENIED, so skip silently unless the active
+	# account is a corp account — otherwise every `-p` run prints a useless
+	# warning on personal machines.
+	if [[ "$active_account" != *"$CORP_NPM_DOMAIN" ]]; then
 		return 0
 	fi
 
