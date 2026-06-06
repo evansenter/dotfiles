@@ -30,6 +30,11 @@ if [[ -n "$INSTALL_AI" && "$INSTALL_AI" != "true" && "$INSTALL_AI" != "false" ]]
 	echo "Warning: ignoring INSTALL_AI='$INSTALL_AI' (expected 'true' or 'false')." >&2
 	export INSTALL_AI=""
 fi
+export INSTALL_TAILSCALE="${INSTALL_TAILSCALE:-}"
+if [[ -n "$INSTALL_TAILSCALE" && "$INSTALL_TAILSCALE" != "true" && "$INSTALL_TAILSCALE" != "false" ]]; then
+	echo "Warning: ignoring INSTALL_TAILSCALE='$INSTALL_TAILSCALE' (expected 'true' or 'false')." >&2
+	export INSTALL_TAILSCALE=""
+fi
 
 # Set up Homebrew environment variables
 if [[ "$(uname)" == "Darwin" ]]; then
@@ -534,7 +539,7 @@ prompt_ai_install() {
 	fi
 
 	echo ""
-	echo "AI assistant setup (Claude, Antigravity, MCP servers, Tailscale):"
+	echo "AI assistant setup (Claude, Antigravity, MCP servers):"
 	echo "  1) Install (default)"
 	echo "  2) Skip"
 	read -p "Choose [1/2]: " -n 1 -r ai_choice
@@ -544,6 +549,39 @@ prompt_ai_install() {
 		export INSTALL_AI=false
 	else
 		export INSTALL_AI=true
+	fi
+}
+
+prompt_tailscale_install() {
+	# Ask once whether to install Tailscale.
+	# Result is cached in INSTALL_TAILSCALE for the rest of the run.
+	if [[ -n "$INSTALL_TAILSCALE" ]]; then
+		return 0
+	fi
+
+	# Skip prompt if already installed
+	if command -v tailscale >/dev/null 2>&1; then
+		export INSTALL_TAILSCALE=true
+		return 0
+	fi
+
+	# Non-interactive: default to skip (install script may not support this distro)
+	if [[ ! -t 0 ]]; then
+		export INSTALL_TAILSCALE=false
+		return 0
+	fi
+
+	echo ""
+	echo "Tailscale setup (VPN/mesh networking):"
+	echo "  1) Install (default)"
+	echo "  2) Skip"
+	read -p "Choose [1/2]: " -n 1 -r ts_choice
+	echo ""
+
+	if [[ "$ts_choice" == "2" ]]; then
+		export INSTALL_TAILSCALE=false
+	else
+		export INSTALL_TAILSCALE=true
 	fi
 }
 
@@ -583,8 +621,8 @@ install_steamos_packages() {
 	fi
 
 	# Install Tailscale (static binary + system service)
-	prompt_ai_install
-	if [[ "$INSTALL_AI" == true ]] && ! command -v tailscale >/dev/null 2>&1; then
+	prompt_tailscale_install
+	if [[ "$INSTALL_TAILSCALE" == true ]] && ! command -v tailscale >/dev/null 2>&1; then
 		echo "Installing Tailscale..."
 		local ts_version
 		ts_version=$(curl -fsSL "https://pkgs.tailscale.com/stable/" | grep -oP 'tailscale_\K[0-9.]+(?=_amd64\.tgz)' | head -1)
@@ -668,8 +706,8 @@ install_apt_packages() {
 	fi
 
 	# Install Tailscale via official apt repo
-	prompt_ai_install
-	if [[ "$INSTALL_AI" == true ]] && ! command -v tailscale >/dev/null 2>&1; then
+	prompt_tailscale_install
+	if [[ "$INSTALL_TAILSCALE" == true ]] && ! command -v tailscale >/dev/null 2>&1; then
 		echo "Installing Tailscale..."
 		curl -fsSL https://tailscale.com/install.sh | sh
 	fi
@@ -743,7 +781,7 @@ install_apt_packages() {
 	install_npm_package "bazelisk" "bazelisk" "@aspect/bazelisk"
 
 	# Install piper-tts (text-to-speech)
-	if ! command -v piper >/dev/null 2>&1; then
+	if ! command -v piper >/dev/null 2>&1 && command -v pip3 >/dev/null 2>&1; then
 		echo "Installing piper-tts..."
 		pip3 install --user piper-tts 2>/dev/null || pip3 install --user --break-system-packages piper-tts
 	fi
@@ -770,21 +808,24 @@ install_linux_common_packages() {
 	# Install Rust via rustup
 	if ! command -v rustup >/dev/null 2>&1; then
 		echo "Installing Rust via rustup..."
-		curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-		# shellcheck disable=SC1091
-		[[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
+		if curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable; then
+			# shellcheck disable=SC1091
+			[[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
+		else
+			echo "  Warning: Failed to install Rust (network issue?)"
+		fi
 	fi
 
 	# Install uv (Python package manager)
 	if ! command -v uv >/dev/null 2>&1; then
 		echo "Installing uv..."
-		curl -LsSf https://astral.sh/uv/install.sh | sh
+		curl -LsSf https://astral.sh/uv/install.sh | sh || echo "  Warning: Failed to install uv (network issue?)"
 	fi
 
 	# Install atuin (shell history)
 	if ! command -v atuin >/dev/null 2>&1; then
 		echo "Installing atuin..."
-		curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
+		curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh || echo "  Warning: Failed to install atuin (network issue?)"
 	fi
 
 	# Install tldr
