@@ -409,6 +409,88 @@ test_obsidian_preflight_starts_when_upstream_up() {
     [[ "$ran" -eq 0 ]]   # server was exec'd
 }
 
+# sysload-writer parses `top` output into ~/.cache/sysload for the zellij widget.
+# Stub `top` with a known sample and assert the cache is written with the
+# computed CPU% (100 - idle) and RAM% (used / (used + unused)).
+test_sysload_writer_writes_cache() {
+    local writer="$SCRIPT_DIR/../home/.bin/sysload-writer"
+    [[ -f "$writer" ]] || return 1
+    local stub home; stub=$(mktemp -d); home=$(mktemp -d)
+    # CPU usage idle=85.0% -> 15%; PhysMem 20G used / 2949M unused -> 87%.
+    {
+        printf '#!/bin/bash\ncat <<EOF\n'
+        printf 'CPU usage: 5.0%% user, 10.0%% sys, 85.0%% idle\n'
+        printf 'PhysMem: 20G used (2759M wired, 3222M compressor), 2949M unused.\n'
+        printf 'EOF\n'
+    } > "$stub/top"
+    chmod +x "$stub/top"
+    PATH="$stub:$PATH" HOME="$home" bash "$writer" >/dev/null 2>&1 || true
+    local cache="$home/.cache/sysload" ok=0
+    [[ -f "$cache" ]] || ok=1
+    grep -q '15%' "$cache" 2>/dev/null || ok=1
+    grep -q '87%' "$cache" 2>/dev/null || ok=1
+    rm -rf "$stub" "$home"
+    return $ok
+}
+
+# When `top` fails, sysload-writer must exit 0 (LaunchAgent KeepAlive sanity)
+# and NOT write a cache file, so the widget keeps its last good value.
+test_sysload_writer_tolerates_top_failure() {
+    local writer="$SCRIPT_DIR/../home/.bin/sysload-writer"
+    [[ -f "$writer" ]] || return 1
+    local stub home rc=0; stub=$(mktemp -d); home=$(mktemp -d)
+    printf '#!/bin/bash\nexit 1\n' > "$stub/top"
+    chmod +x "$stub/top"
+    PATH="$stub:$PATH" HOME="$home" bash "$writer" >/dev/null 2>&1 || rc=$?
+    local wrote=1; [[ -e "$home/.cache/sysload" ]] && wrote=0
+    rm -rf "$stub" "$home"
+    [[ "$rc" -eq 0 && "$wrote" -ne 0 ]]   # exited clean, no cache written
+}
+
+# Load the REAL install_launch_agent, but redirect its dotfiles_dir (derived from
+# BASH_SOURCE, which eval can't satisfy) at a fixture tree. Everything else —
+# __HOME__ substitution, the cmp-based idempotency guard, the launchctl reload —
+# is the genuine bootstrap logic.
+_load_install_launch_agent() {
+    eval "$(sed -n '/^install_launch_agent() {/,/^}/p' "$BOOTSTRAP" \
+        | sed 's|local dotfiles_dir=.*|local dotfiles_dir="${TEST_DOTFILES_DIR:?}"|')"
+}
+
+test_launch_agent_substitutes_home() {
+    _load_install_launch_agent
+    local root home stub; root=$(mktemp -d); home=$(mktemp -d); stub=$(mktemp -d)
+    mkdir -p "$root/LaunchAgents"
+    printf '<plist><string>__HOME__/.local/log/x.log</string></plist>\n' > "$root/LaunchAgents/test.plist"
+    printf '#!/bin/bash\necho "$@" >> "%s/launchctl.calls"\nexit 0\n' "$home" > "$stub/launchctl"
+    chmod +x "$stub/launchctl"
+    PATH="$stub:$PATH" HOME="$home" TEST_DOTFILES_DIR="$root" install_launch_agent "test.plist" >/dev/null 2>&1
+    local dest="$home/Library/LaunchAgents/test.plist" ok=0
+    [[ -f "$dest" ]] || ok=1
+    grep -q "$home/.local/log/x.log" "$dest" 2>/dev/null || ok=1   # __HOME__ expanded
+    grep -q '__HOME__' "$dest" 2>/dev/null && ok=1                  # placeholder gone
+    grep -q 'bootstrap' "$home/launchctl.calls" 2>/dev/null || ok=1 # agent (re)loaded
+    rm -rf "$root" "$home" "$stub"
+    return $ok
+}
+
+test_launch_agent_idempotent_on_unchanged_plist() {
+    _load_install_launch_agent
+    local root home stub; root=$(mktemp -d); home=$(mktemp -d); stub=$(mktemp -d)
+    mkdir -p "$root/LaunchAgents"
+    printf '<plist><string>__HOME__/x</string></plist>\n' > "$root/LaunchAgents/test.plist"
+    printf '#!/bin/bash\necho "$@" >> "%s/launchctl.calls"\nexit 0\n' "$home" > "$stub/launchctl"
+    chmod +x "$stub/launchctl"
+    PATH="$stub:$PATH" HOME="$home" TEST_DOTFILES_DIR="$root" install_launch_agent "test.plist" >/dev/null 2>&1
+    : > "$home/launchctl.calls"   # reset after first install
+    local out
+    out=$(PATH="$stub:$PATH" HOME="$home" TEST_DOTFILES_DIR="$root" install_launch_agent "test.plist" 2>&1)
+    local ok=0
+    echo "$out" | grep -q 'Installing' && ok=1                      # no reinstall message
+    [[ -s "$home/launchctl.calls" ]] && ok=1                        # launchctl not called again
+    rm -rf "$root" "$home" "$stub"
+    return $ok
+}
+
 # ============================================================================
 # Run all tests
 # ============================================================================
@@ -465,6 +547,10 @@ main() {
     run_test "host-gating rejects non-gateway hosts" "test_gateway_host_rejects_other"
     run_test "obsidian preflight backs off when upstream down" "test_obsidian_preflight_backs_off_when_upstream_down"
     run_test "obsidian preflight starts server when upstream up" "test_obsidian_preflight_starts_when_upstream_up"
+    run_test "sysload-writer writes cache from top output" "test_sysload_writer_writes_cache"
+    run_test "sysload-writer tolerates top failure" "test_sysload_writer_tolerates_top_failure"
+    run_test "launch agent substitutes __HOME__ and reloads" "test_launch_agent_substitutes_home"
+    run_test "launch agent idempotent on unchanged plist" "test_launch_agent_idempotent_on_unchanged_plist"
     echo ""
 
     # Summary
