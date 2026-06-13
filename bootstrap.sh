@@ -15,6 +15,16 @@ cd "$(dirname "${BASH_SOURCE}")";
 GATEWAY_HOST="mac-mini.tailac7b3c.ts.net"
 INSTALL_AI=""
 
+# Set up Homebrew environment variables
+if [[ "$(uname)" == "Darwin" ]]; then
+	if [[ -f "/opt/homebrew/bin/brew" ]]; then
+		eval "$(/opt/homebrew/bin/brew shellenv)"
+	elif [[ -f "/usr/local/bin/brew" ]]; then
+		eval "$(/usr/local/bin/brew shellenv)"
+	fi
+fi
+
+
 # ==============================================================================
 # Functions
 # ==============================================================================
@@ -44,6 +54,14 @@ set_default_shell() {
 		current_shell=""
 	fi
 	if [[ "$current_shell" == "$zsh_path" ]]; then
+		return 0
+	fi
+
+	# chsh requires manual password entry on macOS unless run as root.
+	# Skip in non-interactive sessions to avoid hanging.
+	if [[ ! -t 0 ]]; then
+		echo "Warning: Cannot change default shell to zsh automatically in non-interactive mode."
+		echo "  Please run manually: chsh -s $zsh_path"
 		return 0
 	fi
 
@@ -368,9 +386,9 @@ install_tmux_plugin_manager() {
 	mkdir -p "$tpm_dir"
 	git clone https://github.com/tmux-plugins/tpm "$tpm_dir"
 
-	# Source tmux config if tmux is installed
-	if command -v tmux >/dev/null 2>&1 && [[ -e "$HOME/.tmux.conf" ]]; then
-		tmux source "$HOME/.tmux.conf"
+	# Source tmux config if tmux is installed and running
+	if command -v tmux >/dev/null 2>&1 && tmux info &>/dev/null && [[ -e "$HOME/.tmux.conf" ]]; then
+		tmux source "$HOME/.tmux.conf" || true
 	fi
 }
 
@@ -488,9 +506,9 @@ prompt_ai_install() {
 		return 0
 	fi
 
-	# Non-interactive: default to install
+	# Non-interactive: default to skip
 	if [[ ! -t 0 ]]; then
-		INSTALL_AI=true
+		INSTALL_AI=false
 		return 0
 	fi
 
@@ -809,6 +827,14 @@ install_packages() {
 		if ! command -v brew >/dev/null 2>&1; then
 			echo "Installing Homebrew..."
 			/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+			if [[ -f "/opt/homebrew/bin/brew" ]]; then
+				eval "$(/opt/homebrew/bin/brew shellenv)"
+			elif [[ -f "/usr/local/bin/brew" ]]; then
+				eval "$(/usr/local/bin/brew shellenv)"
+			fi
+		else
+			echo "Updating Homebrew..."
+			brew update
 		fi
 
 		install_brew_packages
@@ -830,15 +856,6 @@ install_packages() {
 
 update_packages() {
 	if [[ "$(uname)" == "Darwin" ]]; then
-		if command -v brew >/dev/null 2>&1; then
-			echo "Updating Homebrew and upgrading packages..."
-			brew update
-			brew upgrade
-			brew cleanup
-		else
-			echo "Homebrew not installed, skipping"
-		fi
-
 		if command -v softwareupdate >/dev/null 2>&1; then
 			echo "Checking for macOS software updates..."
 			softwareupdate --list
@@ -869,7 +886,7 @@ update_packages() {
 	# Update global npm packages
 	if command -v npm >/dev/null 2>&1; then
 		echo "Updating global npm packages..."
-		npm update -g
+		npm update -g || true
 	fi
 
 	# Update cargo packages
@@ -881,7 +898,7 @@ update_packages() {
 	fi
 
 	# Update pip packages (no safe "update all" — list managed packages explicitly)
-	if command -v pip3 >/dev/null 2>&1; then
+	if [[ "$INSTALL_AI" == true ]] && command -v pip3 >/dev/null 2>&1; then
 		echo "Updating pip packages..."
 		pip3 install --upgrade piper-tts 2>/dev/null || pip3 install --upgrade --break-system-packages piper-tts 2>/dev/null || true
 	fi
@@ -985,9 +1002,29 @@ install_brew_packages() {
 		return 0
 	fi
 
+	local temp_pip_conf=false
+	# Check if we need to temporarily override pip.conf to bypass corporate mirror issues for gcloud-cli
+	if [[ "$(uname)" == "Darwin" ]] && [[ -f "/Library/Application Support/pip/pip.conf" ]]; then
+		if [[ ! -f "$HOME/.config/pip/pip.conf" ]]; then
+			echo "Temporarily configuring PyPI mirror for Homebrew Python dependencies..."
+			mkdir -p "$HOME/.config/pip"
+			echo -e "[global]\nindex-url = https://pypi.org/simple" > "$HOME/.config/pip/pip.conf"
+			temp_pip_conf=true
+			# Guarantee cleanup even if a brew bundle below aborts under set -euo
+			# pipefail. A leftover temp file would otherwise mask the corporate
+			# pip.conf on every subsequent run (the guard above skips re-creating
+			# it once $HOME/.config/pip/pip.conf exists).
+			trap 'rm -f "$HOME/.config/pip/pip.conf"' EXIT
+		fi
+	fi
+
 	echo "Installing Homebrew packages..."
-	# Use --adopt to take ownership of existing apps instead of erroring
-	HOMEBREW_CASK_OPTS="--adopt" brew bundle --file="$brewfile"
+	# Use --adopt to take ownership of existing apps instead of erroring.
+	# Tolerate a non-zero exit (e.g. a `mas` entry failing because the machine
+	# isn't signed into the App Store) so Phase 1 doesn't abort before
+	# sync_dotfiles runs — brew bundle already reports which packages failed.
+	HOMEBREW_CASK_OPTS="--adopt" brew bundle --file="$brewfile" \
+		|| echo "  Warning: some Homebrew packages failed to install (continuing)."
 
 	# Conditionally install AI assistant packages (Claude, OpenClaw tools)
 	prompt_ai_install
@@ -995,8 +1032,17 @@ install_brew_packages() {
 		local ai_brewfile="$dotfiles_dir/Brewfile.ai"
 		if [[ -f "$ai_brewfile" ]]; then
 			echo "Installing AI assistant packages..."
-			HOMEBREW_CASK_OPTS="--adopt" brew bundle --file="$ai_brewfile"
+			HOMEBREW_CASK_OPTS="--adopt" brew bundle --file="$ai_brewfile" \
+				|| echo "  Warning: some AI Homebrew packages failed to install (continuing)."
 		fi
+	fi
+
+	# Remove the temporary pip.conf on the success path and clear the
+	# safety-net trap (cleanup only ran via the trap on an early abort).
+	if [[ "$temp_pip_conf" == true ]]; then
+		rm -f "$HOME/.config/pip/pip.conf"
+		trap - EXIT
+		echo "Removed temporary PyPI mirror override."
 	fi
 }
 
@@ -1072,7 +1118,7 @@ install_yazi_flavor() {
 	# Install catppuccin-mocha flavor if not present
 	if ! $ya_cmd pkg list 2>/dev/null | grep -q "catppuccin-mocha"; then
 		echo "Installing yazi catppuccin-mocha flavor..."
-		$ya_cmd pkg add yazi-rs/flavors:catppuccin-mocha
+		$ya_cmd pkg add yazi-rs/flavors:catppuccin-mocha || true
 	fi
 }
 
@@ -1143,6 +1189,42 @@ install_claude_mcp_servers() {
 	fi
 }
 
+configure_npm_registry() {
+	# Skip if ~/.npmrc already contains the registry auth configurations
+	if [[ -f "$HOME/.npmrc" ]] && grep -q "ah-3p-staging-npm" "$HOME/.npmrc" 2>/dev/null; then
+		return 0
+	fi
+
+	# Require gcloud and npm to be installed
+	if ! command -v gcloud >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
+		return 0
+	fi
+
+	# Check if user has an active gcloud account
+	local active_account
+	active_account=$(gcloud config get-value account 2>/dev/null) || return 0
+	if [[ -z "$active_account" ]]; then
+		return 0
+	fi
+
+	echo "Configuring NPM registry credentials via gcloud..."
+	local settings
+	if settings=$(gcloud artifacts print-settings npm --project=artifact-foundry-prod --repository=ah-3p-staging-npm --location=us 2>/dev/null); then
+		# Strip the deprecated always-auth line. The trailing `|| true` keeps a
+		# fully-filtered output (grep exit 1) from aborting bootstrap under
+		# `set -euo pipefail`.
+		# Note: print-settings embeds a short-lived OAuth _authToken that is not
+		# refreshed here (the guard above skips re-running once ah-3p-staging-npm
+		# is present in ~/.npmrc). Re-run this step if npm auth starts failing.
+		# Prepend a newline so the first appended line can't concatenate onto an
+		# existing ~/.npmrc entry that lacks a trailing newline.
+		{ printf '\n'; echo "$settings" | { grep -v "always-auth" || true; }; } >> "$HOME/.npmrc"
+		echo "NPM registry credentials configured in ~/.npmrc"
+	else
+		echo "  Warning: Failed to configure NPM credentials automatically"
+	fi
+}
+
 sync_dotfiles() {
 	# Set default shell to zsh
 	set_default_shell
@@ -1200,6 +1282,9 @@ sync_dotfiles() {
 	# Install LaunchAgents (macOS) or cron jobs (Linux)
 	install_launch_agents
 	cleanup_legacy_cron
+
+	# Configure NPM registry auth if authenticated with gcloud
+	configure_npm_registry
 
 	# Reload zsh configuration
 	if [[ -n "${ZSH_VERSION:-}" ]]; then

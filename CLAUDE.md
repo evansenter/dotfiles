@@ -46,7 +46,7 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 **Phase 1 — Pull & packages** (only with `--pull`/`-p`):
 1. Pulls latest from git
 2. Installs packages: Homebrew (macOS), apt (Debian/Ubuntu), or binary downloads to `~/.local/bin` (SteamOS)
-3. Updates existing packages
+3. Refreshes package metadata (`brew update`) and installs any missing packages via `brew bundle`. Note: on macOS it does **not** run `brew upgrade`/`brew cleanup`, so already-installed formulae are not bumped to newer versions (kept out for speed and to avoid surprise breakage — upgrade manually with `brew upgrade`).
 
 **Phase 2 — Sync dotfiles** (always runs):
 1. Sets default shell to zsh
