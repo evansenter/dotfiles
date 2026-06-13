@@ -113,11 +113,11 @@ On a bare macOS install, in order:
    cd ~/projects/dotfiles
    ```
 3. **Create `~/.extra`** with any secrets *before* the full bootstrap, so package/MCP setup can use them (see the env vars under [Customization](#customization) — `GITHUB_TOKEN`, and on the gateway host `OPENCLAW_GATEWAY_TOKEN` / `OBSIDIAN_API_KEY`).
-4. **Run the full bootstrap** (installs Homebrew if missing, installs packages, inits submodules + themes, symlinks dotfiles, registers MCP servers, installs LaunchAgents):
+4. **Run the full bootstrap** (installs Homebrew if missing, installs packages, inits submodules + themes, symlinks dotfiles, registers MCP servers, installs LaunchAgents, and applies macOS system defaults):
    ```bash
    ./bootstrap.sh -p          # -p = pull + install/update packages, then sync
    ```
-   Re-running `./bootstrap.sh -f` later is safe and idempotent (and restores symlinks that atomic-writing tools like btop/zellij/CC replace).
+   The `-p` run also applies `home/.macos` (Dock, Finder, keyboard, trackpad, hot corners, etc. — see [macOS system defaults](#macos-system-defaults)) and restarts Dock/Finder. Re-running `./bootstrap.sh -f` later is safe and idempotent (and restores symlinks that atomic-writing tools like btop/zellij/CC replace) — but `-f` does **not** touch system defaults, so it won't restart your Dock.
 5. **Restart the terminal** (or `source ~/.zshrc`).
 6. **Manual post-install steps** (bootstrap can't automate these):
    - **tmux:** press `prefix + I` to install TPM plugins.
@@ -201,6 +201,26 @@ Create `~/.extra` (not tracked) for personal settings:
 export CUSTOM_VAR="value"
 alias myalias="some command"
 ```
+
+## macOS system defaults
+
+`home/.macos` is a faithful snapshot of intentional macOS system settings — Dock
+(autohide, size, hot corners), Finder (hidden files, list view, path bar),
+keyboard/text (show extensions, no auto-correct, traditional scrolling),
+trackpad (tap-to-click, three-finger drag), Stage Manager off, `en_GB` locale,
+and a few misc tweaks. It's applied automatically by `./bootstrap.sh -p`; you can
+also re-run it any time:
+
+```bash
+~/.macos        # (symlinked) or: bash home/.macos
+```
+
+It's macOS-only, idempotent, and restarts Dock/Finder/SystemUIServer to apply.
+To change settings, edit `home/.macos` (it's a plain `defaults write` script).
+
+**Not captured** (can't be, via `defaults`): iCloud/Apple-ID settings, Login
+Items, TCC permissions, network/Wi-Fi, Touch ID, and sandboxed apps (Safari,
+Control Center) — configure those manually.
 
 ## Credits
 

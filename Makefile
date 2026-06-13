@@ -16,6 +16,7 @@ test:
 	@echo "Checking bash syntax..."
 	@bash -n bootstrap.sh
 	@bash -n uninstall.sh
+	@bash -n home/.macos
 	@for f in home/.bin/*; do echo "  $$f"; bash -n "$$f" || exit 1; done
 	@echo "Checking zsh syntax..."
 	@zsh -n home/.zshrc

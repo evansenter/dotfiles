@@ -1317,6 +1317,17 @@ for arg in "$@"; do
 	esac
 done
 
+# Apply macOS system defaults (faithful snapshot in home/.macos). Only on a full
+# `-p` install — it restarts Dock/Finder, so we don't run it on routine `-f` syncs.
+apply_macos_defaults() {
+	[[ "$(uname)" == "Darwin" ]] || return 0
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	if [[ -x "$dotfiles_dir/home/.macos" ]]; then
+		bash "$dotfiles_dir/home/.macos" || echo "Warning: some macOS defaults failed to apply"
+	fi
+}
+
 # Pull, install, and update packages if requested
 if [[ "$PULL" == true ]]; then
 	pull_latest
@@ -1333,4 +1344,9 @@ else
 	if [[ $REPLY =~ ^[Yy]$ ]]; then
 		sync_dotfiles
 	fi
+fi
+
+# Apply macOS system defaults on a full install only (after symlinks are in place).
+if [[ "$PULL" == true ]]; then
+	apply_macos_defaults
 fi
