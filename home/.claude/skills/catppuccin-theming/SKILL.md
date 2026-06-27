@@ -71,9 +71,7 @@ When configuring a new CLI tool:
 
 ## Dark/Light Mode Switching
 
-`dark-notify` monitors macOS appearance changes. Currently only btop switches themes automatically (`home/.bin/toggle-btop-theme`). Other tools use Mocha (dark) permanently.
-
-To add another tool to auto-switching:
-1. Add a case to `toggle-btop-theme` (or create a new script)
-2. The script receives "light" or "dark" as `$1`
-3. Use Latte for light mode, Mocha for dark mode
+All tools use Mocha (dark) permanently — there is no automatic light/dark
+switching. If you want to add it for a tool, drive a script off macOS appearance
+(e.g. `defaults read -g AppleInterfaceStyle`) and swap Latte (light) for Mocha
+(dark).

@@ -428,45 +428,6 @@ install_launch_agents() {
 		return 0
 	fi
 
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-
-	# Install dark-notify LaunchAgent (only if dark-notify is installed)
-	if command -v dark-notify >/dev/null 2>&1; then
-		local plist="com.user.dark-notify.plist"
-		local homebrew_prefix
-		if command -v brew >/dev/null 2>&1 && homebrew_prefix="$(brew --prefix 2>/dev/null)"; then
-			: # homebrew_prefix set by condition
-		elif [[ "$(uname -m)" == "arm64" ]]; then
-			homebrew_prefix="/opt/homebrew"
-		else
-			homebrew_prefix="/usr/local"
-		fi
-		local new_plist_content
-		new_plist_content=$(sed -e "s|__HOME__|$HOME|g" -e "s|__HOMEBREW_PREFIX__|$homebrew_prefix|g" "$dotfiles_dir/LaunchAgents/$plist")
-		local dest_plist="$HOME/Library/LaunchAgents/$plist"
-
-		mkdir -p "$HOME/Library/LaunchAgents"
-
-		local tmp_plist
-		tmp_plist=$(mktemp)
-		echo "$new_plist_content" > "$tmp_plist"
-
-		if [[ ! -f "$dest_plist" ]] || ! cmp -s "$tmp_plist" "$dest_plist"; then
-			echo "Installing LaunchAgent: $plist"
-			mv "$tmp_plist" "$dest_plist"
-
-			launchctl bootout "gui/$(id -u)/com.user.dark-notify" 2>/dev/null || true
-			launchctl bootstrap "gui/$(id -u)" "$dest_plist" || true
-
-			"$HOME/.bin/toggle-btop-theme"
-		else
-			rm -f "$tmp_plist"
-		fi
-	else
-		echo "Skipping dark-notify LaunchAgent (dark-notify not installed)"
-		echo "  Install with: brew install cormacrelf/tap/dark-notify"
-	fi
-
 	# Install cargo-sweep LaunchAgent (only if cargo is installed)
 	if command -v cargo >/dev/null 2>&1; then
 		install_launch_agent "com.user.cargo-sweep.plist"

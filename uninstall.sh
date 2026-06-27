@@ -36,10 +36,6 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
         rm "$link" && echo "Removed: $link"
     done
 
-    # Unload and remove dark-notify LaunchAgent
-    launchctl bootout "gui/$(id -u)/com.user.dark-notify" 2>/dev/null || true
-    rm -f ~/Library/LaunchAgents/com.user.dark-notify.plist
-
     # Remove btop theme symlinks
     rm -f ~/.config/btop/themes/catppuccin_*.theme 2>/dev/null
 
