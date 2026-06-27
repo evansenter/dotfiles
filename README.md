@@ -123,16 +123,9 @@ On a bare macOS install, in order:
    - **tmux:** press `prefix + I` to install TPM plugins.
    - **iTerm2:** import the Catppuccin color preset (`preferences/` / `vendor/iterm-catppuccin/`).
    - **zellij:** `zellij kill-all-sessions` so the symlinked config is picked up (hot-reload doesn't work with symlinks).
-   - **btop dark-mode switching (optional):** `brew install cormacrelf/tap/dark-notify` then re-run `./bootstrap.sh -f`.
    - **Gateway host only:** open Obsidian with the Local REST API plugin enabled (obsidian-mcp's wrapper backs off until it's reachable).
 
 ### Optional dependencies
-
-**Dark mode theme switching** (btop):
-```bash
-brew install cormacrelf/tap/dark-notify
-./bootstrap.sh  # Re-run to install LaunchAgent
-```
 
 **Claude Code** (commands, hooks, settings symlinked to ~/.claude/):
 ```bash

@@ -87,8 +87,6 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 
 **Prompt** (`home/.zsh_prompt`) - Timer displayed if command takes >0s.
 
-**Dark Mode Switching** (`home/.bin/toggle-btop-theme`) - Switches btop theme based on macOS appearance. Requires `dark-notify`.
-
 **Claude Code** (`home/.claude/`) - Global config, agents, commands, contrib scripts, hooks, skills, settings.
 
 **Hooks** (`home/.claude/hooks/`) - Shell scripts for Claude Code lifecycle events. See `hooks/README.md` for architecture and details. When adding or modifying hooks, update the README.
@@ -117,7 +115,7 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 
 LaunchAgent plists live in `~/Library/LaunchAgents/`. The external service repos (event-bus, session-analytics, memory-store) have their own `make install-server`; obsidian-mcp is set up by *this* repo's bootstrap (`claude mcp add` + plist in `LaunchAgents/`, wrapper in `home/.bin/obsidian-mcp-start`, requires Obsidian with the Local REST API plugin running). Reload with `launchctl unload` + `launchctl load`.
 
-Note: `agent-memory-store` is documented infra but is **not** provisioned by bootstrap (no `claude mcp add`, no `AGENT_MEMORY_STORE_URL` in `settings.local.json`) — it's registered out-of-band where used. The repo-managed LaunchAgents are: `com.evansenter.obsidian-mcp` (gateway only), `com.evansenter.sysload` (zellij CPU/RAM widget, if zellij installed), `com.user.dark-notify` (btop dark-mode switching, if dark-notify installed), and `com.user.cargo-sweep` (periodic `cargo sweep`, if cargo installed).
+Note: `agent-memory-store` is documented infra but is **not** provisioned by bootstrap (no `claude mcp add`, no `AGENT_MEMORY_STORE_URL` in `settings.local.json`) — it's registered out-of-band where used. The repo-managed LaunchAgents are: `com.evansenter.obsidian-mcp` (gateway only), `com.evansenter.sysload` (zellij CPU/RAM widget, if zellij installed), and `com.user.cargo-sweep` (periodic `cargo sweep`, if cargo installed).
 
 **Adding new LaunchAgents:** Plists go in the top-level `LaunchAgents/` directory (NOT `home/Library/LaunchAgents/`). Use `__HOME__` as a placeholder for the user's home directory — `install_launch_agent()` in bootstrap does `sed` substitution at install time. Logs go to `~/.local/log/`. Add an `install_launch_agent` call in `install_launch_agents()`, gated on the binary being present.
 
