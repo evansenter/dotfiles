@@ -158,7 +158,7 @@ Session End / Agent Teams
 ---
 
 ### task-created.sh
-**Trigger:** `TaskCreated` (Agent Teams)
+**Trigger:** `TaskCreated` — fires whenever a task is created via the `TaskCreate` tool (solo sessions and Agent Teams alike; `teammate_name`/`team_name` are empty outside teams)
 
 **Purpose:** Broadcast task creation for cross-agent visibility.
 
@@ -175,7 +175,7 @@ Session End / Agent Teams
 ---
 
 ### task-completed.sh
-**Trigger:** `TaskCompleted` (Agent Teams)
+**Trigger:** `TaskCompleted` — fires whenever a task is marked complete (solo sessions and Agent Teams alike; `teammate_name`/`team_name` are empty outside teams)
 
 **Purpose:** Broadcast task completion for coordination.
 
