@@ -35,6 +35,10 @@ Session Start
 │      │   - post-tool-failure.sh     │
 │      │   (detects recurring errors) │
 │      │                              │
+│      ├── Notification hook          │
+│      │   - notification.sh          │
+│      │   (surfaces in zjstatus bar) │
+│      │                              │
 │      ├── Stop hooks (run in order): │
 │      │   1. zj-status.sh waiting    │
 │      │   2. enforce-insight-publish │
@@ -216,6 +220,27 @@ Counting is lenient: one `publish_event` covers all insights in the turn (matche
 
 ---
 
+### notification.sh
+**Trigger:** `Notification`
+
+**Purpose:** Surface Claude Code notifications in the zjstatus bar — permission requests, idle "waiting for input" prompts, and background agent events (`agent_needs_input` / `agent_completed`, fired by background agents since CC v2.1.198).
+
+**Actions:**
+1. Exit silently if not inside zellij or jq is missing
+2. Parse `message` and optional `notification_type` from stdin JSON
+3. Map type to icon: `agent_completed` → ✅, `agent_needs_input` → 🔔, `permission*` → 🔐, default → 🔔
+4. Truncate message to 60 chars and send `zjstatus::notify::<icon> <message>` via zellij pipe
+
+The notify slot is shared with `zj-status.sh` (working/waiting); notifications intentionally overwrite the working indicator, and the next `UserPromptSubmit`/`Stop` restores it.
+
+**Input JSON fields:** `session_id`, `cwd`, `message`, `notification_type` (background agent events only)
+
+**Output:** None (zellij pipe side effect only)
+
+**Exit code:** Always 0 (graceful degradation without zellij/jq).
+
+---
+
 ### post-tool-failure.sh
 **Trigger:** `PostToolUseFailure`
 
@@ -301,7 +326,8 @@ In `settings.json`:
     "TeammateIdle": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/teammate-idle.sh" }] }],
     "TaskCreated": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/task-created.sh" }] }],
     "TaskCompleted": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/task-completed.sh" }] }],
-    "PostToolUseFailure": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/post-tool-failure.sh" }] }]
+    "PostToolUseFailure": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/post-tool-failure.sh" }] }],
+    "Notification": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/notification.sh" }] }]
   }
 }
 ```

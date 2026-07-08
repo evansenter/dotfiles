@@ -61,7 +61,7 @@ A loop is repeating cycles of work until a stop condition is met. Pick the light
 - **Turn-based** (default): user steers each iteration. For exploratory or judgment-heavy work.
 - **Goal-based** (`/goal`): work with a checkable done-condition. Use deterministic criteria (tests pass, CI green, zero Critical findings) — the evaluator blocks premature "good enough" stops. Set a turn cap.
 - **Time-based** (`/loop <interval>`): polling external systems only. Prefer event-driven signals (event bus, background task notifications, `--watch` flags) over time-driven polling; when you must poll, use the longest interval that works.
-- **Scheduled** (`/schedule` Routines): recurring maintenance on a calendar — e.g., weekly `audit-*` agent sweeps, dependency freshness checks.
+- **Scheduled** (`/schedule` Routines): recurring maintenance on a calendar — e.g., weekly `audit-*` agent sweeps (`/schedule-audits`), dependency freshness checks.
 - **Dynamic workflows** (ask for a workflow): fan out many agents for wide sweeps — audits, migrations, multi-lens reviews. Monitor with `/workflows`.
 
 After a loop runs, note where it stalled or over-reached, then tighten the stop condition or interval. Never busy-wait with foreground `sleep` — background the watcher or use `/loop`.
