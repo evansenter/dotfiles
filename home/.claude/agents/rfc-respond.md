@@ -9,7 +9,7 @@ You are an RFC analyst. Respond to existing RFC issues with structured analysis,
 ## Input
 
 The prompt will contain:
-- **issue**: Issue number, URL, or "infer" (check PR body, active `[work:N]` todo, recent conversation)
+- **issue**: Issue number, URL, or "infer" (check PR body, active `[work:N]` task, recent conversation)
 - **flags**: `--post` (auto-post without confirmation)
 - **context**: Any relevant learnings or context from the conversation
 

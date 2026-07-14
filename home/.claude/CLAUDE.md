@@ -54,6 +54,18 @@ Use `/work <issue-number>` for guided development. `/work --attach` to join an e
 - **On feedback**: Present via AskUserQuestion. Form your own opinion—you have context reviewers lack
 - **After fixes**: Push → auto-cycle repeats until clean
 
+## Loops & Automation
+
+A loop is repeating cycles of work until a stop condition is met. Pick the lightest primitive that fits, and write the verification check *before* handing work to a loop — if "done" can't be checked deterministically, keep it turn-based.
+
+- **Turn-based** (default): user steers each iteration. For exploratory or judgment-heavy work.
+- **Goal-based** (`/goal`): work with a checkable done-condition. Use deterministic criteria (tests pass, CI green, zero Critical findings) — the evaluator blocks premature "good enough" stops. Set a turn cap.
+- **Time-based** (`/loop <interval>`): polling external systems only. Prefer event-driven signals (event bus, background task notifications, `--watch` flags) over time-driven polling; when you must poll, use the longest interval that works.
+- **Scheduled** (`/schedule` Routines): recurring maintenance on a calendar — e.g., weekly `audit-*` agent sweeps (`/schedule-audits`), dependency freshness checks.
+- **Dynamic workflows** (ask for a workflow): fan out many agents for wide sweeps — audits, migrations, multi-lens reviews. Monitor with `/workflows`.
+
+After a loop runs, note where it stalled or over-reached, then tighten the stop condition or interval. Never busy-wait with foreground `sleep` — background the watcher or use `/loop`.
+
 ## Event Bus
 
 Cross-session coordination. Sessions auto-register on startup.

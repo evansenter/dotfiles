@@ -41,6 +41,8 @@ If PR_NUMBER is omitted, uses the current branch's PR.
 
 5. When you receive a task notification about the background command completing, read the output to check results.
 
+   If the background watch dies (network drop, token expiry) or the environment can't hold a long-lived watch, fall back to a time-based loop with a long interval: `/loop 5m check gh pr checks <PR_NUMBER>; stop the loop when checks reach a terminal state`. (No foreground `sleep` — see Loops & Automation.)
+
 6. When CI completes:
    - Notify and broadcast:
      ```

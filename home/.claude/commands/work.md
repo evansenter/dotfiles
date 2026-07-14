@@ -18,7 +18,7 @@ Guided development (optional) runs exploration agents, asks clarifying questions
 
 ## Identifiers
 
-Todos use `[work:ID]` prefix:
+Tasks (created via TaskCreate) use `[work:ID]` subject prefix:
 
 | Input | Identifier | Example |
 |-------|------------|---------|
@@ -51,7 +51,7 @@ Join existing PR on current branch, restoring WIP context if available.
 Note: Code checks (lint, test, etc.) and claude-review are separate CI jobs.
 claude-review posts a native GitHub review (approve/request-changes) — check review status with `gh pr view --json reviews`.
 
-6. Create remaining todos only. Display resume plan showing what's done and what remains.
+6. Create remaining tasks only. Display resume plan showing what's done and what remains.
 
 ---
 
@@ -59,9 +59,9 @@ claude-review posts a native GitHub review (approve/request-changes) — check r
 
 ### 1. Check for Active Session
 
-If incomplete `[work:*]` todos exist, block new work.
+If incomplete `[work:*]` tasks exist (check TaskList), block new work.
 
-**Note:** Other todos without `[work:*]` prefix don't block (including subagent todos).
+**Note:** Other tasks without `[work:*]` prefix don't block (including subagent tasks).
 
 ### 2. Parse Input
 
@@ -112,7 +112,7 @@ These are preliminary - if user opts into guided development, they'll be refined
 Ask via AskUserQuestion:
 - **Start work** - Proceed to guided development question
 - **Modify scope** - Adjust tasks before starting
-- **Cancel** - Abort without creating todos
+- **Cancel** - Abort without creating tasks
 
 ### 6b. Create Feature Branch
 
@@ -200,7 +200,9 @@ Based on the architecture plan, derive final implementation tasks. These replace
 
 ---
 
-### 8. Create Todos
+### 8. Create Tasks
+
+Create via TaskCreate, one per item:
 
 ```
 [work:${ID}] <task 1>
@@ -242,15 +244,17 @@ WIP state is **automatically checkpointed** by the `pre-compact.sh` hook before 
 
 **Auto-captured:** `[work:ID] | branch | pr: #N | files | time`
 
-**On session resume:** Check `<wip-checkpoint-restored>` tags in session start. Combined with the persisted todo list, this provides enough context to continue work.
+**On session resume:** Check `<wip-checkpoint-restored>` tags in session start. Combined with the persisted task list, this provides enough context to continue work.
 
 ---
 
 ## Checkpoint Handling
 
+**Goal-based loops:** For a review→fix or CI→fix cycle expected to take more than one round, offer to set `/goal` with the deterministic stop condition (e.g., `CI green on PR #N and /pr-review local clean`) — see Loops & Automation. Judgment-heavy checkpoints (scope, merge confirmation, feedback triage) stay turn-based.
+
 **Run /pr-review local**: Run, fix issues if found, loop until clean.
 
-**Create PR**: Run `/pr-create`. If adhoc, update remaining todos to `[work:pr-N]`.
+**Create PR**: Run `/pr-create`. If adhoc, update remaining tasks to `[work:pr-N]`.
 
 **Monitor CI**: Run `/watch-ci <PR#>` in background.
 

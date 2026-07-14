@@ -82,6 +82,16 @@ For each error pattern with 3+ occurrences across sessions:
 
 **Skip if:** Error rate is ≤ 5% (Phase 2 already gates this).
 
+### Loop Opportunities
+
+While reviewing the data above (no extra queries), flag work the user is the bottleneck for that has a deterministic done-check — it's a candidate for a loop primitive:
+
+- Same fix-verify cycle repeated across turns with a checkable stop condition → suggest `/goal <condition>`
+- Session polled an external system on a timer → suggest `/loop <interval>` (or an event source if one exists)
+- Same manual maintenance task appearing across sessions (audits, dependency bumps, cleanups) → suggest a `/schedule` Routine
+
+Only report as a finding if you can name the exact stop condition or schedule — "could be automated" without one is not actionable.
+
 ### Cross-Session Gotchas
 
 Only if insights show `has_bus_events: true`:

@@ -32,7 +32,15 @@ Output 2-3 sentence summary of what changed and why.
 
 ### 2. Run Analysis
 
-`code-reviewer` is an agent, not a skill — invoke it with the Task tool:
+Use the built-in `code-review` skill — it fans out multiple reviewers and adversarially verifies findings before reporting:
+
+```
+Skill(skill="code-review", args="medium")
+```
+
+Scale effort to the diff: `args="low"` for small or docs-only changes, `args="high"` for large or risky diffs (security-sensitive files, >10 files changed).
+
+**Fallback** (if the built-in skill is unavailable), use the plugin agent via the Task tool:
 
 ```
 Task(subagent_type="pr-review-toolkit:code-reviewer",
