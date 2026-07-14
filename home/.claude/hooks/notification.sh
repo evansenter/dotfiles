@@ -35,17 +35,15 @@ NTYPE=$(echo "$INPUT" | jq -r '.notification_type // ""' 2>/dev/null) || exit 0
 # Nothing to show
 [[ -z "$MESSAGE" ]] && exit 0
 
-case "$NTYPE" in
-    agent_completed)
-        ICON="✅"
-        ;;
-    permission*)
-        ICON="🔐"
-        ;;
-    *)
-        # Includes agent_needs_input and untyped notifications
-        ICON="🔔"
-        ;;
-esac
+# Permission prompts arrive untyped (notification_type is set only for
+# background-agent events), so also key the padlock off the message text.
+if [[ "$NTYPE" == "agent_completed" ]]; then
+    ICON="✅"
+elif [[ "$NTYPE" == permission* || "$MESSAGE" == *[Pp]ermission* ]]; then
+    ICON="🔐"
+else
+    # Includes agent_needs_input and other untyped notifications
+    ICON="🔔"
+fi
 
 zellij pipe "zjstatus::notify::${ICON} ${MESSAGE}" 2>/dev/null || true

@@ -228,7 +228,7 @@ Counting is lenient: one `publish_event` covers all insights in the turn (matche
 **Actions:**
 1. Exit silently if not inside zellij, jq is missing, or stdin isn't valid JSON
 2. Parse `message` and optional `notification_type` from stdin JSON, truncating the message to 60 chars inside jq (codepoint-safe — bash slicing counts bytes under a C locale and can split multibyte chars)
-3. Map type to icon: `agent_completed` → ✅, `permission*` → 🔐, everything else (incl. `agent_needs_input`) → 🔔
+3. Map to icon: `agent_completed` → ✅, permission prompts (`permission*` type, or "permission" in the message text since permission notifications arrive untyped) → 🔐, everything else (incl. `agent_needs_input`) → 🔔
 4. Send `zjstatus::notify::<icon> <message>` via zellij pipe
 
 The notify slot is shared with `zj-status.sh` (working/waiting); notifications intentionally overwrite the working indicator. A mid-turn notification stays visible until the turn ends (`Stop` clears the slot; the next `UserPromptSubmit` rewrites it).

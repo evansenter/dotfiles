@@ -1110,6 +1110,17 @@ test_notification_default_icon() {
     grep -qF "pipe zjstatus::notify::🔔 Waiting for your input" "$ZJ_CAPTURE"
 }
 
+test_notification_untyped_permission_icon() {
+    # Permission prompts arrive without notification_type — the padlock
+    # must key off the message text
+    setup_mock_zellij
+
+    echo '{"message":"Claude needs your permission to use Bash"}' \
+        | ZELLIJ=1 bash "$HOOKS_DIR/notification.sh"
+
+    grep -qF "pipe zjstatus::notify::🔐 Claude needs your permission to use Bash" "$ZJ_CAPTURE"
+}
+
 test_notification_empty_message_no_pipe() {
     setup_mock_zellij
 
@@ -1820,6 +1831,7 @@ main() {
     run_test "integration: agent_completed icon" "test_notification_agent_completed_icon"
     run_test "integration: agent_needs_input icon" "test_notification_needs_input_icon"
     run_test "integration: default icon (no type)" "test_notification_default_icon"
+    run_test "integration: untyped permission prompt gets padlock" "test_notification_untyped_permission_icon"
     run_test "integration: empty message is a no-op" "test_notification_empty_message_no_pipe"
     run_test "integration: truncates long messages" "test_notification_truncates_long_message"
     run_test "graceful degradation (malformed JSON)" "test_notification_malformed_json_exit_zero"
