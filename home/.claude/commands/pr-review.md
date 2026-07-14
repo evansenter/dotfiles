@@ -40,10 +40,10 @@ Skill(skill="code-review", args="medium")
 
 Scale effort to the diff: `args="low"` for small or docs-only changes, `args="high"` for large or risky diffs (security-sensitive files, >10 files changed).
 
-**Fallback** (if the built-in skill is unavailable), use the plugin agent via the Task tool:
+**Fallback** (if the built-in skill is unavailable), use the plugin agent via the Agent tool:
 
 ```
-Task(subagent_type="pr-review-toolkit:code-reviewer",
+Agent(subagent_type="pr-review-toolkit:code-reviewer",
      prompt="Review the local diff (git diff against the base branch) for bugs, security issues, and convention violations. Report findings by severity.")
 ```
 
@@ -108,12 +108,12 @@ REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 ### 2. Fetch Comments
 
 ```
-mcp__github__get_pull_request_comments(owner, repo, pull_number)  # inline code comments
-mcp__github__get_pull_request_reviews(owner, repo, pull_number)   # review summaries
+mcp__github__pull_request_read(method: "get_review_comments", owner, repo, pullNumber)  # inline review threads (includes isResolved/isOutdated)
+mcp__github__pull_request_read(method: "get_reviews", owner, repo, pullNumber)           # review summaries
 gh api "repos/${REPO}/issues/${PR_NUM}/comments"                  # general PR conversation
 ```
 
-**Important:** An APPROVED review can still have inline suggestions. Always check `get_pull_request_comments` for inline comments even when the review verdict is APPROVE. Present any suggestions found — they're non-blocking but the user should see them before merging.
+**Important:** An APPROVED review can still have inline suggestions. Always check `pull_request_read(method: "get_review_comments")` for inline comments even when the review verdict is APPROVE. Present any suggestions found — they're non-blocking but the user should see them before merging.
 
 **If no feedback found (no reviews, no inline comments, no PR comments):** "No reviewer feedback found. PR is ready for merge or awaiting review." Exit early.
 

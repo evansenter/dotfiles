@@ -4,6 +4,12 @@ on:
   pull_request:
     types: [opened, synchronize]
 
+# Rapid successive pushes would otherwise spawn overlapping full-model review
+# runs (duplicate verdicts, wasted tokens); only the latest HEAD gets reviewed.
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 env:
   # Centralized prompt - edit in dotfiles repo, all repos pick up changes
   PROMPT_URL: https://raw.githubusercontent.com/evansenter/dotfiles/main/home/.claude/contrib/prompts/claude-review.md
@@ -54,5 +60,8 @@ jobs:
             ${{ steps.prompt.outputs.use_file == 'true' && 'First, read the review instructions from /tmp/review-prompt.md using your Read tool. Then follow those instructions to review this PR.' || 'Review this PR for code quality, bugs, security issues, and adherence to project conventions (check CLAUDE.md). Check for previous "Feedback Addressed" comments to avoid re-raising resolved issues. Be strict: REQUEST_CHANGES for any issues found, only APPROVE if genuinely ready to merge. Submit your review using gh api repos/$REPO/pulls/$PR_NUMBER/reviews with inline comments on specific files/lines and event set to APPROVE or REQUEST_CHANGES. Start the review body with: > **Prompt:** Fallback (centralized prompt fetch failed)' }}
 
             Use the REPO and PR_NUMBER variables provided above.
-          # Tools required by the centralized prompt (see contrib/prompts/claude-review.md)
-          claude_args: '--model opus --allowed-tools "Read,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh api:*)"'
+          # Tools required by the centralized prompt (see contrib/prompts/claude-review.md).
+          # Model: fable (Claude Fable 5) — most capable GA model; review quality is the
+          # goal and the run is bounded to one PR. ~2x Opus pricing; if Fable's cyber
+          # safety classifiers ever refuse a security-heavy diff, fall back to --model opus.
+          claude_args: '--model fable --allowed-tools "Read,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh api:*)"'

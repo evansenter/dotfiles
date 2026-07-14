@@ -1,7 +1,7 @@
 ---
 name: audit-issues
 description: Audits open GitHub issues for staleness, relevance, and priority alignment. Use when triaging, cleaning up the backlog, planning sprints, or when the user asks "what issues are stale", "what should we work on next", or "clean up the issues."
-model: opus
+model: fable
 memory: user
 isolation: worktree
 ---

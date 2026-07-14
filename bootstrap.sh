@@ -1142,10 +1142,13 @@ install_claude_mcp_servers() {
 	fi
 
 	# Install GitHub MCP server if not configured
+	# Official remote server (the old npx @modelcontextprotocol/server-github
+	# package is deprecated/archived). ${GITHUB_TOKEN} is single-quoted so it's
+	# stored literally — Claude Code expands env placeholders at request time.
 	if ! echo "$mcp_list" | grep -q "github"; then
 		echo "Installing GitHub MCP server..."
 		# shellcheck disable=SC2016
-		claude mcp add github -s user -e 'GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_TOKEN}' -- npx -y @modelcontextprotocol/server-github
+		claude mcp add --transport http -s user github https://api.githubcopilot.com/mcp/ --header 'Authorization: Bearer ${GITHUB_TOKEN}'
 
 		if [[ -z "${GITHUB_TOKEN:-}" ]]; then
 			echo "  Warning: GITHUB_TOKEN not set. Add to ~/.extra:"

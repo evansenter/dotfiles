@@ -44,7 +44,7 @@ Mantle     #181825    Crust      #11111b
 
 | Tool | Method | Location |
 |------|--------|----------|
-| bat | Config file | `home/.config/bat/config` → `--theme="Catppuccin Mocha"` |
+| bat | Vendor theme | `vendor/bat-catppuccin/themes/` installed by bootstrap; selected via `home/.config/bat/config` → `--theme="Catppuccin Mocha"` |
 | btop | Theme files | `vendor/btop-catppuccin/` → symlinked to `~/.config/btop/themes/` |
 | eza | Theme dir | `vendor/eza-catppuccin/` → `EZA_CONFIG_DIR` env var |
 | fzf | Env var | `home/.exports` → `FZF_DEFAULT_OPTS` with inline colors |
@@ -53,7 +53,7 @@ Mantle     #181825    Crust      #11111b
 | iTerm2 | Manual import | `vendor/iterm-catppuccin/` color preset |
 | lazygit | Inline colors | `home/.config/lazygit/config.yml` → custom theme block |
 | tmux | Plugin | `catppuccin/tmux` plugin in `.tmux.conf` (legacy, kept for compatibility) |
-| yazi | Built-in | Uses flavor system (built-in catppuccin support) |
+| yazi | Flavor package | bootstrap runs `ya pkg add yazi-rs/flavors:catppuccin-mocha`; selected in `home/.config/yazi/theme.toml` (`dark = "catppuccin-mocha"`) |
 | zellij | Built-in | `home/.config/zellij/config.kdl` → `theme "catppuccin-mocha"` |
 
 ## Adding a New Tool

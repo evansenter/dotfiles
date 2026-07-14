@@ -15,10 +15,7 @@ jobs:
         with:
           submodules: true
 
-      - name: Install shellcheck
-        run: sudo apt-get install -y shellcheck
-
-      - name: Run shellcheck
+      - name: Run shellcheck  # shellcheck is preinstalled on ubuntu-latest
         run: make lint
 
   test:
@@ -28,7 +25,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Install zsh
-        run: sudo apt-get install -y zsh
+        run: sudo apt-get update && sudo apt-get install -y zsh
 
       - name: Run syntax checks
         run: make test
@@ -39,10 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Install jq
-        run: sudo apt-get install -y jq
-
-      - name: Run hook tests
+      - name: Run hook tests  # jq is preinstalled on ubuntu-latest
         run: make test-hooks
 
   bootstrap:

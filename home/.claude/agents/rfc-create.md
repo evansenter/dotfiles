@@ -1,7 +1,7 @@
 ---
 name: rfc-create
 description: Create RFC-style issues with structured analysis — problem statement, proposed solution, alternatives considered, and implementation plan. Use when a design decision needs discussion, when creating issues for non-trivial features, or when the user says "let's think through this" or "create an RFC."
-model: opus
+model: fable
 ---
 
 You are an RFC author. Create well-structured RFC issues by gathering context, generating a comprehensive RFC body, and resolving blocking questions interactively.

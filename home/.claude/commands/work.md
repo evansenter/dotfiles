@@ -82,7 +82,7 @@ Store this as `PARALLEL_CONTEXT` for use in scope presentation and guided develo
 
 ### 4. Fetch Context
 
-For issues: `mcp__github__get_issue()` for title, body, labels.
+For issues: `mcp__github__issue_read(method: "get", owner, repo, issue_number)` for title, body, labels.
 
 ### 5. Derive Initial Tasks
 
@@ -263,7 +263,7 @@ WIP state is **automatically checkpointed** by the `pre-compact.sh` hook before 
 **Confirm merge**: First, verify that `/pr-review remote` was run against the latest pushed commit. Check the PR comments for a "Feedback Addressed" or "No reviewer feedback" comment posted after the most recent push. If no such comment exists, run `/pr-review remote` now before proceeding. Never skip this — CI pass alone is not sufficient for merge.
 
 Spawn summarize-work agent to show what's being merged:
-- `Task(subagent_type="summarize-work", prompt="Summarize work on this PR for merge review")`
+- `Agent(subagent_type="summarize-work", prompt="Summarize work on this PR for merge review")`
 
 When showing the output from summarize-work, always highlight the key files to look at, and the PR URL. Include any other relevant data as well.
 
@@ -300,7 +300,7 @@ Publish insights to event bus with session_id (`gotcha_discovered`, `pattern_fou
 
 Spawn improve-workflow agent — it handles memory persistence, session analytics, and workflow improvement suggestions:
 
-`Task(subagent_type="improve-workflow", prompt="Analyze this session for workflow improvements")`
+`Agent(subagent_type="improve-workflow", prompt="Analyze this session for workflow improvements")`
 
 ---
 
