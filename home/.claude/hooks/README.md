@@ -226,18 +226,18 @@ Counting is lenient: one `publish_event` covers all insights in the turn (matche
 **Purpose:** Surface Claude Code notifications in the zjstatus bar — permission requests, idle "waiting for input" prompts, and background agent events (`agent_needs_input` / `agent_completed`, fired by background agents since CC v2.1.198).
 
 **Actions:**
-1. Exit silently if not inside zellij or jq is missing
-2. Parse `message` and optional `notification_type` from stdin JSON
-3. Map type to icon: `agent_completed` → ✅, `agent_needs_input` → 🔔, `permission*` → 🔐, default → 🔔
-4. Truncate message to 60 chars and send `zjstatus::notify::<icon> <message>` via zellij pipe
+1. Exit silently if not inside zellij, jq is missing, or stdin isn't valid JSON
+2. Parse `message` and optional `notification_type` from stdin JSON, truncating the message to 60 chars inside jq (codepoint-safe — bash slicing counts bytes under a C locale and can split multibyte chars)
+3. Map type to icon: `agent_completed` → ✅, `permission*` → 🔐, everything else (incl. `agent_needs_input`) → 🔔
+4. Send `zjstatus::notify::<icon> <message>` via zellij pipe
 
-The notify slot is shared with `zj-status.sh` (working/waiting); notifications intentionally overwrite the working indicator, and the next `UserPromptSubmit`/`Stop` restores it.
+The notify slot is shared with `zj-status.sh` (working/waiting); notifications intentionally overwrite the working indicator. A mid-turn notification stays visible until the turn ends (`Stop` clears the slot; the next `UserPromptSubmit` rewrites it).
 
 **Input JSON fields:** `session_id`, `cwd`, `message`, `notification_type` (background agent events only)
 
 **Output:** None (zellij pipe side effect only)
 
-**Exit code:** Always 0 (graceful degradation without zellij/jq).
+**Exit code:** Always 0 (graceful degradation without zellij/jq, and on malformed input).
 
 ---
 

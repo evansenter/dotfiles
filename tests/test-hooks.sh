@@ -85,7 +85,13 @@ elif [[ "$*" == *".team_name"* ]]; then
 elif [[ "$*" == *".notification_type"* ]]; then
     echo "$input" | grep -o '"notification_type":"[^"]*"' | cut -d'"' -f4 || echo ""
 elif [[ "$*" == *".message"* ]]; then
-    echo "$input" | grep -o '"message":"[^"]*"' | cut -d'"' -f4 || echo ""
+    # Emulate notification.sh's jq-side truncation filter (ASCII only)
+    m=$(echo "$input" | grep -o '"message":"[^"]*"' | cut -d'"' -f4) || m=""
+    if [[ "$*" == *"length > 60"* ]] && (( ${#m} > 60 )); then
+        echo "${m:0:57}..."
+    else
+        echo "$m"
+    fi
 elif [[ "$*" == *"-e"* ]] && [[ "$*" == *".event_id"* ]]; then
     # For jq -e '.event_id' checks - return success if event_id exists
     if echo "$input" | grep -q '"event_id"'; then
@@ -1039,8 +1045,8 @@ test_zj_status_consumes_stdin() {
 # notification.sh tests
 # ============================================================================
 
-# Fake zellij binary that records its arguments, for asserting pipe payloads.
-setup_fake_zellij() {
+# Mock zellij binary that records its arguments, for asserting pipe payloads.
+setup_mock_zellij() {
     ZJ_CAPTURE="$TEST_TMP/zj-capture.txt"
     : > "$ZJ_CAPTURE"
     cat > "$TEST_TMP/bin/zellij" << 'EOF'
@@ -1078,7 +1084,7 @@ test_notification_graceful_no_jq() {
 }
 
 test_notification_agent_completed_icon() {
-    setup_fake_zellij
+    setup_mock_zellij
 
     echo '{"session_id":"s1","message":"Background agent finished","notification_type":"agent_completed"}' \
         | ZELLIJ=1 bash "$HOOKS_DIR/notification.sh"
@@ -1087,7 +1093,7 @@ test_notification_agent_completed_icon() {
 }
 
 test_notification_needs_input_icon() {
-    setup_fake_zellij
+    setup_mock_zellij
 
     echo '{"message":"Agent needs your input","notification_type":"agent_needs_input"}' \
         | ZELLIJ=1 bash "$HOOKS_DIR/notification.sh"
@@ -1096,7 +1102,7 @@ test_notification_needs_input_icon() {
 }
 
 test_notification_default_icon() {
-    setup_fake_zellij
+    setup_mock_zellij
 
     echo '{"message":"Waiting for your input"}' \
         | ZELLIJ=1 bash "$HOOKS_DIR/notification.sh"
@@ -1105,7 +1111,7 @@ test_notification_default_icon() {
 }
 
 test_notification_empty_message_no_pipe() {
-    setup_fake_zellij
+    setup_mock_zellij
 
     echo '{"notification_type":"agent_completed"}' \
         | ZELLIJ=1 bash "$HOOKS_DIR/notification.sh"
@@ -1114,7 +1120,7 @@ test_notification_empty_message_no_pipe() {
 }
 
 test_notification_truncates_long_message() {
-    setup_fake_zellij
+    setup_mock_zellij
 
     local long_msg
     long_msg=$(printf 'x%.0s' {1..80})
@@ -1124,6 +1130,18 @@ test_notification_truncates_long_message() {
     # 57 chars + "..." — the 80-char original must not appear
     grep -qF "$(printf 'x%.0s' {1..57})..." "$ZJ_CAPTURE" \
         && ! grep -qF "$long_msg" "$ZJ_CAPTURE"
+}
+
+test_notification_malformed_json_exit_zero() {
+    # Malformed stdin must not break the always-exit-0 contract (jq parse
+    # errors are guarded) and must not pipe anything to zellij
+    setup_mock_zellij
+
+    local output
+    local exit_code=0
+    output=$(echo 'not json at all' | ZELLIJ=1 bash "$HOOKS_DIR/notification.sh" 2>&1) || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]] && [[ ! -s "$ZJ_CAPTURE" ]]
 }
 
 # ============================================================================
@@ -1804,6 +1822,7 @@ main() {
     run_test "integration: default icon (no type)" "test_notification_default_icon"
     run_test "integration: empty message is a no-op" "test_notification_empty_message_no_pipe"
     run_test "integration: truncates long messages" "test_notification_truncates_long_message"
+    run_test "graceful degradation (malformed JSON)" "test_notification_malformed_json_exit_zero"
     echo ""
 
     echo "=== teammate-idle.sh ==="

@@ -32,11 +32,13 @@ Set up a weekly scheduled loop (Routine) that runs the `audit-*` agents against 
 
      ```
      Run the scheduled weekly audit for <repo>. Spawn the <chosen audit-*>
-     agents in parallel via the Agent tool. For each Critical/Important
-     finding: check for an existing GitHub issue first, then file one with
+     subagents in parallel (subagent_type: audit-docs, audit-issues, ...)
+     and collect their reports. This is an unattended run: agents only
+     observe — do not apply their proposed edits and do not push code.
+     You (the lead) then act on the reports: for each Critical/Important
+     finding, check for an existing GitHub issue first, then file one with
      appropriate labels. Publish an `improvement_suggested` event to the
      event bus (channel repo:<repo>) summarizing findings and issue links.
-     Do NOT push code changes — audits only observe and file issues.
      ```
 
 4. **Confirm**: show the Routine name, schedule, agents included, and how to remove it (`/schedule-audits off`).
@@ -52,5 +54,5 @@ Run CronList, find `weekly-audit-<repo>` for the current repo, confirm with the 
 ## Notes
 
 - Findings flow through issues + event bus, so the next interactive session picks them up via `<recent-events>` — the Routine never needs to interrupt you.
-- Keep the cadence weekly. Audits are loops with a fuzzy stop condition (the agents bound their own scope); the schedule is the token-spend control, per the loops guidance.
-- If CronCreate is unavailable (older CC, API-key auth), fall back to telling the user to run `/schedule` interactively with the same prompt.
+- Keep the cadence weekly — the schedule is the token-spend control.
+- If the Cron* tools are unavailable (older CC, API-key auth), fall back to telling the user to run `/schedule` interactively with the same prompt.

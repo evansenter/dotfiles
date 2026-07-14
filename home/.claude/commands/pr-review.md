@@ -38,7 +38,7 @@ Use the built-in `code-review` skill — it fans out multiple reviewers and adve
 Skill(skill="code-review", args="medium")
 ```
 
-Use `args="high"` for large or risky diffs (security-sensitive files, >10 files changed).
+Scale effort to the diff: `args="low"` for small or docs-only changes, `args="high"` for large or risky diffs (security-sensitive files, >10 files changed).
 
 **Fallback** (if the built-in skill is unavailable), use the plugin agent via the Task tool:
 

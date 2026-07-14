@@ -12,7 +12,8 @@
 #
 # The zjstatus notify slot is shared with zj-status.sh (working/waiting).
 # Overwriting the working indicator is intentional: a notification is
-# strictly more urgent, and the next UserPromptSubmit/Stop restores state.
+# strictly more urgent. A mid-turn notification stays visible until the
+# turn ends (Stop clears the slot; UserPromptSubmit rewrites it).
 
 set -euo pipefail
 
@@ -25,8 +26,11 @@ INPUT=$(cat)
 # Graceful degradation if jq is missing
 command -v jq &>/dev/null || exit 0
 
-MESSAGE=$(echo "$INPUT" | jq -r '.message // ""')
-NTYPE=$(echo "$INPUT" | jq -r '.notification_type // ""')
+# Truncate inside jq: bash ${MESSAGE:0:57} slices bytes under a C locale
+# (GUI-launched sessions), splitting multibyte chars; jq slices codepoints.
+# The `|| exit 0` guards keep the always-exit-0 contract on malformed stdin.
+MESSAGE=$(echo "$INPUT" | jq -r '.message // "" | if length > 60 then .[0:57] + "..." else . end' 2>/dev/null) || exit 0
+NTYPE=$(echo "$INPUT" | jq -r '.notification_type // ""' 2>/dev/null) || exit 0
 
 # Nothing to show
 [[ -z "$MESSAGE" ]] && exit 0
@@ -35,20 +39,13 @@ case "$NTYPE" in
     agent_completed)
         ICON="✅"
         ;;
-    agent_needs_input)
-        ICON="🔔"
-        ;;
-    permission_request | permission*)
+    permission*)
         ICON="🔐"
         ;;
     *)
+        # Includes agent_needs_input and untyped notifications
         ICON="🔔"
         ;;
 esac
-
-# Truncate so the status bar stays readable
-if ((${#MESSAGE} > 60)); then
-    MESSAGE="${MESSAGE:0:57}..."
-fi
 
 zellij pipe "zjstatus::notify::${ICON} ${MESSAGE}" 2>/dev/null || true

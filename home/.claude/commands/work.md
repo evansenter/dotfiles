@@ -250,7 +250,7 @@ WIP state is **automatically checkpointed** by the `pre-compact.sh` hook before 
 
 ## Checkpoint Handling
 
-**Goal-based loops:** The review→fix and CI→fix cycles below are loops with deterministic stop conditions — good `/goal` candidates. For a fix cycle expected to take more than one round, offer to set a goal (e.g., `/goal CI green on PR #N and /pr-review local reports zero Critical/Important findings`) so the evaluator keeps the loop going instead of stopping at "good enough". Keep judgment-heavy checkpoints (scope, merge confirmation, feedback triage) turn-based.
+**Goal-based loops:** For a review→fix or CI→fix cycle expected to take more than one round, offer to set `/goal` with the deterministic stop condition (e.g., `CI green on PR #N and /pr-review local clean`) — see Loops & Automation. Judgment-heavy checkpoints (scope, merge confirmation, feedback triage) stay turn-based.
 
 **Run /pr-review local**: Run, fix issues if found, loop until clean.
 
