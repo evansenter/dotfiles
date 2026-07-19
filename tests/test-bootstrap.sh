@@ -452,8 +452,11 @@ test_sysload_writer_tolerates_top_failure() {
 # __HOME__ substitution, the cmp-based idempotency guard, the launchctl reload —
 # is the genuine bootstrap logic.
 _load_install_launch_agent() {
+    # Handles both declaration styles: the one-line `local dotfiles_dir="$(...)"`
+    # and the SC2155-split `local dotfiles_dir` + `dotfiles_dir="$(cd ...)"`.
     eval "$(sed -n '/^install_launch_agent() {/,/^}/p' "$BOOTSTRAP" \
-        | sed 's|local dotfiles_dir=.*|local dotfiles_dir="${TEST_DOTFILES_DIR:?}"|')"
+        | sed -e 's|local dotfiles_dir=.*|local dotfiles_dir="${TEST_DOTFILES_DIR:?}"|' \
+              -e 's|^\([[:space:]]*\)dotfiles_dir="\$(cd .*|\1dotfiles_dir="${TEST_DOTFILES_DIR:?}"|')"
 }
 
 test_launch_agent_substitutes_home() {
