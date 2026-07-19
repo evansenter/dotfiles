@@ -4,6 +4,11 @@
 
 set -euo pipefail
 
+# Skip if AI assistant setup was skipped
+if [[ "${INSTALL_AI:-}" == "false" ]]; then
+	exit 0
+fi
+
 # macOS only - Tailscale is a cask
 if [[ "$(uname)" != "Darwin" ]]; then
 	exit 0

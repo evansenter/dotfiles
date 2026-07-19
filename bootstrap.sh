@@ -6,14 +6,14 @@ set -euo pipefail
 # ==============================================================================
 
 # Change to the dotfiles directory
-cd "$(dirname "${BASH_SOURCE}")";
+cd "$(dirname "${BASH_SOURCE[0]}")";
 
 # ==============================================================================
 # Constants
 # ==============================================================================
 
 GATEWAY_HOST="mac-mini.tailac7b3c.ts.net"
-INSTALL_AI=""
+export INSTALL_AI=""
 
 # Set up Homebrew environment variables
 if [[ "$(uname)" == "Darwin" ]]; then
@@ -147,13 +147,14 @@ install_github_binary() {
 }
 
 symlink_dotfiles() {
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 	# Find all files in home/ directory and create symlinks
 	# Exclude .claude/{hooks,commands,contrib,agents,skills}/ since we symlink those directories separately
 	while IFS= read -r -d '' src_file; do
 		# Get relative path from home/
-		local rel_path="${src_file#$dotfiles_dir/home/}"
+		local rel_path="${src_file#"$dotfiles_dir"/home/}"
 		local dest_file="$HOME/$rel_path"
 
 		# Create parent directory if needed, then resolve through symlinks to detect
@@ -166,7 +167,8 @@ symlink_dotfiles() {
 			echo "  Warning: cannot resolve $dest_parent, skipping ~/$rel_path"
 			continue
 		}
-		local resolved_dest="$dest_dir/$(basename "$dest_file")"
+		local resolved_dest
+		resolved_dest="$dest_dir/$(basename "$dest_file")"
 
 		# Skip if destination resolves back to the source (parent dir is symlinked into repo)
 		if [[ "$resolved_dest" == "$src_file" ]]; then
@@ -192,7 +194,8 @@ symlink_dotfiles() {
 
 symlink_claude_dir() {
 	local dir_name="$1"
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local src_dir="$dotfiles_dir/home/.claude/$dir_name"
 	local dest_dir="$HOME/.claude/$dir_name"
 
@@ -231,7 +234,8 @@ ensure_openclaw_workspace() {
 }
 
 symlink_openclaw_config() {
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local src_file="$dotfiles_dir/home/.openclaw/openclaw.json"
 	local dest_file="$HOME/.openclaw/openclaw.json"
 
@@ -395,7 +399,8 @@ install_tmux_plugin_manager() {
 install_launch_agent() {
 	local plist="$1"
 	local label="${plist%.plist}"
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local launch_agents_dir="$HOME/Library/LaunchAgents"
 
 	mkdir -p "$launch_agents_dir"
@@ -461,7 +466,7 @@ pull_latest() {
 }
 
 prompt_ai_install() {
-	# Ask once whether to install AI assistant packages (Claude, OpenClaw).
+	# Ask once whether to install AI assistant packages (Claude, OpenClaw, Tailscale).
 	# Result is cached in INSTALL_AI for the rest of the run.
 	if [[ -n "$INSTALL_AI" ]]; then
 		return 0
@@ -469,28 +474,28 @@ prompt_ai_install() {
 
 	# Non-interactive: default to skip
 	if [[ ! -t 0 ]]; then
-		INSTALL_AI=false
+		export INSTALL_AI=false
 		return 0
 	fi
 
 	# Skip prompt if already fully configured
 	# (command -v doesn't execute the binary, so Santa won't block it)
 	if command -v claude >/dev/null 2>&1 && [[ -e "$HOME/.openclaw/openclaw.json" ]]; then
-		INSTALL_AI=true
+		export INSTALL_AI=true
 		return 0
 	fi
 
 	echo ""
-	echo "AI assistant setup (Claude, MCP servers, OpenClaw):"
+	echo "AI assistant setup (Claude, MCP servers, OpenClaw, Tailscale):"
 	echo "  1) Install (default)"
 	echo "  2) Skip"
 	read -p "Choose [1/2]: " -n 1 -r ai_choice
 	echo ""
 
 	if [[ "$ai_choice" == "2" ]]; then
-		INSTALL_AI=false
+		export INSTALL_AI=false
 	else
-		INSTALL_AI=true
+		export INSTALL_AI=true
 	fi
 }
 
@@ -530,7 +535,8 @@ install_steamos_packages() {
 	fi
 
 	# Install Tailscale (static binary + system service)
-	if ! command -v tailscale >/dev/null 2>&1; then
+	prompt_ai_install
+	if [[ "$INSTALL_AI" == true ]] && ! command -v tailscale >/dev/null 2>&1; then
 		echo "Installing Tailscale..."
 		local ts_version
 		ts_version=$(curl -fsSL "https://pkgs.tailscale.com/stable/" | grep -oP 'tailscale_\K[0-9.]+(?=_amd64\.tgz)' | head -1)
@@ -614,7 +620,8 @@ install_apt_packages() {
 	fi
 
 	# Install Tailscale via official apt repo
-	if ! command -v tailscale >/dev/null 2>&1; then
+	prompt_ai_install
+	if [[ "$INSTALL_AI" == true ]] && ! command -v tailscale >/dev/null 2>&1; then
 		echo "Installing Tailscale..."
 		curl -fsSL https://tailscale.com/install.sh | sh
 	fi
@@ -781,7 +788,8 @@ install_linux_common_packages() {
 }
 
 install_packages() {
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 	if [[ "$(uname)" == "Darwin" ]]; then
 		# macOS - use Homebrew
@@ -847,7 +855,7 @@ update_packages() {
 	# Update global npm packages
 	if command -v npm >/dev/null 2>&1; then
 		echo "Updating global npm packages..."
-		npm update -g || true
+		npm update -g --registry https://registry.npmjs.org/ || true
 	fi
 
 	# Update cargo packages
@@ -868,7 +876,8 @@ update_packages() {
 }
 
 init_submodules() {
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 	# Check if any submodule is missing
 	if [[ -d "$dotfiles_dir/vendor/btop-catppuccin/themes" ]] && \
@@ -893,7 +902,8 @@ init_submodules() {
 
 install_btop_themes() {
 	local btop_themes_dir="$HOME/.config/btop/themes"
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local vendor_theme="$dotfiles_dir/vendor/btop-catppuccin/themes/catppuccin_mocha.theme"
 
 	if [[ ! -f "$vendor_theme" ]]; then
@@ -916,7 +926,8 @@ install_btop_themes() {
 
 install_bat_themes() {
 	local bat_themes_dir="$HOME/.config/bat/themes"
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local vendor_theme="$dotfiles_dir/vendor/bat-catppuccin/themes/Catppuccin Mocha.tmTheme"
 
 	if [[ ! -f "$vendor_theme" ]]; then
@@ -956,12 +967,16 @@ install_brew_packages() {
 		return 0
 	fi
 
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local brewfile="$dotfiles_dir/Brewfile"
 
 	if [[ ! -f "$brewfile" ]]; then
 		return 0
 	fi
+
+	# Prompt early so INSTALL_AI is available for Brewfile.ai and hooks
+	prompt_ai_install
 
 	local temp_pip_conf=false
 	# Check if we need to temporarily override pip.conf to bypass corporate mirror issues for gcloud-cli
@@ -1008,7 +1023,8 @@ install_brew_packages() {
 }
 
 run_brew_hooks() {
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local hooks_dir="$dotfiles_dir/brew-hooks"
 
 	if [[ ! -d "$hooks_dir" ]]; then
@@ -1024,7 +1040,8 @@ run_brew_hooks() {
 
 install_eza_theme() {
 	local eza_config_dir="$HOME/.config/eza"
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local vendor_theme="$dotfiles_dir/vendor/eza-catppuccin/themes/mocha/catppuccin-mocha-mauve.yml"
 
 	if [[ ! -f "$vendor_theme" ]]; then
@@ -1046,7 +1063,8 @@ install_eza_theme() {
 
 install_glamour_theme() {
 	local glamour_dir="$HOME/.config/glamour"
-	local dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 	local vendor_theme="$dotfiles_dir/vendor/glamour-catppuccin/themes/catppuccin-mocha.json"
 
 	if [[ ! -f "$vendor_theme" ]]; then
@@ -1126,6 +1144,7 @@ install_claude_mcp_servers() {
 	# Install GitHub MCP server if not configured
 	if ! echo "$mcp_list" | grep -q "github"; then
 		echo "Installing GitHub MCP server..."
+		# shellcheck disable=SC2016
 		claude mcp add github -s user -e 'GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_TOKEN}' -- npx -y @modelcontextprotocol/server-github
 
 		if [[ -z "${GITHUB_TOKEN:-}" ]]; then
@@ -1151,11 +1170,6 @@ install_claude_mcp_servers() {
 }
 
 configure_npm_registry() {
-	# Skip if ~/.npmrc already contains the registry auth configurations
-	if [[ -f "$HOME/.npmrc" ]] && grep -q "ah-3p-staging-npm" "$HOME/.npmrc" 2>/dev/null; then
-		return 0
-	fi
-
 	# Require gcloud and npm to be installed
 	if ! command -v gcloud >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
 		return 0
@@ -1168,21 +1182,22 @@ configure_npm_registry() {
 		return 0
 	fi
 
-	echo "Configuring NPM registry credentials via gcloud..."
 	local settings
 	if settings=$(gcloud artifacts print-settings npm --project=artifact-foundry-prod --repository=ah-3p-staging-npm --location=us 2>/dev/null); then
-		# Strip the deprecated always-auth line. The trailing `|| true` keeps a
-		# fully-filtered output (grep exit 1) from aborting bootstrap under
-		# `set -euo pipefail`.
-		# Note: print-settings embeds a short-lived OAuth _authToken that is not
-		# refreshed here (the guard above skips re-running once ah-3p-staging-npm
-		# is present in ~/.npmrc). Re-run this step if npm auth starts failing.
-		# Prepend a newline so the first appended line can't concatenate onto an
-		# existing ~/.npmrc entry that lacks a trailing newline.
+		echo "Configuring NPM registry credentials via gcloud..."
+
+		# Remove old/expired artifact-foundry-prod lines if present
+		if [[ -f "$HOME/.npmrc" ]]; then
+			local tmp_npmrc
+			tmp_npmrc=$(mktemp)
+			grep -v "artifact-foundry-prod" "$HOME/.npmrc" > "$tmp_npmrc" || true
+			mv "$tmp_npmrc" "$HOME/.npmrc"
+		fi
+
+		# Strip the deprecated always-auth line. Prepend a newline so the first
+		# appended line can't concatenate onto an existing ~/.npmrc entry.
 		{ printf '\n'; echo "$settings" | { grep -v "always-auth" || true; }; } >> "$HOME/.npmrc"
 		echo "NPM registry credentials configured in ~/.npmrc"
-	else
-		echo "  Warning: Failed to configure NPM credentials automatically"
 	fi
 }
 
@@ -1249,6 +1264,7 @@ sync_dotfiles() {
 
 	# Reload zsh configuration
 	if [[ -n "${ZSH_VERSION:-}" ]]; then
+		# shellcheck disable=SC1090
 		source ~/.zshrc 2>/dev/null || echo "Restart your terminal or run: source ~/.zshrc"
 	fi
 }
@@ -1300,7 +1316,7 @@ fi
 if [[ "$FORCE" == true ]]; then
 	sync_dotfiles
 else
-	read -p "This will replace existing dotfiles with symlinks. Are you sure? (y/n) " -n 1
+	read -p "This will replace existing dotfiles with symlinks. Are you sure? (y/n) " -n 1 -r
 	echo ""
 	if [[ $REPLY =~ ^[Yy]$ ]]; then
 		sync_dotfiles

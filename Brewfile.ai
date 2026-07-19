@@ -1,6 +1,9 @@
 # Brewfile.ai - AI assistant dependencies (Claude, OpenClaw)
 # Installed conditionally via bootstrap.sh
 
+# Mesh VPN (event bus, OpenClaw gateway)
+cask "tailscale-app"
+
 # Claude Code
 cask "claude"
 

@@ -76,8 +76,6 @@ cask "whatsapp"
 # Casks - Fonts
 cask "font-jetbrains-mono-nerd-font"
 
-# Casks - Networking
-cask "tailscale-app"          # Mesh VPN (event bus, openclaw) — infra, not AI-gated
 
 # Casks - Cloud
 cask "gcloud-cli"             # Requires: gcloud init
