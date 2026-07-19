@@ -41,12 +41,12 @@ Session Start
 │      │                              │
 │      ├── Stop hooks (run in order): │
 │      │   1. zj-status.sh waiting    │
-│      │   2. enforce-insight-publish │
+│      │   2. drain-directed-events   │
+│      │      (blocks to surface DMs/ │
+│      │       help_needed at idle)   │
+│      │   3. enforce-insight-publish │
 │      │      (blocks if ★ Insight    │
 │      │       without publish_event) │
-│      │   3. drain-directed-events   │
-│      │      (blocks to surface DMs/  │
-│      │       help_needed at idle)   │
 │      │                              │
 │      ▼                              │
 │  (repeat)                           │
@@ -257,7 +257,7 @@ The notify slot is shared with `zj-status.sh` (working/waiting); notifications i
 3. Derive `repo` from `cwd` (git common-dir / toplevel, falling back to `cwd` basename) for `repo:<name>` classification.
 4. **Peek** new events (non-consuming, JSON) and classify DIRECTED = `channel == session:<id>` OR (`event_type == help_needed` AND `channel == repo:<name>`).
 5. If no directed events: exit 0 without consuming — leave everything for the next `prompt-events.sh` pull.
-6. If ≥1 directed: re-peek as text, emit `{"decision": "block", "reason": "...<recent-events>..."}` surfacing **all** peeked events, then do a consuming read to advance the cursor.
+6. If ≥1 directed: render **all** peeked events from the JSON already held (no second peek — a re-peek would open a consumed-but-never-surfaced window), emit `{"decision": "block", "reason": "...<recent-events>..."}`, then do a consuming read to advance the cursor.
 
 **Input JSON fields:** `session_id`, `transcript_path`, `stop_hook_active`, `cwd`
 
@@ -320,7 +320,7 @@ The bus keeps **one high-water cursor per `session_id`**, shared by both hooks.
 
 ### Multi-Stop-hook ordering caveat
 
-`drain-directed-events.sh` is registered in `settings.json` **after** `enforce-insight-publish.sh`. Both can emit `{"decision":"block"}`, and Claude Code honors **one** block decision per Stop. This is safe by design: the drain *peeks* and only *consumes when it wins*. If `enforce-insight-publish.sh` wins a given Stop, the directed events are left intact (unconsumed) and drain on the next Stop. No directed event is lost to the race.
+**Ordering is load-bearing.** Both `drain-directed-events.sh` and `enforce-insight-publish.sh` can emit `{"decision":"block"}`, Claude Code honors **one** block decision per Stop, and a hook cannot observe whether its own block won. Because the drain **consumes** (advances the shared cursor) when it blocks, it is registered **before** `enforce-insight-publish.sh` so its block is the one honored — registered the other way round, a both-block turn would consume the directed events while dropping the reason that surfaces them (silent data loss). The cost of this ordering: on a both-block turn, insight enforcement is skipped once (both hooks exit early on `stop_hook_active` at the continuation Stop) — a missed best-effort policy nudge, accepted in exchange for never losing a directed event. Do not reorder these hooks without revisiting this trade.
 
 ## Writing Hooks
 
@@ -383,8 +383,8 @@ In `settings.json`:
     ] }],
     "Stop": [{ "hooks": [
       { "type": "command", "command": "~/.claude/hooks/zj-status.sh waiting" },
-      { "type": "command", "command": "~/.claude/hooks/enforce-insight-publish.sh" },
-      { "type": "command", "command": "~/.claude/hooks/drain-directed-events.sh" }
+      { "type": "command", "command": "~/.claude/hooks/drain-directed-events.sh" },
+      { "type": "command", "command": "~/.claude/hooks/enforce-insight-publish.sh" }
     ] }],
     "PreCompact": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/pre-compact.sh" }] }],
     "TeammateIdle": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/teammate-idle.sh" }] }],

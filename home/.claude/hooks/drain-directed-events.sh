@@ -23,13 +23,17 @@
 #   - When there are NO directed events we neither surface nor consume, leaving
 #     everything for prompt-events.sh to pull on the next UserPromptSubmit.
 #
-# Stop-hook ordering / multi-block interaction:
-#   Registered in settings.json AFTER enforce-insight-publish.sh. Both can emit
-#   {"decision":"block"}. Claude Code honors a single block decision per Stop,
-#   so the two can race on the same turn; that is fine - this hook only blocks
-#   when directed events exist, and (because it peeks, not consumes, unless it
-#   blocks) a turn where enforce-insight wins leaves the directed events intact
-#   to be drained on the next Stop. See hooks/README.md for details.
+# Stop-hook ordering / multi-block interaction (ORDERING IS LOAD-BEARING):
+#   Claude Code honors ONE block decision per Stop; a hook cannot observe
+#   whether its own block "won". Because this hook CONSUMES (advances the
+#   shared cursor) when it blocks, it MUST be registered BEFORE any other
+#   blocking Stop hook (enforce-insight-publish.sh) so its block is the one
+#   honored — otherwise the events would be consumed but the surfacing reason
+#   dropped, silently losing the DM/help_needed. Cost of this ordering: on a
+#   turn where both would block, insight enforcement is skipped once (both
+#   hooks exit early on stop_hook_active at the continuation Stop). That is
+#   the accepted trade — a missed best-effort policy nudge beats losing a
+#   directed event. See hooks/README.md "Event-drain architecture".
 #
 # NEVER block the session on error: every failure path exits 0.
 
@@ -98,12 +102,13 @@ if [[ -z "$DIRECTED" ]] || ! [[ "$DIRECTED" =~ ^[0-9]+$ ]] || [[ "$DIRECTED" -eq
     exit 0
 fi
 
-# Render ALL peeked events in the CLI's own text format (same as prompt-events
-# surfaces) by re-peeking as text. Still non-consuming.
-SUMMARY=$(eb_fetch_events "$SESSION_ID" peek text asc)
-if [[ -z "$SUMMARY" || "$SUMMARY" == "No events" || "$SUMMARY" == "No new events" ]]; then
-    exit 0
-fi
+# Render ALL peeked events from the JSON we already hold — no second peek.
+# (A re-peek would double bus traffic and open a window where events arriving
+# between peek and consume get consumed-but-never-surfaced.) Format mirrors
+# the CLI's text mode: "[id] type (channel)" + indented payload.
+SUMMARY=$(echo "$PEEKED" | jq -r '
+    (.events // [])[] | "[\(.event_id)] \(.event_type) (\(.channel))\n    \(.payload)"' 2>/dev/null)
+[[ -z "$SUMMARY" ]] && exit 0
 
 REASON=$(printf 'Directed event(s) arrived while you were working. Address them before going idle.\n\n<recent-events>\n%s\n</recent-events>' "$SUMMARY")
 

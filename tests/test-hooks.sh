@@ -1927,6 +1927,18 @@ test_drain_directed_silent_on_no_events() {
     [[ $exit_code -eq 0 ]] && [[ -z "$output" ]] && [[ ! -e "$mark" ]]
 }
 
+test_drain_directed_registered_before_enforce_insight() {
+    # Ordering is load-bearing: one block decision is honored per Stop, and the
+    # drain consumes when it blocks — registered after enforce-insight, a
+    # both-block turn would consume directed events while dropping the reason
+    # that surfaces them. See hooks/README.md "Multi-Stop-hook ordering caveat".
+    local settings="$HOOKS_DIR/../settings.json"
+    local drain_line insight_line
+    drain_line=$(grep -n "drain-directed-events.sh" "$settings" | head -1 | cut -d: -f1)
+    insight_line=$(grep -n "enforce-insight-publish.sh" "$settings" | head -1 | cut -d: -f1)
+    [[ -n "$drain_line" && -n "$insight_line" && "$drain_line" -lt "$insight_line" ]]
+}
+
 test_drain_directed_blocks_on_help_needed_repo() {
     # help_needed on this session's repo:<name> channel is DIRECTED. Repo is
     # derived from cwd basename; use a cwd whose basename is "myrepo".
@@ -2108,6 +2120,7 @@ main() {
     run_test "blocks on help_needed (repo channel)" "test_drain_directed_blocks_on_help_needed_repo"
     run_test "silent on ambient-only (no consume)" "test_drain_directed_silent_on_ambient_only"
     run_test "silent on no events (no consume)" "test_drain_directed_silent_on_no_events"
+    run_test "registered before enforce-insight (block precedence)" "test_drain_directed_registered_before_enforce_insight"
     echo ""
 
     # Summary
