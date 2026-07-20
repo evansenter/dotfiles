@@ -41,19 +41,22 @@ eb_have_deps() {
 
 # Fetch events for a session via the CLI.
 #
-# Usage: eb_fetch_events SESSION_ID PEEK FORMAT ORDER
+# Usage: eb_fetch_events SESSION_ID PEEK FORMAT ORDER [LIMIT]
 #   SESSION_ID  required (used for cursor tracking; client-id == session-id)
 #   PEEK        "peek" -> non-consuming (--peek); anything else -> consuming
 #   FORMAT      "json" -> --json; anything else -> default text rendering
 #   ORDER       "asc" | "desc" (default asc)
+#   LIMIT       max events to fetch (default 20). A consuming read advances the
+#               cursor past everything it returns — pass the exact count you
+#               intend to consume when bounding to a previously peeked set.
 #
 # Always uses --resume so the server tracks the per-session high-water cursor.
 # JSON output is a top-level object: {"events":[{event_id,event_type,payload,
 # channel}, ...], "next_cursor": ...}. Text output is the CLI's human format.
 # Emits the CLI's stdout on success; empty string on any failure (never errors).
 eb_fetch_events() {
-    local session_id="$1" peek="${2:-consume}" format="${3:-text}" order="${4:-asc}"
-    local flags=(--resume --session-id "$session_id" --order "$order" --exclude "$EB_EXCLUDE" --timeout 200 --limit 20)
+    local session_id="$1" peek="${2:-consume}" format="${3:-text}" order="${4:-asc}" limit="${5:-20}"
+    local flags=(--resume --session-id "$session_id" --order "$order" --exclude "$EB_EXCLUDE" --timeout 200 --limit "$limit")
     [[ "$peek" == "peek" ]] && flags+=(--peek)
     [[ "$format" == "json" ]] && flags+=(--json)
     agent-event-bus-cli ${EB_URL_ARGS[@]+"${EB_URL_ARGS[@]}"} events "${flags[@]}" 2>/dev/null || true

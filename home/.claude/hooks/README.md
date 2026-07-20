@@ -257,7 +257,7 @@ The notify slot is shared with `zj-status.sh` (working/waiting); notifications i
 3. Derive `repo` from `cwd` (git common-dir / toplevel, falling back to `cwd` basename) for `repo:<name>` classification.
 4. **Peek** new events (non-consuming, JSON) and classify DIRECTED = `channel == session:<id>` OR (`event_type == help_needed` AND `channel == repo:<name>`).
 5. If no directed events: exit 0 without consuming — leave everything for the next `prompt-events.sh` pull.
-6. If ≥1 directed: render **all** peeked events from the JSON already held (no second peek — a re-peek would open a consumed-but-never-surfaced window), emit `{"decision": "block", "reason": "...<recent-events>..."}`, then do a consuming read to advance the cursor.
+6. If ≥1 directed: render **all** peeked events from the JSON already held (no second peek), emit `{"decision": "block", "reason": "...<recent-events>..."}`, then do a consuming read **bounded to exactly the peeked count** — an unbounded consume would also swallow events that arrived between peek and consume without ever surfacing them; bounding leaves late arrivals behind the cursor for the next Stop / `prompt-events.sh` pull.
 
 **Input JSON fields:** `session_id`, `transcript_path`, `stop_hook_active`, `cwd`
 

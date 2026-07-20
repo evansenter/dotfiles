@@ -102,19 +102,25 @@ if [[ -z "$DIRECTED" ]] || ! [[ "$DIRECTED" =~ ^[0-9]+$ ]] || [[ "$DIRECTED" -eq
     exit 0
 fi
 
-# Render ALL peeked events from the JSON we already hold — no second peek.
-# (A re-peek would double bus traffic and open a window where events arriving
-# between peek and consume get consumed-but-never-surfaced.) Format mirrors
+# Render ALL peeked events from the JSON we already hold — no second peek
+# (avoids doubled bus traffic and a divergent event set). Format mirrors
 # the CLI's text mode: "[id] type (channel)" + indented payload.
 SUMMARY=$(echo "$PEEKED" | jq -r '
     (.events // [])[] | "[\(.event_id)] \(.event_type) (\(.channel))\n    \(.payload)"' 2>/dev/null)
 [[ -z "$SUMMARY" ]] && exit 0
 
+PEEKED_COUNT=$(echo "$PEEKED" | jq -r '(.events // []) | length' 2>/dev/null) || exit 0
+[[ "$PEEKED_COUNT" =~ ^[0-9]+$ ]] || exit 0
+[[ "$PEEKED_COUNT" -eq 0 ]] && exit 0
+
 REASON=$(printf 'Directed event(s) arrived while you were working. Address them before going idle.\n\n<recent-events>\n%s\n</recent-events>' "$SUMMARY")
 
-# Consume to advance the shared cursor past what we just surfaced, so the next
-# prompt-events.sh pull does not re-show these. Discard the output.
-eb_fetch_events "$SESSION_ID" consume text asc >/dev/null 2>&1 || true
+# Consume to advance the shared cursor past what we just surfaced, BOUNDED to
+# exactly the peeked count (asc order → the same events). An unbounded consume
+# would also swallow any event that arrived between the peek above and now,
+# consuming it without ever surfacing it. Bounding closes that window: late
+# arrivals stay behind the cursor for the next Stop / prompt-events.sh pull.
+eb_fetch_events "$SESSION_ID" consume text asc "$PEEKED_COUNT" >/dev/null 2>&1 || true
 
 # Block once, surfacing all peeked events so the agent can act.
 jq -n --arg reason "$REASON" '{decision: "block", reason: $reason}'

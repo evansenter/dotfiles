@@ -1776,19 +1776,22 @@ case "${1:-}" in
     events)
         peek=0
         json=0
+        limit=""
         shift
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 --peek) peek=1; shift ;;
                 --json) json=1; shift ;;
-                --session-id|--order|--exclude|--timeout|--limit|--url) shift 2 ;;
+                --limit) limit="$2"; shift 2 ;;
+                --session-id|--order|--exclude|--timeout|--url) shift 2 ;;
                 --resume) shift ;;
                 *) shift ;;
             esac
         done
-        # Consuming read (not peek): record that the cursor advanced.
+        # Consuming read (not peek): record that the cursor advanced, and with
+        # what --limit (the drain must bound consumes to the peeked count).
         if [[ $peek -eq 0 && -n "${MOCK_CONSUME_MARK:-}" ]]; then
-            : > "$MOCK_CONSUME_MARK"
+            printf '%s' "$limit" > "$MOCK_CONSUME_MARK"
         fi
         if [[ $json -eq 1 ]]; then
             printf '%s\n' "${MOCK_EVENTS_JSON:-{\"events\":[]\}}"
@@ -1883,12 +1886,15 @@ test_drain_directed_blocks_on_dm() {
         MOCK_CONSUME_MARK="$mark" \
         bash -c 'echo "{\"session_id\":\"sess-1\",\"cwd\":\"/tmp\"}" | PATH="'"$(_real_jq_path)"':$PATH" bash "'"$HOOKS_DIR"'/drain-directed-events.sh"' 2>&1) || exit_code=$?
 
-    # Block JSON emitted, event surfaced, and a consuming read happened.
+    # Block JSON emitted, event surfaced, and a consuming read happened —
+    # bounded to exactly the peeked count (1), so late arrivals are not
+    # swallowed by the consume.
     [[ $exit_code -eq 0 ]] && \
     [[ "$output" == *"\"decision\": \"block\""* ]] && \
     [[ "$output" == *"help_needed"* ]] && \
     [[ "$output" == *"<recent-events>"* ]] && \
-    [[ -e "$mark" ]]
+    [[ -e "$mark" ]] && \
+    [[ "$(cat "$mark")" == "1" ]]
 }
 
 test_drain_directed_silent_on_ambient_only() {
