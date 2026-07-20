@@ -6,54 +6,34 @@
 #
 # Uses --resume for incremental polling: only shows events since last prompt.
 # The server tracks cursor position per session, so each prompt only sees NEW events.
+#
+# Shares its denylist + fetch path with drain-directed-events.sh via the
+# eventbus-collect.sh lib so the two hooks cannot diverge. See hooks/README.md
+# "Event-drain architecture".
 
 set -euo pipefail
 
-# Source user's environment for AGENT_EVENT_BUS_URL
-if [[ -f ~/.extra ]]; then
-    # ~/.extra is user-edited and untracked; a stray unset var or non-zero
-    # line must not abort the hook under set -euo pipefail.
-    set +eu
-    # shellcheck source=/dev/null
-    source ~/.extra
-    set -eu
-fi
+# Source shared collection library (handles ~/.extra, URL args, denylist, fetch).
+# shellcheck source=lib/eventbus-collect.sh
+source "$(dirname "$0")/lib/eventbus-collect.sh"
 
 # Read session info (always consume stdin to avoid broken pipe)
 INPUT=$(cat)
 
-# Check for agent-event-bus-cli
-if ! command -v agent-event-bus-cli &>/dev/null; then
-    # Graceful degradation: skip if CLI not installed
-    exit 0
-fi
-
-# Build URL args if AGENT_EVENT_BUS_URL is set (e.g., remote Tailscale endpoint)
-URL_ARGS=()
-[[ -n "${AGENT_EVENT_BUS_URL:-}" ]] && URL_ARGS=(--url "$AGENT_EVENT_BUS_URL")
+# Graceful degradation: need cli + jq.
+eb_have_deps || exit 0
 
 # Parse session-id - required for cursor tracking
-SESSION_ID=""
-if command -v jq &>/dev/null; then
-    SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // ""')
-fi
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // ""')
 
 # Without session_id, we can't do incremental polling
 if [[ -z "$SESSION_ID" ]]; then
     exit 0
 fi
 
-# Fetch only NEW events since last prompt using --resume
-# --resume: incremental polling - server tracks cursor, only returns new events
+# Fetch only NEW events since last prompt (consuming read, ascending, text).
 # --order asc: chronological order (oldest first, new events at end)
-EVENTS=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} events \
-    --resume \
-    --session-id "$SESSION_ID" \
-    --order asc \
-    --exclude session_registered,session_unregistered,ci_watching,task_started,ci_rerun,parallel_work_started \
-    --timeout 200 \
-    --limit 20 \
-    2>/dev/null) || true
+EVENTS=$(eb_fetch_events "$SESSION_ID" consume text asc)
 
 # Output events in XML tags (interpretation guidance is in CLAUDE.md)
 if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]]; then

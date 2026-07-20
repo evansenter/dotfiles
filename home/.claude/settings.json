@@ -35,6 +35,10 @@
           },
           {
             "type": "command",
+            "command": "~/.claude/hooks/drain-directed-events.sh"
+          },
+          {
+            "type": "command",
             "command": "~/.claude/hooks/enforce-insight-publish.sh"
           }
         ]

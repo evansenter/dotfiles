@@ -41,7 +41,10 @@ Session Start
 │      │                              │
 │      ├── Stop hooks (run in order): │
 │      │   1. zj-status.sh waiting    │
-│      │   2. enforce-insight-publish │
+│      │   2. drain-directed-events   │
+│      │      (blocks to surface DMs/ │
+│      │       help_needed at idle)   │
+│      │   3. enforce-insight-publish │
 │      │      (blocks if ★ Insight    │
 │      │       without publish_event) │
 │      │                              │
@@ -109,6 +112,8 @@ Session End / Agent Teams
 **Input JSON fields:** `session_id`, `transcript_path`, `cwd`
 
 **Output:** New events in `<recent-events>` tags (only if new events exist)
+
+**Shared lib:** Uses `lib/eventbus-collect.sh` for `~/.extra`/`AGENT_EVENT_BUS_URL` handling, the canonical `EB_EXCLUDE` denylist, and the `eb_fetch_events` wrapper — the same code path as `drain-directed-events.sh`, so the two hooks cannot diverge. See [Event-drain architecture](#event-drain-architecture).
 
 ---
 
@@ -241,6 +246,29 @@ The notify slot is shared with `zj-status.sh` (working/waiting); notifications i
 
 ---
 
+### drain-directed-events.sh
+**Trigger:** `Stop`
+
+**Purpose:** Surface **directed** event-bus events (DMs to `session:<id>`, or `help_needed` on the session's `repo:<name>` channel) that arrived while the session was working, so the agent acts on them at end-of-turn instead of waiting until the next human prompt. `prompt-events.sh` (UserPromptSubmit) only fires when the human types; a directed event sent to an idle/just-finished session would otherwise sit unseen.
+
+**Actions:**
+1. Exit 0 if `stop_hook_active` is true (loop guard, mirrors `enforce-insight-publish.sh`).
+2. Exit 0 (silent) if jq, `agent-event-bus-cli`, or `session_id` is missing — never block on degradation.
+3. Derive `repo` from `cwd` (git common-dir / toplevel, falling back to `cwd` basename) for `repo:<name>` classification.
+4. **Peek** new events (non-consuming, JSON) and classify DIRECTED = `channel == session:<id>` OR (`event_type == help_needed` AND `channel == repo:<name>`).
+5. If no directed events: exit 0 without consuming — leave everything for the next `prompt-events.sh` pull.
+6. If ≥1 directed: render **all** peeked events from the JSON already held (no second peek), emit `{"decision": "block", "reason": "...<recent-events>..."}`, then do a consuming read **bounded to exactly the peeked count** — an unbounded consume would also swallow events that arrived between peek and consume without ever surfacing them; bounding leaves late arrivals behind the cursor for the next Stop / `prompt-events.sh` pull.
+
+**Input JSON fields:** `session_id`, `transcript_path`, `stop_hook_active`, `cwd`
+
+**Output:** `{"decision": "block", "reason": "..."}` (with surfaced events in `<recent-events>` tags) when directed events wait. Silent otherwise.
+
+**Exit code:** Always 0. Blocking is signaled via the JSON `decision` field.
+
+See [Event-drain architecture](#event-drain-architecture) for the shared-lib design, cursor/peek semantics, and the multi-Stop-hook ordering caveat.
+
+---
+
 ### post-tool-failure.sh
 **Trigger:** `PostToolUseFailure`
 
@@ -258,6 +286,41 @@ The notify slot is shared with `zj-status.sh` (working/waiting); notifications i
 **Output:** JSON with `hookSpecificOutput.additionalContext` when recurring pattern detected. Silent otherwise.
 
 **Exit code:** Always 0. Uses `additionalContext` for feedback, not exit codes.
+
+## Event-drain architecture
+
+Two hooks read the agent-event-bus and surface events to the agent:
+
+- **`prompt-events.sh`** (`UserPromptSubmit`) — fires when the human types. Consumes new events and injects them as `<recent-events>`.
+- **`drain-directed-events.sh`** (`Stop`) — fires at end-of-turn. Peeks for *directed* events and blocks once to surface them if any are waiting, closing the gap where a session goes idle without seeing a DM / help request.
+
+### Shared library (`lib/eventbus-collect.sh`)
+
+Both hooks `source "$(dirname "$0")/lib/eventbus-collect.sh"` so they **cannot diverge**. It is the single source of truth for:
+
+- `~/.extra` sourcing + `AGENT_EVENT_BUS_URL` → `EB_URL_ARGS` (one fetch path).
+- `EB_EXCLUDE` — one canonical denylist of noisy event types.
+- `eb_have_deps` — graceful-degradation guard (`agent-event-bus-cli` AND `jq`).
+- `eb_fetch_events SESSION_ID PEEK FORMAT ORDER` — thin wrapper over `agent-event-bus-cli events`, always `--resume`. `peek`→`--peek` (non-consuming); `json`→`--json`.
+
+Bootstrap symlinks the whole `hooks/` dir, so `lib/` rides along automatically.
+
+### Event-bus JSON schema (verified live)
+
+`events --json` returns a **top-level object**: `{"events":[{event_id, event_type, payload, channel}, …], "next_cursor": …}`. The human-readable field is `payload` (not `message`); classification keys on `channel`.
+
+### Peek / cursor semantics
+
+The bus keeps **one high-water cursor per `session_id`**, shared by both hooks.
+
+- **Peek** is non-consuming: it looks without advancing the cursor.
+- The drain only **consumes** (advances the cursor) when it actually surfaces events — i.e. only when it blocks.
+- When it blocks, it surfaces **all** peeked events (directed *and* ambient), because the single shared cursor can't selectively skip the ambient ones. Surfacing ambient alongside directed is lossless and correct.
+- When there are **no directed** events, it neither surfaces nor consumes — everything is left in place for the next `prompt-events.sh` pull on `UserPromptSubmit`. (No directed → no consume → ambient flows normally.)
+
+### Multi-Stop-hook ordering caveat
+
+**Ordering is load-bearing.** Both `drain-directed-events.sh` and `enforce-insight-publish.sh` can emit `{"decision":"block"}`, Claude Code honors **one** block decision per Stop, and a hook cannot observe whether its own block won. Because the drain **consumes** (advances the shared cursor) when it blocks, it is registered **before** `enforce-insight-publish.sh` so its block is the one honored — registered the other way round, a both-block turn would consume the directed events while dropping the reason that surfaces them (silent data loss). The cost of this ordering: on a both-block turn, insight enforcement is skipped once (both hooks exit early on `stop_hook_active` at the continuation Stop) — a missed best-effort policy nudge, accepted in exchange for never losing a directed event. Do not reorder these hooks without revisiting this trade.
 
 ## Writing Hooks
 
@@ -320,6 +383,7 @@ In `settings.json`:
     ] }],
     "Stop": [{ "hooks": [
       { "type": "command", "command": "~/.claude/hooks/zj-status.sh waiting" },
+      { "type": "command", "command": "~/.claude/hooks/drain-directed-events.sh" },
       { "type": "command", "command": "~/.claude/hooks/enforce-insight-publish.sh" }
     ] }],
     "PreCompact": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/pre-compact.sh" }] }],
