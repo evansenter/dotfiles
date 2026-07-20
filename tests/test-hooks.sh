@@ -1953,6 +1953,27 @@ test_drain_directed_silent_on_no_events() {
     [[ $exit_code -eq 0 ]] && [[ -z "$output" ]] && [[ ! -e "$mark" ]]
 }
 
+test_drain_directed_bounded_consume_multi_event() {
+    # One directed + one ambient event peeked → the consume must be bounded to
+    # the actual peeked count (2), not a coincidental 1 or an unbounded default.
+    setup_mock_drain_cli
+    local mark="$TEST_TMP/consume-multi"
+    rm -f "$mark"
+
+    local multi_json='{"events":[{"event_id":11,"event_type":"help_needed","payload":"DM me","channel":"session:sess-1"},{"event_id":12,"event_type":"gotcha_discovered","payload":"ambient","channel":"all"}]}'
+
+    local output exit_code=0
+    output=$(MOCK_EVENTS_JSON="$multi_json" \
+        MOCK_CONSUME_MARK="$mark" \
+        bash -c 'echo "{\"session_id\":\"sess-1\",\"cwd\":\"/tmp\"}" | PATH="'"$(_real_jq_path)"':$PATH" bash "'"$HOOKS_DIR"'/drain-directed-events.sh"' 2>&1) || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && \
+    [[ "$output" == *"\"decision\": \"block\""* ]] && \
+    [[ "$output" == *"gotcha_discovered"* ]] && \
+    [[ -e "$mark" ]] && \
+    [[ "$(cat "$mark")" == "2" ]]
+}
+
 test_drain_directed_registered_before_enforce_insight() {
     # Ordering is load-bearing: one block decision is honored per Stop, and the
     # drain consumes when it blocks — registered after enforce-insight, a
@@ -2147,6 +2168,7 @@ main() {
     run_test "blocks on help_needed (repo channel)" "test_drain_directed_blocks_on_help_needed_repo"
     run_test "silent on ambient-only (no consume)" "test_drain_directed_silent_on_ambient_only"
     run_test "silent on no events (no consume)" "test_drain_directed_silent_on_no_events"
+    run_test "bounded consume tracks multi-event peeked count" "test_drain_directed_bounded_consume_multi_event"
     run_test "registered before enforce-insight (block precedence)" "test_drain_directed_registered_before_enforce_insight"
     echo ""
 
