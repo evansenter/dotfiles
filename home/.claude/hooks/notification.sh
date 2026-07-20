@@ -36,10 +36,11 @@ NTYPE=$(echo "$INPUT" | jq -r '.notification_type // ""' 2>/dev/null) || exit 0
 [[ -z "$MESSAGE" ]] && exit 0
 
 # Permission prompts arrive untyped (notification_type is set only for
-# background-agent events), so also key the padlock off the message text.
+# background-agent events), so also key the padlock off the message text —
+# matched against the raw input, not $MESSAGE, which is already truncated.
 if [[ "$NTYPE" == "agent_completed" ]]; then
     ICON="✅"
-elif [[ "$NTYPE" == permission* || "$MESSAGE" == *[Pp]ermission* ]]; then
+elif [[ "$NTYPE" == permission* || "$INPUT" == *[Pp]ermission* ]]; then
     ICON="🔐"
 else
     # Includes agent_needs_input and other untyped notifications

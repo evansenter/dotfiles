@@ -1121,6 +1121,19 @@ test_notification_untyped_permission_icon() {
     grep -qF "pipe zjstatus::notify::🔐 Claude needs your permission to use Bash" "$ZJ_CAPTURE"
 }
 
+test_notification_permission_word_past_truncation() {
+    # The padlock match runs against the raw input, so "permission" appearing
+    # after the 57-char display-truncation point must still get 🔐
+    setup_mock_zellij
+
+    local prefix
+    prefix=$(printf 'x%.0s' {1..70})
+    echo "{\"message\":\"$prefix needs your permission to continue\"}" \
+        | ZELLIJ=1 bash "$HOOKS_DIR/notification.sh"
+
+    grep -qF "pipe zjstatus::notify::🔐 " "$ZJ_CAPTURE"
+}
+
 test_notification_empty_message_no_pipe() {
     setup_mock_zellij
 
@@ -1131,6 +1144,10 @@ test_notification_empty_message_no_pipe() {
 }
 
 test_notification_truncates_long_message() {
+    # Coverage boundary: the mock jq slices bytes, real jq slices codepoints,
+    # so only ASCII truncation is regression-testable here. Multibyte safety
+    # is jq's behavior (verified manually against real jq); a UTF-8 case would
+    # diverge under the mock.
     setup_mock_zellij
 
     local long_msg
@@ -1514,7 +1531,10 @@ EOF
 
     local output
     local exit_code=0
+    # Real jq required: the mock has no .stop_hook_active branch, so without
+    # this the guard is never exercised and the test passes vacuously
     output=$(echo "{\"transcript_path\":\"$transcript\",\"stop_hook_active\":true}" | \
+        PATH="$(_real_jq_path):$PATH" \
         bash "$HOOKS_DIR/enforce-insight-publish.sh" 2>&1) || exit_code=$?
 
     # Must be silent when stop_hook_active is true
@@ -1933,6 +1953,27 @@ test_drain_directed_silent_on_no_events() {
     [[ $exit_code -eq 0 ]] && [[ -z "$output" ]] && [[ ! -e "$mark" ]]
 }
 
+test_drain_directed_bounded_consume_multi_event() {
+    # One directed + one ambient event peeked → the consume must be bounded to
+    # the actual peeked count (2), not a coincidental 1 or an unbounded default.
+    setup_mock_drain_cli
+    local mark="$TEST_TMP/consume-multi"
+    rm -f "$mark"
+
+    local multi_json='{"events":[{"event_id":11,"event_type":"help_needed","payload":"DM me","channel":"session:sess-1"},{"event_id":12,"event_type":"gotcha_discovered","payload":"ambient","channel":"all"}]}'
+
+    local output exit_code=0
+    output=$(MOCK_EVENTS_JSON="$multi_json" \
+        MOCK_CONSUME_MARK="$mark" \
+        bash -c 'echo "{\"session_id\":\"sess-1\",\"cwd\":\"/tmp\"}" | PATH="'"$(_real_jq_path)"':$PATH" bash "'"$HOOKS_DIR"'/drain-directed-events.sh"' 2>&1) || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && \
+    [[ "$output" == *"\"decision\": \"block\""* ]] && \
+    [[ "$output" == *"gotcha_discovered"* ]] && \
+    [[ -e "$mark" ]] && \
+    [[ "$(cat "$mark")" == "2" ]]
+}
+
 test_drain_directed_registered_before_enforce_insight() {
     # Ordering is load-bearing: one block decision is honored per Stop, and the
     # drain consumes when it blocks — registered after enforce-insight, a
@@ -2062,6 +2103,7 @@ main() {
     run_test "integration: agent_needs_input icon" "test_notification_needs_input_icon"
     run_test "integration: default icon (no type)" "test_notification_default_icon"
     run_test "integration: untyped permission prompt gets padlock" "test_notification_untyped_permission_icon"
+    run_test "integration: permission match survives display truncation" "test_notification_permission_word_past_truncation"
     run_test "integration: empty message is a no-op" "test_notification_empty_message_no_pipe"
     run_test "integration: truncates long messages" "test_notification_truncates_long_message"
     run_test "graceful degradation (malformed JSON)" "test_notification_malformed_json_exit_zero"
@@ -2126,6 +2168,7 @@ main() {
     run_test "blocks on help_needed (repo channel)" "test_drain_directed_blocks_on_help_needed_repo"
     run_test "silent on ambient-only (no consume)" "test_drain_directed_silent_on_ambient_only"
     run_test "silent on no events (no consume)" "test_drain_directed_silent_on_no_events"
+    run_test "bounded consume tracks multi-event peeked count" "test_drain_directed_bounded_consume_multi_event"
     run_test "registered before enforce-insight (block precedence)" "test_drain_directed_registered_before_enforce_insight"
     echo ""
 

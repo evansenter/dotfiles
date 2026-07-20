@@ -27,25 +27,32 @@ Session Start
     ├── SessionStart hook
     │
     ▼
-┌─────────────────────────────────┐
-│  User sends prompt              │
-│      │                          │
-│      ├── UserPromptSubmit hooks │
-│      ▼                          │
-│  Claude processes...            │
-│      │                          │
-│      ├── Stop hook              │
-│      ▼                          │
-│  (repeat)                       │
-└─────────────────────────────────┘
+┌─────────────────────────────────────┐
+│  User sends prompt                  │
+│      │                              │
+│      ├── UserPromptSubmit hooks     │
+│      ▼                              │
+│  Claude processes...                │
+│      │                              │
+│      ├── TaskCreated / TaskCompleted│
+│      ├── PostToolUseFailure         │
+│      ├── Notification               │
+│      │                              │
+│      ├── Stop hooks (in order)      │
+│      ▼                              │
+│  (repeat)                           │
+└─────────────────────────────────────┘
     │
     ├── PreCompact hook
     │
     ▼
-Session End
+Session End / Agent Teams
     │
+    ├── TeammateIdle hook
     └── SessionEnd hook
 ```
+
+The authoritative per-hook lifecycle for THIS repo (which script runs on which trigger, in what order) is `home/.claude/hooks/README.md` — keep that as the source of truth and update it when adding hooks.
 
 ## Required Patterns
 
@@ -112,9 +119,14 @@ All hooks receive JSON on stdin:
 ```
 
 Additional fields by trigger:
-- **SessionStart:** `permission_mode`, `source` ("user" or "resume")
+- **SessionStart:** `permission_mode`, `source` ("startup", "resume", "clear", or "compact")
 - **SessionEnd:** `permission_mode`, `reason`
 - **PreCompact:** `trigger`
+- **Stop:** `stop_hook_active` (true when re-entered after a prior block — exit early to avoid loops)
+- **TeammateIdle:** `permission_mode`, `teammate_name`, `team_name`
+- **TaskCreated / TaskCompleted:** `permission_mode`, `task_id`, `task_subject`, `task_description`, `teammate_name`, `team_name` (teammate fields empty outside Agent Teams)
+- **PostToolUseFailure:** `tool_name`, `tool_input`, `error`, `is_interrupt`
+- **Notification:** `message`, `notification_type` (type set for background-agent events only)
 
 ## Output Patterns
 
@@ -220,12 +232,18 @@ Register hooks in `settings.json`:
 }
 ```
 
-Available triggers:
+Triggers used in this repo:
 - `SessionStart` - Session begins
 - `SessionEnd` - Session ends
 - `UserPromptSubmit` - User sends message
-- `Stop` - Claude finishes response
+- `Stop` - Claude finishes response (can block via `{"decision": "block"}`)
 - `PreCompact` - Before context summarization
+- `PostToolUseFailure` - A tool call failed
+- `TaskCreated` / `TaskCompleted` - Task lifecycle (TaskCreate tool; also Agent Teams)
+- `TeammateIdle` - Teammate agent has no work (Agent Teams)
+- `Notification` - Claude Code sends a notification (permission prompts, idle waits, background-agent events)
+
+Claude Code has more (PreToolUse, PostToolUse, PostCompact, StopFailure, MessageDisplay, CwdChanged, FileChanged, PermissionRequest/PermissionDenied, Elicitation…) — check current docs before assuming a trigger doesn't exist.
 
 ## Reference
 
@@ -235,3 +253,8 @@ See existing hooks in `home/.claude/hooks/` for examples:
 - `prompt-events.sh` - Incremental event polling
 - `zj-status.sh` - Visual state indicator (zjstatus notification)
 - `pre-compact.sh` - WIP checkpointing
+- `notification.sh` - Notification → zjstatus bridge with icon mapping
+- `post-tool-failure.sh` - Recurring-error detection, feedback via `hookSpecificOutput.additionalContext`
+- `task-created.sh` / `task-completed.sh` - Task event broadcasting to event bus
+- `teammate-idle.sh` - Agent Teams idle broadcasting
+- `enforce-insight-publish.sh` - Stop-hook transcript inspection with quiescence detection; blocks via JSON `decision` field

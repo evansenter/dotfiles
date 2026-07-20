@@ -208,7 +208,7 @@ Session End / Agent Teams
 **Actions:**
 1. Exit 0 if `stop_hook_active` is true (prevents infinite loop after a prior block)
 2. Exit 0 if `transcript_path` is missing or the file doesn't exist
-3. **Wait for transcript to stabilize** — poll line count every 100ms until unchanged across two samples (hard cap: 1s). This handles a race with Claude Code's transcript writer: the current turn's `text` block can be flushed after the Stop hook starts, so reading too early sees only the preceding `thinking` event.
+3. **Wait for transcript to stabilize (content-aware)** — poll line count every 100ms; proceed once the count is stable AND the turn's final assistant `text` block has landed, or after ~500ms of quiescence for tool-only turns (hard cap: ~2s). This handles a race with Claude Code's transcript writer: the current turn's `text` block can be flushed after the Stop hook starts, so reading too early sees only the preceding `thinking` event. See Gotchas below.
 4. Parse the JSONL transcript to find the last "real" user message (string content, or array without `tool_result` blocks)
 5. Count `★ Insight ─` markers in assistant text blocks after that point
 6. Count `mcp__agent-event-bus__publish_event` tool_use blocks after that point
@@ -233,7 +233,7 @@ Counting is lenient: one `publish_event` covers all insights in the turn (matche
 **Actions:**
 1. Exit silently if not inside zellij, jq is missing, or stdin isn't valid JSON
 2. Parse `message` and optional `notification_type` from stdin JSON, truncating the message to 60 chars inside jq (codepoint-safe — bash slicing counts bytes under a C locale and can split multibyte chars)
-3. Map to icon: `agent_completed` → ✅, permission prompts (`permission*` type, or "permission" in the message text since permission notifications arrive untyped) → 🔐, everything else (incl. `agent_needs_input`) → 🔔
+3. Map to icon: `agent_completed` → ✅, permission prompts (`permission*` type, or "permission" in the raw input — permission notifications arrive untyped, and the match runs pre-truncation) → 🔐, everything else (incl. `agent_needs_input`) → 🔔
 4. Send `zjstatus::notify::<icon> <message>` via zellij pipe
 
 The notify slot is shared with `zj-status.sh` (working/waiting); notifications intentionally overwrite the working indicator. A mid-turn notification stays visible until the turn ends (`Stop` clears the slot; the next `UserPromptSubmit` rewrites it).

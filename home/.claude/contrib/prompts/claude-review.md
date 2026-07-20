@@ -170,20 +170,22 @@ Suggestions are valuable feedback but should not block merge. Post them as inlin
 
 **MANDATORY: Use `gh api` to submit reviews.** Do NOT use `gh pr review` or `gh pr comment`. The `gh api` endpoint is the ONLY way to post inline comments on specific files and lines.
 
-**Step 1: Get the latest commit SHA** (required by the API):
+**IMPORTANT — allowlist constraint:** Your Bash access is restricted to commands that start with the allowed `gh` prefixes. Do NOT wrap commands in variable assignments (`SHA=$(gh ...)`), write temp files (`cat > file`), or run `sed` — those are denied. Every command must begin with an allowed `gh` subcommand, and values must be written literally into the JSON.
+
+**Step 1: Get the latest commit SHA** (required by the API — run bare, copy the SHA from the output):
 
 ```bash
-COMMIT_SHA=$(gh pr view $PR_NUMBER --json headRefOid -q .headRefOid)
+gh pr view $PR_NUMBER --json headRefOid -q .headRefOid
 ```
 
-**Step 2: Build the review JSON with inline comments:**
+**Step 2: Submit the review in a single `gh api` command**, piping the JSON via a quoted heredoc with the real commit SHA (and your repo/PR values) written literally:
 
-For each finding, create an entry in the `comments` array with the exact `path` and `line` from the diff. Write the JSON to a file, then submit.
+For each finding, create an entry in the `comments` array with the exact `path` and `line` from the diff.
 
 ```bash
-cat > /tmp/review.json << 'REVIEW_EOF'
+gh api repos/OWNER/REPO/pulls/PR_NUMBER/reviews --input - << 'REVIEW_EOF'
 {
-  "commit_id": "$COMMIT_SHA",
+  "commit_id": "<paste the SHA from Step 1>",
   "event": "REQUEST_CHANGES",
   "body": "> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)\n\n## Code Review\n\n### Summary\n[1-2 sentences]\n\n### Previously Addressed (Filtered)\n[if any]\n\n### Verdict\nREQUEST_CHANGES - [brief reason]\n\n---\n*Automated review by Claude Code*",
   "comments": [
@@ -200,11 +202,6 @@ cat > /tmp/review.json << 'REVIEW_EOF'
   ]
 }
 REVIEW_EOF
-
-# IMPORTANT: Replace $COMMIT_SHA in the JSON before submitting
-sed -i "s/\$COMMIT_SHA/$COMMIT_SHA/" /tmp/review.json
-
-gh api repos/$REPO/pulls/$PR_NUMBER/reviews --input /tmp/review.json
 ```
 
 **Rules for inline comments:**
@@ -214,14 +211,16 @@ gh api repos/$REPO/pulls/$PR_NUMBER/reviews --input /tmp/review.json
 - For multi-line ranges, add `start_line` alongside `line`
 - Every finding MUST be an inline comment. Do NOT put findings only in the review body.
 
-**If no issues found** (no `comments` array needed):
+**If no issues found** (no `comments` array needed — same heredoc form, literal SHA):
 
 ```bash
-echo '{
-  "commit_id": "'$COMMIT_SHA'",
+gh api repos/OWNER/REPO/pulls/PR_NUMBER/reviews --input - << 'REVIEW_EOF'
+{
+  "commit_id": "<paste the SHA from Step 1>",
   "event": "APPROVE",
   "body": "> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)\n\n## Code Review\n\n### Summary\n[1-2 sentences]\n\n### Verdict\nAPPROVE - Code looks good, no issues found.\n\n---\n*Automated review by Claude Code*"
-}' | gh api repos/$REPO/pulls/$PR_NUMBER/reviews --input -
+}
+REVIEW_EOF
 ```
 
 **If `gh api` fails** (e.g., a line number is outside the diff hunk): fix the line number and retry. If it still fails, use `gh pr review` as a last resort and note the failure in the review body.
@@ -229,6 +228,7 @@ echo '{
 ## Important Notes
 
 - Always read the repository's CLAUDE.md for project-specific conventions
+- If the PR adds or modifies a Claude Code behavioral guard (a hook, or settings.json hook wiring, that blocks or enforces something): CI proves static fixtures pass, not that the guard fires in a real session. Look for live-validation evidence in the PR body (e.g. a deliberate violation observed to trigger the guard); if absent, raise it as an Important finding. Skip this check entirely for repos without Claude Code hooks.
 - Check if shell scripts pass shellcheck-style validation
 - For Rust projects, verify idiomatic patterns are followed
 - Consider the PR's scope - don't suggest unrelated improvements

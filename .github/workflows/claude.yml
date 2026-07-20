@@ -41,3 +41,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           additional_permissions: |
             actions: read
+          # Pin fable (Claude Fable 5) for implementation-grade @claude responses,
+          # matching the review workflow; unpinned would silently track the CC
+          # default model (Sonnet 5 as of v2.1.197).
+          claude_args: '--model fable'

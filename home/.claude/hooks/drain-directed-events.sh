@@ -120,6 +120,11 @@ REASON=$(printf 'Directed event(s) arrived while you were working. Address them 
 # would also swallow any event that arrived between the peek above and now,
 # consuming it without ever surfacing it. Bounding closes that window: late
 # arrivals stay behind the cursor for the next Stop / prompt-events.sh pull.
+#
+# ASSUMES the CLI applies --limit AFTER --exclude (PEEKED_COUNT is a
+# post-exclusion count), consistently between peek and consume. If a CLI
+# change ever counted --limit pre-exclusion, this consume could over-advance
+# and silently drop events — revisit this bound if that flag semantic changes.
 eb_fetch_events "$SESSION_ID" consume text asc "$PEEKED_COUNT" >/dev/null 2>&1 || true
 
 # Block once, surfacing all peeked events so the agent can act.

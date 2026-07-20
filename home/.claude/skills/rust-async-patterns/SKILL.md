@@ -303,6 +303,17 @@ async fn run_with_broadcast() -> Result<()> {
 
 ### Pattern 5: Async Traits
 
+Native `async fn` in traits has been stable since Rust 1.75 and is the default choice — no macro needed:
+
+```rust
+pub trait Repository {
+    async fn get(&self, id: &str) -> Result<Entity>;
+    async fn save(&self, entity: &Entity) -> Result<()>;
+}
+```
+
+Two cases still want more: spawned/`Send` contexts need explicit bounds on native AFIT (e.g. `fn get(&self, id: &str) -> impl Future<Output = Result<Entity>> + Send;`, or the `trait-variant` crate), and `dyn Trait` objects still need the `async-trait` crate:
+
 ```rust
 use async_trait::async_trait;
 
