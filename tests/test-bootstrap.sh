@@ -582,6 +582,30 @@ test_pull_latest_skips_pull_after_reexec() {
     return $ok
 }
 
+# The re-exec marker is exported, so without an unset it rides along into every
+# child bootstrap spawns (brew, npm, launchctl, .macos) and would make a nested
+# bootstrap run silently skip its own pull.
+test_pull_latest_unsets_reexec_marker() {
+    local dir; dir=$(_make_reexec_sandbox noop)
+    printf 'echo "marker=[${DOTFILES_BOOTSTRAP_REEXECED:-}]" > "%s/marker.state"\n' "$dir" >> "$dir/run.sh"
+    DOTFILES_BOOTSTRAP_REEXECED=1 bash "$dir/run.sh" >/dev/null 2>&1 || true
+    local ok=0
+    grep -q 'marker=\[\]' "$dir/marker.state" 2>/dev/null || ok=1
+    rm -rf "$dir"
+    return $ok
+}
+
+# BOOTSTRAP_SOURCE_ONLY is only meaningful when sourced. It is also inherited by
+# the re-exec'd process, so if a stray value in the environment could reach the
+# top-level `return`, bash would error ("can only `return' from a function or
+# sourced script") and set -e would abort the install. An executed run must
+# ignore it entirely.
+test_source_only_ignored_when_executed() {
+    local out rc=0
+    out=$(BOOTSTRAP_SOURCE_ONLY=1 "$BOOTSTRAP" --help 2>&1) || rc=$?
+    [[ "$rc" -eq 0 ]] && echo "$out" | grep -q "Usage:"
+}
+
 # ============================================================================
 # Run all tests
 # ============================================================================
@@ -648,6 +672,8 @@ main() {
     run_test "re-execs when pull rewrites bootstrap.sh" "test_pull_latest_reexecs_when_pull_rewrites_script"
     run_test "no re-exec when script unchanged" "test_pull_latest_no_reexec_when_script_unchanged"
     run_test "skips pull after re-exec (no loop)" "test_pull_latest_skips_pull_after_reexec"
+    run_test "unsets re-exec marker so children don't inherit it" "test_pull_latest_unsets_reexec_marker"
+    run_test "BOOTSTRAP_SOURCE_ONLY ignored when executed" "test_source_only_ignored_when_executed"
     echo ""
 
     # Summary

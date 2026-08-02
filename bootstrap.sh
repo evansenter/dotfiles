@@ -481,6 +481,9 @@ cleanup_legacy_cron() {
 # parsed in full, so we get out before the corrupted read can occur.
 pull_latest() {
 	if [[ -n "${DOTFILES_BOOTSTRAP_REEXECED:-}" ]]; then
+		# Done its job — drop it so it doesn't ride along into brew, npm,
+		# launchctl, .macos, or any nested bootstrap run.
+		unset DOTFILES_BOOTSTRAP_REEXECED
 		echo "Already pulled before restarting; skipping."
 		return 0
 	fi
@@ -1311,7 +1314,14 @@ sync_dotfiles() {
 
 # Tests source this file to exercise individual functions. `return` is legal at
 # the top level of a sourced script and stops here, before any install work.
-[[ "${BOOTSTRAP_SOURCE_ONLY:-}" == "1" ]] && return 0
+#
+# The BASH_SOURCE test keeps this to genuinely-sourced runs. `return` from an
+# *executed* script is an error that set -e turns into an abort, so without it a
+# stray BOOTSTRAP_SOURCE_ONLY=1 in the environment would break a normal install —
+# including the re-exec'd process in pull_latest, which inherits the environment.
+if [[ "${BOOTSTRAP_SOURCE_ONLY:-}" == "1" && "${BASH_SOURCE[0]}" != "$0" ]]; then
+	return 0
+fi
 
 # Parse arguments
 FORCE=false
