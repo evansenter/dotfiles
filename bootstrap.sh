@@ -5,6 +5,12 @@ set -euo pipefail
 # Bootstrap Script - Install Dotfiles
 # ==============================================================================
 
+# Capture our own absolute path and argv before the cd below, so pull_latest can
+# re-exec us after a pull rewrites this file. Resolve with `pwd -P` so a run via
+# a symlink still points at the physical script.
+BOOTSTRAP_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/$(basename "${BASH_SOURCE[0]}")"
+BOOTSTRAP_ARGS=("$@")
+
 # Change to the dotfiles directory
 cd "$(dirname "${BASH_SOURCE[0]}")";
 
@@ -460,9 +466,36 @@ cleanup_legacy_cron() {
 	fi
 }
 
+# Pull, then restart if the pull rewrote this script.
+#
+# Bash reads a script lazily, by byte offset, as it executes. `git pull` rewrites
+# bootstrap.sh in place whenever an update touches it, which shifts the
+# interpreter's next read into unrelated content — the run then derails silently,
+# with no error and no exit code. Observed on 2026-08-02: a `-p` run stopped right
+# after `brew bundle` and never reached sync_dotfiles, even though the brew call is
+# wrapped in `|| echo "...(continuing)"` that never printed. The code still
+# executing was not the code on disk.
+#
+# Re-exec'ing hands the rest of the run to a fresh interpreter reading the new
+# file from byte zero. It happens inside this function, which bash has already
+# parsed in full, so we get out before the corrupted read can occur.
 pull_latest() {
+	if [[ -n "${DOTFILES_BOOTSTRAP_REEXECED:-}" ]]; then
+		echo "Already pulled before restarting; skipping."
+		return 0
+	fi
+
 	echo "Pulling latest changes from origin/main..."
+	local before after
+	before="$(cksum < "$BOOTSTRAP_SCRIPT")"
 	git pull origin main
+	after="$(cksum < "$BOOTSTRAP_SCRIPT")"
+
+	if [[ "$before" != "$after" ]]; then
+		echo "bootstrap.sh was updated by the pull — restarting with the new version..."
+		export DOTFILES_BOOTSTRAP_REEXECED=1
+		exec "$BOOTSTRAP_SCRIPT" ${BOOTSTRAP_ARGS[@]+"${BOOTSTRAP_ARGS[@]}"}
+	fi
 }
 
 prompt_ai_install() {
@@ -1275,6 +1308,10 @@ sync_dotfiles() {
 # ==============================================================================
 # Main Execution
 # ==============================================================================
+
+# Tests source this file to exercise individual functions. `return` is legal at
+# the top level of a sourced script and stops here, before any install work.
+[[ "${BOOTSTRAP_SOURCE_ONLY:-}" == "1" ]] && return 0
 
 # Parse arguments
 FORCE=false

@@ -495,6 +495,94 @@ test_launch_agent_idempotent_on_unchanged_plist() {
 }
 
 # ============================================================================
+# Self-update re-exec tests
+# ============================================================================
+#
+# `git pull` can rewrite bootstrap.sh mid-run. Bash reads scripts lazily by byte
+# offset, so the interpreter then reads from a shifted position in new content and
+# the run derails silently. pull_latest must detect that and re-exec.
+#
+# These load the REAL pull_latest by sourcing bootstrap.sh with BOOTSTRAP_SOURCE_ONLY,
+# against a sandboxed copy plus a stubbed `git` that simulates the rewrite.
+
+# Build a sandbox: a copy of bootstrap.sh, a `git` stub, and a runner that sources
+# the copy and calls pull_latest. $1 = "rewrite" (pull mutates the script) or
+# "noop". Echoes the sandbox dir.
+_make_reexec_sandbox() {
+    local mode="$1"
+    local dir stub
+    dir=$(mktemp -d); stub="$dir/bin"; mkdir -p "$stub"
+    cp "$BOOTSTRAP" "$dir/bootstrap.sh"
+    chmod +x "$dir/bootstrap.sh"
+
+    # What `git pull` leaves behind in the rewrite case: a stand-in that records
+    # the argv it was re-exec'd with. Reaching this proves the exec happened.
+    {
+        printf '#!/bin/bash\n'
+        printf 'echo "$@" > "%s/reexec.args"\n' "$dir"
+    } > "$dir/marker.sh"
+    chmod +x "$dir/marker.sh"
+
+    {
+        printf '#!/bin/bash\n'
+        printf 'echo "$@" >> "%s/git.calls"\n' "$dir"
+        if [[ "$mode" == "rewrite" ]]; then
+            printf '[[ "$1" == "pull" ]] && cp "%s/marker.sh" "%s/bootstrap.sh"\n' "$dir" "$dir"
+        fi
+        printf 'exit 0\n'
+    } > "$stub/git"
+    chmod +x "$stub/git"
+
+    {
+        printf '#!/bin/bash\n'
+        printf 'set -euo pipefail\n'
+        printf 'export BOOTSTRAP_SOURCE_ONLY=1\n'
+        printf 'source "%s/bootstrap.sh" --force --pull\n' "$dir"
+        printf 'unset BOOTSTRAP_SOURCE_ONLY\n'
+        # Prepend the stub AFTER sourcing: bootstrap.sh evals `brew shellenv`,
+        # which puts /opt/homebrew/bin in front and would shadow our fake git.
+        printf 'export PATH="%s:$PATH"\n' "$stub"
+        printf 'pull_latest\n'
+    } > "$dir/run.sh"
+
+    echo "$dir"
+}
+
+test_pull_latest_reexecs_when_pull_rewrites_script() {
+    local dir; dir=$(_make_reexec_sandbox rewrite)
+    PATH="$dir/bin:$PATH" bash "$dir/run.sh" >/dev/null 2>&1 || true
+    local ok=0
+    [[ -f "$dir/reexec.args" ]] || ok=1                              # re-exec happened
+    grep -q -- '--force --pull' "$dir/reexec.args" 2>/dev/null || ok=1  # argv preserved
+    rm -rf "$dir"
+    return $ok
+}
+
+test_pull_latest_no_reexec_when_script_unchanged() {
+    local dir rc=0; dir=$(_make_reexec_sandbox noop)
+    PATH="$dir/bin:$PATH" bash "$dir/run.sh" >/dev/null 2>&1 || rc=$?
+    local ok=0
+    [[ "$rc" -eq 0 ]] || ok=1                    # returned normally, run continues
+    [[ -e "$dir/reexec.args" ]] && ok=1          # did NOT re-exec
+    grep -q 'pull origin main' "$dir/git.calls" 2>/dev/null || ok=1   # did still pull
+    rm -rf "$dir"
+    return $ok
+}
+
+# The re-exec'd process must not pull again — otherwise it re-detects a change
+# against the pre-pull checksum and loops.
+test_pull_latest_skips_pull_after_reexec() {
+    local dir rc=0; dir=$(_make_reexec_sandbox rewrite)
+    DOTFILES_BOOTSTRAP_REEXECED=1 PATH="$dir/bin:$PATH" bash "$dir/run.sh" >/dev/null 2>&1 || rc=$?
+    local ok=0
+    [[ "$rc" -eq 0 ]] || ok=1
+    [[ -e "$dir/git.calls" ]] && ok=1            # git never invoked
+    [[ -e "$dir/reexec.args" ]] && ok=1          # no second exec
+    rm -rf "$dir"
+    return $ok
+}
+
+# ============================================================================
 # Run all tests
 # ============================================================================
 
@@ -554,6 +642,12 @@ main() {
     run_test "sysload-writer tolerates top failure" "test_sysload_writer_tolerates_top_failure"
     run_test "launch agent substitutes __HOME__ and reloads" "test_launch_agent_substitutes_home"
     run_test "launch agent idempotent on unchanged plist" "test_launch_agent_idempotent_on_unchanged_plist"
+    echo ""
+
+    echo "=== self-update re-exec ==="
+    run_test "re-execs when pull rewrites bootstrap.sh" "test_pull_latest_reexecs_when_pull_rewrites_script"
+    run_test "no re-exec when script unchanged" "test_pull_latest_no_reexec_when_script_unchanged"
+    run_test "skips pull after re-exec (no loop)" "test_pull_latest_skips_pull_after_reexec"
     echo ""
 
     # Summary
