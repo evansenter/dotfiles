@@ -7,6 +7,17 @@
 #   GEMINI_API_KEY - Required for Gemini API access
 #   AGENT_EVENT_BUS_URL - URL for event bus MCP server (e.g., https://host/agent-event-bus/mcp)
 
+# Claude Code shells (subagents, workflow steps, Bash tool calls): attribute
+# agent-event-bus publishes/polls to the owning session instead of "anonymous"
+# (agent-event-bus#128). The SessionStart hook registers on the bus with
+# client_id = the Claude Code session id, which the bus adopts as its session
+# id - so the two ids are the same value. The CLI reads this env var when
+# --session-id is omitted. No-op outside Claude Code or on versions that don't
+# expose CLAUDE_CODE_SESSION_ID to subprocesses.
+if [[ -n "${CLAUDE_CODE_SESSION_ID:-}" && -z "${AGENT_EVENT_BUS_SESSION_ID:-}" ]]; then
+    export AGENT_EVENT_BUS_SESSION_ID="$CLAUDE_CODE_SESSION_ID"
+fi
+
 # Set up Homebrew PATH for macOS
 if [[ "$(uname)" == "Darwin" ]]; then
 	if [[ -f "/opt/homebrew/bin/brew" ]]; then

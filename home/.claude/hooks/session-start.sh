@@ -96,10 +96,13 @@ fi
 # - "repo:<name>" - repo-specific coordination
 # - "machine:<hostname>" - local machine coordination
 # - "session:<id>" - direct messages (if resumed with same session_id)
+# --min-level info drops lifecycle churn (session_registered, ci_watching,
+# task_started, ...) server-side - one canonical noise policy on the bus
+# (agent-event-bus#129) instead of a local denylist.
 EVENTS=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} events \
     --session-id "$SESSION_ID" \
     --order desc \
-    --exclude session_registered,session_unregistered \
+    --min-level info \
     --timeout 200 \
     --limit 20 \
     2>/dev/null) || true

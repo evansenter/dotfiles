@@ -188,7 +188,7 @@ case "$1" in
         while [[ $# -gt 1 ]]; do
             case "$2" in
                 --session-id) session_id="$3"; shift 2 ;;
-                --order|--include|--exclude|--timeout|--limit) shift 2 ;;  # Accept but ignore
+                --order|--include|--exclude|--min-level|--timeout|--limit) shift 2 ;;  # Accept but ignore
                 *) shift ;;
             esac
         done
@@ -1803,7 +1803,7 @@ case "${1:-}" in
                 --peek) peek=1; shift ;;
                 --json) json=1; shift ;;
                 --limit) limit="$2"; shift 2 ;;
-                --session-id|--order|--exclude|--timeout|--url) shift 2 ;;
+                --session-id|--order|--exclude|--min-level|--timeout|--url) shift 2 ;;
                 --resume) shift ;;
                 *) shift ;;
             esac
