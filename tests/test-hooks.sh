@@ -188,6 +188,16 @@ case "$1" in
             printf '%s ' "$@" >> "$MOCK_EVENTS_ARGS_FILE"
             printf '\n' >> "$MOCK_EVENTS_ARGS_FILE"
         fi
+        # Simulate a CLI predating --min-level (agent-event-bus#129): argparse
+        # rejects an unknown flag with a usage error on stderr and exit 2.
+        if [[ -n "${MOCK_REJECT_MIN_LEVEL:-}" ]]; then
+            for arg in "$@"; do
+                if [[ "$arg" == "--min-level" ]]; then
+                    echo "usage: agent-event-bus-cli events [...] (unrecognized arguments: --min-level)" >&2
+                    exit 2
+                fi
+            done
+        fi
         # Parse args - real CLI also accepts --order, --include, --exclude, --timeout, --limit
         # Currently only --session-id affects output; others are accepted but ignored
         session_id=""
@@ -361,6 +371,25 @@ test_session_start_uses_min_level() {
     # mock understands --min-level and returns events, so no retry fires).
     grep -q -- '--min-level info' "$args_file" && \
     ! grep -q -- '--exclude' "$args_file"
+}
+
+test_session_start_min_level_fallback() {
+    setup_mock_event_bus_cli
+
+    local args_file="$TEST_TMP/session-start-fallback-args"
+    rm -f "$args_file"
+    local output
+    output=$(echo '{"session_id":"test-client","cwd":"/tmp"}' | \
+        MOCK_EVENTS_ARGS_FILE="$args_file" MOCK_REJECT_MIN_LEVEL=1 \
+        bash "$HOOKS_DIR/session-start.sh" 2>&1) || true
+
+    # Exercises the deploy-ordering fallback end to end: an old CLI rejects
+    # --min-level with an argparse usage error (exit 2), and the hook must
+    # retry with the legacy --exclude denylist and still surface events.
+    # The argv file shows both attempts, in order.
+    [[ "$output" == *"task_completed"* ]] && \
+    sed -n '1p' "$args_file" | grep -q -- '--min-level' && \
+    sed -n '2p' "$args_file" | grep -q -- '--exclude'
 }
 
 # ============================================================================
@@ -2072,6 +2101,7 @@ main() {
     run_test "integration: parses session_id" "test_session_start_parses_session_id"
     run_test "integration: fetches events" "test_session_start_fetches_events"
     run_test "integration: uses server-side --min-level (noise policy)" "test_session_start_uses_min_level"
+    run_test "integration: falls back to --exclude on old CLI (exit 2)" "test_session_start_min_level_fallback"
     run_test "integration: populates statusline cache" "test_session_start_populates_cache"
     run_test "integration: skips cache without display_id" "test_session_start_cache_skipped_without_display_id"
     echo ""

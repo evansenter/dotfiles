@@ -99,19 +99,23 @@ fi
 # --min-level info drops lifecycle churn (session_registered, ci_watching,
 # task_started, ...) server-side - one canonical noise policy on the bus
 # (agent-event-bus#129) instead of a local denylist.
+FETCH_RC=0
 EVENTS=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} events \
     --session-id "$SESSION_ID" \
     --order desc \
     --min-level info \
     --timeout 200 \
     --limit 20 \
-    2>/dev/null) || true
+    2>/dev/null) || FETCH_RC=$?
 
 # Version-skew fallback: a CLI predating --min-level (agent-event-bus#129)
-# errors out with stderr suppressed, leaving EVENTS empty - the CLI prints
-# "No events" when there are genuinely none, so empty means the flag wasn't
-# understood; retry once with the legacy client-side denylist.
-if [[ -z "$EVENTS" ]]; then
+# rejects the flag with an argparse usage error - exit 2, stderr suppressed,
+# EVENTS empty - so retry once with the legacy client-side denylist. Exit 2
+# discriminates that from a bus that is down or timed out (exit 1), where a
+# retry can't help and would make every offline session start pay a second
+# ~200ms timeout. A flag-aware CLI prints "No events" when there are
+# genuinely none, so empty-with-success never fires the fallback either.
+if [[ -z "$EVENTS" && $FETCH_RC -eq 2 ]]; then
     EVENTS=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} events \
         --session-id "$SESSION_ID" \
         --order desc \
