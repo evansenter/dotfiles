@@ -182,6 +182,12 @@ case "$1" in
         ;;
 
     events)
+        # Record argv when asked - pins the noise-policy split (session-start
+        # uses server-side --min-level; the drain lib keeps client-side --exclude)
+        if [[ -n "${MOCK_EVENTS_ARGS_FILE:-}" ]]; then
+            printf '%s ' "$@" >> "$MOCK_EVENTS_ARGS_FILE"
+            printf '\n' >> "$MOCK_EVENTS_ARGS_FILE"
+        fi
         # Parse args - real CLI also accepts --order, --include, --exclude, --timeout, --limit
         # Currently only --session-id affects output; others are accepted but ignored
         session_id=""
@@ -339,6 +345,22 @@ test_session_start_fetches_events() {
     # Should fetch and display events after registration
     # Output should contain BOTH registration confirmation AND event content
     [[ "$output" == *"Registered"* ]] && [[ "$output" == *"task_completed"* ]]
+}
+
+test_session_start_uses_min_level() {
+    setup_mock_event_bus_cli
+
+    local args_file="$TEST_TMP/session-start-events-args"
+    rm -f "$args_file"
+    echo '{"session_id":"test-client","cwd":"/tmp"}' | \
+        MOCK_EVENTS_ARGS_FILE="$args_file" \
+        bash "$HOOKS_DIR/session-start.sh" >/dev/null 2>&1 || true
+
+    # Pins the server-side noise policy: the recent-events fetch passes
+    # --min-level info, and the legacy --exclude fallback stays idle (the
+    # mock understands --min-level and returns events, so no retry fires).
+    grep -q -- '--min-level info' "$args_file" && \
+    ! grep -q -- '--exclude' "$args_file"
 }
 
 # ============================================================================
@@ -1794,6 +1816,12 @@ done
 
 case "${1:-}" in
     events)
+        # Record argv when asked - pins the noise-policy split (session-start
+        # uses server-side --min-level; the drain lib keeps client-side --exclude)
+        if [[ -n "${MOCK_EVENTS_ARGS_FILE:-}" ]]; then
+            printf '%s ' "$@" >> "$MOCK_EVENTS_ARGS_FILE"
+            printf '\n' >> "$MOCK_EVENTS_ARGS_FILE"
+        fi
         peek=0
         json=0
         limit=""
@@ -2007,6 +2035,24 @@ test_drain_directed_blocks_on_help_needed_repo() {
     [[ "$output" == *"help_needed"* ]]
 }
 
+test_eventbus_lib_uses_client_side_exclude() {
+    # The drain lib must KEEP the client-side denylist: its bounded consume
+    # relies on --exclude filtering client-side so peek and consume agree on
+    # the same raw event window (see the rationale in lib/eventbus-collect.sh).
+    # A "unification" onto server-side --min-level would silently break that.
+    setup_mock_drain_cli
+
+    local args_file="$TEST_TMP/drain-events-args"
+    rm -f "$args_file"
+    MOCK_EVENTS_ARGS_FILE="$args_file" bash -c '
+        source "'"$HOOKS_DIR"'/lib/eventbus-collect.sh"
+        eb_fetch_events "sess-1" consume text asc
+    ' >/dev/null 2>&1 || true
+
+    grep -q -- '--exclude' "$args_file" && \
+    ! grep -q -- '--min-level' "$args_file"
+}
+
 # ============================================================================
 # Run all tests
 # ============================================================================
@@ -2025,6 +2071,7 @@ main() {
     run_test "integration: happy path" "test_session_start_happy_path"
     run_test "integration: parses session_id" "test_session_start_parses_session_id"
     run_test "integration: fetches events" "test_session_start_fetches_events"
+    run_test "integration: uses server-side --min-level (noise policy)" "test_session_start_uses_min_level"
     run_test "integration: populates statusline cache" "test_session_start_populates_cache"
     run_test "integration: skips cache without display_id" "test_session_start_cache_skipped_without_display_id"
     echo ""
@@ -2170,6 +2217,7 @@ main() {
     run_test "silent on no events (no consume)" "test_drain_directed_silent_on_no_events"
     run_test "bounded consume tracks multi-event peeked count" "test_drain_directed_bounded_consume_multi_event"
     run_test "registered before enforce-insight (block precedence)" "test_drain_directed_registered_before_enforce_insight"
+    run_test "lib keeps client-side --exclude (bounded-consume safety)" "test_eventbus_lib_uses_client_side_exclude"
     echo ""
 
     # Summary

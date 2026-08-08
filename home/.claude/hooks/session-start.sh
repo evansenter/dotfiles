@@ -107,6 +107,20 @@ EVENTS=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} events \
     --limit 20 \
     2>/dev/null) || true
 
+# Version-skew fallback: a CLI predating --min-level (agent-event-bus#129)
+# errors out with stderr suppressed, leaving EVENTS empty - the CLI prints
+# "No events" when there are genuinely none, so empty means the flag wasn't
+# understood; retry once with the legacy client-side denylist.
+if [[ -z "$EVENTS" ]]; then
+    EVENTS=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} events \
+        --session-id "$SESSION_ID" \
+        --order desc \
+        --exclude session_registered,session_unregistered \
+        --timeout 200 \
+        --limit 20 \
+        2>/dev/null) || true
+fi
+
 # Output events in XML tags (interpretation guidance is in CLAUDE.md)
 if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]]; then
     echo "<recent-events>"
