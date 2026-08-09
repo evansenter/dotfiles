@@ -37,7 +37,7 @@ Non-obvious autonomy:
 ## Quality Gates
 
 - Run quality gates (linter, formatter, tests) before pushing.
-- New code needs tests. User-facing features need examples. Flag gaps.
+- New user-facing behavior needs tests; user-facing features need examples. Flag gaps. An untested internal helper or branch is a suggestion, not a blocker — treating every new line as a coverage defect makes fix→re-review cycles unable to converge.
 
 ## Reflection
 
@@ -52,7 +52,7 @@ Use `/work <issue-number>` for guided development. `/work --attach` to join an e
 - **Before pushing**: `/pr-review local`, update docs if needed
 - **After push**: `/pr-create` (or just push) → `/watch-ci` → CI completes → `/pr-review remote`
 - **On feedback**: Present via AskUserQuestion. Form your own opinion—you have context reviewers lack
-- **After fixes**: Push → auto-cycle repeats until clean
+- **After fixes**: Push → auto-cycle repeats until clean, capped at ~5 rounds. Each push triggers the next review, and each fix is new surface for it. From round 3, only fix findings with a concrete failure scenario; when a round yields only polish, the PR has converged — ask the user to merge rather than pushing again
 
 ## Loops & Automation
 
