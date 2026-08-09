@@ -108,7 +108,20 @@ The `claude-code-review.yml` workflow runs on every PR push:
 **Review standards:**
 - Critical or Important issues → REQUEST_CHANGES (blocks merge)
 - Suggestions only → APPROVE (inline comments posted but non-blocking)
+- An Important finding must carry a **failure scenario** — concrete inputs/state → wrong output. Missing tests, missing comments, style/convention nits, and duplicated strings are Suggestions by construction and can never block
 - Previously addressed items are filtered via semantic matching against "Feedback Addressed" comments
+
+**Convergence:** the reviewer counts prior automated reviews on the PR to derive a round number, and tightens what may block as rounds accumulate:
+
+| Round | May block |
+|-------|-----------|
+| 1–2 | Full review depth |
+| 3–5 | Only findings with a failure scenario |
+| 6+ | Only Critical, or a regression against earlier behavior |
+
+Because the review runs on every push, and the author's answer to a review *is* a push, an unbounded loop is the default failure mode — one PR drew 70 rounds with CI green throughout ([#330](https://github.com/evansenter/dotfiles/issues/330)). Findings against code that exists only because of a previous round's fix are discounted to Suggestions unless they are genuine regressions, and a PR in a polish-only steady state is approved as converged.
+
+**Maturity calibration:** a PR marked `experimental` / `prototype` / `spike` / RFC (or left in draft) is reviewed for whether it works for its stated purpose. Production-hardening findings on such a PR are Suggestions.
 
 **Branch protection:**
 - Requires 1 approving review (bot counts)

@@ -252,13 +252,15 @@ WIP state is **automatically checkpointed** by the `pre-compact.sh` hook before 
 
 **Goal-based loops:** For a review→fix or CI→fix cycle expected to take more than one round, offer to set `/goal` with the deterministic stop condition (e.g., `CI green on PR #N and /pr-review local clean`) — see Loops & Automation. Judgment-heavy checkpoints (scope, merge confirmation, feedback triage) stay turn-based.
 
-**Run /pr-review local**: Run, fix issues if found, loop until clean.
+**Run /pr-review local**: Run, fix issues if found, loop until clean — cap at 3 rounds. Each fix is new surface for the next review, so a review→fix cycle can run forever on polish; once a round yields only Suggestions, it has converged.
 
 **Create PR**: Run `/pr-create`. If adhoc, update remaining tasks to `[work:pr-N]`.
 
 **Monitor CI**: Run `/watch-ci <PR#>` in background.
 
 **Process feedback**: Run `/pr-review remote` (do not gate on CI status — review and CI are independent). If changes pushed, reset CI and feedback checkpoints, loop.
+
+Track the round count. From round 3, only act on findings that name a concrete failure (inputs/state → wrong output); post the rest as acknowledged-but-skipped in the "Feedback Addressed" comment rather than fixing them. If rounds 5+ are still producing only polish findings — or you find yourself reworking the same construct across consecutive rounds — stop and surface it to the user via `AskUserQuestion`: merge as-is, or address a specific remaining item. Do not keep pushing; every push triggers the next review round.
 
 **Confirm merge**: First, verify that `/pr-review remote` was run against the latest pushed commit. Check the PR comments for a "Feedback Addressed" or "No reviewer feedback" comment posted after the most recent push. If no such comment exists, run `/pr-review remote` now before proceeding. Never skip this — CI pass alone is not sufficient for merge.
 

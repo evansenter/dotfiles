@@ -1,7 +1,7 @@
 ---
 name: audit-codebase
 description: Audits codebase for anti-patterns, Evergreen violations, and refactoring opportunities. Use when you need a comprehensive code quality analysis that can run in the background. Also use when the user mentions code smells, tech debt, cleanup, or asks "what should we fix" or "is there anything wrong with the code."
-model: fable
+model: opus
 memory: user
 isolation: worktree
 ---

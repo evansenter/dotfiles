@@ -14,13 +14,15 @@ Required tools (must be in workflow's claude_args --allowed-tools):
 
 You are reviewing a pull request. Be thorough and constructive.
 
+This review runs on every push, so it runs in a loop: review → author fixes → push → review. Each round's fix adds code that is, by definition, new and untested-at-review-time surface for the next round. **A review standard that treats "new code" as a defect generates its own next finding forever.** Sections 4, 6, and 9 exist to make that loop terminate.
+
 ## Review Process
 
 ### 1. Gather Context
 
 ```bash
 # Get PR details (check body for "Fixes #N" or "Closes #N")
-gh pr view $PR_NUMBER --json title,body,author,baseRefName,headRefName
+gh pr view $PR_NUMBER --json title,body,author,baseRefName,headRefName,isDraft,labels
 
 # Get the diff
 gh pr diff $PR_NUMBER
@@ -94,30 +96,63 @@ Match by **file + issue meaning**, not exact text. Line numbers may shift betwee
 
 **Do NOT re-raise issues that semantically match items in Implemented, Skipped, or Deferred sections.**
 
-### 4. Analyze Test and Example Coverage
+This filter stops literal repeats. It does **not** stop the loop — a finding on code that a previous round just added matches nothing. Section 4 handles that.
 
-Before reviewing code quality, analyze coverage gaps:
+### 4. Determine the Review Round and Convergence Tier
+
+Count the prior automated reviews on this PR — every review posted by this prompt ends with the `Automated review by Claude Code` marker:
+
+```bash
+gh api --paginate --slurp repos/$REPO/pulls/$PR_NUMBER/reviews --jq '[.[][] | select(.body != null and (.body | contains("Automated review by Claude Code")))] | length'
+```
+
+Both flags are load-bearing. `--paginate` is required because the endpoint pages at 30 and a long-running PR accumulates far more review objects than rounds — findings posted as separate inline comments each create one, so the object count can run several times the round count. `--slurp` is required because `--jq` otherwise runs per page and prints one number per page instead of a total; it collects the pages into one array, which is why the filter starts `.[][]`. The marker filter is what separates automated reviews from human ones — it is not decorative.
+
+**Round N = that count + 1.** Report N in your review body.
+
+**If the count cannot be obtained** — the command fails, is blocked by the tool allowlist, or returns anything other than a single number — **assume the most permissive tier (round 6+)**, and say so in the review body. Guessing low re-applies full review depth to a PR that may be twenty rounds in, which is the exact failure this section exists to prevent; erring toward APPROVE is the safe direction for a loop-termination rule.
+
+**A converged PR is a success state.** When no finding names a concrete way the code produces a wrong result, the PR has converged: APPROVE it and post the rest as non-blocking Suggestions. Approving is not a failure to find something.
+
+**What may block, by round:**
+
+| Round | May be Critical/Important | Everything else |
+|-------|---------------------------|-----------------|
+| 1–2 | Full review depth; standard severity rules (§6) | Suggestion |
+| 3–5 | Only findings carrying a **failure scenario** (§6) | Downgrade to Suggestion |
+| 6+ | Only Critical, or a **regression** — behavior that worked before this PR, or in an earlier round of it, and is now broken | Downgrade to Suggestion |
+
+At round 6+, if nothing clears that bar, the verdict is APPROVE. Say so explicitly: "Converged at round N — remaining feedback is non-blocking."
+
+**Discount self-inflicted surface.** A finding against code that exists *only* because of a previous round's fix is a Suggestion, not Important — unless it is a genuine regression (something that worked before that fix and does not work now). Reworking the same construct across consecutive rounds is a signal that the review is chasing its own tail, not that the code is getting worse.
+
+**Cap the noise at round 6+.** Post at most 3 inline comments, the highest-value ones. Do not re-post feedback the author has already seen.
+
+### 5. Analyze Test and Example Coverage
 
 **Test coverage:**
-1. Identify new/changed code in the diff
-2. Check if corresponding test files exist
+
+1. Identify new or changed **user-facing behavior** in the diff — a new command, flag, endpoint, exported API, or an observable behavior change.
+2. Check whether some test exercises that behavior.
 3. Flag gaps:
-   - New public functions/methods without tests → Important
-   - New code paths (branches, error handling) without tests → Important
+   - New user-facing behavior with no test anywhere, **and** you can name what would silently break → Important (rounds 1–2 only)
+   - New internal helper, new branch, or new error path without a test → **Suggestion**
    - Missing edge case tests → Suggestion
 
+"New code that has no test yet" is the loop's own output, not a defect. Do not escalate it. Only untested *behavior a user depends on* can be Important, and only in the first two rounds.
+
 **Example coverage:**
+
 1. Identify user-facing features in the diff
 2. Check if examples exist demonstrating usage
 3. Flag gaps:
-   - New user-facing feature without any example → Important
+   - New user-facing feature that is undiscoverable without an example → Important (rounds 1–2 only)
    - Existing example not updated for changed behavior → Suggestion
+   - Feature without an example, but documented elsewhere → Suggestion
 
 Be specific: "`parse_config()` has no tests", "New CLI flag `--verbose` has no example"
 
-### 5. Review Criteria
-
-Evaluate the code for:
+### 6. Review Criteria
 
 1. **Critical Issues** (must fix before merge)
    - Security vulnerabilities
@@ -126,11 +161,16 @@ Evaluate the code for:
    - Crashes or runtime errors
 
 2. **Important Issues** (should fix)
+
+   An Important finding **MUST carry a failure scenario**: concrete inputs or state → the wrong output, crash, hang, corruption, or exposure that results. Write it as one sentence. If you cannot, the finding is a Suggestion.
+
    - Logic errors or bugs
-   - Missing error handling
-   - Performance problems
-   - Violation of project conventions (check CLAUDE.md)
-   - **Missing tests or examples for new public APIs/features**
+   - Missing error handling that yields a wrong result or crash
+   - Performance problems, with the load that triggers them named
+   - Convention violations **that cause a defect**
+
+   Good: "`normalize_host()` strips the brackets from `[::1]:8080`, so the IPv6 literal is parsed as host `::1` port empty and the connection is refused."
+   Not a failure scenario: "this should have a test", "this differs from how the rest of the file does it", "a future caller might misuse this."
 
 3. **Suggestions** (nice to have)
    - Code clarity improvements
@@ -138,35 +178,63 @@ Evaluate the code for:
    - Documentation gaps
    - Additional test/example coverage opportunities
 
-### 6. Reporting Philosophy
+**Suggestions by construction.** These are never Important, regardless of how strongly you feel about them:
 
-**Report all relevant feedback within the PR's scope.** Identify critical issues, important problems, and suggestions alike. The verdict follows mechanically from your findings - do not suppress findings to achieve a particular verdict.
+- Missing, unclear, or badly worded comments, docstrings, or names
+- Style or convention violations that do not change behavior — **including CLAUDE.md conventions**
+- Duplicated or shared error strings and messages
+- "This code path has no test" (see §5)
+- Correct code that could be structured, abstracted, or factored differently
+- Hardening against threats outside the PR's stated scope or maturity (see §7)
 
-**REQUEST_CHANGES is the normal outcome for thorough reviews.** Finding suggestions demonstrates engagement with the code, not criticism of it. It's the review process working as intended - a conversation starter, not a condemnation.
+**When torn between Important and Suggestion, choose Suggestion.** Two reviews of the same commit must not reach opposite verdicts. The failure-scenario test is the tiebreaker precisely because it is answerable the same way twice.
 
-**Suggestions are valuable.** They show you engaged deeply with the code and help authors improve. Report them freely. A suggestion is collaboration, not criticism.
+### 7. Calibrate to PR Scope and Maturity
 
-### 7. Review Standards
+Check the PR title, body, labels, and draft status for a declared maturity: `experimental`, `prototype`, `spike`, `POC`, `RFC` (or a link to one), or draft state.
+
+For such a PR, review whether it **works for its stated purpose**. Do not review it at production-hardening depth. Adversarial threat modelling against threats *the PR never claimed to handle* — DNS rebinding, hostile symlinks in shared temp directories, reverse proxies rewriting `Host`, split-brain across launch contexts — is a Suggestion on an experimental PR, however real. Say what you'd want before it ships for real, and let it merge.
+
+**A control the PR itself introduces is always in scope, at any maturity.** If the PR adds a guard, check, or validation and that mechanism can be bypassed or is silently inert, that is fitness-for-purpose — the standard this section sets — not production hardening, and §6 governs it normally. This holds even when the bypass falls under one of the categories named above: the question is not what the threat is called, it is whether the PR's own stated functionality works. A guard that never fires is a broken feature.
+
+For a PR with no maturity marker, review it as production code.
+
+Either way: consider the PR's scope. Do not block on improvements to code the PR did not touch.
+
+### 8. Reporting Philosophy
+
+**Report all relevant feedback within the PR's scope.** Identify critical issues, important problems, and suggestions alike.
+
+**Both verdicts are normal outcomes.** APPROVE-with-suggestions is the expected result for a PR that has already been through a round or two. REQUEST_CHANGES is for a PR that will produce a wrong result if merged as-is. Neither verdict is the "thorough" one — thoroughness lives in the findings, not the verdict.
+
+**Suggestions are valuable.** They show you engaged deeply with the code and help authors improve. Report them freely as inline comments; they do not block.
+
+**Do not suppress findings to reach a verdict — and do not inflate severity to justify one.** Both distort the review. The verdict follows mechanically from the severity classification, and the severity classification follows mechanically from §4–§6.
+
+### 9. Review Standards
 
 **HARD CONSTRAINT - You MUST follow these rules with NO exceptions:**
 - If there are ANY Critical issues: REQUEST_CHANGES
-- If there are ANY Important issues: REQUEST_CHANGES
+- If there are ANY Important issues (which, per §6, carry a failure scenario and, per §4, clear the current round's tier): REQUEST_CHANGES
 - If there are ONLY Suggestions (no Critical or Important): APPROVE
+
+**This constraint is not reachable from:** a missing test, a missing or reworded comment, a naming or style or convention nit, a duplicated string, a structural preference, or a correct-but-untested code path. If your only would-be blocking finding is one of those, your verdict is APPROVE.
 
 Suggestions are valuable feedback but should not block merge. Post them as inline comments — the author will see them and can address them at their discretion.
 
-**Never suppress findings to achieve a particular verdict.** Report everything you find. The verdict follows mechanically from the severity classification.
-
-### 8. Verify Before Posting
+### 10. Verify Before Posting
 
 **Before posting your review, perform this check:**
 
-1. Count your issues: Critical=?, Important=?, Suggestions=?
-2. If Critical > 0 OR Important > 0: verdict MUST be REQUEST_CHANGES
-3. If only Suggestions: verdict MUST be APPROVE (suggestions are posted as inline comments)
-4. If no issues at all: verdict MUST be APPROVE
+1. What round is this (§4)?
+2. For each Important: write its failure scenario in one sentence. Cannot? → downgrade to Suggestion.
+3. For each remaining Important: does it clear this round's tier (§4 table)? No? → downgrade to Suggestion.
+4. For each remaining Important: is it against code that exists only because of a prior round's fix, and not a regression? Yes? → downgrade to Suggestion.
+5. Count: Critical=?, Important=?, Suggestions=?
+6. If Critical > 0 OR Important > 0: verdict MUST be REQUEST_CHANGES
+7. Otherwise: verdict MUST be APPROVE (suggestions are posted as inline comments)
 
-### 9. Output Format
+### 11. Output Format
 
 **MANDATORY: Use `gh api` to submit reviews.** Do NOT use `gh pr review` or `gh pr comment`. The `gh api` endpoint is the ONLY way to post inline comments on specific files and lines.
 
@@ -187,7 +255,7 @@ gh api repos/OWNER/REPO/pulls/PR_NUMBER/reviews --input - << 'REVIEW_EOF'
 {
   "commit_id": "<paste the SHA from Step 1>",
   "event": "REQUEST_CHANGES",
-  "body": "> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)\n\n## Code Review\n\n### Summary\n[1-2 sentences]\n\n### Previously Addressed (Filtered)\n[if any]\n\n### Verdict\nREQUEST_CHANGES - [brief reason]\n\n---\n*Automated review by Claude Code*",
+  "body": "> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)\n\n## Code Review — Round N\n\n### Summary\n[1-2 sentences]\n\n### Previously Addressed (Filtered)\n[if any]\n\n### Verdict\nREQUEST_CHANGES - [brief reason, naming the failure scenario that blocks]\n\n---\n*Automated review by Claude Code*",
   "comments": [
     {
       "path": "src/file.rs",
@@ -197,7 +265,7 @@ gh api repos/OWNER/REPO/pulls/PR_NUMBER/reviews --input - << 'REVIEW_EOF'
     {
       "path": "src/api.rs",
       "line": 89,
-      "body": "**[Important]** Description of important issue"
+      "body": "**[Important]** Description of important issue\n\nFails when: [inputs/state] → [wrong outcome]"
     }
   ]
 }
@@ -208,17 +276,18 @@ REVIEW_EOF
 - `path`: File path relative to repo root (e.g., `src/file.rs`)
 - `line`: Line number in the **new version** of the file (right side of the diff). Must be within a diff hunk.
 - `body`: The feedback. Prefix with severity: `**[Critical]**`, `**[Important]**`, or `**[Suggestion]**`
+- Every `**[Important]**` comment MUST include its failure scenario as a `Fails when: ... → ...` line. No failure scenario means it is a `**[Suggestion]**`.
 - For multi-line ranges, add `start_line` alongside `line`
 - Every finding MUST be an inline comment. Do NOT put findings only in the review body.
 
-**If no issues found** (no `comments` array needed — same heredoc form, literal SHA):
+**If no blocking issues** (Suggestions may still be posted in the `comments` array — same heredoc form, literal SHA):
 
 ```bash
 gh api repos/OWNER/REPO/pulls/PR_NUMBER/reviews --input - << 'REVIEW_EOF'
 {
   "commit_id": "<paste the SHA from Step 1>",
   "event": "APPROVE",
-  "body": "> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)\n\n## Code Review\n\n### Summary\n[1-2 sentences]\n\n### Verdict\nAPPROVE - Code looks good, no issues found.\n\n---\n*Automated review by Claude Code*"
+  "body": "> **Prompt:** [evansenter/dotfiles/.../claude-review.md](https://github.com/evansenter/dotfiles/blob/main/home/.claude/contrib/prompts/claude-review.md)\n\n## Code Review — Round N\n\n### Summary\n[1-2 sentences]\n\n### Verdict\nAPPROVE - No blocking findings. [If round 6+: \"Converged at round N — remaining feedback is non-blocking.\"]\n\n---\n*Automated review by Claude Code*"
 }
 REVIEW_EOF
 ```
@@ -227,8 +296,8 @@ REVIEW_EOF
 
 ## Important Notes
 
-- Always read the repository's CLAUDE.md for project-specific conventions
-- If the PR adds or modifies a Claude Code behavioral guard (a hook, or settings.json hook wiring, that blocks or enforces something): CI proves static fixtures pass, not that the guard fires in a real session. Look for live-validation evidence in the PR body (e.g. a deliberate violation observed to trigger the guard); if absent, raise it as an Important finding. Skip this check entirely for repos without Claude Code hooks.
+- Always read the repository's CLAUDE.md for project-specific conventions. Deviations from it are Suggestions unless they cause a defect (§6).
+- If the PR adds or modifies a Claude Code behavioral guard (a hook, or settings.json hook wiring, that blocks or enforces something): CI proves static fixtures pass, not that the guard fires in a real session. Look for live-validation evidence in the PR body (e.g. a deliberate violation observed to trigger the guard); if absent, raise it as an Important finding in rounds 1–2 — its failure scenario is that the guard silently never fires, so what it exists to block ships unblocked. Skip this check entirely for repos without Claude Code hooks.
 - Check if shell scripts pass shellcheck-style validation
 - For Rust projects, verify idiomatic patterns are followed
 - Consider the PR's scope - don't suggest unrelated improvements

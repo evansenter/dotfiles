@@ -58,8 +58,10 @@ Analyze the diff for untested code paths. For each new/modified source file:
 
 **Severity:**
 - **Critical** - Security-sensitive code (auth, validation, permissions) without tests
-- **Important** - New public function without tests; new user-facing feature without example
-- **Suggestion** - Modified function with incomplete coverage; private helpers without tests
+- **Important** - New *user-facing behavior* (command, flag, endpoint, exported API) with no test anywhere, and you can name what would silently break; new user-facing feature that is undiscoverable without an example
+- **Suggestion** - Internal helpers, new branches, and error paths without tests; modified function with incomplete coverage; feature documented but without an example
+
+Do not escalate "this new code has no test yet" past Suggestion. On a fix→re-review cycle every fix adds new untested surface, so that rule regenerates itself every round and never converges.
 
 ### 4. Run Examples (if applicable)
 
@@ -225,7 +227,7 @@ Publish `feedback_addressed` to event bus.
 
 ### 10. Final Steps
 
-**Local**: If fixes made, run `/pr-review local` again.
+**Local**: If fixes made, run `/pr-review local` again — but at most twice. A re-review exists to catch regressions in the fixes, not to find new polish in them. If the third pass surfaces only Suggestions, the diff has converged: report them and move on.
 
 **Remote** (if fixes were made):
 1. Run quality gates (linter, formatter, tests)
