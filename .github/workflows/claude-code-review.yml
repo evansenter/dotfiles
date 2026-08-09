@@ -25,10 +25,14 @@ jobs:
 
     steps:
       - name: Checkout repository
-        # Pinned to v4 (Node20). A v5 bump here can't be CI-verified: the claude-review
-        # action requires this workflow file to match main, so its check fails on any PR
-        # that edits it (the action says to ignore that). dotfiles.yml is bumped to v5
-        # (verified green); revisit these two once v5 is confirmed safe for the action.
+        # Pinned to v4 (Node20). A v5 bump here can't be CI-verified: the action refuses
+        # to run when this workflow file differs from the copy on the default branch (a
+        # security control — a PR that can rewrite the workflow would otherwise direct
+        # the reviewer while holding its token). Note it does NOT fail: it logs
+        # "Skipping action due to workflow validation" and exits *success*, so a green
+        # claude-review on a workflow-editing PR means the review never ran, not that it
+        # passed. Don't read it as a pass. dotfiles.yml is bumped to v5 (verified green);
+        # revisit these two once v5 is confirmed safe for the action.
         uses: actions/checkout@v4
         with:
           fetch-depth: 1

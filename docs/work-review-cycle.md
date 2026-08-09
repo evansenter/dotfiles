@@ -128,6 +128,8 @@ Because the review runs on every push, and the author's answer to a review *is* 
 - Dismisses stale reviews on new pushes (bot re-reviews automatically)
 - Admin bypass available if bot is down
 
+**A green `claude-review` check does not always mean a review happened.** The action refuses to run when the workflow file on the PR differs from the copy on the default branch — a security control, since a PR that can rewrite the workflow could otherwise direct the reviewer while it holds the token. It logs `Skipping action due to workflow validation` and exits **success**, so on any PR that edits `.github/workflows/claude*.yml` the check goes green in ~10s without reviewing anything. Check for an actual review verdict (`gh pr view --json reviews`) rather than trusting the check, and expect the first PR that adds these workflows to a new repo to behave the same way.
+
 ## Event Bus Integration
 
 The workflow publishes events for cross-session coordination:
