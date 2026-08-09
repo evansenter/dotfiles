@@ -123,7 +123,7 @@ Because the review runs on every push, and the author's answer to a review *is* 
 
 **Maturity calibration:** a PR marked `experimental` / `prototype` / `spike` / RFC (or left in draft) is reviewed for whether it works for its stated purpose. Production-hardening findings on such a PR are Suggestions.
 
-**Branch protection** on `main` (verify with `gh api repos/evansenter/dotfiles/branches/main/protection`):
+**Branch protection** on `main` (verify with `gh api repos/evansenter/dotfiles/branches/main/protection` — needs repo admin; a `403` means your token lacks admin rights, *not* that protection is off):
 - Requires 1 approving review (bot counts)
 - Dismisses stale reviews on new pushes (bot re-reviews automatically)
 - Required status checks: `Lint`, `Test`, `Bootstrap`. `Hooks` and `claude-review` run but are **not** required, so neither can block a merge
@@ -180,7 +180,7 @@ After running `bootstrap.sh` (which sets up the shared components):
 3. **Configure branch protection** on `main`:
    - Require 1 approving review (bot counts)
    - Dismiss stale reviews on push
-   - Don't enforce for admins (escape hatch if bot is down)
+   - Leave `enforce_admins` **off** — not as a rarely-used escape hatch, but because the bot can't review PRs that edit the claude workflows, so admin merges are the only way those land. See the `enforce_admins` note above before turning it on.
 
 4. **Write a project-specific `CLAUDE.md`** covering:
    - Build/test/lint commands
