@@ -123,10 +123,13 @@ Because the review runs on every push, and the author's answer to a review *is* 
 
 **Maturity calibration:** a PR marked `experimental` / `prototype` / `spike` / RFC (or left in draft) is reviewed for whether it works for its stated purpose. Production-hardening findings on such a PR are Suggestions.
 
-**Branch protection:**
+**Branch protection** on `main` (verify with `gh api repos/evansenter/dotfiles/branches/main/protection` — needs repo admin; a `403` means your token lacks admin rights, while a `404 Branch not protected` is what genuinely-unprotected looks like):
 - Requires 1 approving review (bot counts)
 - Dismisses stale reviews on new pushes (bot re-reviews automatically)
-- Admin bypass available if bot is down
+- Required status checks: `Lint`, `Test`, `Bootstrap`. `Hooks` and `claude-review` run but are **not** required, so neither can block a merge
+- `enforce_admins` is **off**, so none of the above binds an admin — admin merges bypass the review requirement unconditionally, not only as break-glass when the bot is down
+
+**Don't enable `enforce_admins` without solving the workflow-PR deadlock first.** The three settings interact: the review requirement is satisfied by the bot, and the bot cannot review a PR that edits `.github/workflows/claude*.yml` (see the validation-skip note below). Today the admin bypass is what lets those PRs merge anyway. Turn `enforce_admins` on and they become unmergeable — the only eligible approver is structurally unable to approve them, and the escape hatch is gone, leaving "disable branch protection" as the only way to land a workflow change. Add a second human approver, or exempt those paths, before flipping it.
 
 **A green `claude-review` check does not always mean a review happened.** The action refuses to run when the workflow file on the PR differs from the copy on the default branch — a security control, since a PR that can rewrite the workflow could otherwise direct the reviewer while it holds the token. It logs `Skipping action due to workflow validation` and exits **success**, so on any PR that edits `.github/workflows/claude*.yml` the check goes green in ~10s without reviewing anything. Check for an actual review verdict (`gh pr view --json reviews`) rather than trusting the check, and expect the first PR that adds these workflows to a new repo to behave the same way.
 
@@ -177,7 +180,8 @@ After running `bootstrap.sh` (which sets up the shared components):
 3. **Configure branch protection** on `main`:
    - Require 1 approving review (bot counts)
    - Dismiss stale reviews on push
-   - Don't enforce for admins (escape hatch if bot is down)
+   - Leave `enforce_admins` **off** — not as a rarely-used escape hatch, but because the bot can't review PRs that edit the claude workflows, so admin merges are the only way those land. See the `enforce_admins` note above before turning it on.
+   - Require status checks to pass, choosing the ones that gate correctness (here: `Lint`, `Test`, `Bootstrap`). Without this you get review protection but no CI gate — the merge button stays green with the build red. Requiring `claude-review` buys less than it looks, since it goes green without reviewing on workflow-editing PRs (above).
 
 4. **Write a project-specific `CLAUDE.md`** covering:
    - Build/test/lint commands
