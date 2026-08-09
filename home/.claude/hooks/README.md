@@ -77,7 +77,10 @@ Session End / Agent Teams
 **Actions:**
 1. Rename zellij tab to directory name (with worktree format: `repo (branch)`)
 2. Register with event bus using `agent-event-bus-cli`
-3. Fetch recent events (last 20, newest first)
+3. Fetch recent events (last 20, newest first) using the server-side noise
+   policy (`--min-level info`, agent-event-bus#129); if the installed CLI
+   predates the flag the call fails silently, so the hook falls back once to
+   the legacy client-side `--exclude` denylist (deploy-ordering safety)
 4. If resuming after compaction, restore WIP checkpoint
 
 **Input JSON fields:** `session_id`, `transcript_path`, `cwd`, `permission_mode`, `source`
@@ -293,6 +296,15 @@ Two hooks read the agent-event-bus and surface events to the agent:
 
 - **`prompt-events.sh`** (`UserPromptSubmit`) — fires when the human types. Consumes new events and injects them as `<recent-events>`.
 - **`drain-directed-events.sh`** (`Stop`) — fires at end-of-turn. Peeks for *directed* events and blocks once to surface them if any are waiting, closing the gap where a session goes idle without seeing a DM / help request.
+
+**Noise policy is deliberately split.** `session-start.sh` filters server-side
+with `--min-level info` (non-consuming read, so a coarser filter only costs
+noise), while both drain-path hooks keep the client-side `EB_EXCLUDE` denylist:
+the drain *consumes* exactly the window it peeked, and a server-side filter
+would advance the cursor past events the client never saw. See the rationale
+comment in `lib/eventbus-collect.sh` before "unifying" the drain onto
+`--min-level` (agent-event-bus#134 tracks the cursor-ack primitive that would
+make that safe).
 
 ### Shared library (`lib/eventbus-collect.sh`)
 

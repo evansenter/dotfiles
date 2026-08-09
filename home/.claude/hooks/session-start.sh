@@ -96,13 +96,36 @@ fi
 # - "repo:<name>" - repo-specific coordination
 # - "machine:<hostname>" - local machine coordination
 # - "session:<id>" - direct messages (if resumed with same session_id)
-EVENTS=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} events \
-    --session-id "$SESSION_ID" \
-    --order desc \
-    --exclude session_registered,session_unregistered \
-    --timeout 200 \
-    --limit 20 \
-    2>/dev/null) || true
+# --min-level info drops lifecycle churn (session_registered, ci_watching,
+# task_started, ...) server-side - one canonical noise policy on the bus
+# (agent-event-bus#129) instead of a local denylist.
+#
+# The primary fetch and the version-skew fallback below differ only in
+# their filter flag - one shared invocation keeps --timeout/--limit (and
+# the stderr suppression) from drifting between the two call sites.
+fetch_events() {
+    agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} events \
+        --session-id "$SESSION_ID" \
+        --order desc \
+        "$@" \
+        --timeout 200 \
+        --limit 20 \
+        2>/dev/null
+}
+
+FETCH_RC=0
+EVENTS=$(fetch_events --min-level info) || FETCH_RC=$?
+
+# Version-skew fallback: a CLI predating --min-level (agent-event-bus#129)
+# rejects the flag with an argparse usage error - exit 2, stderr suppressed,
+# EVENTS empty - so retry once with the legacy client-side denylist. Exit 2
+# discriminates that from a bus that is down or timed out (exit 1), where a
+# retry can't help and would make every offline session start pay a second
+# ~200ms timeout. A flag-aware CLI prints "No events" when there are
+# genuinely none, so empty-with-success never fires the fallback either.
+if [[ -z "$EVENTS" && $FETCH_RC -eq 2 ]]; then
+    EVENTS=$(fetch_events --exclude session_registered,session_unregistered) || true
+fi
 
 # Output events in XML tags (interpretation guidance is in CLAUDE.md)
 if [[ -n "$EVENTS" && "$EVENTS" != "No events" && "$EVENTS" != "No new events" ]]; then

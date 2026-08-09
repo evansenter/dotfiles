@@ -31,6 +31,17 @@ EB_URL_ARGS=()
 [[ -n "${AGENT_EVENT_BUS_URL:-}" ]] && EB_URL_ARGS=(--url "$AGENT_EVENT_BUS_URL")
 
 # Canonical denylist of noisy event types. Both hooks MUST use this one list.
+#
+# Why not the bus's server-side --min-level (agent-event-bus#129)? The drain
+# hook's bounded consume (peek N filtered events, then consume with
+# --limit N) relies on --exclude being CLIENT-side: the server's --limit and
+# the peeked count then refer to the same raw event window. --min-level
+# filters server-side BUT the raw batch still advances the cursor, so a
+# consume bounded to the filtered count would advance past a different raw
+# window than the peek saw - risking consumed-but-never-surfaced events.
+# Migrate to --min-level only once the bus grows an explicit cursor-ack
+# primitive (advance-to <id>); until then this list must stay in sync with
+# the bus's lifecycle level (EVENT_TYPE_SIGNAL_LEVELS in server.py).
 EB_EXCLUDE="session_registered,session_unregistered,ci_watching,task_started,ci_rerun,parallel_work_started"
 
 # Graceful-degradation guard: caller should `eb_have_deps || exit 0`.
