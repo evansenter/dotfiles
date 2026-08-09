@@ -103,10 +103,14 @@ This filter stops literal repeats. It does **not** stop the loop — a finding o
 Count the prior automated reviews on this PR — every review posted by this prompt ends with the `Automated review by Claude Code` marker:
 
 ```bash
-gh api repos/$REPO/pulls/$PR_NUMBER/reviews --jq '[.[] | select(.body != null and (.body | contains("Automated review by Claude Code")))] | length'
+gh api --paginate --slurp repos/$REPO/pulls/$PR_NUMBER/reviews --jq '[.[][] | select(.body != null and (.body | contains("Automated review by Claude Code")))] | length'
 ```
 
+Both flags are load-bearing. `--paginate` is required because the endpoint pages at 30 and a long-running PR accumulates far more review objects than rounds — findings posted as separate inline comments each create one, so the object count can run several times the round count. `--slurp` is required because `--jq` otherwise runs per page and prints one number per page instead of a total; it collects the pages into one array, which is why the filter starts `.[][]`. The marker filter is what separates automated reviews from human ones — it is not decorative.
+
 **Round N = that count + 1.** Report N in your review body.
+
+**If the count cannot be obtained** — the command fails, is blocked by the tool allowlist, or returns anything other than a single number — **assume the most permissive tier (round 6+)**, and say so in the review body. Guessing low re-applies full review depth to a PR that may be twenty rounds in, which is the exact failure this section exists to prevent; erring toward APPROVE is the safe direction for a loop-termination rule.
 
 **A converged PR is a success state.** When no finding names a concrete way the code produces a wrong result, the PR has converged: APPROVE it and post the rest as non-blocking Suggestions. Approving is not a failure to find something.
 
@@ -189,7 +193,9 @@ Be specific: "`parse_config()` has no tests", "New CLI flag `--verbose` has no e
 
 Check the PR title, body, labels, and draft status for a declared maturity: `experimental`, `prototype`, `spike`, `POC`, `RFC` (or a link to one), or draft state.
 
-For such a PR, review whether it **works for its stated purpose**. Do not review it at production-hardening depth. Adversarial threat modelling — DNS rebinding, hostile symlinks in shared temp directories, reverse proxies rewriting `Host`, split-brain across launch contexts — is a Suggestion on an experimental PR, however real. Say what you'd want before it ships for real, and let it merge.
+For such a PR, review whether it **works for its stated purpose**. Do not review it at production-hardening depth. Adversarial threat modelling against threats *the PR never claimed to handle* — DNS rebinding, hostile symlinks in shared temp directories, reverse proxies rewriting `Host`, split-brain across launch contexts — is a Suggestion on an experimental PR, however real. Say what you'd want before it ships for real, and let it merge.
+
+**A control the PR itself introduces is always in scope, at any maturity.** If the PR adds a guard, check, or validation and that mechanism can be bypassed or is silently inert, that is fitness-for-purpose — the standard this section sets — not production hardening, and §6 governs it normally. This holds even when the bypass falls under one of the categories named above: the question is not what the threat is called, it is whether the PR's own stated functionality works. A guard that never fires is a broken feature.
 
 For a PR with no maturity marker, review it as production code.
 
