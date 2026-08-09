@@ -339,7 +339,7 @@ _Data available since December 30, 2025 (when session logging began via the sess
 
 ### Cost since Dec 30th
 
-_Estimated from session analytics. Regenerate: [`~/.claude/contrib/compute-api-cost.sh`](../home/.claude/contrib/compute-api-cost.sh)_
+_Estimated from session analytics at the time of writing; a historical snapshot, not a live figure._
 
 | Metric | Value |
 |--------|-------|
