@@ -52,6 +52,7 @@ jobs:
           test -x bootstrap.sh
           test -x uninstall.sh
           test -x tests/test-hooks.sh
+          test -x tests/test-bootstrap.sh
 
       - name: Check for required files
         run: |
@@ -59,3 +60,11 @@ jobs:
           test -f home/.gitconfig
           test -f home/.vimrc
           test -f home/.tmux.conf
+
+      # The checks above only assert files exist and are executable — they pass
+      # through any logic regression in bootstrap.sh. This is the step that
+      # actually tests it (flag parsing, host-gating, LaunchAgent install,
+      # self-update re-exec). It stubs launchctl/brew/curl, so no macOS-only
+      # binaries are needed.
+      - name: Run bootstrap tests
+        run: make test-bootstrap
