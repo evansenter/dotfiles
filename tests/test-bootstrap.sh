@@ -78,17 +78,29 @@ test_no_openclaw_config_dir() {
     [[ ! -d "$SCRIPT_DIR/../home/.moltbot" ]]
 }
 
-test_no_openclaw_in_bootstrap() {
-    # bootstrap.sh should no longer set up openclaw
-    ! grep -qi 'openclaw' "$BOOTSTRAP"
+test_no_openclaw_setup_in_bootstrap() {
+    # bootstrap.sh should no longer set up openclaw. The cleanup_legacy_openclaw
+    # migration helper is expected — only the setup functions must stay gone.
+    ! grep -qE 'symlink_openclaw_config|install_openclaw_cli|ensure_openclaw_workspace' "$BOOTSTRAP"
+}
+
+test_openclaw_cleanup_is_symlink_guarded() {
+    # The migration must only ever rm a symlink — a real file at that path is a
+    # locally-managed gateway config and must survive.
+    local body
+    body=$(sed -n '/^cleanup_legacy_openclaw()/,/^}/p' "$BOOTSTRAP")
+    [[ -n "$body" ]] && echo "$body" | grep -q '\-L "\$config"'
 }
 
 test_no_openclaw_in_docs() {
-    # Docs and the AI Brewfile should not reference openclaw
+    # Docs, the AI Brewfile, and .zshrc should not reference openclaw.
+    # Explicit file list rather than all of home/: home/.hermes/config.yaml
+    # legitimately keeps an `openclaw_residue_cleanup` onboarding flag.
     ! grep -qi 'openclaw' \
         "$SCRIPT_DIR/../CLAUDE.md" \
         "$SCRIPT_DIR/../README.md" \
-        "$SCRIPT_DIR/../Brewfile.ai"
+        "$SCRIPT_DIR/../Brewfile.ai" \
+        "$SCRIPT_DIR/../home/.zshrc"
 }
 
 # ============================================================================
@@ -596,8 +608,9 @@ main() {
     run_test "no moltbot refs in CLAUDE.md" "test_no_moltbot_references_claude_md"
     run_test "no moltbot refs in home/" "test_no_moltbot_references_home"
     run_test "no openclaw config dir under home/" "test_no_openclaw_config_dir"
-    run_test "no openclaw refs in bootstrap.sh" "test_no_openclaw_in_bootstrap"
-    run_test "no openclaw refs in docs/Brewfile" "test_no_openclaw_in_docs"
+    run_test "no openclaw setup in bootstrap.sh" "test_no_openclaw_setup_in_bootstrap"
+    run_test "no openclaw refs in docs/Brewfile/.zshrc" "test_no_openclaw_in_docs"
+    run_test "openclaw cleanup only removes symlinks" "test_openclaw_cleanup_is_symlink_guarded"
     echo ""
 
     echo "=== URL migration (speck-vm -> mac-mini/localhost) ==="

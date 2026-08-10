@@ -386,6 +386,24 @@ install_launch_agents() {
 	fi
 }
 
+cleanup_legacy_openclaw() {
+	# OpenClaw was dropped from this repo. Machines bootstrapped before that have
+	# ~/.openclaw/openclaw.json symlinked into home/.openclaw/, which no longer
+	# exists — leaving a dangling symlink behind. Only ever remove a symlink: a
+	# real file there is a locally-managed gateway config, so leave it alone.
+	local config="$HOME/.openclaw/openclaw.json"
+
+	if [[ -L "$config" ]]; then
+		echo "Removing legacy OpenClaw config symlink (~/.openclaw/openclaw.json)..."
+		rm -f "$config"
+	fi
+
+	# Drop the directories bootstrap used to scaffold, but only if they're empty —
+	# rmdir is a no-op when personal workspace content is still there.
+	rmdir "$HOME/.openclaw/workspace" 2>/dev/null || true
+	rmdir "$HOME/.openclaw" 2>/dev/null || true
+}
+
 cleanup_legacy_cron() {
 	# cargo-sweep is handled by LaunchAgent (com.user.cargo-sweep.plist)
 	# Remove legacy cron entry if present
@@ -443,7 +461,7 @@ prompt_ai_install() {
 		return 0
 	fi
 
-	# Skip prompt if already fully configured
+	# Skip prompt if Claude is already installed (treat as an AI machine)
 	# (command -v doesn't execute the binary, so Santa won't block it)
 	if command -v claude >/dev/null 2>&1; then
 		export INSTALL_AI=true
@@ -1220,6 +1238,7 @@ sync_dotfiles() {
 	# Install LaunchAgents (macOS) or cron jobs (Linux)
 	install_launch_agents
 	cleanup_legacy_cron
+	cleanup_legacy_openclaw
 
 	# Configure NPM registry auth if authenticated with gcloud
 	configure_npm_registry
