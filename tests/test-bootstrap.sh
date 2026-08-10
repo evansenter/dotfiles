@@ -141,11 +141,14 @@ test_no_spotify_player_packages() {
 }
 
 test_no_openclaw_in_docs() {
-    # These three are openclaw-free, so they keep the strict ban on the bare
-    # word: a re-added `brew "openclaw"` line or a docs blurb names the tool
-    # without touching the setup surface, and only this catches those.
+    # These are openclaw-free, so they keep the strict ban on the bare word: a
+    # re-added `brew "openclaw"` line or a docs blurb names the tool without
+    # touching the setup surface, and only this catches those. Both Brewfiles
+    # are listed — the main one is the likelier landing spot now that
+    # Brewfile.ai is explicitly the AI-only file.
     assert_no_match_in_files 'openclaw' \
         "$SCRIPT_DIR/../README.md" \
+        "$SCRIPT_DIR/../Brewfile" \
         "$SCRIPT_DIR/../Brewfile.ai" \
         "$SCRIPT_DIR/../home/.zshrc" || return 1
 
