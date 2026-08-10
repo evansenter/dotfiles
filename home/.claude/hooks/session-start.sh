@@ -90,6 +90,26 @@ else
     exit 0
 fi
 
+# Map this session to its terminal pane so the RFC #122 bridge can wake it
+# when it goes idle. Without this the bridge resolves every DM to
+# "spool-unmapped" — which is also the normal outcome for a session on
+# another machine, so a missing mapping never surfaces as an error, only as
+# wakes that quietly never happen.
+#
+# `panes set` writes nothing at all when this session is not inside a
+# multiplexer, which is the correct behaviour rather than a failure: the
+# contract says OMIT the entry, because a null or empty one reads as a
+# misconfiguration the bridge warns about and asks an operator to repair.
+# It also evicts any stale entry on this same pane — a previous session
+# killed without its SessionEnd hook would otherwise leave a mapping that has
+# the bridge type into whatever now owns the pane.
+#
+# Also clear any turn-state marker left behind: reaching SessionStart means
+# no turn is in flight, and a marker orphaned by a hard kill would otherwise
+# keep this session's id gated as busy.
+agent-event-bus-cli panes set --session-id "$SESSION_ID" >/dev/null 2>&1 || true
+agent-event-bus-cli wake-state idle --session-id "$SESSION_ID" >/dev/null 2>&1 || true
+
 # Fetch recent events (newest-first for natural reading order - most relevant at top)
 # Session is auto-subscribed to 4 channels:
 # - "all" - broadcasts to everyone

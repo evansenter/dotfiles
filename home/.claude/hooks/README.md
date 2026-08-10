@@ -19,6 +19,7 @@ Session Start
 │      ├── UserPromptSubmit hooks     │
 │      │   - prompt-events.sh         │
 │      │   - zj-status.sh working     │
+│      │   - wake-state.sh busy       │
 │      │                              │
 │      ▼                              │
 │  Claude processes...                │
@@ -47,6 +48,10 @@ Session Start
 │      │   3. enforce-insight-publish │
 │      │      (blocks if ★ Insight    │
 │      │       without publish_event) │
+│      │   4. wake-state.sh idle      │
+│      │      (never blocks — last so │
+│      │       it can't affect which  │
+│      │       block decision wins)   │
 │      │                              │
 │      ▼                              │
 │  (repeat)                           │
@@ -117,6 +122,25 @@ Session End / Agent Teams
 **Output:** New events in `<recent-events>` tags (only if new events exist)
 
 **Shared lib:** Uses `lib/eventbus-collect.sh` for `~/.extra`/`AGENT_EVENT_BUS_URL` handling, the canonical `EB_EXCLUDE` denylist, and the `eb_fetch_events` wrapper — the same code path as `drain-directed-events.sh`, so the two hooks cannot diverge. See [Event-drain architecture](#event-drain-architecture).
+
+---
+
+### wake-state.sh
+**Trigger:** `UserPromptSubmit` (with arg `busy`), `Stop` (with arg `idle`) — registered **last** in both slots
+
+**Purpose:** Gate the agent-event-bus re-awakening bridge (RFC #122). The bridge wakes an idle session by typing a fixed prompt into its terminal pane; it injects **only between turns**, keyed on the `<session_id>.busy` marker this hook maintains.
+
+**Why gate at all:** mid-turn injection is *redundant* — `drain-directed-events.sh` already surfaces directed events at end-of-turn — and it is the one window where a permission dialog can be on screen for injected text plus a newline to answer a prompt nobody saw. Gating loses no coverage and removes that case.
+
+**Actions:** `agent-event-bus-cli wake-state busy|idle --session-id <id>`. The session id comes straight from stdin: Claude Code's `session_id` **is** the bus session id, because `session-start.sh` registers with `--client-id` set to it and the bus adopts a `client_id` as its `session_id` verbatim. So this runs on every turn boundary without depending on the bus being reachable.
+
+**Ordering:** last in `Stop`, after `enforce-insight-publish.sh`. This hook never blocks, so its position cannot affect which block decision wins — see [Multi-Stop-hook ordering caveat](#multi-stop-hook-ordering-caveat).
+
+**Known gap:** when a Stop hook *blocks*, the turn continues but this hook has already marked the session idle, so a wake arriving in that window lands mid-turn. Benign — the TUI queues typed text — and unavoidable, since a hook cannot observe another hook's block decision.
+
+**Degradation:** exits 0 on every path. No CLI, no `jq`, no `session_id`, or an unrecognized state argument all mean "no idle gate", never a failed turn.
+
+**Related:** `session-start.sh` writes the pane mapping (and clears a stale marker); `session-end.sh` removes both. See `docs/BRIDGE.md` in agent-event-bus.
 
 ---
 

@@ -42,6 +42,20 @@ if [[ -z "$CLIENT_ID" ]]; then
     exit 0
 fi
 
+# Drop the bridge's pane mapping and any turn-state marker BEFORE unregistering.
+#
+# Before, because these are local filesystem operations that must happen even
+# when the bus is unreachable — and a stale mapping is the one failure with a
+# visible blast radius: the bridge would type its wake prompt into whatever
+# now owns this pane, usually the shell left behind after the session exits.
+#
+# CLIENT_ID is the bus session_id (the bus adopts a client_id as its
+# session_id verbatim), so no lookup is needed. `panes clear` also drops any
+# other entry pointing at this pane, which cleans up after a previous session
+# that died without reaching this hook.
+agent-event-bus-cli panes clear --session-id "$CLIENT_ID" >/dev/null 2>&1 || true
+agent-event-bus-cli wake-state idle --session-id "$CLIENT_ID" >/dev/null 2>&1 || true
+
 # Unregister by client_id - server looks up session by (machine, client_id)
 OUTPUT=$(agent-event-bus-cli ${URL_ARGS[@]+"${URL_ARGS[@]}"} unregister --client-id "$CLIENT_ID" 2>/dev/null) || true
 

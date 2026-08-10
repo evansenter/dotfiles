@@ -22,6 +22,10 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/zj-status.sh working"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/wake-state.sh busy"
           }
         ]
       }
@@ -40,6 +44,10 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/enforce-insight-publish.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/wake-state.sh idle"
           }
         ]
       }
