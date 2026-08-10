@@ -79,17 +79,20 @@ test_no_openclaw_config_dir() {
 }
 
 test_no_openclaw_setup_in_bootstrap() {
-    # bootstrap.sh should no longer set up openclaw. The cleanup_legacy_openclaw
-    # migration helper is expected — only the setup functions must stay gone.
+    # bootstrap.sh should no longer set up openclaw. The openclaw path named in
+    # cleanup_legacy_configs is expected — only the setup functions must stay gone.
     ! grep -qE 'symlink_openclaw_config|install_openclaw_cli|ensure_openclaw_workspace' "$BOOTSTRAP"
 }
 
 test_legacy_cleanup_is_symlink_guarded() {
-    # The migration must only ever rm a symlink — a real file at one of those
-    # paths is locally managed (e.g. a hand-rolled gateway config) and survives.
+    # The migration must only reclaim links this repo created: a regular file is
+    # locally managed, and so is a symlink the user aimed somewhere of their own.
     local body
     body=$(sed -n '/^remove_legacy_symlink()/,/^}/p' "$BOOTSTRAP")
-    [[ -n "$body" ]] && echo "$body" | grep -q '\-L "\$path"'
+    [[ -n "$body" ]] && \
+    echo "$body" | grep -q '\-L "\$path"' && \
+    echo "$body" | grep -q 'readlink' && \
+    echo "$body" | grep -q 'dotfiles_dir/home/'
 }
 
 test_legacy_cleanup_covers_dropped_configs() {

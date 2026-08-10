@@ -387,16 +387,26 @@ install_launch_agents() {
 }
 
 # Remove a symlink left behind by a config this repo no longer tracks.
-# Only ever removes a symlink — a real file at the path is locally managed
-# (e.g. a hand-rolled gateway config) and must survive.
+# Only reclaims links this repo created: a regular file is locally managed
+# (e.g. a hand-rolled gateway config), and so is a symlink the user pointed
+# somewhere else (a synced folder, say) — both must survive. readlink still
+# reports the recorded target for a dangling link, which is the case here.
 remove_legacy_symlink() {
 	local path="$1"
 	local label="$2"
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
-	if [[ -L "$path" ]]; then
-		echo "Removing legacy $label symlink: $path"
-		rm -f "$path"
+	[[ -L "$path" ]] || return 0
+
+	local target
+	target="$(readlink "$path")"
+	if [[ "$target" != "$dotfiles_dir/home/"* ]]; then
+		return 0
 	fi
+
+	echo "Removing legacy $label symlink: $path"
+	rm -f "$path"
 }
 
 cleanup_legacy_configs() {
