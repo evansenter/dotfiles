@@ -1,4 +1,4 @@
-# Brewfile.ai - AI assistant dependencies (Claude, agent CLI tools)
+# Brewfile.ai - AI assistant dependencies
 # Installed conditionally via bootstrap.sh
 
 # Mesh VPN (event bus, MCP services)
@@ -15,6 +15,3 @@ cask "lm-studio"
 
 # Local speech-to-text
 brew "whisper-cpp"
-
-# Agent CLI tools
-brew "gogcli"                     # Google Suite CLI (backs the `gog` Claude skill)
