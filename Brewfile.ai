@@ -1,7 +1,7 @@
-# Brewfile.ai - AI assistant dependencies (Claude, OpenClaw)
+# Brewfile.ai - AI assistant dependencies (Claude, agent CLI tools)
 # Installed conditionally via bootstrap.sh
 
-# Mesh VPN (event bus, OpenClaw gateway)
+# Mesh VPN (event bus, MCP services)
 cask "tailscale-app"
 
 # Claude Code
@@ -16,6 +16,5 @@ cask "lm-studio"
 # Local speech-to-text
 brew "whisper-cpp"
 
-# OpenClaw Agent Tools
-brew "spotify_player"             # Spotify CLI (OAuth device flow)
-brew "gogcli"                     # Google Suite CLI
+# Agent CLI tools
+brew "gogcli"                     # Google Suite CLI (backs the `gog` Claude skill)

@@ -112,7 +112,7 @@ On a bare macOS install, in order:
    git clone --recursive https://github.com/evansenter/dotfiles.git ~/projects/dotfiles
    cd ~/projects/dotfiles
    ```
-3. **Create `~/.extra`** with any secrets *before* the full bootstrap, so package/MCP setup can use them (see the env vars under [Customization](#customization) — `GITHUB_TOKEN`, and on the gateway host `OPENCLAW_GATEWAY_TOKEN` / `OBSIDIAN_API_KEY`).
+3. **Create `~/.extra`** with any secrets *before* the full bootstrap, so package/MCP setup can use them (see the env vars under [Customization](#customization) — `GITHUB_TOKEN`, and on the gateway host `OBSIDIAN_API_KEY`).
 4. **Run the full bootstrap** (installs Homebrew if missing, installs packages, inits submodules + themes, symlinks dotfiles, registers MCP servers, installs LaunchAgents, and applies macOS system defaults):
    ```bash
    ./bootstrap.sh -p          # -p = pull + install/update packages, then sync
@@ -135,7 +135,6 @@ On a bare macOS install, in order:
 Also installs the GitHub MCP server and enables a curated set of official plugins (see `enabledPlugins` in `home/.claude/settings.json`). Several integrations read secrets from `~/.extra` (not tracked):
 ```bash
 export GITHUB_TOKEN="ghp_your_token_here"   # GitHub MCP / gh
-export OPENCLAW_GATEWAY_TOKEN="..."         # OpenClaw gateway client
 export OBSIDIAN_API_KEY="..."               # obsidian-mcp (gateway host only; wrapper exits without it)
 ```
 

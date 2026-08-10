@@ -44,52 +44,121 @@ run_test() {
     fi
 }
 
+# Assert none of the given files match a pattern.
+#
+# `! grep -qi pat f1 f2` would also invert grep's *error* exit (2, e.g. a file
+# that has been renamed away), turning a broken guard into a silent pass. Check
+# each file exists and grep them one at a time so the guard stays honest as the
+# tree changes around it.
+assert_no_match_in_files() {
+    local pattern="$1"
+    shift
+    local file
+    for file in "$@"; do
+        # Distinguish "the tree moved under the guard" from "the pattern came
+        # back" — run_test drops stderr, so this has to go to stdout.
+        [[ -f "$file" ]] || { echo "  (guard target missing: $file)"; return 1; }
+        if grep -qiE "$pattern" "$file"; then
+            return 1
+        fi
+    done
+    return 0
+}
+
 # ============================================================================
-# Naming consistency tests (moltbot -> openclaw migration)
+# Removed-tooling tests (moltbot/openclaw are gone — guard against reappearing)
 # ============================================================================
 
 test_no_moltbot_references_bootstrap() {
     # bootstrap.sh should not contain any moltbot references
-    ! grep -qi 'moltbot' "$BOOTSTRAP"
+    assert_no_match_in_files 'moltbot' "$BOOTSTRAP"
 }
 
 test_no_moltbot_references_claude_md() {
-    local claude_md="$SCRIPT_DIR/../CLAUDE.md"
-    ! grep -qi 'moltbot' "$claude_md"
+    assert_no_match_in_files 'moltbot' "$SCRIPT_DIR/../CLAUDE.md"
 }
 
 test_no_moltbot_references_home() {
-    # No tracked config files under home/ should reference moltbot
-    # Exclude binary/db files and log files (contain historical data)
-    ! find "$SCRIPT_DIR/../home" -type f \
+    # No tracked config files under home/ should reference moltbot.
+    # Exclude binary/db files and log files (contain historical data).
+    # Collect the list and hand it to the helper rather than inverting a
+    # `find | xargs grep` pipeline, whose `!` would read an xargs error as a pass.
+    local files=()
+    while IFS= read -r -d '' file; do
+        files+=("$file")
+    done < <(find "$SCRIPT_DIR/../home" -type f \
         -not -path "*/.git/*" \
         -not -name "*.db" \
         -not -name "*.db.*" \
         -not -name "*.log" \
         -not -name "*.err" \
         -not -name "*.stdout" \
-        -print0 | \
-        xargs -0 grep -li 'moltbot' 2>/dev/null
+        -print0)
+
+    # An empty list means the find broke, not that home/ is clean
+    [[ ${#files[@]} -gt 0 ]] || return 1
+
+    assert_no_match_in_files 'moltbot' "${files[@]}"
 }
 
-test_openclaw_config_path() {
-    # Config should be at home/.openclaw/openclaw.json, not home/.moltbot/
-    [[ -f "$SCRIPT_DIR/../home/.openclaw/openclaw.json" ]] && \
+test_no_openclaw_config_dir() {
+    # OpenClaw config was removed — neither it nor its predecessor should return
+    [[ ! -d "$SCRIPT_DIR/../home/.openclaw" ]] && \
     [[ ! -d "$SCRIPT_DIR/../home/.moltbot" ]]
 }
 
-test_openclaw_function_names() {
-    # bootstrap.sh should use openclaw function names
-    grep -q 'symlink_openclaw_config' "$BOOTSTRAP" && \
-    grep -q 'install_openclaw_cli' "$BOOTSTRAP" && \
-    ! grep -q 'symlink_moltbot_config' "$BOOTSTRAP" && \
-    ! grep -q 'install_moltbot_cli' "$BOOTSTRAP"
+test_no_openclaw_setup_in_bootstrap() {
+    # bootstrap.sh should no longer set up openclaw. The openclaw path named in
+    # cleanup_legacy_configs is expected — only the setup functions must stay gone.
+    assert_no_match_in_files 'symlink_openclaw_config|install_openclaw_cli|ensure_openclaw_workspace' "$BOOTSTRAP"
 }
 
-test_openclaw_env_var() {
-    # Config should reference OPENCLAW_GATEWAY_TOKEN, not MOLTBOT_GATEWAY_TOKEN
-    grep -q 'OPENCLAW_GATEWAY_TOKEN' "$SCRIPT_DIR/../home/.openclaw/openclaw.json" && \
-    ! grep -q 'MOLTBOT_GATEWAY_TOKEN' "$SCRIPT_DIR/../home/.openclaw/openclaw.json"
+test_legacy_cleanup_is_symlink_guarded() {
+    # The migration must only reclaim links this repo created: a regular file is
+    # locally managed, and so is a symlink the user aimed somewhere of their own.
+    local body
+    body=$(sed -n '/^remove_legacy_symlink()/,/^}/p' "$BOOTSTRAP")
+    [[ -n "$body" ]] && \
+    echo "$body" | grep -q '\-L "\$path"' && \
+    echo "$body" | grep -q 'readlink' && \
+    echo "$body" | grep -q 'dotfiles_dir/home/'
+}
+
+test_legacy_cleanup_covers_dropped_configs() {
+    # Both configs this repo stopped tracking need their stale symlink removed
+    local body
+    body=$(sed -n '/^cleanup_legacy_configs()/,/^}/p' "$BOOTSTRAP")
+    echo "$body" | grep -q '\.openclaw/openclaw\.json' && \
+    echo "$body" | grep -q '\.config/spotify-player/app\.toml'
+}
+
+test_no_spotify_player_packages() {
+    # spotify_player was removed; the Spotify desktop cask is unrelated and stays
+    assert_no_match_in_files 'spotify_player' \
+        "$SCRIPT_DIR/../Brewfile" \
+        "$SCRIPT_DIR/../Brewfile.ai" && \
+    [[ ! -d "$SCRIPT_DIR/../home/.config/spotify-player" ]]
+}
+
+test_no_openclaw_in_docs() {
+    # These are openclaw-free, so they keep the strict ban on the bare word: a
+    # re-added `brew "openclaw"` line or a docs blurb names the tool without
+    # touching the setup surface, and only this catches those. Both Brewfiles
+    # are listed — the main one is the likelier landing spot now that
+    # Brewfile.ai is explicitly the AI-only file.
+    assert_no_match_in_files 'openclaw' \
+        "$SCRIPT_DIR/../README.md" \
+        "$SCRIPT_DIR/../Brewfile" \
+        "$SCRIPT_DIR/../Brewfile.ai" \
+        "$SCRIPT_DIR/../home/.zshrc" || return 1
+
+    # CLAUDE.md documents the cleanup step, so it has to name the tool it cleans
+    # up. Match the setup surface (config path, token, configure step) there
+    # instead, so only the file that needs the room pays for it. Explicit file
+    # list rather than all of home/: home/.hermes/config.yaml legitimately keeps
+    # an onboarding flag.
+    assert_no_match_in_files '\.openclaw/|OPENCLAW_GATEWAY_TOKEN|openclaw configure' \
+        "$SCRIPT_DIR/../CLAUDE.md"
 }
 
 # ============================================================================
@@ -102,23 +171,12 @@ test_no_speck_vm_mcp_urls() {
     ! grep -q 'speck-vm.*agent-session-analytics' "$SCRIPT_DIR/../home/.claude/settings.json"
 }
 
-test_openclaw_gateway_url() {
-    # openclaw.json should point to mac-mini, not speck-vm
-    grep -q 'mac-mini' "$SCRIPT_DIR/../home/.openclaw/openclaw.json" && \
-    ! grep -q 'speck-vm' "$SCRIPT_DIR/../home/.openclaw/openclaw.json"
-}
-
 # ============================================================================
 # Bootstrap structure tests
 # ============================================================================
 
 test_bootstrap_syntax() {
     bash -n "$BOOTSTRAP"
-}
-
-test_bootstrap_excludes_openclaw_from_symlinks() {
-    # symlink_dotfiles should exclude .openclaw/ (handled separately)
-    grep -q '\.openclaw' "$BOOTSTRAP"
 }
 
 test_bootstrap_handles_cargo_sweep() {
@@ -144,17 +202,6 @@ test_settings_local_skips_gateway_host() {
     # The function should skip on mac-mini (gateway host)
     grep -q 'mac-mini' "$BOOTSTRAP" && \
     grep -q 'HOSTNAME' "$BOOTSTRAP"
-}
-
-test_ensure_openclaw_workspace_exists() {
-    # bootstrap.sh should have the ensure_openclaw_workspace function
-    grep -q 'ensure_openclaw_workspace' "$BOOTSTRAP"
-}
-
-test_openclaw_workspace_gitignore() {
-    # .gitignore should exist and ignore *.md to prevent tracking personal content
-    [[ -f "$SCRIPT_DIR/../home/.openclaw/workspace/.gitignore" ]] && \
-    grep -q '\*.md' "$SCRIPT_DIR/../home/.openclaw/workspace/.gitignore"
 }
 
 test_sync_dotfiles_no_package_install() {
@@ -614,23 +661,24 @@ main() {
     echo "Running bootstrap tests..."
     echo ""
 
-    echo "=== naming consistency (moltbot -> openclaw) ==="
+    echo "=== removed tooling (moltbot/openclaw) ==="
     run_test "no moltbot refs in bootstrap.sh" "test_no_moltbot_references_bootstrap"
     run_test "no moltbot refs in CLAUDE.md" "test_no_moltbot_references_claude_md"
     run_test "no moltbot refs in home/" "test_no_moltbot_references_home"
-    run_test "openclaw config at correct path" "test_openclaw_config_path"
-    run_test "openclaw function names in bootstrap" "test_openclaw_function_names"
-    run_test "openclaw env var in config" "test_openclaw_env_var"
+    run_test "no openclaw config dir under home/" "test_no_openclaw_config_dir"
+    run_test "no openclaw setup in bootstrap.sh" "test_no_openclaw_setup_in_bootstrap"
+    run_test "no openclaw refs in docs/Brewfile/.zshrc" "test_no_openclaw_in_docs"
+    run_test "legacy cleanup only removes symlinks" "test_legacy_cleanup_is_symlink_guarded"
+    run_test "legacy cleanup covers dropped configs" "test_legacy_cleanup_covers_dropped_configs"
+    run_test "no spotify_player in Brewfiles or home/" "test_no_spotify_player_packages"
     echo ""
 
     echo "=== URL migration (speck-vm -> mac-mini/localhost) ==="
     run_test "no speck-vm MCP URLs in settings" "test_no_speck_vm_mcp_urls"
-    run_test "openclaw gateway points to mac-mini" "test_openclaw_gateway_url"
     echo ""
 
     echo "=== bootstrap structure ==="
     run_test "syntax check" "test_bootstrap_syntax"
-    run_test "excludes openclaw from generic symlinks" "test_bootstrap_excludes_openclaw_from_symlinks"
     run_test "handles cargo-sweep setup" "test_bootstrap_handles_cargo_sweep"
     run_test "cargo-sweep script exists and executable" "test_cargo_sweep_script_exists"
     run_test "cargo-sweep script syntax" "test_cargo_sweep_syntax"
@@ -638,8 +686,6 @@ main() {
     run_test "settings.local.json skips gateway host" "test_settings_local_skips_gateway_host"
     run_test "sync_dotfiles has no package installers" "test_sync_dotfiles_no_package_install"
     run_test "no ~/Documents/projects references" "test_no_documents_projects_refs"
-    run_test "ensure_openclaw_workspace function exists" "test_ensure_openclaw_workspace_exists"
-    run_test "openclaw workspace .gitignore ignores content" "test_openclaw_workspace_gitignore"
     run_test "SteamOS detection function exists" "test_steamos_detection"
     run_test "SteamOS package function exists" "test_steamos_packages"
     run_test "set_default_shell function exists" "test_set_default_shell"
