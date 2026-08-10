@@ -399,11 +399,22 @@ remove_legacy_symlink() {
 
 	[[ -L "$path" ]] || return 0
 
-	local target
+	local target rel reclaim=false
 	target="$(readlink "$path")"
-	if [[ "$target" != "$dotfiles_dir/home/"* ]]; then
-		return 0
+	rel="${path#"$HOME"/}"
+
+	if [[ "$target" == "$dotfiles_dir/home/"* ]]; then
+		# Points into this checkout.
+		reclaim=true
+	elif [[ ! -e "$path" && "$target" == */home/"$rel" ]]; then
+		# The link records wherever the clone lived when it was created, so a
+		# checkout that has since moved no longer matches the prefix above.
+		# A dangling link whose target still carries this repo's layout is ours.
+		# A link the user aimed at their own file resolves, so it never lands here.
+		reclaim=true
 	fi
+
+	[[ "$reclaim" == true ]] || return 0
 
 	echo "Removing legacy $label symlink: $path"
 	rm -f "$path"

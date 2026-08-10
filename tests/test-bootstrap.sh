@@ -44,18 +44,36 @@ run_test() {
     fi
 }
 
+# Assert none of the given files match a pattern.
+#
+# `! grep -qi pat f1 f2` would also invert grep's *error* exit (2, e.g. a file
+# that has been renamed away), turning a broken guard into a silent pass. Check
+# each file exists and grep them one at a time so the guard stays honest as the
+# tree changes around it.
+assert_no_match_in_files() {
+    local pattern="$1"
+    shift
+    local file
+    for file in "$@"; do
+        [[ -f "$file" ]] || return 1
+        if grep -qiE "$pattern" "$file"; then
+            return 1
+        fi
+    done
+    return 0
+}
+
 # ============================================================================
 # Removed-tooling tests (moltbot/openclaw are gone — guard against reappearing)
 # ============================================================================
 
 test_no_moltbot_references_bootstrap() {
     # bootstrap.sh should not contain any moltbot references
-    ! grep -qi 'moltbot' "$BOOTSTRAP"
+    assert_no_match_in_files 'moltbot' "$BOOTSTRAP"
 }
 
 test_no_moltbot_references_claude_md() {
-    local claude_md="$SCRIPT_DIR/../CLAUDE.md"
-    ! grep -qi 'moltbot' "$claude_md"
+    assert_no_match_in_files 'moltbot' "$SCRIPT_DIR/../CLAUDE.md"
 }
 
 test_no_moltbot_references_home() {
@@ -81,7 +99,7 @@ test_no_openclaw_config_dir() {
 test_no_openclaw_setup_in_bootstrap() {
     # bootstrap.sh should no longer set up openclaw. The openclaw path named in
     # cleanup_legacy_configs is expected — only the setup functions must stay gone.
-    ! grep -qE 'symlink_openclaw_config|install_openclaw_cli|ensure_openclaw_workspace' "$BOOTSTRAP"
+    assert_no_match_in_files 'symlink_openclaw_config|install_openclaw_cli|ensure_openclaw_workspace' "$BOOTSTRAP"
 }
 
 test_legacy_cleanup_is_symlink_guarded() {
@@ -105,7 +123,9 @@ test_legacy_cleanup_covers_dropped_configs() {
 
 test_no_spotify_player_packages() {
     # spotify_player was removed; the Spotify desktop cask is unrelated and stays
-    ! grep -q 'spotify_player' "$SCRIPT_DIR/../Brewfile" "$SCRIPT_DIR/../Brewfile.ai" && \
+    assert_no_match_in_files 'spotify_player' \
+        "$SCRIPT_DIR/../Brewfile" \
+        "$SCRIPT_DIR/../Brewfile.ai" && \
     [[ ! -d "$SCRIPT_DIR/../home/.config/spotify-player" ]]
 }
 
@@ -113,7 +133,7 @@ test_no_openclaw_in_docs() {
     # Docs, the AI Brewfile, and .zshrc should not reference openclaw.
     # Explicit file list rather than all of home/: home/.hermes/config.yaml
     # legitimately keeps an `openclaw_residue_cleanup` onboarding flag.
-    ! grep -qi 'openclaw' \
+    assert_no_match_in_files 'openclaw' \
         "$SCRIPT_DIR/../CLAUDE.md" \
         "$SCRIPT_DIR/../README.md" \
         "$SCRIPT_DIR/../Brewfile.ai" \
