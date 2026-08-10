@@ -5,11 +5,15 @@ Required tools (must be in workflow's claude_args --allowed-tools):
 - Read                      - Read prompt file and CLAUDE.md
 - Bash(gh pr view:*)        - Get PR details and comments
 - Bash(gh pr diff:*)        - Get PR diff
-- Bash(gh pr comment:*)     - Post review comments (fallback)
-- Bash(gh pr review:*)      - Submit review verdict (fallback)
+- Bash(gh pr comment:*)     - Post a plain PR comment
+- Bash(gh pr review:*)      - Submit the verdict on §11 Path B (required where the guard rejects heredocs)
 - Bash(gh issue view:*)     - Read linked issues for context
 - Bash(gh issue comment:*)  - Comment on issue if PR incomplete (use sparingly)
-- Bash(gh api:*)            - Submit reviews with inline comments, fetch prior feedback
+- Bash(gh api:*)            - Submit reviews and inline comments, count prior rounds, fetch prior feedback
+
+Both §11 paths must stay allowed: environments whose command guard rejects the
+quoted heredoc need `gh pr review` to post a verdict at all, and a round whose
+verdict never lands is invisible to the §4 round counter.
 -->
 
 You are reviewing a pull request. Be thorough and constructive.
@@ -236,7 +240,9 @@ Suggestions are valuable feedback but should not block merge. Post them as inlin
 
 ### 11. Output Format
 
-**MANDATORY: Use `gh api` to submit reviews.** Do NOT use `gh pr review` or `gh pr comment`. The `gh api` endpoint is the ONLY way to post inline comments on specific files and lines.
+There are two supported ways to submit, **A** and **B** below. Prefer A; use B whenever A is unavailable. Both are first-class — B is not a degraded outcome and needs no apology in the review body.
+
+**Whichever you use, the verdict body MUST end with the `Automated review by Claude Code` marker line.** §4's round counter finds prior rounds by that marker, so a verdict posted without it makes this round invisible and resets the convergence tiering for every round after it.
 
 **IMPORTANT — allowlist constraint:** Your Bash access is restricted to commands that start with the allowed `gh` prefixes. Do NOT wrap commands in variable assignments (`SHA=$(gh ...)`), write temp files (`cat > file`), or run `sed` — those are denied. Every command must begin with an allowed `gh` subcommand, and values must be written literally into the JSON.
 
@@ -245,6 +251,8 @@ Suggestions are valuable feedback but should not block merge. Post them as inlin
 ```bash
 gh pr view $PR_NUMBER --json headRefOid -q .headRefOid
 ```
+
+#### Path A — one `gh api` call (preferred)
 
 **Step 2: Submit the review in a single `gh api` command**, piping the JSON via a quoted heredoc with the real commit SHA (and your repo/PR values) written literally:
 
@@ -292,7 +300,45 @@ gh api repos/OWNER/REPO/pulls/PR_NUMBER/reviews --input - << 'REVIEW_EOF'
 REVIEW_EOF
 ```
 
-**If `gh api` fails** (e.g., a line number is outside the diff hunk): fix the line number and retry. If it still fails, use `gh pr review` as a last resort and note the failure in the review body.
+**If a line number is outside the diff hunk**, the API rejects the whole call: fix the line and retry Path A before switching paths.
+
+#### Path B — post comments individually, then the verdict
+
+Some environments' command guards reject the quoted heredoc above (a `brace with quote character` error, or similar). That is a property of the sandbox, not a mistake on your part — **switch to Path B immediately rather than retrying A, and do not describe the switch as a failure.**
+
+**Step 2a: post each finding** as its own inline comment, one call per finding, with the SHA from Step 1 written literally. Use `-F` for `line` (it must be a number) and `-f` for the string fields:
+
+```bash
+gh api repos/OWNER/REPO/pulls/PR_NUMBER/comments \
+  -f commit_id='<paste the SHA from Step 1>' \
+  -f path='src/file.rs' \
+  -F line=42 \
+  -f side='RIGHT' \
+  -f body='**[Important]** Description of the issue
+
+Fails when: [inputs/state] → [wrong outcome]'
+```
+
+**Step 2b: post the verdict** with the same body you would have used in Path A — including the `Automated review by Claude Code` marker line:
+
+```bash
+gh pr review $PR_NUMBER --approve --body '> **Prompt:** ...
+
+## Code Review — Round N
+
+### Summary
+[1-2 sentences]
+
+### Verdict
+APPROVE - No blocking findings.
+
+---
+*Automated review by Claude Code*'
+```
+
+Use `--request-changes` instead of `--approve` when §9 says REQUEST_CHANGES. The severity rules, the failure-scenario requirement, and the round tiers are identical on both paths — only the transport differs.
+
+**Why the marker matters more on this path.** Each Step 2a call creates its own review object with no body, so a PR reviewed this way accumulates roughly one extra object per finding — several times more objects than rounds. §4's count survives that only because it filters on the marker and paginates: the comment-only objects carry no body and are correctly ignored, and the marker-bearing verdicts may sit well past the first page. Do not "simplify" either the filter or `--paginate --slurp` out of that command.
 
 ## Important Notes
 
