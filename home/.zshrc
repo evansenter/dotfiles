@@ -136,9 +136,6 @@ fi
 # Atuin (shell history)
 [[ -f "$HOME/.atuin/bin/env" ]] && source "$HOME/.atuin/bin/env"
 
-# OpenClaw Completion
-[[ -f "$HOME/.openclaw/completions/openclaw.zsh" ]] && source "$HOME/.openclaw/completions/openclaw.zsh"
-
 # Antigravity
 export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 

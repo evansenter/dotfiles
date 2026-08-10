@@ -195,7 +195,7 @@ symlink_dotfiles() {
 		# Create symlink
 		ln -s "$src_file" "$dest_file"
 		echo "Linked: ~/$rel_path"
-	done < <(find "$dotfiles_dir/home" -type f -not -name ".DS_Store" -not -path "*/.claude/hooks/*" -not -path "*/.claude/commands/*" -not -path "*/.claude/contrib/*" -not -path "*/.claude/agents/*" -not -path "*/.claude/skills/*" -not -path "*/.openclaw/*" -print0)
+	done < <(find "$dotfiles_dir/home" -type f -not -name ".DS_Store" -not -path "*/.claude/hooks/*" -not -path "*/.claude/commands/*" -not -path "*/.claude/contrib/*" -not -path "*/.claude/agents/*" -not -path "*/.claude/skills/*" -print0)
 }
 
 symlink_claude_dir() {
@@ -223,73 +223,6 @@ symlink_claude_dir() {
 
 	ln -s "$src_dir" "$dest_dir"
 	echo "Linked: ~/.claude/$dir_name/"
-}
-
-ensure_openclaw_workspace() {
-	local dest_dir="$HOME/.openclaw/workspace"
-
-	if [[ -d "$dest_dir" ]]; then
-		return 0
-	fi
-
-	# Create the workspace directory so OpenClaw finds it on first run.
-	# Content files (SOUL.md, AGENTS.md, etc.) are personal and created
-	# locally via `openclaw configure`, not tracked in dotfiles.
-	mkdir -p "$dest_dir"
-	echo "Created: ~/.openclaw/workspace/"
-}
-
-symlink_openclaw_config() {
-	local dotfiles_dir
-	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-	local src_file="$dotfiles_dir/home/.openclaw/openclaw.json"
-	local dest_file="$HOME/.openclaw/openclaw.json"
-
-	if [[ ! -f "$src_file" ]]; then
-		return 0
-	fi
-
-	mkdir -p "$HOME/.openclaw"
-
-	# Skip if local config exists (gateway host keeps its own config)
-	if [[ -f "$dest_file" && ! -L "$dest_file" ]]; then
-		echo "Skipped: ~/.openclaw/openclaw.json (local gateway config exists)"
-		return 0
-	fi
-
-	# Skip if already correctly symlinked
-	if [[ -L "$dest_file" && "$(readlink "$dest_file")" == "$src_file" ]]; then
-		install_openclaw_cli
-		return 0
-	fi
-
-	# Ask if this is the gateway host or a remote client
-	# Default to remote client when non-interactive (CI, scripts, -f flag)
-	if [[ ! -e "$dest_file" ]]; then
-		if [[ -t 0 ]]; then
-			echo ""
-			echo "OpenClaw setup:"
-			echo "  1) Remote client - connect to existing gateway (default)"
-			echo "  2) Gateway host - run the gateway on this machine"
-			read -p "Choose [1/2]: " -n 1 -r openclaw_choice
-			echo ""
-
-			if [[ "$openclaw_choice" == "2" ]]; then
-				echo "Skipped: ~/.openclaw/openclaw.json (run 'openclaw configure' to set up gateway)"
-				return 0
-			fi
-		fi
-	fi
-
-	# Remove existing symlink if present
-	if [[ -L "$dest_file" ]]; then
-		rm -f "$dest_file"
-	fi
-
-	ln -s "$src_file" "$dest_file"
-	echo "Linked: ~/.openclaw/openclaw.json (remote client config)"
-
-	install_openclaw_cli
 }
 
 # Install an npm package globally with graceful error handling
@@ -327,10 +260,6 @@ install_npm_package() {
 		echo ""
 		return 0  # Continue bootstrap despite failure
 	fi
-}
-
-install_openclaw_cli() {
-	install_npm_package "openclaw" "OpenClaw CLI" "openclaw"
 }
 
 configure_claude_local_settings() {
@@ -502,7 +431,7 @@ pull_latest() {
 }
 
 prompt_ai_install() {
-	# Ask once whether to install AI assistant packages (Claude, OpenClaw, Tailscale).
+	# Ask once whether to install AI assistant packages (Claude, Tailscale).
 	# Result is cached in INSTALL_AI for the rest of the run.
 	if [[ -n "$INSTALL_AI" ]]; then
 		return 0
@@ -516,13 +445,13 @@ prompt_ai_install() {
 
 	# Skip prompt if already fully configured
 	# (command -v doesn't execute the binary, so Santa won't block it)
-	if command -v claude >/dev/null 2>&1 && [[ -e "$HOME/.openclaw/openclaw.json" ]]; then
+	if command -v claude >/dev/null 2>&1; then
 		export INSTALL_AI=true
 		return 0
 	fi
 
 	echo ""
-	echo "AI assistant setup (Claude, MCP servers, OpenClaw, Tailscale):"
+	echo "AI assistant setup (Claude, MCP servers, Tailscale):"
 	echo "  1) Install (default)"
 	echo "  2) Skip"
 	read -p "Choose [1/2]: " -n 1 -r ai_choice
@@ -1038,7 +967,7 @@ install_brew_packages() {
 	HOMEBREW_CASK_OPTS="--adopt" brew bundle --file="$brewfile" \
 		|| echo "  Warning: some Homebrew packages failed to install (continuing)."
 
-	# Conditionally install AI assistant packages (Claude, OpenClaw tools)
+	# Conditionally install AI assistant packages (Claude, agent CLI tools)
 	prompt_ai_install
 	if [[ "$INSTALL_AI" == true ]]; then
 		local ai_brewfile="$dotfiles_dir/Brewfile.ai"
@@ -1247,7 +1176,7 @@ sync_dotfiles() {
 	# Symlink dotfiles from home/ directory to ~
 	symlink_dotfiles
 
-	# AI assistant setup (Claude dirs, MCP servers, OpenClaw)
+	# AI assistant setup (Claude dirs, MCP servers)
 	prompt_ai_install
 	if [[ "$INSTALL_AI" == true ]]; then
 		# Symlink Claude Code directories
@@ -1256,12 +1185,6 @@ sync_dotfiles() {
 		symlink_claude_dir "contrib"
 		symlink_claude_dir "agents"
 		symlink_claude_dir "skills"
-
-		# Ensure OpenClaw workspace directory exists
-		ensure_openclaw_workspace
-
-		# Symlink OpenClaw config (skipped if local gateway config exists)
-		symlink_openclaw_config
 
 		# Install Claude Code MCP servers
 		install_claude_mcp_servers

@@ -45,7 +45,7 @@ run_test() {
 }
 
 # ============================================================================
-# Naming consistency tests (moltbot -> openclaw migration)
+# Removed-tooling tests (moltbot/openclaw are gone — guard against reappearing)
 # ============================================================================
 
 test_no_moltbot_references_bootstrap() {
@@ -72,24 +72,23 @@ test_no_moltbot_references_home() {
         xargs -0 grep -li 'moltbot' 2>/dev/null
 }
 
-test_openclaw_config_path() {
-    # Config should be at home/.openclaw/openclaw.json, not home/.moltbot/
-    [[ -f "$SCRIPT_DIR/../home/.openclaw/openclaw.json" ]] && \
+test_no_openclaw_config_dir() {
+    # OpenClaw config was removed — neither it nor its predecessor should return
+    [[ ! -d "$SCRIPT_DIR/../home/.openclaw" ]] && \
     [[ ! -d "$SCRIPT_DIR/../home/.moltbot" ]]
 }
 
-test_openclaw_function_names() {
-    # bootstrap.sh should use openclaw function names
-    grep -q 'symlink_openclaw_config' "$BOOTSTRAP" && \
-    grep -q 'install_openclaw_cli' "$BOOTSTRAP" && \
-    ! grep -q 'symlink_moltbot_config' "$BOOTSTRAP" && \
-    ! grep -q 'install_moltbot_cli' "$BOOTSTRAP"
+test_no_openclaw_in_bootstrap() {
+    # bootstrap.sh should no longer set up openclaw
+    ! grep -qi 'openclaw' "$BOOTSTRAP"
 }
 
-test_openclaw_env_var() {
-    # Config should reference OPENCLAW_GATEWAY_TOKEN, not MOLTBOT_GATEWAY_TOKEN
-    grep -q 'OPENCLAW_GATEWAY_TOKEN' "$SCRIPT_DIR/../home/.openclaw/openclaw.json" && \
-    ! grep -q 'MOLTBOT_GATEWAY_TOKEN' "$SCRIPT_DIR/../home/.openclaw/openclaw.json"
+test_no_openclaw_in_docs() {
+    # Docs and the AI Brewfile should not reference openclaw
+    ! grep -qi 'openclaw' \
+        "$SCRIPT_DIR/../CLAUDE.md" \
+        "$SCRIPT_DIR/../README.md" \
+        "$SCRIPT_DIR/../Brewfile.ai"
 }
 
 # ============================================================================
@@ -102,23 +101,12 @@ test_no_speck_vm_mcp_urls() {
     ! grep -q 'speck-vm.*agent-session-analytics' "$SCRIPT_DIR/../home/.claude/settings.json"
 }
 
-test_openclaw_gateway_url() {
-    # openclaw.json should point to mac-mini, not speck-vm
-    grep -q 'mac-mini' "$SCRIPT_DIR/../home/.openclaw/openclaw.json" && \
-    ! grep -q 'speck-vm' "$SCRIPT_DIR/../home/.openclaw/openclaw.json"
-}
-
 # ============================================================================
 # Bootstrap structure tests
 # ============================================================================
 
 test_bootstrap_syntax() {
     bash -n "$BOOTSTRAP"
-}
-
-test_bootstrap_excludes_openclaw_from_symlinks() {
-    # symlink_dotfiles should exclude .openclaw/ (handled separately)
-    grep -q '\.openclaw' "$BOOTSTRAP"
 }
 
 test_bootstrap_handles_cargo_sweep() {
@@ -144,17 +132,6 @@ test_settings_local_skips_gateway_host() {
     # The function should skip on mac-mini (gateway host)
     grep -q 'mac-mini' "$BOOTSTRAP" && \
     grep -q 'HOSTNAME' "$BOOTSTRAP"
-}
-
-test_ensure_openclaw_workspace_exists() {
-    # bootstrap.sh should have the ensure_openclaw_workspace function
-    grep -q 'ensure_openclaw_workspace' "$BOOTSTRAP"
-}
-
-test_openclaw_workspace_gitignore() {
-    # .gitignore should exist and ignore *.md to prevent tracking personal content
-    [[ -f "$SCRIPT_DIR/../home/.openclaw/workspace/.gitignore" ]] && \
-    grep -q '\*.md' "$SCRIPT_DIR/../home/.openclaw/workspace/.gitignore"
 }
 
 test_sync_dotfiles_no_package_install() {
@@ -614,23 +591,21 @@ main() {
     echo "Running bootstrap tests..."
     echo ""
 
-    echo "=== naming consistency (moltbot -> openclaw) ==="
+    echo "=== removed tooling (moltbot/openclaw) ==="
     run_test "no moltbot refs in bootstrap.sh" "test_no_moltbot_references_bootstrap"
     run_test "no moltbot refs in CLAUDE.md" "test_no_moltbot_references_claude_md"
     run_test "no moltbot refs in home/" "test_no_moltbot_references_home"
-    run_test "openclaw config at correct path" "test_openclaw_config_path"
-    run_test "openclaw function names in bootstrap" "test_openclaw_function_names"
-    run_test "openclaw env var in config" "test_openclaw_env_var"
+    run_test "no openclaw config dir under home/" "test_no_openclaw_config_dir"
+    run_test "no openclaw refs in bootstrap.sh" "test_no_openclaw_in_bootstrap"
+    run_test "no openclaw refs in docs/Brewfile" "test_no_openclaw_in_docs"
     echo ""
 
     echo "=== URL migration (speck-vm -> mac-mini/localhost) ==="
     run_test "no speck-vm MCP URLs in settings" "test_no_speck_vm_mcp_urls"
-    run_test "openclaw gateway points to mac-mini" "test_openclaw_gateway_url"
     echo ""
 
     echo "=== bootstrap structure ==="
     run_test "syntax check" "test_bootstrap_syntax"
-    run_test "excludes openclaw from generic symlinks" "test_bootstrap_excludes_openclaw_from_symlinks"
     run_test "handles cargo-sweep setup" "test_bootstrap_handles_cargo_sweep"
     run_test "cargo-sweep script exists and executable" "test_cargo_sweep_script_exists"
     run_test "cargo-sweep script syntax" "test_cargo_sweep_syntax"
@@ -638,8 +613,6 @@ main() {
     run_test "settings.local.json skips gateway host" "test_settings_local_skips_gateway_host"
     run_test "sync_dotfiles has no package installers" "test_sync_dotfiles_no_package_install"
     run_test "no ~/Documents/projects references" "test_no_documents_projects_refs"
-    run_test "ensure_openclaw_workspace function exists" "test_ensure_openclaw_workspace_exists"
-    run_test "openclaw workspace .gitignore ignores content" "test_openclaw_workspace_gitignore"
     run_test "SteamOS detection function exists" "test_steamos_detection"
     run_test "SteamOS package function exists" "test_steamos_packages"
     run_test "set_default_shell function exists" "test_set_default_shell"
