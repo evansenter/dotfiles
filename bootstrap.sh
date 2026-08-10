@@ -386,22 +386,31 @@ install_launch_agents() {
 	fi
 }
 
-cleanup_legacy_openclaw() {
-	# OpenClaw was dropped from this repo. Machines bootstrapped before that have
-	# ~/.openclaw/openclaw.json symlinked into home/.openclaw/, which no longer
-	# exists — leaving a dangling symlink behind. Only ever remove a symlink: a
-	# real file there is a locally-managed gateway config, so leave it alone.
-	local config="$HOME/.openclaw/openclaw.json"
+# Remove a symlink left behind by a config this repo no longer tracks.
+# Only ever removes a symlink — a real file at the path is locally managed
+# (e.g. a hand-rolled gateway config) and must survive.
+remove_legacy_symlink() {
+	local path="$1"
+	local label="$2"
 
-	if [[ -L "$config" ]]; then
-		echo "Removing legacy OpenClaw config symlink (~/.openclaw/openclaw.json)..."
-		rm -f "$config"
+	if [[ -L "$path" ]]; then
+		echo "Removing legacy $label symlink: $path"
+		rm -f "$path"
 	fi
+}
 
-	# Drop the directories bootstrap used to scaffold, but only if they're empty —
-	# rmdir is a no-op when personal workspace content is still there.
+cleanup_legacy_configs() {
+	# Configs this repo used to track. Machines bootstrapped earlier still have
+	# symlinks pointing into home/, which no longer holds these files — leaving
+	# dangling links that nothing else would clean up.
+	remove_legacy_symlink "$HOME/.openclaw/openclaw.json" "OpenClaw config"
+	remove_legacy_symlink "$HOME/.config/spotify-player/app.toml" "spotify-player config"
+
+	# Drop directories bootstrap used to scaffold, but only when they're empty —
+	# rmdir is a no-op if personal content is still there.
 	rmdir "$HOME/.openclaw/workspace" 2>/dev/null || true
 	rmdir "$HOME/.openclaw" 2>/dev/null || true
+	rmdir "$HOME/.config/spotify-player" 2>/dev/null || true
 }
 
 cleanup_legacy_cron() {
@@ -1238,7 +1247,7 @@ sync_dotfiles() {
 	# Install LaunchAgents (macOS) or cron jobs (Linux)
 	install_launch_agents
 	cleanup_legacy_cron
-	cleanup_legacy_openclaw
+	cleanup_legacy_configs
 
 	# Configure NPM registry auth if authenticated with gcloud
 	configure_npm_registry

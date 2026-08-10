@@ -84,12 +84,26 @@ test_no_openclaw_setup_in_bootstrap() {
     ! grep -qE 'symlink_openclaw_config|install_openclaw_cli|ensure_openclaw_workspace' "$BOOTSTRAP"
 }
 
-test_openclaw_cleanup_is_symlink_guarded() {
-    # The migration must only ever rm a symlink — a real file at that path is a
-    # locally-managed gateway config and must survive.
+test_legacy_cleanup_is_symlink_guarded() {
+    # The migration must only ever rm a symlink — a real file at one of those
+    # paths is locally managed (e.g. a hand-rolled gateway config) and survives.
     local body
-    body=$(sed -n '/^cleanup_legacy_openclaw()/,/^}/p' "$BOOTSTRAP")
-    [[ -n "$body" ]] && echo "$body" | grep -q '\-L "\$config"'
+    body=$(sed -n '/^remove_legacy_symlink()/,/^}/p' "$BOOTSTRAP")
+    [[ -n "$body" ]] && echo "$body" | grep -q '\-L "\$path"'
+}
+
+test_legacy_cleanup_covers_dropped_configs() {
+    # Both configs this repo stopped tracking need their stale symlink removed
+    local body
+    body=$(sed -n '/^cleanup_legacy_configs()/,/^}/p' "$BOOTSTRAP")
+    echo "$body" | grep -q '\.openclaw/openclaw\.json' && \
+    echo "$body" | grep -q '\.config/spotify-player/app\.toml'
+}
+
+test_no_spotify_player_packages() {
+    # spotify_player was removed; the Spotify desktop cask is unrelated and stays
+    ! grep -q 'spotify_player' "$SCRIPT_DIR/../Brewfile" "$SCRIPT_DIR/../Brewfile.ai" && \
+    [[ ! -d "$SCRIPT_DIR/../home/.config/spotify-player" ]]
 }
 
 test_no_openclaw_in_docs() {
@@ -610,7 +624,9 @@ main() {
     run_test "no openclaw config dir under home/" "test_no_openclaw_config_dir"
     run_test "no openclaw setup in bootstrap.sh" "test_no_openclaw_setup_in_bootstrap"
     run_test "no openclaw refs in docs/Brewfile/.zshrc" "test_no_openclaw_in_docs"
-    run_test "openclaw cleanup only removes symlinks" "test_openclaw_cleanup_is_symlink_guarded"
+    run_test "legacy cleanup only removes symlinks" "test_legacy_cleanup_is_symlink_guarded"
+    run_test "legacy cleanup covers dropped configs" "test_legacy_cleanup_covers_dropped_configs"
+    run_test "no spotify_player in Brewfiles or home/" "test_no_spotify_player_packages"
     echo ""
 
     echo "=== URL migration (speck-vm -> mac-mini/localhost) ==="

@@ -31,7 +31,6 @@ brew "direnv"                 # Directory-specific env vars
 brew "glow"                   # Terminal markdown viewer
 brew "tldr"                   # Simplified man pages
 brew "watch"                  # Run command periodically
-brew "spotify_player"         # Spotify TUI (config in home/.config/spotify-player/)
 
 # Languages & Runtimes
 brew "go"
