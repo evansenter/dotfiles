@@ -2,9 +2,6 @@
 # Install: brew bundle
 # With existing apps: HOMEBREW_CASK_OPTS="--adopt" brew bundle
 
-# Taps
-tap "cormacrelf/tap"
-
 # CLI Tools
 brew "bat"                    # Cat with syntax highlighting
 brew "btop"                   # System monitor

@@ -140,6 +140,15 @@ test_no_spotify_player_packages() {
     [[ ! -d "$SCRIPT_DIR/../home/.config/spotify-player" ]]
 }
 
+test_no_gogcli_packages() {
+    # gogcli is an openclaw-org tool served from openclaw/tap; it went with the
+    # rest of that ecosystem, along with the gog skill that shelled out to it.
+    assert_no_match_in_files 'gogcli' \
+        "$SCRIPT_DIR/../Brewfile" \
+        "$SCRIPT_DIR/../Brewfile.ai" && \
+    [[ ! -d "$SCRIPT_DIR/../home/.claude/skills/gog" ]]
+}
+
 test_no_openclaw_in_docs() {
     # These are openclaw-free, so they keep the strict ban on the bare word: a
     # re-added `brew "openclaw"` line or a docs blurb names the tool without
@@ -671,6 +680,7 @@ main() {
     run_test "legacy cleanup only removes symlinks" "test_legacy_cleanup_is_symlink_guarded"
     run_test "legacy cleanup covers dropped configs" "test_legacy_cleanup_covers_dropped_configs"
     run_test "no spotify_player in Brewfiles or home/" "test_no_spotify_player_packages"
+    run_test "no gogcli in Brewfiles or gog skill" "test_no_gogcli_packages"
     echo ""
 
     echo "=== URL migration (speck-vm -> mac-mini/localhost) ==="
