@@ -55,7 +55,9 @@ assert_no_match_in_files() {
     shift
     local file
     for file in "$@"; do
-        [[ -f "$file" ]] || return 1
+        # Distinguish "the tree moved under the guard" from "the pattern came
+        # back" — run_test drops stderr, so this has to go to stdout.
+        [[ -f "$file" ]] || { echo "  (guard target missing: $file)"; return 1; }
         if grep -qiE "$pattern" "$file"; then
             return 1
         fi
@@ -139,16 +141,21 @@ test_no_spotify_player_packages() {
 }
 
 test_no_openclaw_in_docs() {
-    # Docs, the AI Brewfile, and .zshrc should not wire openclaw back up.
-    # Matches the setup surface (config path, token, configure step) rather than
-    # the bare word, so the migration note in CLAUDE.md can name the tool it
-    # cleans up. Explicit file list rather than all of home/:
-    # home/.hermes/config.yaml legitimately keeps an onboarding flag.
-    assert_no_match_in_files '\.openclaw/|OPENCLAW_GATEWAY_TOKEN|openclaw configure' \
-        "$SCRIPT_DIR/../CLAUDE.md" \
+    # These three are openclaw-free, so they keep the strict ban on the bare
+    # word: a re-added `brew "openclaw"` line or a docs blurb names the tool
+    # without touching the setup surface, and only this catches those.
+    assert_no_match_in_files 'openclaw' \
         "$SCRIPT_DIR/../README.md" \
         "$SCRIPT_DIR/../Brewfile.ai" \
-        "$SCRIPT_DIR/../home/.zshrc"
+        "$SCRIPT_DIR/../home/.zshrc" || return 1
+
+    # CLAUDE.md documents the cleanup step, so it has to name the tool it cleans
+    # up. Match the setup surface (config path, token, configure step) there
+    # instead, so only the file that needs the room pays for it. Explicit file
+    # list rather than all of home/: home/.hermes/config.yaml legitimately keeps
+    # an onboarding flag.
+    assert_no_match_in_files '\.openclaw/|OPENCLAW_GATEWAY_TOKEN|openclaw configure' \
+        "$SCRIPT_DIR/../CLAUDE.md"
 }
 
 # ============================================================================
