@@ -17,5 +17,4 @@ cask "lm-studio"
 brew "whisper-cpp"
 
 # Agent CLI tools
-brew "spotify_player"             # Spotify CLI (OAuth device flow); config in home/.config/spotify-player/
 brew "gogcli"                     # Google Suite CLI (backs the `gog` Claude skill)
