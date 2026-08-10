@@ -77,17 +77,26 @@ test_no_moltbot_references_claude_md() {
 }
 
 test_no_moltbot_references_home() {
-    # No tracked config files under home/ should reference moltbot
-    # Exclude binary/db files and log files (contain historical data)
-    ! find "$SCRIPT_DIR/../home" -type f \
+    # No tracked config files under home/ should reference moltbot.
+    # Exclude binary/db files and log files (contain historical data).
+    # Collect the list and hand it to the helper rather than inverting a
+    # `find | xargs grep` pipeline, whose `!` would read an xargs error as a pass.
+    local files=()
+    while IFS= read -r -d '' file; do
+        files+=("$file")
+    done < <(find "$SCRIPT_DIR/../home" -type f \
         -not -path "*/.git/*" \
         -not -name "*.db" \
         -not -name "*.db.*" \
         -not -name "*.log" \
         -not -name "*.err" \
         -not -name "*.stdout" \
-        -print0 | \
-        xargs -0 grep -li 'moltbot' 2>/dev/null
+        -print0)
+
+    # An empty list means the find broke, not that home/ is clean
+    [[ ${#files[@]} -gt 0 ]] || return 1
+
+    assert_no_match_in_files 'moltbot' "${files[@]}"
 }
 
 test_no_openclaw_config_dir() {
@@ -130,10 +139,12 @@ test_no_spotify_player_packages() {
 }
 
 test_no_openclaw_in_docs() {
-    # Docs, the AI Brewfile, and .zshrc should not reference openclaw.
-    # Explicit file list rather than all of home/: home/.hermes/config.yaml
-    # legitimately keeps an `openclaw_residue_cleanup` onboarding flag.
-    assert_no_match_in_files 'openclaw' \
+    # Docs, the AI Brewfile, and .zshrc should not wire openclaw back up.
+    # Matches the setup surface (config path, token, configure step) rather than
+    # the bare word, so the migration note in CLAUDE.md can name the tool it
+    # cleans up. Explicit file list rather than all of home/:
+    # home/.hermes/config.yaml legitimately keeps an onboarding flag.
+    assert_no_match_in_files '\.openclaw/|OPENCLAW_GATEWAY_TOKEN|openclaw configure' \
         "$SCRIPT_DIR/../CLAUDE.md" \
         "$SCRIPT_DIR/../README.md" \
         "$SCRIPT_DIR/../Brewfile.ai" \

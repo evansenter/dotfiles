@@ -399,18 +399,21 @@ remove_legacy_symlink() {
 
 	[[ -L "$path" ]] || return 0
 
-	local target rel reclaim=false
+	local target rel repo_name reclaim=false
 	target="$(readlink "$path")"
 	rel="${path#"$HOME"/}"
+	repo_name="$(basename "$dotfiles_dir")"
 
 	if [[ "$target" == "$dotfiles_dir/home/"* ]]; then
 		# Points into this checkout.
 		reclaim=true
-	elif [[ ! -e "$path" && "$target" == */home/"$rel" ]]; then
+	elif [[ ! -e "$path" && "$target" == */"$repo_name"/home/"$rel" ]]; then
 		# The link records wherever the clone lived when it was created, so a
-		# checkout that has since moved no longer matches the prefix above.
-		# A dangling link whose target still carries this repo's layout is ours.
-		# A link the user aimed at their own file resolves, so it never lands here.
+		# checkout that has since moved no longer matches the prefix above. A
+		# dangling link still carrying <repo-dir>/home/<relpath> is one of ours.
+		# Requiring the repo directory name keeps an unreachable user path out:
+		# a link into a detached volume is dangling too, but would have to sit
+		# at .../<repo-dir>/home/<relpath> to be mistaken for a moved clone.
 		reclaim=true
 	fi
 
