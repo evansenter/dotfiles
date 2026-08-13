@@ -171,14 +171,16 @@ test_no_openclaw_in_docs() {
 }
 
 test_no_lm_studio_packages() {
-    assert_no_match_in_files 'lm-studio' \
+    # LM Studio was removed; guard against cask ("lm-studio"), app name ("LM Studio"), or CLI PATH exports (~/.lmstudio/bin)
+    assert_no_match_in_files 'lm-?studio|lm studio|\.lmstudio' \
         "$SCRIPT_DIR/../Brewfile" \
         "$SCRIPT_DIR/../Brewfile.ai" \
         "$SCRIPT_DIR/../home/.zshrc"
 }
 
 test_no_whisper_cpp_packages() {
-    assert_no_match_in_files 'whisper-cpp' \
+    # whisper-cpp was removed; guard against formula, binary ("whisper-cli"), or build repo ("whisper.cpp") re-adds
+    assert_no_match_in_files 'whisper[-.]?(cpp|cli)' \
         "$SCRIPT_DIR/../Brewfile" \
         "$SCRIPT_DIR/../Brewfile.ai" \
         "$BOOTSTRAP"
