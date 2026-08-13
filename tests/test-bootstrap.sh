@@ -125,12 +125,14 @@ test_legacy_cleanup_is_symlink_guarded() {
 }
 
 test_legacy_cleanup_covers_dropped_configs() {
-    # Both configs this repo stopped tracking need their stale symlink removed
+    # Both configs this repo stopped tracking need their stale symlink removed, along with dropped binaries
     local body
     body=$(sed -n '/^cleanup_legacy_configs()/,/^}/p' "$BOOTSTRAP")
     echo "$body" | grep -q '\.openclaw/openclaw\.json' && \
-    echo "$body" | grep -q '\.config/spotify-player/app\.toml'
+    echo "$body" | grep -q '\.config/spotify-player/app\.toml' && \
+    echo "$body" | grep -q 'whisper-cli'
 }
+
 
 test_no_spotify_player_packages() {
     # spotify_player was removed; the Spotify desktop cask is unrelated and stays
@@ -181,23 +183,24 @@ test_no_lm_studio_packages() {
 }
 
 test_no_whisper_cpp_packages() {
-    # whisper-cpp was removed; guard against formula, binary ("whisper-cli"), or build repo ("whisper.cpp") re-adds
+    # whisper-cpp was removed; guard against formula in Brewfiles/rcs and build/install setup in bootstrap.sh
     assert_no_match_in_files 'whisper[-.]?(cpp|cli)' \
         "$SCRIPT_DIR/../Brewfile" \
         "$SCRIPT_DIR/../Brewfile.ai" \
-        "$BOOTSTRAP" \
         "$SCRIPT_DIR/../home/.zshrc" \
-        "$SCRIPT_DIR/../home/.exports"
+        "$SCRIPT_DIR/../home/.exports" && \
+    assert_no_match_in_files 'whisper-cpp|whisper\.cpp|whisper_tmp' \
+        "$BOOTSTRAP"
 }
 
 # ============================================================================
-
 # URL migration tests (speck-vm -> mac-mini/localhost)
 # ============================================================================
 
 test_no_speck_vm_mcp_urls() {
     # settings.json should not reference speck-vm for MCP URLs
     ! grep -q 'speck-vm.*agent-event-bus' "$SCRIPT_DIR/../home/.claude/settings.json" && \
+
     ! grep -q 'speck-vm.*agent-session-analytics' "$SCRIPT_DIR/../home/.claude/settings.json"
 }
 
