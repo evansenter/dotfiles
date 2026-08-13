@@ -175,7 +175,9 @@ test_no_lm_studio_packages() {
     assert_no_match_in_files 'lm-?studio|lm studio|\.lmstudio' \
         "$SCRIPT_DIR/../Brewfile" \
         "$SCRIPT_DIR/../Brewfile.ai" \
-        "$SCRIPT_DIR/../home/.zshrc"
+        "$BOOTSTRAP" \
+        "$SCRIPT_DIR/../home/.zshrc" \
+        "$SCRIPT_DIR/../home/.exports"
 }
 
 test_no_whisper_cpp_packages() {
@@ -183,11 +185,13 @@ test_no_whisper_cpp_packages() {
     assert_no_match_in_files 'whisper[-.]?(cpp|cli)' \
         "$SCRIPT_DIR/../Brewfile" \
         "$SCRIPT_DIR/../Brewfile.ai" \
-        "$BOOTSTRAP"
+        "$BOOTSTRAP" \
+        "$SCRIPT_DIR/../home/.zshrc" \
+        "$SCRIPT_DIR/../home/.exports"
 }
 
-
 # ============================================================================
+
 # URL migration tests (speck-vm -> mac-mini/localhost)
 # ============================================================================
 
