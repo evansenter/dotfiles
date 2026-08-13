@@ -170,6 +170,21 @@ test_no_openclaw_in_docs() {
         "$SCRIPT_DIR/../CLAUDE.md"
 }
 
+test_no_lm_studio_packages() {
+    assert_no_match_in_files 'lm-studio' \
+        "$SCRIPT_DIR/../Brewfile" \
+        "$SCRIPT_DIR/../Brewfile.ai" \
+        "$SCRIPT_DIR/../home/.zshrc"
+}
+
+test_no_whisper_cpp_packages() {
+    assert_no_match_in_files 'whisper-cpp' \
+        "$SCRIPT_DIR/../Brewfile" \
+        "$SCRIPT_DIR/../Brewfile.ai" \
+        "$BOOTSTRAP"
+}
+
+
 # ============================================================================
 # URL migration tests (speck-vm -> mac-mini/localhost)
 # ============================================================================
@@ -681,6 +696,8 @@ main() {
     run_test "legacy cleanup covers dropped configs" "test_legacy_cleanup_covers_dropped_configs"
     run_test "no spotify_player in Brewfiles or home/" "test_no_spotify_player_packages"
     run_test "no gogcli in Brewfiles or gog skill" "test_no_gogcli_packages"
+    run_test "no lm-studio in Brewfiles or .zshrc" "test_no_lm_studio_packages"
+    run_test "no whisper-cpp in Brewfiles or bootstrap.sh" "test_no_whisper_cpp_packages"
     echo ""
 
     echo "=== URL migration (speck-vm -> mac-mini/localhost) ==="

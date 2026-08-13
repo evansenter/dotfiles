@@ -710,22 +710,6 @@ install_apt_packages() {
 	# Install bazelisk
 	install_npm_package "bazelisk" "bazelisk" "@aspect/bazelisk"
 
-	# Install whisper-cpp (speech-to-text)
-	if ! command -v whisper-cli >/dev/null 2>&1; then
-		echo "Installing whisper-cpp..."
-		local whisper_tmp
-		whisper_tmp="$(mktemp -d)"
-		git clone --depth 1 https://github.com/ggerganov/whisper.cpp.git "$whisper_tmp"
-		cmake -B "$whisper_tmp/build" -S "$whisper_tmp" -DCMAKE_BUILD_TYPE=Release
-		cmake --build "$whisper_tmp/build" --config Release -j"$(nproc)"
-		if [[ -f "$whisper_tmp/build/bin/whisper-cli" ]]; then
-			sudo cp "$whisper_tmp/build/bin/whisper-cli" /usr/local/bin/
-		else
-			echo "whisper-cpp build failed — skipping install"
-		fi
-		rm -rf "$whisper_tmp"
-	fi
-
 	# Install piper-tts (text-to-speech)
 	if ! command -v piper >/dev/null 2>&1; then
 		echo "Installing piper-tts..."
