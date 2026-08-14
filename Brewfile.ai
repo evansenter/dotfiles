@@ -9,9 +9,3 @@ cask "claude"
 
 # OpenAI Terminal Agent
 cask "codex"
-
-# Local LLM runner
-cask "lm-studio"
-
-# Local speech-to-text
-brew "whisper-cpp"

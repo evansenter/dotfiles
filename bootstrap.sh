@@ -435,6 +435,13 @@ cleanup_legacy_configs() {
 	rmdir "$HOME/.openclaw/workspace" 2>/dev/null || true
 	rmdir "$HOME/.openclaw" 2>/dev/null || true
 	rmdir "$HOME/.config/spotify-player" 2>/dev/null || true
+
+	# Drop legacy binaries installed by previous bootstrap versions.
+	# whisper-cli was built from source on Linux only (the apt path); on macOS
+	# /usr/local/bin/whisper-cli is a Homebrew symlink — leave it for brew.
+	if [[ "$(uname)" == "Linux" ]] && [[ -f "/usr/local/bin/whisper-cli" && ! -L "/usr/local/bin/whisper-cli" ]]; then
+		sudo -n rm -f "/usr/local/bin/whisper-cli" 2>/dev/null || true
+	fi
 }
 
 cleanup_legacy_cron() {
@@ -709,22 +716,6 @@ install_apt_packages() {
 
 	# Install bazelisk
 	install_npm_package "bazelisk" "bazelisk" "@aspect/bazelisk"
-
-	# Install whisper-cpp (speech-to-text)
-	if ! command -v whisper-cli >/dev/null 2>&1; then
-		echo "Installing whisper-cpp..."
-		local whisper_tmp
-		whisper_tmp="$(mktemp -d)"
-		git clone --depth 1 https://github.com/ggerganov/whisper.cpp.git "$whisper_tmp"
-		cmake -B "$whisper_tmp/build" -S "$whisper_tmp" -DCMAKE_BUILD_TYPE=Release
-		cmake --build "$whisper_tmp/build" --config Release -j"$(nproc)"
-		if [[ -f "$whisper_tmp/build/bin/whisper-cli" ]]; then
-			sudo cp "$whisper_tmp/build/bin/whisper-cli" /usr/local/bin/
-		else
-			echo "whisper-cpp build failed — skipping install"
-		fi
-		rm -rf "$whisper_tmp"
-	fi
 
 	# Install piper-tts (text-to-speech)
 	if ! command -v piper >/dev/null 2>&1; then

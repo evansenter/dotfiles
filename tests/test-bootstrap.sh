@@ -125,11 +125,12 @@ test_legacy_cleanup_is_symlink_guarded() {
 }
 
 test_legacy_cleanup_covers_dropped_configs() {
-    # Both configs this repo stopped tracking need their stale symlink removed
+    # Both configs this repo stopped tracking need their stale symlink removed, along with dropped binaries
     local body
     body=$(sed -n '/^cleanup_legacy_configs()/,/^}/p' "$BOOTSTRAP")
     echo "$body" | grep -q '\.openclaw/openclaw\.json' && \
-    echo "$body" | grep -q '\.config/spotify-player/app\.toml'
+    echo "$body" | grep -q '\.config/spotify-player/app\.toml' && \
+    echo "$body" | grep -q 'whisper-cli'
 }
 
 test_no_spotify_player_packages() {
@@ -168,6 +169,27 @@ test_no_openclaw_in_docs() {
     # an onboarding flag.
     assert_no_match_in_files '\.openclaw/|OPENCLAW_GATEWAY_TOKEN|openclaw configure' \
         "$SCRIPT_DIR/../CLAUDE.md"
+}
+
+test_no_lm_studio_packages() {
+    # LM Studio was removed; guard against cask ("lm-studio"), app name ("LM Studio"), or CLI PATH exports (~/.lmstudio/bin)
+    assert_no_match_in_files 'lm-?studio|lm studio|\.lmstudio' \
+        "$SCRIPT_DIR/../Brewfile" \
+        "$SCRIPT_DIR/../Brewfile.ai" \
+        "$BOOTSTRAP" \
+        "$SCRIPT_DIR/../home/.zshrc" \
+        "$SCRIPT_DIR/../home/.exports"
+}
+
+test_no_whisper_cpp_packages() {
+    # whisper-cpp was removed; guard against formula in Brewfiles/rcs and build/install setup in bootstrap.sh
+    assert_no_match_in_files 'whisper[-.]?(cpp|cli)' \
+        "$SCRIPT_DIR/../Brewfile" \
+        "$SCRIPT_DIR/../Brewfile.ai" \
+        "$SCRIPT_DIR/../home/.zshrc" \
+        "$SCRIPT_DIR/../home/.exports" && \
+    assert_no_match_in_files 'whisper-cpp|whisper\.cpp|whisper_tmp' \
+        "$BOOTSTRAP"
 }
 
 # ============================================================================
@@ -681,6 +703,8 @@ main() {
     run_test "legacy cleanup covers dropped configs" "test_legacy_cleanup_covers_dropped_configs"
     run_test "no spotify_player in Brewfiles or home/" "test_no_spotify_player_packages"
     run_test "no gogcli in Brewfiles or gog skill" "test_no_gogcli_packages"
+    run_test "no lm-studio in Brewfiles or .zshrc" "test_no_lm_studio_packages"
+    run_test "no whisper-cpp in Brewfiles or bootstrap.sh" "test_no_whisper_cpp_packages"
     echo ""
 
     echo "=== URL migration (speck-vm -> mac-mini/localhost) ==="
