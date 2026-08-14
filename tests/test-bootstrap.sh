@@ -133,7 +133,6 @@ test_legacy_cleanup_covers_dropped_configs() {
     echo "$body" | grep -q 'whisper-cli'
 }
 
-
 test_no_spotify_player_packages() {
     # spotify_player was removed; the Spotify desktop cask is unrelated and stays
     assert_no_match_in_files 'spotify_player' \
@@ -200,7 +199,6 @@ test_no_whisper_cpp_packages() {
 test_no_speck_vm_mcp_urls() {
     # settings.json should not reference speck-vm for MCP URLs
     ! grep -q 'speck-vm.*agent-event-bus' "$SCRIPT_DIR/../home/.claude/settings.json" && \
-
     ! grep -q 'speck-vm.*agent-session-analytics' "$SCRIPT_DIR/../home/.claude/settings.json"
 }
 

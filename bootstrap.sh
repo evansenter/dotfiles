@@ -436,9 +436,11 @@ cleanup_legacy_configs() {
 	rmdir "$HOME/.openclaw" 2>/dev/null || true
 	rmdir "$HOME/.config/spotify-player" 2>/dev/null || true
 
-	# Drop legacy binaries installed by previous bootstrap versions
-	if [[ -f "/usr/local/bin/whisper-cli" ]]; then
-		sudo rm -f "/usr/local/bin/whisper-cli" 2>/dev/null || true
+	# Drop legacy binaries installed by previous bootstrap versions.
+	# whisper-cli was built from source on Linux only (the apt path); on macOS
+	# /usr/local/bin/whisper-cli is a Homebrew symlink — leave it for brew.
+	if [[ "$(uname)" == "Linux" ]] && [[ -f "/usr/local/bin/whisper-cli" && ! -L "/usr/local/bin/whisper-cli" ]]; then
+		sudo -n rm -f "/usr/local/bin/whisper-cli" 2>/dev/null || true
 	fi
 }
 
