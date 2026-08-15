@@ -65,6 +65,59 @@ if ! command -v agent-event-bus-cli &>/dev/null; then
     exit 0
 fi
 
+# --- RFC #122 wake state (before registering, deliberately) ---
+#
+# These are local filesystem writes, so they must not sit behind the bus being
+# reachable: registration failure `exit 0`s below, and a mapping written only
+# on the success path would leave a session started while the bus was down
+# unmapped — and therefore unwakeable — for its entire life, with the bus
+# coming back changing nothing until the next restart.
+#
+# Keyed on CLIENT_ID (the stdin session_id) rather than the register response,
+# which is what makes that possible. The two are the same value by
+# construction: registration passes --client-id, and the bus adopts a
+# client_id as its session_id verbatim. This also matches session-end.sh and
+# wake-state.sh, which already key on the stdin id.
+if [[ -n "$CLIENT_ID" ]]; then
+    # Map this session to its terminal pane so the bridge can wake it when it
+    # goes idle. Without this every DM resolves to "spool-unmapped" — which is
+    # also the normal outcome for a session on another machine, so a missing
+    # mapping never surfaces as an error, only as wakes that never happen.
+    #
+    # `panes set` writes nothing at all outside a multiplexer, which is the
+    # correct behaviour rather than a failure: the contract says OMIT the
+    # entry, because a null or empty one reads as a misconfiguration the
+    # bridge warns about and asks an operator to repair. It also evicts any
+    # stale entry on this same pane — a previous session killed without its
+    # SessionEnd hook would otherwise leave a mapping that has the bridge type
+    # into whatever now owns the pane.
+    #
+    # SessionStart normally also means no turn is in flight, so this is where
+    # a turn-state marker orphaned by a hard kill gets cleared.
+    #
+    # EXCEPT on compact. An auto-compaction fires SessionStart in the MIDDLE
+    # of a long turn, and clearing there would leave the session reading idle
+    # for the rest of that turn — reopening exactly the window the gate exists
+    # to close. Only the hook knows the source.
+    #
+    # `if`/`fi`, not `[[ ... ]] && PANES_ARGS+=(...)`: mid-script that form is
+    # safe under `set -e`, but as the last statement of a function or script
+    # it returns 1 and exits the hook. Not worth leaving that landmine.
+    PANES_ARGS=(--session-id "$CLIENT_ID")
+    if [[ "$SOURCE" == "compact" ]]; then
+        PANES_ARGS+=(--keep-wake-state)
+    fi
+    agent-event-bus-cli panes set "${PANES_ARGS[@]}" >/dev/null 2>&1 || true
+
+    # Redundant against a current CLI, since `panes set` clears the marker
+    # itself. It stays because the two repos version independently: a machine
+    # that pulls dotfiles before agent-event-bus has a `panes set` that does
+    # NOT clear, and the failure that leaves is invisible from both sides.
+    if [[ "$SOURCE" != "compact" ]]; then
+        agent-event-bus-cli wake-state idle --session-id "$CLIENT_ID" >/dev/null 2>&1 || true
+    fi
+fi
+
 # Build URL args if AGENT_EVENT_BUS_URL is set (e.g., remote Tailscale endpoint)
 URL_ARGS=()
 [[ -n "${AGENT_EVENT_BUS_URL:-}" ]] && URL_ARGS=(--url "$AGENT_EVENT_BUS_URL")
@@ -88,49 +141,6 @@ if [[ -n "$SESSION_ID" ]]; then
 else
     echo "Event bus registration failed"
     exit 0
-fi
-
-# Map this session to its terminal pane so the RFC #122 bridge can wake it
-# when it goes idle. Without this the bridge resolves every DM to
-# "spool-unmapped" — which is also the normal outcome for a session on
-# another machine, so a missing mapping never surfaces as an error, only as
-# wakes that quietly never happen.
-#
-# `panes set` writes nothing at all when this session is not inside a
-# multiplexer, which is the correct behaviour rather than a failure: the
-# contract says OMIT the entry, because a null or empty one reads as a
-# misconfiguration the bridge warns about and asks an operator to repair.
-# It also evicts any stale entry on this same pane — a previous session
-# killed without its SessionEnd hook would otherwise leave a mapping that has
-# the bridge type into whatever now owns the pane.
-#
-# SessionStart normally also means no turn is in flight, so this is where a
-# turn-state marker orphaned by a hard kill gets cleared — without it, a
-# resumed session maps its pane correctly and still sits gated busy while
-# idle, reported by nothing.
-#
-# EXCEPT on compact. An auto-compaction fires SessionStart in the MIDDLE of a
-# long turn, and clearing there would leave the session reading idle for the
-# rest of that turn — reopening exactly the window the gate exists to close
-# (injected text plus a newline answering a permission dialog nobody saw).
-# Only the hook knows the source, so only the hook can make this call.
-# `if`/`fi`, not `[[ ... ]] && PANES_ARGS+=(...)`: mid-script that form is
-# safe under `set -e`, but as the last statement of a function or script it
-# returns 1 and exits the hook. Not worth leaving a landmine for whoever
-# moves this line.
-PANES_ARGS=(--session-id "$SESSION_ID")
-if [[ "$SOURCE" == "compact" ]]; then
-    PANES_ARGS+=(--keep-wake-state)
-fi
-agent-event-bus-cli panes set "${PANES_ARGS[@]}" >/dev/null 2>&1 || true
-
-# Redundant against a current CLI, since `panes set` clears the marker itself.
-# It stays because the two repos version independently: a machine that pulls
-# dotfiles before agent-event-bus has a `panes set` that does NOT clear, and
-# the failure that leaves is invisible from both sides. Skipped on compact for
-# the same mid-turn reason as above.
-if [[ "$SOURCE" != "compact" ]]; then
-    agent-event-bus-cli wake-state idle --session-id "$SESSION_ID" >/dev/null 2>&1 || true
 fi
 
 # Fetch recent events (newest-first for natural reading order - most relevant at top)

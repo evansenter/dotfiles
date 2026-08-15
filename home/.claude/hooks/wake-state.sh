@@ -24,11 +24,18 @@ set -euo pipefail
 # Consume stdin (required for hooks — must be before any exit)
 INPUT=$(cat)
 
-STATE="${1:-idle}"
+# No default. zj-status.sh and tmux-status.sh use `${1:-waiting}`, and that is
+# fine for a status bar — but this argument decides whether a wake may be
+# injected, and defaulting a MISSING one to `idle` fails OPEN: a miswiring
+# would silently disable the gate and let a wake land mid-turn, which is the
+# thing the gate exists to prevent. A missing argument is not evidence of
+# either state, so it is treated exactly like an unknown one: write nothing
+# and leave whatever the last known state was.
+STATE="${1:-}"
 case "$STATE" in
     busy | idle) ;;
     *)
-        echo "wake-state.sh: unknown state '$STATE', expected 'busy' or 'idle'" >&2
+        echo "wake-state.sh: expected 'busy' or 'idle', got '${STATE:-(none)}'" >&2
         exit 0
         ;;
 esac

@@ -1105,6 +1105,48 @@ test_session_start_clears_stale_busy_marker() {
     grep -q "wake-state idle --session-id sid-abc" "$(cli_calls_log)"
 }
 
+test_wake_state_missing_argument_writes_nothing() {
+    # zj-status.sh/tmux-status.sh default a missing arg to "waiting", which is
+    # fine for a status bar. Here the argument decides whether a wake may be
+    # injected, so defaulting a MISSING one to "idle" would fail OPEN — a
+    # miswiring silently disables the gate and lets a wake land mid-turn.
+    setup_mock_cli
+    reset_cli_calls
+
+    local exit_code=0
+    echo '{"session_id":"sid-abc"}' | PATH="$TEST_TMP/bin:$PATH" \
+        bash "$HOOKS_DIR/wake-state.sh" >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ ! -f "$(cli_calls_log)" ]]
+}
+
+test_session_start_maps_pane_when_bus_is_down() {
+    # The mapping is a LOCAL filesystem write and must not sit behind the bus
+    # being reachable: registration failure exits the hook, so a mapping
+    # written only on the success path would leave a session started during a
+    # bus outage unmapped — and unwakeable — for its entire life, with the bus
+    # returning changing nothing until the next restart.
+    setup_mock_cli
+    reset_cli_calls
+
+    # Mock CLI whose `register` fails, as an unreachable bus would
+    cat > "$TEST_TMP/bin/agent-event-bus-cli" << 'MOCK_DOWN'
+#!/bin/bash
+while [[ "$1" == --* ]]; do case "$1" in --url) shift 2 ;; *) shift ;; esac; done
+case "$1" in
+    register) echo "Error: bus unreachable" >&2; exit 1 ;;
+    panes | wake-state) echo "$*" >> "$(dirname "$0")/../cli-calls.log"; echo '{"ok":true}' ;;
+    *) exit 1 ;;
+esac
+MOCK_DOWN
+    chmod +x "$TEST_TMP/bin/agent-event-bus-cli"
+
+    echo '{"session_id":"sid-abc","cwd":"'"$TEST_TMP"'","source":"startup"}' | \
+        PATH="$TEST_TMP/bin:$PATH" bash "$HOOKS_DIR/session-start.sh" >/dev/null 2>&1
+
+    grep -q "panes set --session-id sid-abc" "$(cli_calls_log)"
+}
+
 test_session_start_compact_preserves_turn_state() {
     # SessionStart is NOT always between turns: an auto-compaction fires it
     # mid-turn. Clearing the marker there would leave the session reading
@@ -2336,7 +2378,9 @@ main() {
     run_test "no session_id exits clean" "test_wake_state_without_session_id_exits_clean"
     run_test "no CLI exits clean" "test_wake_state_without_cli_exits_clean"
     run_test "consumes stdin" "test_wake_state_consumes_stdin"
+    run_test "missing argument writes nothing" "test_wake_state_missing_argument_writes_nothing"
     run_test "session-start maps the pane" "test_session_start_maps_pane"
+    run_test "session-start maps the pane with bus down" "test_session_start_maps_pane_when_bus_is_down"
     run_test "session-start clears stale busy marker" "test_session_start_clears_stale_busy_marker"
     run_test "session-start (compact) preserves turn state" "test_session_start_compact_preserves_turn_state"
     run_test "session-start (startup) clears turn state" "test_session_start_startup_clears_turn_state"
