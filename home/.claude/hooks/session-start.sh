@@ -107,6 +107,12 @@ fi
 # Also clear any turn-state marker left behind: reaching SessionStart means
 # no turn is in flight, and a marker orphaned by a hard kill would otherwise
 # keep this session's id gated as busy.
+#
+# `panes set` clears it too, so this is redundant against a current CLI. It
+# stays because these two repos version independently: a machine that pulls
+# dotfiles before agent-event-bus has a `panes set` that does NOT clear, and
+# the failure it would leave — a resumed session gated busy while idle — is
+# invisible from both sides.
 agent-event-bus-cli panes set --session-id "$SESSION_ID" >/dev/null 2>&1 || true
 agent-event-bus-cli wake-state idle --session-id "$SESSION_ID" >/dev/null 2>&1 || true
 
