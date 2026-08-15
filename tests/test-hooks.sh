@@ -264,6 +264,15 @@ case "$1" in
         echo "    channels: all, session:test-client-uuid-1234, repo:dotfiles, machine:test-machine"
         ;;
 
+    panes | wake-state)
+        # Wake-dir commands (agent-event-bus RFC #122). Recorded rather than
+        # simulated: the hooks' job is to invoke these with the right session
+        # id at the right lifecycle point, and the CLI's own suite already
+        # covers what the commands then write.
+        echo "$*" >> "$(dirname "$0")/../cli-calls.log"
+        echo '{"ok": true}'
+        ;;
+
     *)
         echo "Unknown command: $1" >&2
         exit 1
@@ -981,6 +990,201 @@ MOCK_TMUX
 
 test_tmux_status_syntax() {
     bash -n "$HOOKS_DIR/tmux-status.sh"
+}
+
+# ============================================================================
+# wake-state.sh — the RFC #122 idle gate
+#
+# The bridge injects a wake prompt into a session's terminal pane only while
+# this marker says no turn is in flight. Every failure here is silent by
+# nature (a wake that does not happen, or one that lands mid-turn), so these
+# pin the invocation itself.
+# ============================================================================
+
+cli_calls_log() { echo "$TEST_TMP/cli-calls.log"; }
+
+reset_cli_calls() { rm -f "$(cli_calls_log)"; }
+
+test_wake_state_syntax() {
+    bash -n "$HOOKS_DIR/wake-state.sh"
+}
+
+test_wake_state_busy_invokes_cli() {
+    setup_mock_cli
+    reset_cli_calls
+
+    echo '{"session_id":"sid-abc"}' | PATH="$TEST_TMP/bin:$PATH" \
+        bash "$HOOKS_DIR/wake-state.sh" busy >/dev/null 2>&1
+
+    grep -q "wake-state busy --session-id sid-abc" "$(cli_calls_log)"
+}
+
+test_wake_state_idle_invokes_cli() {
+    setup_mock_cli
+    reset_cli_calls
+
+    echo '{"session_id":"sid-abc"}' | PATH="$TEST_TMP/bin:$PATH" \
+        bash "$HOOKS_DIR/wake-state.sh" idle >/dev/null 2>&1
+
+    grep -q "wake-state idle --session-id sid-abc" "$(cli_calls_log)"
+}
+
+test_wake_state_unknown_state_does_not_write() {
+    # An unknown argument must not be forwarded: "busy" and "idle" are the
+    # only two states, and a typo silently marking a session busy forever
+    # would make it permanently unwakeable.
+    setup_mock_cli
+    reset_cli_calls
+
+    local exit_code=0
+    echo '{"session_id":"sid-abc"}' | PATH="$TEST_TMP/bin:$PATH" \
+        bash "$HOOKS_DIR/wake-state.sh" sideways >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ ! -f "$(cli_calls_log)" ]]
+}
+
+test_wake_state_without_session_id_exits_clean() {
+    setup_mock_cli
+    reset_cli_calls
+
+    local exit_code=0
+    echo '{}' | PATH="$TEST_TMP/bin:$PATH" \
+        bash "$HOOKS_DIR/wake-state.sh" busy >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ ! -f "$(cli_calls_log)" ]]
+}
+
+test_wake_state_without_cli_exits_clean() {
+    # The bridge is optional and experimental. A box without the CLI simply
+    # has no idle gate; it must not fail a turn boundary over it.
+    local exit_code=0
+    echo '{"session_id":"sid-abc"}' | env -i PATH="/usr/bin:/bin" HOME="$HOME" \
+        bash "$HOOKS_DIR/wake-state.sh" busy >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]]
+}
+
+test_wake_state_consumes_stdin() {
+    setup_mock_cli
+
+    local exit_code=0
+    (echo '{"session_id":"sid-abc"}' | PATH="$TEST_TMP/bin:$PATH" \
+        bash "$HOOKS_DIR/wake-state.sh" busy >/dev/null 2>&1) &
+    local pid=$!
+    sleep 1
+    if kill -0 "$pid" 2>/dev/null; then
+        kill "$pid" 2>/dev/null
+        exit_code=1
+    fi
+    wait "$pid" 2>/dev/null || true
+    [[ $exit_code -eq 0 ]]
+}
+
+test_session_start_maps_pane() {
+    # Without this the bridge resolves every DM for this session to
+    # spool-unmapped — which is ALSO the normal outcome for a session on
+    # another machine, so a missing mapping never surfaces as an error.
+    setup_mock_cli
+    reset_cli_calls
+
+    echo '{"session_id":"sid-abc","cwd":"'"$TEST_TMP"'","source":"startup"}' | \
+        PATH="$TEST_TMP/bin:$PATH" bash "$HOOKS_DIR/session-start.sh" >/dev/null 2>&1
+
+    grep -q "panes set --session-id sid-abc" "$(cli_calls_log)"
+}
+
+test_session_start_clears_stale_busy_marker() {
+    # Reaching SessionStart means no turn is in flight. A marker orphaned by
+    # a hard kill would otherwise keep this id gated as busy forever.
+    setup_mock_cli
+    reset_cli_calls
+
+    echo '{"session_id":"sid-abc","cwd":"'"$TEST_TMP"'","source":"startup"}' | \
+        PATH="$TEST_TMP/bin:$PATH" bash "$HOOKS_DIR/session-start.sh" >/dev/null 2>&1
+
+    grep -q "wake-state idle --session-id sid-abc" "$(cli_calls_log)"
+}
+
+test_wake_state_missing_argument_writes_nothing() {
+    # zj-status.sh/tmux-status.sh default a missing arg to "waiting", which is
+    # fine for a status bar. Here the argument decides whether a wake may be
+    # injected, so defaulting a MISSING one to "idle" would fail OPEN — a
+    # miswiring silently disables the gate and lets a wake land mid-turn.
+    setup_mock_cli
+    reset_cli_calls
+
+    local exit_code=0
+    echo '{"session_id":"sid-abc"}' | PATH="$TEST_TMP/bin:$PATH" \
+        bash "$HOOKS_DIR/wake-state.sh" >/dev/null 2>&1 || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ ! -f "$(cli_calls_log)" ]]
+}
+
+test_session_start_maps_pane_when_bus_is_down() {
+    # The mapping is a LOCAL filesystem write and must not sit behind the bus
+    # being reachable: registration failure exits the hook, so a mapping
+    # written only on the success path would leave a session started during a
+    # bus outage unmapped — and unwakeable — for its entire life, with the bus
+    # returning changing nothing until the next restart.
+    setup_mock_cli
+    reset_cli_calls
+
+    # Mock CLI whose `register` fails, as an unreachable bus would
+    cat > "$TEST_TMP/bin/agent-event-bus-cli" << 'MOCK_DOWN'
+#!/bin/bash
+while [[ "$1" == --* ]]; do case "$1" in --url) shift 2 ;; *) shift ;; esac; done
+case "$1" in
+    register) echo "Error: bus unreachable" >&2; exit 1 ;;
+    panes | wake-state) echo "$*" >> "$(dirname "$0")/../cli-calls.log"; echo '{"ok":true}' ;;
+    *) exit 1 ;;
+esac
+MOCK_DOWN
+    chmod +x "$TEST_TMP/bin/agent-event-bus-cli"
+
+    echo '{"session_id":"sid-abc","cwd":"'"$TEST_TMP"'","source":"startup"}' | \
+        PATH="$TEST_TMP/bin:$PATH" bash "$HOOKS_DIR/session-start.sh" >/dev/null 2>&1
+
+    grep -q "panes set --session-id sid-abc" "$(cli_calls_log)"
+}
+
+test_session_start_compact_preserves_turn_state() {
+    # SessionStart is NOT always between turns: an auto-compaction fires it
+    # mid-turn. Clearing the marker there would leave the session reading
+    # idle for the rest of that turn — reopening exactly the window the gate
+    # exists to close. Only the hook knows the source.
+    setup_mock_cli
+    reset_cli_calls
+
+    echo '{"session_id":"sid-abc","cwd":"'"$TEST_TMP"'","source":"compact"}' | \
+        PATH="$TEST_TMP/bin:$PATH" bash "$HOOKS_DIR/session-start.sh" >/dev/null 2>&1
+
+    # Maps the pane, but suppresses BOTH turn-state clears
+    grep -q "panes set --session-id sid-abc --keep-wake-state" "$(cli_calls_log)" &&
+        ! grep -q "wake-state idle" "$(cli_calls_log)"
+}
+
+test_session_start_startup_clears_turn_state() {
+    # The contrast case: a normal start IS between turns.
+    setup_mock_cli
+    reset_cli_calls
+
+    echo '{"session_id":"sid-abc","cwd":"'"$TEST_TMP"'","source":"startup"}' | \
+        PATH="$TEST_TMP/bin:$PATH" bash "$HOOKS_DIR/session-start.sh" >/dev/null 2>&1
+
+    ! grep -q -- "--keep-wake-state" "$(cli_calls_log)" &&
+        grep -q "wake-state idle --session-id sid-abc" "$(cli_calls_log)"
+}
+
+test_session_end_clears_pane_mapping() {
+    # The one failure here with a visible blast radius: a stale mapping has
+    # the bridge type its wake prompt into whatever now owns the pane.
+    setup_mock_cli
+    reset_cli_calls
+
+    echo '{"session_id":"sid-abc"}' | \
+        PATH="$TEST_TMP/bin:$PATH" bash "$HOOKS_DIR/session-end.sh" >/dev/null 2>&1
+
+    grep -q "panes clear --session-id sid-abc" "$(cli_calls_log)"
 }
 
 test_tmux_status_graceful_no_tmux_env() {
@@ -2164,6 +2368,23 @@ main() {
     run_test "integration: waiting state" "test_tmux_status_waiting_state"
     run_test "integration: default to waiting" "test_tmux_status_default_waiting"
     run_test "consumes stdin" "test_tmux_status_consumes_stdin"
+    echo ""
+
+    echo "=== wake-state.sh (RFC #122 idle gate) ==="
+    run_test "syntax check" "test_wake_state_syntax"
+    run_test "busy invokes the CLI" "test_wake_state_busy_invokes_cli"
+    run_test "idle invokes the CLI" "test_wake_state_idle_invokes_cli"
+    run_test "unknown state writes nothing" "test_wake_state_unknown_state_does_not_write"
+    run_test "no session_id exits clean" "test_wake_state_without_session_id_exits_clean"
+    run_test "no CLI exits clean" "test_wake_state_without_cli_exits_clean"
+    run_test "consumes stdin" "test_wake_state_consumes_stdin"
+    run_test "missing argument writes nothing" "test_wake_state_missing_argument_writes_nothing"
+    run_test "session-start maps the pane" "test_session_start_maps_pane"
+    run_test "session-start maps the pane with bus down" "test_session_start_maps_pane_when_bus_is_down"
+    run_test "session-start clears stale busy marker" "test_session_start_clears_stale_busy_marker"
+    run_test "session-start (compact) preserves turn state" "test_session_start_compact_preserves_turn_state"
+    run_test "session-start (startup) clears turn state" "test_session_start_startup_clears_turn_state"
+    run_test "session-end clears the mapping" "test_session_end_clears_pane_mapping"
     echo ""
 
     echo "=== zj-status.sh ==="
