@@ -114,8 +114,14 @@ fi
 # rest of that turn — reopening exactly the window the gate exists to close
 # (injected text plus a newline answering a permission dialog nobody saw).
 # Only the hook knows the source, so only the hook can make this call.
+# `if`/`fi`, not `[[ ... ]] && PANES_ARGS+=(...)`: mid-script that form is
+# safe under `set -e`, but as the last statement of a function or script it
+# returns 1 and exits the hook. Not worth leaving a landmine for whoever
+# moves this line.
 PANES_ARGS=(--session-id "$SESSION_ID")
-[[ "$SOURCE" == "compact" ]] && PANES_ARGS+=(--keep-wake-state)
+if [[ "$SOURCE" == "compact" ]]; then
+    PANES_ARGS+=(--keep-wake-state)
+fi
 agent-event-bus-cli panes set "${PANES_ARGS[@]}" >/dev/null 2>&1 || true
 
 # Redundant against a current CLI, since `panes set` clears the marker itself.
