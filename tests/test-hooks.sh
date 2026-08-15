@@ -1105,6 +1105,34 @@ test_session_start_clears_stale_busy_marker() {
     grep -q "wake-state idle --session-id sid-abc" "$(cli_calls_log)"
 }
 
+test_session_start_compact_preserves_turn_state() {
+    # SessionStart is NOT always between turns: an auto-compaction fires it
+    # mid-turn. Clearing the marker there would leave the session reading
+    # idle for the rest of that turn — reopening exactly the window the gate
+    # exists to close. Only the hook knows the source.
+    setup_mock_cli
+    reset_cli_calls
+
+    echo '{"session_id":"sid-abc","cwd":"'"$TEST_TMP"'","source":"compact"}' | \
+        PATH="$TEST_TMP/bin:$PATH" bash "$HOOKS_DIR/session-start.sh" >/dev/null 2>&1
+
+    # Maps the pane, but suppresses BOTH turn-state clears
+    grep -q "panes set --session-id sid-abc --keep-wake-state" "$(cli_calls_log)" &&
+        ! grep -q "wake-state idle" "$(cli_calls_log)"
+}
+
+test_session_start_startup_clears_turn_state() {
+    # The contrast case: a normal start IS between turns.
+    setup_mock_cli
+    reset_cli_calls
+
+    echo '{"session_id":"sid-abc","cwd":"'"$TEST_TMP"'","source":"startup"}' | \
+        PATH="$TEST_TMP/bin:$PATH" bash "$HOOKS_DIR/session-start.sh" >/dev/null 2>&1
+
+    ! grep -q -- "--keep-wake-state" "$(cli_calls_log)" &&
+        grep -q "wake-state idle --session-id sid-abc" "$(cli_calls_log)"
+}
+
 test_session_end_clears_pane_mapping() {
     # The one failure here with a visible blast radius: a stale mapping has
     # the bridge type its wake prompt into whatever now owns the pane.
@@ -2310,6 +2338,8 @@ main() {
     run_test "consumes stdin" "test_wake_state_consumes_stdin"
     run_test "session-start maps the pane" "test_session_start_maps_pane"
     run_test "session-start clears stale busy marker" "test_session_start_clears_stale_busy_marker"
+    run_test "session-start (compact) preserves turn state" "test_session_start_compact_preserves_turn_state"
+    run_test "session-start (startup) clears turn state" "test_session_start_startup_clears_turn_state"
     run_test "session-end clears the mapping" "test_session_end_clears_pane_mapping"
     echo ""
 

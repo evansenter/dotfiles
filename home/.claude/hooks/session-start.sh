@@ -104,17 +104,28 @@ fi
 # killed without its SessionEnd hook would otherwise leave a mapping that has
 # the bridge type into whatever now owns the pane.
 #
-# Also clear any turn-state marker left behind: reaching SessionStart means
-# no turn is in flight, and a marker orphaned by a hard kill would otherwise
-# keep this session's id gated as busy.
+# SessionStart normally also means no turn is in flight, so this is where a
+# turn-state marker orphaned by a hard kill gets cleared — without it, a
+# resumed session maps its pane correctly and still sits gated busy while
+# idle, reported by nothing.
 #
-# `panes set` clears it too, so this is redundant against a current CLI. It
-# stays because these two repos version independently: a machine that pulls
+# EXCEPT on compact. An auto-compaction fires SessionStart in the MIDDLE of a
+# long turn, and clearing there would leave the session reading idle for the
+# rest of that turn — reopening exactly the window the gate exists to close
+# (injected text plus a newline answering a permission dialog nobody saw).
+# Only the hook knows the source, so only the hook can make this call.
+PANES_ARGS=(--session-id "$SESSION_ID")
+[[ "$SOURCE" == "compact" ]] && PANES_ARGS+=(--keep-wake-state)
+agent-event-bus-cli panes set "${PANES_ARGS[@]}" >/dev/null 2>&1 || true
+
+# Redundant against a current CLI, since `panes set` clears the marker itself.
+# It stays because the two repos version independently: a machine that pulls
 # dotfiles before agent-event-bus has a `panes set` that does NOT clear, and
-# the failure it would leave — a resumed session gated busy while idle — is
-# invisible from both sides.
-agent-event-bus-cli panes set --session-id "$SESSION_ID" >/dev/null 2>&1 || true
-agent-event-bus-cli wake-state idle --session-id "$SESSION_ID" >/dev/null 2>&1 || true
+# the failure that leaves is invisible from both sides. Skipped on compact for
+# the same mid-turn reason as above.
+if [[ "$SOURCE" != "compact" ]]; then
+    agent-event-bus-cli wake-state idle --session-id "$SESSION_ID" >/dev/null 2>&1 || true
+fi
 
 # Fetch recent events (newest-first for natural reading order - most relevant at top)
 # Session is auto-subscribed to 4 channels:
