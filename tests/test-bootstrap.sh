@@ -137,6 +137,9 @@ test_legacy_cleanup_removes_dangling_iterm_profile() {
     # The iTerm2 dynamic profile link points into preferences/, outside the home/
     # mirror remove_legacy_symlink guards, so it needs its own dangling check.
     local home; home=$(mktemp -d)
+    # Unguarded, an empty $home makes the paths below absolute (/Library/...),
+    # aiming the sandbox at the system tree. run_test disables set -e.
+    [[ -n "$home" ]] || return 1
     local dir="$home/Library/Application Support/iTerm2/DynamicProfiles"
     mkdir -p "$dir"
     ln -s "$home/gone/iTerm Profile.json" "$dir/dotfiles-profile.json"
@@ -151,6 +154,9 @@ test_legacy_cleanup_keeps_live_iterm_profile() {
     # A dynamic profile someone deliberately placed here must survive: only a
     # link whose target is gone gets reclaimed.
     local home; home=$(mktemp -d)
+    # Unguarded, an empty $home makes the paths below absolute (/Library/...),
+    # aiming the sandbox at the system tree. run_test disables set -e.
+    [[ -n "$home" ]] || return 1
     local dir="$home/Library/Application Support/iTerm2/DynamicProfiles"
     mkdir -p "$dir"
     printf '{"Profiles":[]}\n' > "$home/real-profile.json"
@@ -160,6 +166,17 @@ test_legacy_cleanup_keeps_live_iterm_profile() {
     [[ -L "$dir/dotfiles-profile.json" ]] || ok=1
     rm -rf "$home"
     return $ok
+}
+
+test_iterm_snapshot_has_no_dynamic_residue() {
+    # preferences/iTerm.json is refreshed by hand from the iTerm2 UI, and a raw
+    # export carries the keys iTerm writes into its own prefs: a machine-specific
+    # absolute path in Dynamic Profile Filename, plus Rewritable and a "Dynamic"
+    # entry in Tags. Importing a snapshot with those re-seeds the dangling
+    # DynamicProfiles link cleanup_legacy_configs exists to remove, so the
+    # documented re-export step must not be able to reintroduce it silently.
+    assert_no_match_in_files '"Dynamic Profile Filename"|"Rewritable"' \
+        "$SCRIPT_DIR/../preferences/iTerm.json"
 }
 
 _run_cleanup_legacy_configs() {
@@ -755,6 +772,7 @@ main() {
     run_test "legacy cleanup covers dropped configs" "test_legacy_cleanup_covers_dropped_configs"
     run_test "legacy cleanup removes dangling iTerm profile link" "test_legacy_cleanup_removes_dangling_iterm_profile"
     run_test "legacy cleanup keeps live iTerm profile link" "test_legacy_cleanup_keeps_live_iterm_profile"
+    run_test "iTerm snapshot free of dynamic-profile residue" "test_iterm_snapshot_has_no_dynamic_residue"
     run_test "no spotify_player in Brewfiles or home/" "test_no_spotify_player_packages"
     run_test "no gogcli in Brewfiles or gog skill" "test_no_gogcli_packages"
     run_test "no lm-studio in Brewfiles or .zshrc" "test_no_lm_studio_packages"

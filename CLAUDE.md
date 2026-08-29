@@ -57,7 +57,7 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 6. Installs TPM (manual `prefix + I` for plugins)
 7. Installs bat/yazi/zellij themes from `vendor/`
 8. Installs LaunchAgents (macOS) and cron jobs
-9. Clears stale symlinks for configs the repo no longer tracks (OpenClaw, spotify-player) — see `cleanup_legacy_configs`
+9. Clears stale symlinks for configs the repo no longer tracks (OpenClaw, spotify-player, iTerm2 dynamic profile) — see `cleanup_legacy_configs`
 
 ### Symlink Pattern
 
