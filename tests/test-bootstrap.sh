@@ -140,7 +140,7 @@ test_legacy_cleanup_removes_dangling_iterm_profile() {
     local dir="$home/Library/Application Support/iTerm2/DynamicProfiles"
     mkdir -p "$dir"
     ln -s "$home/gone/iTerm Profile.json" "$dir/dotfiles-profile.json"
-    HOME="$home" _run_cleanup_legacy_configs
+    HOME="$home" _run_cleanup_legacy_configs || { rm -rf "$home"; return 1; }
     local ok=0
     [[ -e "$dir/dotfiles-profile.json" || -L "$dir/dotfiles-profile.json" ]] && ok=1
     rm -rf "$home"
@@ -155,7 +155,7 @@ test_legacy_cleanup_keeps_live_iterm_profile() {
     mkdir -p "$dir"
     printf '{"Profiles":[]}\n' > "$home/real-profile.json"
     ln -s "$home/real-profile.json" "$dir/dotfiles-profile.json"
-    HOME="$home" _run_cleanup_legacy_configs
+    HOME="$home" _run_cleanup_legacy_configs || { rm -rf "$home"; return 1; }
     local ok=0
     [[ -L "$dir/dotfiles-profile.json" ]] || ok=1
     rm -rf "$home"
@@ -163,12 +163,26 @@ test_legacy_cleanup_keeps_live_iterm_profile() {
 }
 
 _run_cleanup_legacy_configs() {
-    # Loads the real cleanup_legacy_configs against a temp HOME. remove_legacy_symlink
-    # is stubbed out: its own guards are covered by
-    # test_legacy_cleanup_is_symlink_guarded, and the iTerm branch doesn't use it.
-    remove_legacy_symlink() { :; }
-    eval "$(sed -n '/^cleanup_legacy_configs() {/,/^}/p' "$BOOTSTRAP")"
-    cleanup_legacy_configs >/dev/null 2>&1
+    # Runs the REAL cleanup_legacy_configs against a temp HOME. Returns non-zero if
+    # the function couldn't be extracted, so a reformatted header fails the negative
+    # test loudly instead of passing vacuously on "nothing ran".
+    local body
+    body=$(sed -n '/^cleanup_legacy_configs()/,/^}/p' "$BOOTSTRAP")
+    [[ -n "$body" ]] || return 1
+
+    # Subshell: eval defines cleanup_legacy_configs globally regardless of nesting,
+    # and so do the stubs — scoping them here keeps them out of later tests.
+    (
+        # Covered on its own by test_legacy_cleanup_is_symlink_guarded, and the
+        # iTerm branch doesn't route through it.
+        remove_legacy_symlink() { :; }
+        # The whisper-cli branch is the one statement that reaches outside the temp
+        # HOME, and CI runs on Ubuntu with passwordless sudo — inert there only
+        # because the file happens not to exist. A function shadows the PATH lookup.
+        sudo() { :; }
+        eval "$body"
+        cleanup_legacy_configs >/dev/null 2>&1
+    )
 }
 
 test_no_spotify_player_packages() {
