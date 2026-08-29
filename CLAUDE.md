@@ -120,6 +120,8 @@ Note: `agent-memory-store` is documented infra but is **not** provisioned by boo
 **Important:** Never place projects in `~/Documents/` — macOS TCC blocks LaunchAgents from accessing it, causing silent `PermissionError` failures.
 
 **iTerm2** (`preferences/`, `vendor/iterm-catppuccin/`) - Manual color preset import required.
+`preferences/iTerm.json` is a hand-refreshed profile snapshot with no installer — a backup, not a
+source of truth, and not in Dynamic Profile format.
 
 ## After Merging
 

@@ -121,7 +121,9 @@ On a bare macOS install, in order:
 5. **Restart the terminal** (or `source ~/.zshrc`).
 6. **Manual post-install steps** (bootstrap can't automate these):
    - **tmux:** press `prefix + I` to install TPM plugins.
-   - **iTerm2:** import the Catppuccin color preset (`preferences/` / `vendor/iterm-catppuccin/`).
+   - **iTerm2:** import the Catppuccin color preset from `vendor/iterm-catppuccin/`.
+     `preferences/iTerm.json` is a separate, hand-refreshed snapshot of the profile —
+     nothing installs it, and it drifts until someone re-exports it.
    - **zellij:** `zellij kill-all-sessions` so the symlinked config is picked up (hot-reload doesn't work with symlinks).
    - **Gateway host only:** open Obsidian with the Local REST API plugin enabled (obsidian-mcp's wrapper backs off until it's reachable).
 

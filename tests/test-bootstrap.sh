@@ -133,6 +133,44 @@ test_legacy_cleanup_covers_dropped_configs() {
     echo "$body" | grep -q 'whisper-cli'
 }
 
+test_legacy_cleanup_removes_dangling_iterm_profile() {
+    # The iTerm2 dynamic profile link points into preferences/, outside the home/
+    # mirror remove_legacy_symlink guards, so it needs its own dangling check.
+    local home; home=$(mktemp -d)
+    local dir="$home/Library/Application Support/iTerm2/DynamicProfiles"
+    mkdir -p "$dir"
+    ln -s "$home/gone/iTerm Profile.json" "$dir/dotfiles-profile.json"
+    HOME="$home" _run_cleanup_legacy_configs
+    local ok=0
+    [[ -e "$dir/dotfiles-profile.json" || -L "$dir/dotfiles-profile.json" ]] && ok=1
+    rm -rf "$home"
+    return $ok
+}
+
+test_legacy_cleanup_keeps_live_iterm_profile() {
+    # A dynamic profile someone deliberately placed here must survive: only a
+    # link whose target is gone gets reclaimed.
+    local home; home=$(mktemp -d)
+    local dir="$home/Library/Application Support/iTerm2/DynamicProfiles"
+    mkdir -p "$dir"
+    printf '{"Profiles":[]}\n' > "$home/real-profile.json"
+    ln -s "$home/real-profile.json" "$dir/dotfiles-profile.json"
+    HOME="$home" _run_cleanup_legacy_configs
+    local ok=0
+    [[ -L "$dir/dotfiles-profile.json" ]] || ok=1
+    rm -rf "$home"
+    return $ok
+}
+
+_run_cleanup_legacy_configs() {
+    # Loads the real cleanup_legacy_configs against a temp HOME. remove_legacy_symlink
+    # is stubbed out: its own guards are covered by
+    # test_legacy_cleanup_is_symlink_guarded, and the iTerm branch doesn't use it.
+    remove_legacy_symlink() { :; }
+    eval "$(sed -n '/^cleanup_legacy_configs() {/,/^}/p' "$BOOTSTRAP")"
+    cleanup_legacy_configs >/dev/null 2>&1
+}
+
 test_no_spotify_player_packages() {
     # spotify_player was removed; the Spotify desktop cask is unrelated and stays
     assert_no_match_in_files 'spotify_player' \
@@ -701,6 +739,8 @@ main() {
     run_test "no openclaw refs in docs/Brewfile/.zshrc" "test_no_openclaw_in_docs"
     run_test "legacy cleanup only removes symlinks" "test_legacy_cleanup_is_symlink_guarded"
     run_test "legacy cleanup covers dropped configs" "test_legacy_cleanup_covers_dropped_configs"
+    run_test "legacy cleanup removes dangling iTerm profile link" "test_legacy_cleanup_removes_dangling_iterm_profile"
+    run_test "legacy cleanup keeps live iTerm profile link" "test_legacy_cleanup_keeps_live_iterm_profile"
     run_test "no spotify_player in Brewfiles or home/" "test_no_spotify_player_packages"
     run_test "no gogcli in Brewfiles or gog skill" "test_no_gogcli_packages"
     run_test "no lm-studio in Brewfiles or .zshrc" "test_no_lm_studio_packages"
