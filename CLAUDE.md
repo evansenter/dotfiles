@@ -57,7 +57,7 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 6. Installs TPM (manual `prefix + I` for plugins)
 7. Installs bat/yazi/zellij themes from `vendor/`
 8. Installs LaunchAgents (macOS) and cron jobs
-9. Clears stale symlinks for configs the repo no longer tracks (OpenClaw, spotify-player) — see `cleanup_legacy_configs`
+9. Clears stale symlinks for configs the repo no longer tracks (OpenClaw, spotify-player, iTerm2 dynamic profile) — see `cleanup_legacy_configs`
 
 ### Symlink Pattern
 
@@ -120,6 +120,8 @@ Note: `agent-memory-store` is documented infra but is **not** provisioned by boo
 **Important:** Never place projects in `~/Documents/` — macOS TCC blocks LaunchAgents from accessing it, causing silent `PermissionError` failures.
 
 **iTerm2** (`preferences/`, `vendor/iterm-catppuccin/`) - Manual color preset import required.
+`preferences/iTerm.json` is a hand-refreshed profile snapshot with no installer — a backup, not a
+source of truth, and not in Dynamic Profile format.
 
 ## After Merging
 

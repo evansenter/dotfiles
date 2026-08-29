@@ -436,6 +436,17 @@ cleanup_legacy_configs() {
 	rmdir "$HOME/.openclaw" 2>/dev/null || true
 	rmdir "$HOME/.config/spotify-player" 2>/dev/null || true
 
+	# The iTerm2 dynamic profile, dropped in #320 along with brew-hooks/iterm2.sh
+	# that created this link. remove_legacy_symlink can't take it: that helper only
+	# reclaims targets under "$dotfiles_dir/home/", and this one pointed into
+	# preferences/ — outside the symlink mirror. Only remove it when it's dangling,
+	# so a dynamic profile someone deliberately put here later survives.
+	local iterm_dynamic_profile="$HOME/Library/Application Support/iTerm2/DynamicProfiles/dotfiles-profile.json"
+	if [[ -L "$iterm_dynamic_profile" && ! -e "$iterm_dynamic_profile" ]]; then
+		echo "Removing legacy iTerm2 dynamic profile symlink: $iterm_dynamic_profile"
+		rm -f "$iterm_dynamic_profile"
+	fi
+
 	# Drop legacy binaries installed by previous bootstrap versions.
 	# whisper-cli was built from source on Linux only (the apt path); on macOS
 	# /usr/local/bin/whisper-cli is a Homebrew symlink — leave it for brew.
