@@ -298,6 +298,19 @@ test_configure_claude_local_settings_exists() {
     grep -q 'configure_claude_local_settings' "$BOOTSTRAP"
 }
 
+test_symlink_agy_configs_exists() {
+    grep -q 'symlink_agy_configs' "$BOOTSTRAP"
+}
+
+test_install_agy_mcp_servers_exists() {
+    grep -q 'install_agy_mcp_servers' "$BOOTSTRAP"
+}
+
+test_agents_md_symlink_exists() {
+    [[ -L "$SCRIPT_DIR/../AGENTS.md" ]] && \
+    [[ "$(readlink "$SCRIPT_DIR/../AGENTS.md")" == "CLAUDE.md" ]]
+}
+
 test_settings_local_skips_gateway_host() {
     # The function should skip on mac-mini (gateway host)
     grep -q 'mac-mini' "$BOOTSTRAP" && \
@@ -789,6 +802,9 @@ main() {
     run_test "cargo-sweep script exists and executable" "test_cargo_sweep_script_exists"
     run_test "cargo-sweep script syntax" "test_cargo_sweep_syntax"
     run_test "configure_claude_local_settings exists" "test_configure_claude_local_settings_exists"
+    run_test "symlink_agy_configs exists" "test_symlink_agy_configs_exists"
+    run_test "install_agy_mcp_servers exists" "test_install_agy_mcp_servers_exists"
+    run_test "AGENTS.md symlink exists" "test_agents_md_symlink_exists"
     run_test "settings.local.json skips gateway host" "test_settings_local_skips_gateway_host"
     run_test "sync_dotfiles has no package installers" "test_sync_dotfiles_no_package_install"
     run_test "no ~/Documents/projects references" "test_no_documents_projects_refs"

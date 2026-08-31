@@ -129,9 +129,13 @@ On a bare macOS install, in order:
 
 ### Optional dependencies
 
-**Claude Code** (commands, hooks, settings symlinked to ~/.claude/):
+**AI Assistants (Claude Code & Google Antigravity / `agy`)**:
+Dual-agent setup sharing skills, instructions, and MCP servers without duplication:
+- **Claude Code**: commands, hooks, settings symlinked to `~/.claude/`
+- **Antigravity**: global instructions (`GEMINI.md -> CLAUDE.md`), `skills.json` sharing `~/.claude/skills`, Zellij status via `hooks.json`, and parallel MCP provisioning
+
 ```bash
-./bootstrap.sh  # Symlinks commands/, hooks/, settings.json, CLAUDE.md
+./bootstrap.sh  # Symlinks configs, hooks, skills, and provisions MCP servers
 ```
 
 Also installs the GitHub MCP server and enables a curated set of official plugins (see `enabledPlugins` in `home/.claude/settings.json`). Several integrations read secrets from `~/.extra` (not tracked):
@@ -173,6 +177,10 @@ dotfiles/
 │   │   ├── hooks/               # Lifecycle event hooks
 │   │   ├── statusline-command.sh  # Statusline provider script
 │   │   └── settings.json        # Plugins and hook config
+│   ├── .gemini/
+│   │   └── config/
+│   │       ├── skills.json      # Discovers ~/.claude/skills
+│   │       └── hooks.json       # Bridges Zellij status hooks
 │   ├── .exports
 │   ├── .gitconfig
 │   ├── .tmux.conf
