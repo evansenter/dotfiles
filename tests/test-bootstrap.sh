@@ -315,23 +315,33 @@ _load_symlink_agy_configs() {
 }
 
 test_symlink_agy_configs_behavior() {
-    _load_symlink_agy_configs || return 1
     local fake_home; fake_home=$(mktemp -d)
+    [[ -n "$fake_home" ]] || return 1
     local ok=0
 
+    # Subshell to keep evaluated function out of global test environment
     # (a) Creates symlink pointing to dotfiles home/.claude/CLAUDE.md
-    HOME="$fake_home" symlink_agy_configs >/dev/null
+    (
+        _load_symlink_agy_configs || exit 1
+        HOME="$fake_home" symlink_agy_configs >/dev/null
+    ) || ok=1
     [[ -L "$fake_home/.gemini/GEMINI.md" ]] || ok=1
     [[ "$(readlink "$fake_home/.gemini/GEMINI.md")" == "$SCRIPT_DIR/../home/.claude/CLAUDE.md" ]] || ok=1
 
     # (b) Re-run is idempotent (no output)
     local output
-    output=$(HOME="$fake_home" symlink_agy_configs)
+    output=$(
+        _load_symlink_agy_configs || exit 1
+        HOME="$fake_home" symlink_agy_configs
+    ) || ok=1
     [[ -z "$output" ]] || ok=1
 
     # (c) Replaces stale/wrong symlink
     ln -sf "/tmp/wrong-target" "$fake_home/.gemini/GEMINI.md"
-    HOME="$fake_home" symlink_agy_configs >/dev/null
+    (
+        _load_symlink_agy_configs || exit 1
+        HOME="$fake_home" symlink_agy_configs >/dev/null
+    ) || ok=1
     [[ "$(readlink "$fake_home/.gemini/GEMINI.md")" == "$SCRIPT_DIR/../home/.claude/CLAUDE.md" ]] || ok=1
 
     rm -rf "$fake_home"

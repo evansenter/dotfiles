@@ -54,7 +54,7 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 3. Symlinks `.claude/{hooks,commands,contrib,agents,skills}/`
 4. Installs Claude Code MCP servers
 5. Configures Claude Code `settings.local.json` with remote MCP URLs (skipped on gateway host)
-6. Configures Antigravity (`agy`) bridge configs (`skills.json`, `hooks.json`, `GEMINI.md`) and MCP servers
+6. Configures Antigravity (`agy`) global rules (`GEMINI.md`) and MCP servers
 7. Installs TPM (manual `prefix + I` for plugins)
 8. Installs bat/yazi/zellij themes from `vendor/`
 9. Installs LaunchAgents (macOS) and cron jobs
@@ -104,7 +104,7 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 
 **Antigravity (`agy`) Co-existence** (`home/.gemini/`) - Dual-agent support alongside Claude Code:
 - `AGENTS.md` symlinked to `CLAUDE.md` in repository roots for shared repo guidelines
-- `~/.gemini/GEMINI.md` symlinked to `~/.claude/CLAUDE.md` for shared global instructions
+- `~/.gemini/GEMINI.md` symlinked to `home/.claude/CLAUDE.md` in dotfiles for shared global instructions
 - `home/.gemini/config/skills.json` discovers `~/.claude/skills` so skills are defined once
 - `home/.gemini/config/hooks.json` maps AGY `PreInvocation` and `Stop` hooks to Zellij status (`zj-status.sh`)
 - `bootstrap.sh` provisions MCP servers (`github`, `obsidian`) for `agy` when installed
