@@ -39,6 +39,10 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     # Remove btop theme symlinks
     rm -f ~/.config/btop/themes/catppuccin_*.theme 2>/dev/null
 
+    # Clean up empty .gemini directories if left behind
+    rmdir ~/.gemini/config 2>/dev/null || true
+    rmdir ~/.gemini 2>/dev/null || true
+
     echo ""
     echo "Dotfile symlinks removed successfully."
     echo ""

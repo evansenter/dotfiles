@@ -1191,13 +1191,19 @@ install_claude_mcp_servers() {
 }
 
 symlink_agy_configs() {
-	# Symlink global GEMINI.md to ~/.claude/CLAUDE.md for single source of truth
-	if [[ -f "$HOME/.claude/CLAUDE.md" ]]; then
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local target_claude_md="$dotfiles_dir/home/.claude/CLAUDE.md"
+
+	# Symlink global GEMINI.md to dotfiles CLAUDE.md for single source of truth
+	# Target is directly under dotfiles home/ so uninstall.sh reclaims it automatically
+	if [[ -f "$target_claude_md" ]]; then
 		mkdir -p "$HOME/.gemini"
-		if [[ ! -L "$HOME/.gemini/GEMINI.md" || "$(readlink "$HOME/.gemini/GEMINI.md")" != "$HOME/.claude/CLAUDE.md" ]]; then
-			rm -f "$HOME/.gemini/GEMINI.md"
-			ln -s "$HOME/.claude/CLAUDE.md" "$HOME/.gemini/GEMINI.md"
-			echo "Linked: ~/.gemini/GEMINI.md -> ~/.claude/CLAUDE.md"
+		local dest_gemini="$HOME/.gemini/GEMINI.md"
+		if [[ ! -L "$dest_gemini" || "$(readlink "$dest_gemini")" != "$target_claude_md" ]]; then
+			rm -f "$dest_gemini"
+			ln -s "$target_claude_md" "$dest_gemini"
+			echo "Linked: ~/.gemini/GEMINI.md -> $target_claude_md"
 		fi
 	fi
 }
@@ -1215,12 +1221,15 @@ install_agy_mcp_servers() {
 	fi
 
 	# Install GitHub MCP server if not configured
+	# ${GITHUB_TOKEN} is single-quoted so it's stored literally — expanded per request
 	if ! echo "$mcp_list" | grep -q "github"; then
-		if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-			echo "Installing agy GitHub MCP server..."
-			agy mcp add --header "Authorization: Bearer ${GITHUB_TOKEN}" github https://api.githubcopilot.com/mcp/ 2>/dev/null || true
-		else
-			echo "  Warning: GITHUB_TOKEN not set. Skipping agy GitHub MCP server"
+		echo "Installing agy GitHub MCP server..."
+		# shellcheck disable=SC2016
+		agy mcp add --header 'Authorization: Bearer ${GITHUB_TOKEN}' github https://api.githubcopilot.com/mcp/
+
+		if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+			echo "  Warning: GITHUB_TOKEN not set. Add to ~/.extra:"
+			echo "    export GITHUB_TOKEN=\"ghp_your_token_here\""
 		fi
 	fi
 
@@ -1228,9 +1237,15 @@ install_agy_mcp_servers() {
 	if ! echo "$mcp_list" | grep -q "obsidian"; then
 		echo "Installing agy Obsidian MCP server..."
 		if is_gateway_host; then
-			agy mcp add obsidian http://localhost:3010/mcp 2>/dev/null || true
+			install_npm_package "obsidian-mcp-server" "Obsidian MCP Server"
+			agy mcp add obsidian http://localhost:3010/mcp
+
+			if [[ -z "${OBSIDIAN_API_KEY:-}" ]]; then
+				echo "  Warning: OBSIDIAN_API_KEY not set. Add to ~/.extra:"
+				echo "    export OBSIDIAN_API_KEY=\"your-api-key-here\""
+			fi
 		else
-			agy mcp add obsidian "https://${GATEWAY_HOST}/obsidian-mcp/mcp" 2>/dev/null || true
+			agy mcp add obsidian "https://${GATEWAY_HOST}/obsidian-mcp/mcp"
 		fi
 	fi
 }

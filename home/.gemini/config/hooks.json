@@ -3,13 +3,13 @@
     "PreInvocation": [
       {
         "type": "command",
-        "command": "~/.claude/hooks/zj-status.sh working; echo '{}'"
+        "command": "~/.claude/hooks/zj-status.sh working < /dev/null; echo '{}'"
       }
     ],
     "Stop": [
       {
         "type": "command",
-        "command": "~/.claude/hooks/zj-status.sh waiting; echo '{}'"
+        "command": "~/.claude/hooks/zj-status.sh waiting < /dev/null; echo '{}'"
       }
     ]
   }

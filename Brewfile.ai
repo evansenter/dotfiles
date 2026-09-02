@@ -12,4 +12,3 @@ cask "codex"
 
 # Google Antigravity CLI
 cask "antigravity-cli"
-
