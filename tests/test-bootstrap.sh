@@ -307,29 +307,35 @@ test_sync_dotfiles_wires_agy_setup() {
 }
 
 _load_symlink_agy_configs() {
-    eval "$(sed -n '/^symlink_agy_configs() {/,/^}/p' "$BOOTSTRAP" \
-        | sed -e 's|^\([[:space:]]*\)dotfiles_dir="\$(cd .*|\1dotfiles_dir="${TEST_DOTFILES_DIR:-$SCRIPT_DIR/..}"|')"
+    local body
+    body=$(sed -n '/^symlink_agy_configs() {/,/^}/p' "$BOOTSTRAP" \
+        | sed -e 's|^\([[:space:]]*\)dotfiles_dir="\$(cd .*|\1dotfiles_dir="${TEST_DOTFILES_DIR:-$SCRIPT_DIR/..}"|')
+    [[ -n "$body" ]] || return 1
+    eval "$body"
 }
 
 test_symlink_agy_configs_behavior() {
-    _load_symlink_agy_configs
+    _load_symlink_agy_configs || return 1
     local fake_home; fake_home=$(mktemp -d)
+    local ok=0
 
     # (a) Creates symlink pointing to dotfiles home/.claude/CLAUDE.md
     HOME="$fake_home" symlink_agy_configs >/dev/null
-    [[ -L "$fake_home/.gemini/GEMINI.md" ]]
-    [[ "$(readlink "$fake_home/.gemini/GEMINI.md")" == "$SCRIPT_DIR/../home/.claude/CLAUDE.md" ]]
+    [[ -L "$fake_home/.gemini/GEMINI.md" ]] || ok=1
+    [[ "$(readlink "$fake_home/.gemini/GEMINI.md")" == "$SCRIPT_DIR/../home/.claude/CLAUDE.md" ]] || ok=1
 
     # (b) Re-run is idempotent (no output)
     local output
     output=$(HOME="$fake_home" symlink_agy_configs)
-    [[ -z "$output" ]]
+    [[ -z "$output" ]] || ok=1
 
     # (c) Replaces stale/wrong symlink
     ln -sf "/tmp/wrong-target" "$fake_home/.gemini/GEMINI.md"
     HOME="$fake_home" symlink_agy_configs >/dev/null
-    [[ "$(readlink "$fake_home/.gemini/GEMINI.md")" == "$SCRIPT_DIR/../home/.claude/CLAUDE.md" ]]
+    [[ "$(readlink "$fake_home/.gemini/GEMINI.md")" == "$SCRIPT_DIR/../home/.claude/CLAUDE.md" ]] || ok=1
+
     rm -rf "$fake_home"
+    return $ok
 }
 
 test_install_agy_mcp_servers_exists() {

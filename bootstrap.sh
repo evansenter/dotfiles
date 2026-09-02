@@ -1225,7 +1225,7 @@ install_agy_mcp_servers() {
 	if ! echo "$mcp_list" | grep -q "github"; then
 		echo "Installing agy GitHub MCP server..."
 		# shellcheck disable=SC2016
-		agy mcp add --header 'Authorization: Bearer ${GITHUB_TOKEN}' github https://api.githubcopilot.com/mcp/
+		agy mcp add --header 'Authorization: Bearer ${GITHUB_TOKEN}' github https://api.githubcopilot.com/mcp/ || echo "  Warning: agy mcp add github failed"
 
 		if [[ -z "${GITHUB_TOKEN:-}" ]]; then
 			echo "  Warning: GITHUB_TOKEN not set. Add to ~/.extra:"
@@ -1238,14 +1238,14 @@ install_agy_mcp_servers() {
 		echo "Installing agy Obsidian MCP server..."
 		if is_gateway_host; then
 			install_npm_package "obsidian-mcp-server" "Obsidian MCP Server"
-			agy mcp add obsidian http://localhost:3010/mcp
+			agy mcp add obsidian http://localhost:3010/mcp || echo "  Warning: agy mcp add obsidian failed"
 
 			if [[ -z "${OBSIDIAN_API_KEY:-}" ]]; then
 				echo "  Warning: OBSIDIAN_API_KEY not set. Add to ~/.extra:"
 				echo "    export OBSIDIAN_API_KEY=\"your-api-key-here\""
 			fi
 		else
-			agy mcp add obsidian "https://${GATEWAY_HOST}/obsidian-mcp/mcp"
+			agy mcp add obsidian "https://${GATEWAY_HOST}/obsidian-mcp/mcp" || echo "  Warning: agy mcp add obsidian failed"
 		fi
 	fi
 }
