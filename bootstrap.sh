@@ -512,15 +512,15 @@ prompt_ai_install() {
 		return 0
 	fi
 
-	# Skip prompt if Claude is already installed (treat as an AI machine)
+	# Skip prompt if Claude or AGY is already installed (treat as an AI machine)
 	# (command -v doesn't execute the binary, so Santa won't block it)
-	if command -v claude >/dev/null 2>&1; then
+	if command -v claude >/dev/null 2>&1 || command -v agy >/dev/null 2>&1; then
 		export INSTALL_AI=true
 		return 0
 	fi
 
 	echo ""
-	echo "AI assistant setup (Claude, MCP servers, Tailscale):"
+	echo "AI assistant setup (Claude, Antigravity, MCP servers, Tailscale):"
 	echo "  1) Install (default)"
 	echo "  2) Skip"
 	read -p "Choose [1/2]: " -n 1 -r ai_choice
@@ -1190,6 +1190,66 @@ install_claude_mcp_servers() {
 	fi
 }
 
+symlink_agy_configs() {
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	local target_claude_md="$dotfiles_dir/home/.claude/CLAUDE.md"
+
+	# Symlink global GEMINI.md to dotfiles CLAUDE.md for single source of truth
+	# Target is directly under dotfiles home/ so uninstall.sh reclaims it automatically
+	if [[ -f "$target_claude_md" ]]; then
+		mkdir -p "$HOME/.gemini"
+		local dest_gemini="$HOME/.gemini/GEMINI.md"
+		if [[ ! -L "$dest_gemini" || "$(readlink "$dest_gemini")" != "$target_claude_md" ]]; then
+			rm -f "$dest_gemini"
+			ln -s "$target_claude_md" "$dest_gemini"
+			echo "Linked: ~/.gemini/GEMINI.md -> $target_claude_md"
+		fi
+	fi
+}
+
+install_agy_mcp_servers() {
+	if ! command -v agy >/dev/null 2>&1; then
+		echo "Skipping agy MCP servers (agy not installed)"
+		return 0
+	fi
+
+	local mcp_list
+	if ! mcp_list=$(agy mcp list 2>/dev/null); then
+		echo "Skipping agy MCP servers (agy mcp list failed)"
+		return 0
+	fi
+
+	# Install GitHub MCP server if not configured
+	# ${GITHUB_TOKEN} is single-quoted so it's stored literally — expanded per request
+	if ! echo "$mcp_list" | grep -q "github"; then
+		echo "Installing agy GitHub MCP server..."
+		# shellcheck disable=SC2016
+		agy mcp add --header 'Authorization: Bearer ${GITHUB_TOKEN}' github https://api.githubcopilot.com/mcp/ || echo "  Warning: agy mcp add github failed"
+
+		if [[ -z "${GITHUB_TOKEN:-}" ]]; then
+			echo "  Warning: GITHUB_TOKEN not set. Add to ~/.extra:"
+			echo "    export GITHUB_TOKEN=\"ghp_your_token_here\""
+		fi
+	fi
+
+	# Install Obsidian MCP server if not configured
+	if ! echo "$mcp_list" | grep -q "obsidian"; then
+		echo "Installing agy Obsidian MCP server..."
+		if is_gateway_host; then
+			install_npm_package "obsidian-mcp-server" "Obsidian MCP Server"
+			agy mcp add obsidian http://localhost:3010/mcp || echo "  Warning: agy mcp add obsidian failed"
+
+			if [[ -z "${OBSIDIAN_API_KEY:-}" ]]; then
+				echo "  Warning: OBSIDIAN_API_KEY not set. Add to ~/.extra:"
+				echo "    export OBSIDIAN_API_KEY=\"your-api-key-here\""
+			fi
+		else
+			agy mcp add obsidian "https://${GATEWAY_HOST}/obsidian-mcp/mcp" || echo "  Warning: agy mcp add obsidian failed"
+		fi
+	fi
+}
+
 configure_npm_registry() {
 	# Require gcloud and npm to be installed
 	if ! command -v gcloud >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
@@ -1244,6 +1304,10 @@ sync_dotfiles() {
 
 		# Configure settings.local.json with remote MCP URLs (skipped on gateway host)
 		configure_claude_local_settings
+
+		# Configure Antigravity (AGY) bridge configs & MCP servers
+		symlink_agy_configs
+		install_agy_mcp_servers
 	fi
 
 	# Install tmux plugin manager if needed

@@ -53,11 +53,12 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 2. Symlinks `home/` files to `~`
 3. Symlinks `.claude/{hooks,commands,contrib,agents,skills}/`
 4. Installs Claude Code MCP servers
-5. Configures `settings.local.json` with remote MCP URLs (skipped on gateway host)
-6. Installs TPM (manual `prefix + I` for plugins)
-7. Installs bat/yazi/zellij themes from `vendor/`
-8. Installs LaunchAgents (macOS) and cron jobs
-9. Clears stale symlinks for configs the repo no longer tracks (OpenClaw, spotify-player, iTerm2 dynamic profile) — see `cleanup_legacy_configs`
+5. Configures Claude Code `settings.local.json` with remote MCP URLs (skipped on gateway host)
+6. Configures Antigravity (`agy`) global rules (`GEMINI.md`) and MCP servers
+7. Installs TPM (manual `prefix + I` for plugins)
+8. Installs bat/yazi/zellij themes from `vendor/`
+9. Installs LaunchAgents (macOS) and cron jobs
+10. Clears stale symlinks for configs the repo no longer tracks (OpenClaw, spotify-player, iTerm2 dynamic profile) — see `cleanup_legacy_configs`
 
 ### Symlink Pattern
 
@@ -100,6 +101,13 @@ Files in `home/` are symlinked to `~` by `bootstrap.sh`. This allows version con
 - Format: `[repo/session]:branch ✓/✗/↻ →#issues ● model context%` (CI status hidden when dirty)
 - GitHub API calls (repo URL, PR number, PR body, CI status) are cached in `$TMPDIR/claude-statusline-gh/` with per-call TTLs
 - Session name cached in `$TMPDIR/claude-statusline/` (pre-populated by session-start hook)
+
+**Antigravity (`agy`) Co-existence** (`home/.gemini/`) - Dual-agent support alongside Claude Code:
+- `AGENTS.md` symlinked to `CLAUDE.md` in repository roots for shared repo guidelines
+- `~/.gemini/GEMINI.md` symlinked to `home/.claude/CLAUDE.md` in dotfiles for shared global instructions
+- `home/.gemini/config/skills.json` discovers `~/.claude/skills` so skills are defined once
+- `home/.gemini/config/hooks.json` maps AGY `PreInvocation` and `Stop` hooks to Zellij status (`zj-status.sh`)
+- `bootstrap.sh` provisions MCP servers (`github`, `obsidian`) for `agy` when installed
 
 **Infrastructure Services** - LaunchAgents on mac-mini, exposed via tailscale:
 | Service | Port | Tailscale Path | LaunchAgent |

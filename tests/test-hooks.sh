@@ -1191,7 +1191,7 @@ test_tmux_status_graceful_no_tmux_env() {
     # Without TMUX env var, should exit silently
     local output
     local exit_code=0
-    output=$(env -u TMUX -u TMUX_PANE bash "$HOOKS_DIR/tmux-status.sh" working 2>&1) || exit_code=$?
+    output=$(echo "" | env -u TMUX -u TMUX_PANE bash "$HOOKS_DIR/tmux-status.sh" working 2>&1) || exit_code=$?
 
     # Should exit cleanly with no output
     [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
@@ -1202,7 +1202,7 @@ test_tmux_status_graceful_no_pane_id() {
     local output
     local exit_code=0
     # Use env -i to clear all environment, then set only what we need
-    output=$(env -i PATH="$PATH" HOME="$HOME" TMUX="/tmp/tmux-test" bash "$HOOKS_DIR/tmux-status.sh" working 2>&1) || exit_code=$?
+    output=$(echo "" | env -i PATH="$PATH" HOME="$HOME" TMUX="/tmp/tmux-test" bash "$HOOKS_DIR/tmux-status.sh" working 2>&1) || exit_code=$?
 
     # Should exit cleanly with no output
     [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
@@ -1274,7 +1274,7 @@ test_zj_status_graceful_no_zellij_env() {
     # Without ZELLIJ env var, should exit silently
     local output
     local exit_code=0
-    output=$(env -u ZELLIJ bash "$HOOKS_DIR/zj-status.sh" working 2>&1) || exit_code=$?
+    output=$(echo "" | env -u ZELLIJ bash "$HOOKS_DIR/zj-status.sh" working 2>&1) || exit_code=$?
 
     # Should exit cleanly with no output
     [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]

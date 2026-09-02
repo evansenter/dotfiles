@@ -9,3 +9,6 @@ cask "claude"
 
 # OpenAI Terminal Agent
 cask "codex"
+
+# Google Antigravity CLI
+cask "antigravity-cli"

@@ -298,6 +298,65 @@ test_configure_claude_local_settings_exists() {
     grep -q 'configure_claude_local_settings' "$BOOTSTRAP"
 }
 
+test_sync_dotfiles_wires_agy_setup() {
+    # sync_dotfiles must invoke symlink_agy_configs and install_agy_mcp_servers
+    local sync_body
+    sync_body=$(sed -n '/^sync_dotfiles()/,/^}/p' "$BOOTSTRAP")
+    echo "$sync_body" | grep -v '^\s*#' | grep -q 'symlink_agy_configs' && \
+    echo "$sync_body" | grep -v '^\s*#' | grep -q 'install_agy_mcp_servers'
+}
+
+_load_symlink_agy_configs() {
+    local body
+    body=$(sed -n '/^symlink_agy_configs() {/,/^}/p' "$BOOTSTRAP" \
+        | sed -e 's|^\([[:space:]]*\)dotfiles_dir="\$(cd .*|\1dotfiles_dir="${TEST_DOTFILES_DIR:-$SCRIPT_DIR/..}"|')
+    [[ -n "$body" ]] || return 1
+    eval "$body"
+}
+
+test_symlink_agy_configs_behavior() {
+    local fake_home; fake_home=$(mktemp -d)
+    [[ -n "$fake_home" ]] || return 1
+    local ok=0
+
+    # Subshell to keep evaluated function out of global test environment
+    # (a) Creates symlink pointing to dotfiles home/.claude/CLAUDE.md
+    (
+        _load_symlink_agy_configs || exit 1
+        HOME="$fake_home" symlink_agy_configs >/dev/null
+    ) || ok=1
+    [[ -L "$fake_home/.gemini/GEMINI.md" ]] || ok=1
+    [[ "$(readlink "$fake_home/.gemini/GEMINI.md")" == "$SCRIPT_DIR/../home/.claude/CLAUDE.md" ]] || ok=1
+
+    # (b) Re-run is idempotent (no output)
+    local output
+    output=$(
+        _load_symlink_agy_configs || exit 1
+        HOME="$fake_home" symlink_agy_configs
+    ) || ok=1
+    [[ -z "$output" ]] || ok=1
+
+    # (c) Replaces stale/wrong symlink
+    ln -sf "/tmp/wrong-target" "$fake_home/.gemini/GEMINI.md"
+    (
+        _load_symlink_agy_configs || exit 1
+        HOME="$fake_home" symlink_agy_configs >/dev/null
+    ) || ok=1
+    [[ "$(readlink "$fake_home/.gemini/GEMINI.md")" == "$SCRIPT_DIR/../home/.claude/CLAUDE.md" ]] || ok=1
+
+    rm -rf "$fake_home"
+    return $ok
+}
+
+test_install_agy_mcp_servers_exists() {
+    grep -q 'install_agy_mcp_servers' "$BOOTSTRAP"
+}
+
+test_agents_md_symlink_exists() {
+    [[ -L "$SCRIPT_DIR/../AGENTS.md" ]] && \
+    [[ "$(readlink "$SCRIPT_DIR/../AGENTS.md")" == "CLAUDE.md" ]]
+}
+
 test_settings_local_skips_gateway_host() {
     # The function should skip on mac-mini (gateway host)
     grep -q 'mac-mini' "$BOOTSTRAP" && \
@@ -789,6 +848,10 @@ main() {
     run_test "cargo-sweep script exists and executable" "test_cargo_sweep_script_exists"
     run_test "cargo-sweep script syntax" "test_cargo_sweep_syntax"
     run_test "configure_claude_local_settings exists" "test_configure_claude_local_settings_exists"
+    run_test "sync_dotfiles wires agy setup" "test_sync_dotfiles_wires_agy_setup"
+    run_test "symlink_agy_configs behavior" "test_symlink_agy_configs_behavior"
+    run_test "install_agy_mcp_servers exists" "test_install_agy_mcp_servers_exists"
+    run_test "AGENTS.md symlink exists" "test_agents_md_symlink_exists"
     run_test "settings.local.json skips gateway host" "test_settings_local_skips_gateway_host"
     run_test "sync_dotfiles has no package installers" "test_sync_dotfiles_no_package_install"
     run_test "no ~/Documents/projects references" "test_no_documents_projects_refs"
