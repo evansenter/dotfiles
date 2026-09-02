@@ -516,20 +516,20 @@ prompt_ai_install() {
 		return 0
 	fi
 
-	# Non-interactive: default to skip, but say so. This gate also controls the
-	# Claude Code symlinks and MCP registration, so a silent skip makes a partial
-	# install indistinguishable from a full one.
-	if [[ ! -t 0 ]]; then
-		export INSTALL_AI=false
-		echo "Non-interactive shell: skipping AI assistant setup (Claude/agy symlinks, MCP servers, Brewfile.ai, pip packages)." >&2
-		echo "  To include it, re-run with INSTALL_AI=true." >&2
-		return 0
-	fi
-
 	# Skip prompt if Claude or AGY is already installed (treat as an AI machine)
 	# (command -v doesn't execute the binary, so Santa won't block it)
 	if command -v claude >/dev/null 2>&1 || command -v agy >/dev/null 2>&1; then
 		export INSTALL_AI=true
+		return 0
+	fi
+
+	# Non-interactive with no other signal: default to skip, but say so. This gate
+	# also controls the Claude Code symlinks and MCP registration, so a silent skip
+	# makes a partial install indistinguishable from a full one.
+	if [[ ! -t 0 ]]; then
+		export INSTALL_AI=false
+		echo "Non-interactive shell: skipping AI assistant setup (Claude/agy symlinks, MCP servers, Brewfile.ai, pip packages)." >&2
+		echo "  To include it, re-run with INSTALL_AI=true." >&2
 		return 0
 	fi
 

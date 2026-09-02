@@ -306,6 +306,28 @@ test_sync_dotfiles_wires_agy_setup() {
     echo "$sync_body" | grep -v '^\s*#' | grep -q 'install_agy_mcp_servers'
 }
 
+test_prompt_ai_install_detects_installed_assistant() {
+    # If claude or agy is installed, prompt_ai_install must detect it and set
+    # INSTALL_AI=true even in non-interactive sessions (! -t 0)
+    local stub; stub=$(mktemp -d)
+    [[ -n "$stub" ]] || return 1
+    touch "$stub/agy"
+    chmod +x "$stub/agy"
+
+    local ok=0
+    local result
+    result=$(
+        PATH="$stub:$PATH"
+        export INSTALL_AI=""
+        eval "$(sed -n '/^prompt_ai_install() {/,/^}/p' "$BOOTSTRAP")"
+        prompt_ai_install </dev/null
+        echo "$INSTALL_AI"
+    ) || ok=1
+    [[ "$result" == "true" ]] || ok=1
+    rm -rf "$stub"
+    return $ok
+}
+
 _load_symlink_agy_configs() {
     local body
     body=$(sed -n '/^symlink_agy_configs() {/,/^}/p' "$BOOTSTRAP" \
@@ -759,8 +781,14 @@ test_install_ai_rejects_unrecognized_value() {
 test_prompt_ai_install_announces_non_tty_skip() {
     # A skip is fine; a silent skip is not — it makes a partial install
     # indistinguishable from a full one.
+    #
+    # Empty PATH so no real claude/agy is findable: the already-installed check
+    # now runs *first*, so on a developer machine that branch would win and this
+    # test would assert nothing about the skip it claims to cover. Safe here
+    # because sourcing has already finished and the remaining path to the skip
+    # uses only builtins.
     local out
-    out=$(_run_sourced 'prompt_ai_install; echo "VALUE=$INSTALL_AI"') || return 1
+    out=$(_run_sourced 'PATH=; prompt_ai_install; echo "VALUE=$INSTALL_AI"') || return 1
     grep -qi 'skipping AI assistant setup' <<< "$out" && \
     grep -q 'INSTALL_AI=true' <<< "$out" && \
     grep -q '^VALUE=false$' <<< "$out"
@@ -920,6 +948,7 @@ main() {
     run_test "cargo-sweep script exists and executable" "test_cargo_sweep_script_exists"
     run_test "cargo-sweep script syntax" "test_cargo_sweep_syntax"
     run_test "configure_claude_local_settings exists" "test_configure_claude_local_settings_exists"
+    run_test "prompt_ai_install detects installed assistant" "test_prompt_ai_install_detects_installed_assistant"
     run_test "sync_dotfiles wires agy setup" "test_sync_dotfiles_wires_agy_setup"
     run_test "symlink_agy_configs behavior" "test_symlink_agy_configs_behavior"
     run_test "install_agy_mcp_servers exists" "test_install_agy_mcp_servers_exists"
