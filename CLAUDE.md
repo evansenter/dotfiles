@@ -46,12 +46,12 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 **Phase 1 — Pull & packages** (only with `--pull`/`-p`):
 1. Pulls latest from git
 2. Installs packages: Homebrew (macOS), apt (Debian/Ubuntu), or binary downloads to `~/.local/bin` (SteamOS)
-3. Refreshes package metadata (`brew update`) and installs any missing packages via `brew bundle`. Note: on macOS it does **not** run `brew upgrade`/`brew cleanup`, so already-installed formulae are not bumped to newer versions (kept out for speed and to avoid surprise breakage — upgrade manually with `brew upgrade`).
+3. Refreshes package metadata (`brew update`), then runs `brew bundle`, which installs missing packages **and upgrades outdated ones that the Brewfile lists** (modern `brew bundle` upgrades by default). Packages not in a Brewfile — transitive dependencies, anything installed by hand — are left alone, as are Brewfile entries behind a false conditional (e.g. `swiftlint`/`xcodegen`, gated on Xcode being installed). `brew cleanup` is never run, so old versions are not reclaimed.
 
 **Phase 2 — Sync dotfiles** (always runs):
 1. Sets default shell to zsh
 2. Symlinks `home/` files to `~`
-3. Symlinks `.claude/{hooks,commands,contrib,agents,skills}/`
+3. Symlinks `.claude/{hooks,commands,contrib,agents,skills}/` — this and steps 4–6 sit behind `prompt_ai_install`, which skips them (with a notice) on a non-TTY stdin unless `INSTALL_AI=true` is set
 4. Installs Claude Code MCP servers
 5. Configures Claude Code `settings.local.json` with remote MCP URLs (skipped on gateway host)
 6. Configures Antigravity (`agy`) global rules (`GEMINI.md`) and MCP servers

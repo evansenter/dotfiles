@@ -703,6 +703,78 @@ test_launch_agent_idempotent_on_unchanged_plist() {
 # ============================================================================
 # Self-update re-exec tests
 # ============================================================================
+# INSTALL_AI gating
+# ============================================================================
+#
+# INSTALL_AI controls far more than its name suggests: the Claude Code symlinks
+# (hooks/commands/contrib/agents/skills), MCP registration, Brewfile.ai, and the
+# pip updates all sit behind it. Two ways that used to fail silently:
+# a bare `export INSTALL_AI=""` at the top of bootstrap.sh clobbered any
+# inherited value, and the non-TTY branch skipped every one of those steps
+# without printing a word — so a piped run looked exactly like a full install.
+
+# Source the real bootstrap.sh (BOOTSTRAP_SOURCE_ONLY stops before arg parsing),
+# then run $1. Emits the runner's combined output; stdin is /dev/null so the
+# non-TTY branch is exercised regardless of how the suite itself was invoked.
+_run_sourced() {
+    local snippet="$1"
+    local dir; dir=$(mktemp -d) || return 1
+    [[ -n "$dir" ]] || return 1
+    {
+        printf '#!/bin/bash\n'
+        printf 'set -euo pipefail\n'
+        printf 'export BOOTSTRAP_SOURCE_ONLY=1\n'
+        printf 'source "%s"\n' "$BOOTSTRAP"
+        printf 'unset BOOTSTRAP_SOURCE_ONLY\n'
+        printf '%s\n' "$snippet"
+    } > "$dir/run.sh"
+    bash "$dir/run.sh" 2>&1 < /dev/null
+    local rc=$?
+    rm -rf "$dir"
+    return $rc
+}
+
+test_install_ai_env_override_survives_sourcing() {
+    # The whole point of the fix: an inherited INSTALL_AI must reach
+    # prompt_ai_install instead of being reset to "" at the top of the script.
+    local out
+    out=$(INSTALL_AI=true _run_sourced 'echo "VALUE=$INSTALL_AI"') || return 1
+    grep -q '^VALUE=true$' <<< "$out"
+}
+
+test_install_ai_env_false_survives_sourcing() {
+    # The opt-out direction has to work too, or "false" silently becomes a prompt.
+    local out
+    out=$(INSTALL_AI=false _run_sourced 'echo "VALUE=$INSTALL_AI"') || return 1
+    grep -q '^VALUE=false$' <<< "$out"
+}
+
+test_install_ai_rejects_unrecognized_value() {
+    # Every consumer tests `== true`, so INSTALL_AI=1 would read as opted-in to
+    # the caller and as opted-out to the code. Warn and fall back to unset.
+    local out
+    out=$(INSTALL_AI=1 _run_sourced 'echo "VALUE=[$INSTALL_AI]"') || return 1
+    grep -q "ignoring INSTALL_AI='1'" <<< "$out" && \
+    grep -q '^VALUE=\[\]$' <<< "$out"
+}
+
+test_prompt_ai_install_announces_non_tty_skip() {
+    # A skip is fine; a silent skip is not — it makes a partial install
+    # indistinguishable from a full one.
+    local out
+    out=$(_run_sourced 'prompt_ai_install; echo "VALUE=$INSTALL_AI"') || return 1
+    grep -qi 'skipping AI assistant setup' <<< "$out" && \
+    grep -q 'INSTALL_AI=true' <<< "$out" && \
+    grep -q '^VALUE=false$' <<< "$out"
+}
+
+test_install_ai_default_is_env_respecting() {
+    # Guard the mechanism itself: a future edit back to `export INSTALL_AI=""`
+    # would restore the clobber and defeat every test above.
+    grep -q 'export INSTALL_AI="\${INSTALL_AI:-}"' "$BOOTSTRAP"
+}
+
+# ============================================================================
 #
 # `git pull` can rewrite bootstrap.sh mid-run. Bash reads scripts lazily by byte
 # offset, so the interpreter then reads from a shifted position in new content and
@@ -881,6 +953,14 @@ main() {
     run_test "sysload-writer tolerates top failure" "test_sysload_writer_tolerates_top_failure"
     run_test "launch agent substitutes __HOME__ and reloads" "test_launch_agent_substitutes_home"
     run_test "launch agent idempotent on unchanged plist" "test_launch_agent_idempotent_on_unchanged_plist"
+    echo ""
+
+    echo "=== INSTALL_AI gating ==="
+    run_test "INSTALL_AI=true survives sourcing" "test_install_ai_env_override_survives_sourcing"
+    run_test "INSTALL_AI=false survives sourcing" "test_install_ai_env_false_survives_sourcing"
+    run_test "unrecognized INSTALL_AI warns and unsets" "test_install_ai_rejects_unrecognized_value"
+    run_test "non-TTY skip is announced" "test_prompt_ai_install_announces_non_tty_skip"
+    run_test "INSTALL_AI default honours the environment" "test_install_ai_default_is_env_respecting"
     echo ""
 
     echo "=== self-update re-exec ==="
