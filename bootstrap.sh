@@ -521,8 +521,8 @@ prompt_ai_install() {
 	# install indistinguishable from a full one.
 	if [[ ! -t 0 ]]; then
 		export INSTALL_AI=false
-		echo "Non-interactive shell: skipping AI assistant setup (Claude/agy symlinks, MCP servers, Brewfile.ai, pip packages)."
-		echo "  To include it, set INSTALL_AI=true, or run under a TTY: script -q /dev/null $0 <flags>"
+		echo "Non-interactive shell: skipping AI assistant setup (Claude/agy symlinks, MCP servers, Brewfile.ai, pip packages)." >&2
+		echo "  To include it, re-run with INSTALL_AI=true." >&2
 		return 0
 	fi
 
@@ -1394,6 +1394,11 @@ for arg in "$@"; do
 			echo "  -f, --force    Skip confirmation prompt"
 			echo "  -p, --pull     Also pull latest and install/update packages"
 			echo "  -h, --help     Show this help message"
+			echo ""
+			echo "Environment:"
+			echo "  INSTALL_AI=true|false   Opt in/out of AI assistant setup (Claude/agy"
+			echo "                          symlinks, MCP servers, Brewfile.ai) without a"
+			echo "                          TTY. Unset prompts, or skips on a non-TTY stdin."
 			exit 0
 			;;
 	esac

@@ -701,8 +701,6 @@ test_launch_agent_idempotent_on_unchanged_plist() {
 }
 
 # ============================================================================
-# Self-update re-exec tests
-# ============================================================================
 # INSTALL_AI gating
 # ============================================================================
 #
@@ -774,6 +772,8 @@ test_install_ai_default_is_env_respecting() {
     grep -q 'export INSTALL_AI="\${INSTALL_AI:-}"' "$BOOTSTRAP"
 }
 
+# ============================================================================
+# Self-update re-exec tests
 # ============================================================================
 #
 # `git pull` can rewrite bootstrap.sh mid-run. Bash reads scripts lazily by byte
