@@ -19,7 +19,17 @@ cd "$(dirname "${BASH_SOURCE[0]}")";
 # ==============================================================================
 
 GATEWAY_HOST="mac-mini.tailac7b3c.ts.net"
-export INSTALL_AI=""
+# Whether to install AI assistant packages and wire up the Claude Code / agy
+# config. Honour an inherited value so non-interactive callers (CI, an agent
+# tool call, anything piping our output) can opt in without a TTY -- a bare
+# `export INSTALL_AI=""` here would clobber it before prompt_ai_install reads it.
+# Only "true"/"false" are meaningful; anything else is treated as unset so a
+# typo prompts instead of silently skipping every AI-gated step.
+export INSTALL_AI="${INSTALL_AI:-}"
+if [[ -n "$INSTALL_AI" && "$INSTALL_AI" != "true" && "$INSTALL_AI" != "false" ]]; then
+	echo "Warning: ignoring INSTALL_AI='$INSTALL_AI' (expected 'true' or 'false')." >&2
+	export INSTALL_AI=""
+fi
 
 # Set up Homebrew environment variables
 if [[ "$(uname)" == "Darwin" ]]; then
@@ -506,9 +516,13 @@ prompt_ai_install() {
 		return 0
 	fi
 
-	# Non-interactive: default to skip
+	# Non-interactive: default to skip, but say so. This gate also controls the
+	# Claude Code symlinks and MCP registration, so a silent skip makes a partial
+	# install indistinguishable from a full one.
 	if [[ ! -t 0 ]]; then
 		export INSTALL_AI=false
+		echo "Non-interactive shell: skipping AI assistant setup (Claude/agy symlinks, MCP servers, Brewfile.ai, pip packages)." >&2
+		echo "  To include it, re-run with INSTALL_AI=true." >&2
 		return 0
 	fi
 
@@ -1380,6 +1394,11 @@ for arg in "$@"; do
 			echo "  -f, --force    Skip confirmation prompt"
 			echo "  -p, --pull     Also pull latest and install/update packages"
 			echo "  -h, --help     Show this help message"
+			echo ""
+			echo "Environment:"
+			echo "  INSTALL_AI=true|false   Opt in/out of AI assistant setup (Claude/agy"
+			echo "                          symlinks, MCP servers, Brewfile.ai) without a"
+			echo "                          TTY. Unset prompts, or skips on a non-TTY stdin."
 			exit 0
 			;;
 	esac
