@@ -45,7 +45,7 @@ CI runs: Lint, Test, Hooks, Bootstrap, claude-review.
 
 **Phase 1 — Pull & packages** (only with `--pull`/`-p`):
 1. Pulls latest from git
-2. Installs packages: Homebrew (macOS), apt (Debian/Ubuntu), or binary downloads to `~/.local/bin` (SteamOS)
+2. Installs packages: Homebrew (macOS), apt (Debian/Ubuntu), or binary downloads to `~/.local/bin` (SteamOS). On Linux/SteamOS, Tailscale is gated behind `prompt_tailscale_install` (skipped with a notice on non-TTY stdin unless `INSTALL_TAILSCALE=true` is set).
 3. Refreshes package metadata (`brew update`), then runs `brew bundle`, which installs missing packages **and upgrades outdated ones that the Brewfile lists** (modern `brew bundle` upgrades by default). Packages not in a Brewfile — transitive dependencies, anything installed by hand — are left alone, as are Brewfile entries behind a false conditional (e.g. `swiftlint`/`xcodegen`, gated on Xcode being installed). `brew cleanup` is never run, so old versions are not reclaimed.
 
 **Phase 2 — Sync dotfiles** (always runs):

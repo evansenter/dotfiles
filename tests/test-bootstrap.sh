@@ -806,6 +806,12 @@ test_install_tailscale_env_override_survives_sourcing() {
     grep -q '^VALUE=true$' <<< "$out"
 }
 
+test_install_tailscale_env_false_survives_sourcing() {
+    local out
+    out=$(INSTALL_TAILSCALE=false _run_sourced 'echo "VALUE=$INSTALL_TAILSCALE"') || return 1
+    grep -q '^VALUE=false$' <<< "$out"
+}
+
 test_install_tailscale_rejects_unrecognized_value() {
     local out
     out=$(INSTALL_TAILSCALE=1 _run_sourced 'echo "VALUE=[$INSTALL_TAILSCALE]"') || return 1
@@ -816,7 +822,13 @@ test_install_tailscale_rejects_unrecognized_value() {
 test_prompt_tailscale_install_skips_non_tty() {
     local out
     out=$(_run_sourced 'PATH=; prompt_tailscale_install; echo "VALUE=$INSTALL_TAILSCALE"') || return 1
+    grep -qi 'skipping Tailscale setup' <<< "$out" && \
+    grep -q 'INSTALL_TAILSCALE=true' <<< "$out" && \
     grep -q '^VALUE=false$' <<< "$out"
+}
+
+test_install_tailscale_default_is_env_respecting() {
+    grep -q 'export INSTALL_TAILSCALE="\${INSTALL_TAILSCALE:-}"' "$BOOTSTRAP"
 }
 
 test_prompt_tailscale_install_detects_installed() {
@@ -1021,8 +1033,10 @@ main() {
     run_test "non-TTY skip is announced" "test_prompt_ai_install_announces_non_tty_skip"
     run_test "INSTALL_AI default honours the environment" "test_install_ai_default_is_env_respecting"
     run_test "INSTALL_TAILSCALE=true survives sourcing" "test_install_tailscale_env_override_survives_sourcing"
+    run_test "INSTALL_TAILSCALE=false survives sourcing" "test_install_tailscale_env_false_survives_sourcing"
     run_test "unrecognized INSTALL_TAILSCALE warns and unsets" "test_install_tailscale_rejects_unrecognized_value"
     run_test "prompt_tailscale_install skips on non-TTY" "test_prompt_tailscale_install_skips_non_tty"
+    run_test "INSTALL_TAILSCALE default honours the environment" "test_install_tailscale_default_is_env_respecting"
     run_test "prompt_tailscale_install detects installed tailscale" "test_prompt_tailscale_install_detects_installed"
     echo ""
 

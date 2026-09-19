@@ -515,7 +515,7 @@ pull_latest() {
 }
 
 prompt_ai_install() {
-	# Ask once whether to install AI assistant packages (Claude, Tailscale).
+	# Ask once whether to install AI assistant packages (Claude, Antigravity).
 	# Result is cached in INSTALL_AI for the rest of the run.
 	if [[ -n "$INSTALL_AI" ]]; then
 		return 0
@@ -568,6 +568,7 @@ prompt_tailscale_install() {
 	# Non-interactive: default to skip (install script may not support this distro)
 	if [[ ! -t 0 ]]; then
 		export INSTALL_TAILSCALE=false
+		echo "Non-interactive shell: skipping Tailscale setup (set INSTALL_TAILSCALE=true to include)." >&2
 		return 0
 	fi
 
@@ -709,7 +710,7 @@ install_apt_packages() {
 	prompt_tailscale_install
 	if [[ "$INSTALL_TAILSCALE" == true ]] && ! command -v tailscale >/dev/null 2>&1; then
 		echo "Installing Tailscale..."
-		curl -fsSL https://tailscale.com/install.sh | sh
+		curl -fsSL https://tailscale.com/install.sh | sh || echo "  Warning: Failed to install Tailscale (unsupported OS or network issue?)"
 	fi
 
 	# Install Node.js 22 via NodeSource
@@ -783,7 +784,7 @@ install_apt_packages() {
 	# Install piper-tts (text-to-speech)
 	if ! command -v piper >/dev/null 2>&1 && command -v pip3 >/dev/null 2>&1; then
 		echo "Installing piper-tts..."
-		pip3 install --user piper-tts 2>/dev/null || pip3 install --user --break-system-packages piper-tts
+		pip3 install --user piper-tts 2>/dev/null || pip3 install --user --break-system-packages piper-tts || echo "  Warning: Failed to install piper-tts (network issue?)"
 	fi
 
 	# Create fd alias (Debian/Ubuntu installs as fdfind)
@@ -1437,9 +1438,11 @@ for arg in "$@"; do
 			echo "  -h, --help     Show this help message"
 			echo ""
 			echo "Environment:"
-			echo "  INSTALL_AI=true|false   Opt in/out of AI assistant setup (Claude/agy"
-			echo "                          symlinks, MCP servers, Brewfile.ai) without a"
-			echo "                          TTY. Unset prompts, or skips on a non-TTY stdin."
+			echo "  INSTALL_AI=true|false         Opt in/out of AI assistant setup (Claude/agy"
+			echo "                                symlinks, MCP servers, Brewfile.ai) without a"
+			echo "                                TTY. Unset prompts, or skips on a non-TTY stdin."
+			echo "  INSTALL_TAILSCALE=true|false  Opt in/out of Tailscale setup on Linux/SteamOS"
+			echo "                                without a TTY. Unset prompts, or skips on a non-TTY stdin."
 			exit 0
 			;;
 	esac
