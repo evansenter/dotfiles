@@ -626,7 +626,7 @@ install_steamos_packages() {
 	if [[ "$INSTALL_TAILSCALE" == true ]] && ! command -v tailscale >/dev/null 2>&1; then
 		echo "Installing Tailscale..."
 		local ts_version
-		ts_version=$(curl -fsSL "https://pkgs.tailscale.com/stable/" | grep -oP 'tailscale_\K[0-9.]+(?=_amd64\.tgz)' | head -1)
+		ts_version=$(curl -fsSL "https://pkgs.tailscale.com/stable/" | grep -oP 'tailscale_\K[0-9.]+(?=_amd64\.tgz)' | head -1 || true)
 		if [[ -n "$ts_version" ]]; then
 			curl -fsSL "https://pkgs.tailscale.com/stable/tailscale_${ts_version}_amd64.tgz" -o /tmp/tailscale.tgz
 			tar xf /tmp/tailscale.tgz -C /tmp
@@ -635,6 +635,8 @@ install_steamos_packages() {
 			chmod +x "$HOME/.local/bin/tailscale" "$HOME/.local/bin/tailscaled"
 			rm -rf /tmp/tailscale.tgz "/tmp/tailscale_${ts_version}_amd64"
 			echo "  Tailscale installed. Run: sudo tailscaled & && sudo tailscale up"
+		else
+			echo "  Warning: Failed to fetch Tailscale version, skipping Tailscale install"
 		fi
 	fi
 
@@ -782,9 +784,14 @@ install_apt_packages() {
 	install_npm_package "bazelisk" "bazelisk" "@aspect/bazelisk"
 
 	# Install piper-tts (text-to-speech)
-	if ! command -v piper >/dev/null 2>&1 && command -v pip3 >/dev/null 2>&1; then
-		echo "Installing piper-tts..."
-		pip3 install --user piper-tts 2>/dev/null || pip3 install --user --break-system-packages piper-tts || echo "  Warning: Failed to install piper-tts (network issue?)"
+	prompt_ai_install
+	if [[ "$INSTALL_AI" == true ]] && ! command -v piper >/dev/null 2>&1; then
+		if command -v pip3 >/dev/null 2>&1; then
+			echo "Installing piper-tts..."
+			pip3 install --user piper-tts 2>/dev/null || pip3 install --user --break-system-packages piper-tts || echo "  Warning: Failed to install piper-tts (network issue?)"
+		else
+			echo "Skipping piper-tts (pip3 not installed)"
+		fi
 	fi
 
 	# Create fd alias (Debian/Ubuntu installs as fdfind)
@@ -941,6 +948,7 @@ update_packages() {
 	fi
 
 	# Update pip packages (no safe "update all" — list managed packages explicitly)
+	prompt_ai_install
 	if [[ "$INSTALL_AI" == true ]] && command -v pip3 >/dev/null 2>&1; then
 		echo "Updating pip packages..."
 		pip3 install --upgrade piper-tts 2>/dev/null || pip3 install --upgrade --break-system-packages piper-tts 2>/dev/null || true

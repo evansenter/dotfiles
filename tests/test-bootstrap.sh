@@ -842,6 +842,12 @@ test_prompt_tailscale_install_detects_installed() {
     [[ $rc -eq 0 ]] && grep -q '^VALUE=true$' <<< "$out"
 }
 
+test_install_ai_and_tailscale_are_independent() {
+    local out
+    out=$(INSTALL_AI=true _run_sourced 'PATH=; prompt_ai_install; prompt_tailscale_install; echo "AI=$INSTALL_AI TS=$INSTALL_TAILSCALE"') || return 1
+    grep -q '^AI=true TS=false$' <<< "$out"
+}
+
 # ============================================================================
 # Self-update re-exec tests
 # ============================================================================
@@ -1038,6 +1044,7 @@ main() {
     run_test "prompt_tailscale_install skips on non-TTY" "test_prompt_tailscale_install_skips_non_tty"
     run_test "INSTALL_TAILSCALE default honours the environment" "test_install_tailscale_default_is_env_respecting"
     run_test "prompt_tailscale_install detects installed tailscale" "test_prompt_tailscale_install_detects_installed"
+    run_test "INSTALL_AI and INSTALL_TAILSCALE are independent" "test_install_ai_and_tailscale_are_independent"
     echo ""
 
     echo "=== self-update re-exec ==="
