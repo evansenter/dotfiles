@@ -53,6 +53,14 @@ export LESS='-R'
 # Claude Code statusline - disable hyperlinks due to injection corruption (#172)
 export STATUSLINE_NO_LINKS=1
 
+# Mosh (mosh-server / gmosh-server) strips OSC 8 hyperlinks and misparses
+# semicolon-delimited SGR 58 underline colors. Disable OSC 8 hyperlinks so CLIs
+# (supports-hyperlinks, Jetski/AGY CLI, etc.) render fallback URLs cleanly.
+if [[ "$(ps -o comm= -p "${PPID:-0}" 2>/dev/null)" == *mosh-server* ]]; then
+    export FORCE_HYPERLINK=0
+    export AGY_CLI_FORCE_OSC8=0
+fi
+
 # Suppress Node.js deprecation warnings (e.g., DEP0040 punycode)
 export NODE_NO_WARNINGS=1
 
