@@ -38,16 +38,14 @@ Non-obvious autonomy:
 
 ## Model Policy
 
-Default is opus (Claude Opus 5) — `settings.json` for interactive sessions, `--model opus` in `claude-code-review.yml` for the CI reviewer. Agents pin a tier in their frontmatter: opus for `audit-*` / `rfc-*` / `improve-workflow` (judgment-heavy sweeps), sonnet for `summarize-work`, haiku for `status-report`. Fable is ~2x opus per token; use it only when asked for by name. The `@claude` mention workflow is deliberately unpinned and tracks the action default.
+Default is the `opus` alias (the current Opus) — `settings.json` for interactive sessions, `--model opus` in `claude-code-review.yml` for the CI reviewer. Agents pin a tier alias in their frontmatter: opus for `audit-*` / `rfc-*` / `improve-workflow` (judgment-heavy sweeps), sonnet for `summarize-work`, haiku for `status-report`. Fable costs well over twice Opus per token; use it only when asked for by name. The `@claude` mention workflow is deliberately unpinned and tracks the action default.
 
-### Working with Opus 5
+### Working Style
 
-Behaviors worth counteracting — see the migration guide in the `claude-api` skill for the full list:
-
-- **Length.** Keep responses focused and brief; put most of the response on the main answer rather than caveats. Match written deliverables (especially Markdown files) to what the task needs — no filler sections or redundant summaries. Lowering effort does not reliably shorten visible output; say so in the prompt instead.
+- **Length.** Keep responses focused and brief; put most of the response on the main answer rather than caveats. Match written deliverables (especially Markdown files) to what the task needs — no filler sections or redundant summaries.
 - **Scope.** Deliver what was asked at the scope intended. Make routine judgment calls; check in only when readings diverge materially. If the ask looks mistaken, say so in a sentence and keep going rather than quietly widening or narrowing it. Finish the whole task and report completion only when it's actually done.
 - **Delegation.** Subagents multiply cost and latency — each re-establishes context and reports back. Delegate genuinely independent, sizeable tracks; do the rest inline. Never fan out more than 20 agents unless explicitly asked. Verification belongs in the main loop, not in a subagent.
-- **Verification.** Don't add "double-check your answer" instructions — Opus 5 verifies its own work, and telling it to causes over-verification.
+- **Verification.** Don't write "double-check your answer" steps or verify-with-a-subagent phases into prompts, commands, or agents — the model verifies its own work, and telling it to causes over-verification.
 - **Corrections.** Only correct an earlier statement when the error changes the user's code or decisions. State it plainly and move on; don't ruminate or tally past mistakes. A follow-up question is not by itself a signal that something was wrong.
 
 ## Quality Gates

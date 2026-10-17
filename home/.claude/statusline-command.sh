@@ -313,7 +313,7 @@ fi
 # Final hyperlink reset to ensure no unclosed hyperlinks leak
 LINK_RESET=$'\e]8;;\e\\'
 
-# Model name — prefer the friendly display_name (e.g. "Opus 4.8") over the raw id
+# Model name — prefer the friendly display_name (e.g. "Opus 5.5") over the raw id
 model_display="${model_name:-$model_id}"
 
 # Context window usage percentage
