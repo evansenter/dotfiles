@@ -26,7 +26,7 @@ brew "zoxide"                 # Smart cd command
 brew "atuin"                  # Shell history search/sync
 brew "direnv"                 # Directory-specific env vars
 brew "glow"                   # Terminal markdown viewer
-brew "tldr"                   # Simplified man pages
+brew "tlrc"                   # Simplified man pages (tldr client)
 brew "watch"                  # Run command periodically
 
 # Languages & Runtimes
