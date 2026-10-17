@@ -21,3 +21,7 @@ home/.config/zellij/layouts/*
 !home/.config/zellij/layouts/default.kdl
 !home/.config/zellij/layouts/default.swap.kdl
 home/.config/zellij/layouts/saved-layout.kdl
+
+# claude.ai account skills synced by Claude Code (lands here because
+# ~/.claude/skills is symlinked into the repo)
+home/.claude/skills/synced/
