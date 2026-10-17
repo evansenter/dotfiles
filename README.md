@@ -51,8 +51,11 @@ Minimal macOS/Linux dotfiles for a modern terminal setup with Catppuccin Mocha t
 | `/event-bus-status` | Overview of active sessions and recent events |
 | `/broadcast` | Send message to other Claude Code sessions |
 | `/session-dump` | Dump recent conversation to file |
+| `/rfc-create` | Create RFC-style issues with structured analysis |
+| `/rfc-respond` | Respond to RFC-style issues |
+| `/schedule-audits` | Weekly Routine that runs the `audit-*` agents |
 
-**Agents** (invoked via Task tool for background/complex work):
+**Agents** (invoked via the Agent tool for background/complex work):
 | Agent | Description |
 |-------|-------------|
 | `status-report` | Repo status with recent work, open PRs/issues, and recommendations |
@@ -63,8 +66,6 @@ Minimal macOS/Linux dotfiles for a modern terminal setup with Catppuccin Mocha t
 | `audit-docs` | CLAUDE.md, README, and documentation quality |
 | `audit-workflows` | Command contradictions and inconsistencies |
 | `improve-workflow` | Data-driven workflow improvements from session analytics |
-| `rfc-create` | Create RFC-style issues with structured analysis |
-| `rfc-respond` | Respond to RFC-style issues |
 
 **Usage examples:**
 ```bash
@@ -83,8 +84,8 @@ Minimal macOS/Linux dotfiles for a modern terminal setup with Catppuccin Mocha t
 # Monitor CI with notification
 /watch-ci 123
 
-# Data-driven workflow improvements (agent)
-/improve-workflow
+# Draft an RFC issue for a design decision
+/rfc-create "cache invalidation for the statusline"
 ```
 
 ## Installation

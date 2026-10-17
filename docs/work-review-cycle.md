@@ -31,12 +31,11 @@ A guided development workflow for Claude Code that takes a task from issue to me
 
 Parses the input (issue number, URL, event bus ID, or description), fetches context, and presents a scope proposal. Numbers are checked as GitHub issues first, then event bus events — so `/work 2883` on a `test_flaky` event works without manually explaining context. Optionally runs **guided development** — a multi-phase process:
 
-1. **Explore** — Launch parallel `code-explorer` agents to understand the codebase
-2. **Clarify** — Structured design conversation (edge cases, integration points, scope)
-3. **Architect** — Parallel `code-architect` agents propose approaches; you pick one
-4. **Document** — Structured implementation plan
-5. **Context Check** — Warn if context window is >70% full before implementation
-6. **Derive Tasks** — Break plan into implementation todos
+1. **Explore** — Read the code the change touches (one `Explore` agent only for wide searches)
+2. **Clarify** — Resolve open questions with you (edge cases, integration points, scope)
+3. **Design** — For a real architectural choice, 2-3 approaches with trade-offs; you pick one
+4. **Context Check** — Warn if context window is >70% full before implementation
+5. **Derive Tasks** — Break the approach into implementation todos
 
 Creates a task list with `[work:ID]` prefix and checkpoint tasks (review, PR, CI, merge, reflect).
 
@@ -48,7 +47,7 @@ Work through tasks. The task list tracks progress. WIP state is automatically ch
 
 Before pushing:
 - Summarize changes
-- Run `pr-review-toolkit:code-reviewer` agent
+- Run the built-in `code-review` skill
 - Check test/example coverage gaps
 - Security spot-check (scans for auth, crypto, config, dependency changes)
 - Loop until clean
@@ -57,7 +56,7 @@ Before pushing:
 
 - Verify quality gates pass
 - Check for main drift (optionally rebase)
-- Commit, push, open PR via `commit-push-pr` skill
+- Commit, push, and open or update the PR with `git`/`gh`
 - Auto-start `/watch-ci`
 
 ### 5. Monitor CI (`/watch-ci`)

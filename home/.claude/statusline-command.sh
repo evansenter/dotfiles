@@ -5,7 +5,7 @@
 
 # Claude Code status line script
 # Usage: Called automatically by Claude Code with JSON on stdin
-# Example: echo '{"workspace":{"current_dir":"/path"},"context_window":{"current_usage":{"input_tokens":50000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0},"context_window_size":1000000},"model":{"id":"claude-opus-4-6"}}' | ~/.claude/statusline-command.sh
+# Example: echo '{"workspace":{"current_dir":"/path"},"context_window":{"current_usage":{"input_tokens":50000,"cache_creation_input_tokens":0,"cache_read_input_tokens":0},"context_window_size":1000000},"model":{"id":"claude-opus-5-5"}}' | ~/.claude/statusline-command.sh
 
 # Collect all output in a buffer to avoid interleaving with CC status messages
 exec 3>&1  # Save stdout
