@@ -61,11 +61,11 @@ jobs:
             REPO: ${{ github.repository }}
             PR_NUMBER: ${{ github.event.pull_request.number }}
 
-            ${{ steps.prompt.outputs.use_file == 'true' && 'First, read the review instructions from /tmp/review-prompt.md using your Read tool. Then follow those instructions to review this PR.' || 'Review this PR for code quality, bugs, security issues, and adherence to project conventions (check CLAUDE.md). Check for previous "Feedback Addressed" comments to avoid re-raising resolved issues. Be strict: REQUEST_CHANGES for any issues found, only APPROVE if genuinely ready to merge. Submit your review using gh api repos/$REPO/pulls/$PR_NUMBER/reviews with inline comments on specific files/lines and event set to APPROVE or REQUEST_CHANGES. Start the review body with: > **Prompt:** Fallback (centralized prompt fetch failed)' }}
+            ${{ steps.prompt.outputs.use_file == 'true' && 'First, read the review instructions from /tmp/review-prompt.md using your Read tool. Then follow those instructions to review this PR.' || 'Review this PR for code quality, bugs, security issues, and adherence to project conventions (check CLAUDE.md). Check for previous "Feedback Addressed" comments to avoid re-raising resolved issues. REQUEST_CHANGES only for Critical issues or for Important issues that name a concrete failure scenario (inputs or state leading to a wrong result); otherwise APPROVE and post the rest as inline Suggestions. Submit your review using gh api repos/$REPO/pulls/$PR_NUMBER/reviews with inline comments on specific files/lines and event set to APPROVE or REQUEST_CHANGES. Start the review body with: > **Prompt:** Fallback (centralized prompt fetch failed)' }}
 
             Use the REPO and PR_NUMBER variables provided above.
           # Tools required by the centralized prompt (see contrib/prompts/claude-review.md).
-          # Model: opus (Claude Opus 5) — matches the interactive Claude Code default in
-          # home/.claude/settings.json, at roughly half Fable's price. Bump to --model
-          # fable if review depth on a given repo turns out to need it.
+          # Model: the opus alias — matches the interactive Claude Code default in
+          # home/.claude/settings.json, at well under half Fable's per-token price.
+          # Bump to --model fable if review depth on a given repo turns out to need it.
           claude_args: '--model opus --allowed-tools "Read,Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr comment:*),Bash(gh pr review:*),Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh api:*)"'
