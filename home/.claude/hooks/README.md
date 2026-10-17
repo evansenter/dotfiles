@@ -49,9 +49,12 @@ Session Start
 │      │      (blocks if ★ Insight    │
 │      │       without publish_event) │
 │      │   4. wake-state.sh idle      │
-│      │      (never blocks — last so │
-│      │       it can't affect which  │
+│      │      (never blocks — after   │
+│      │       the blockers so it     │
+│      │       can't affect which     │
 │      │       block decision wins)   │
+│      │   5. iterm-cc-status.sh      │
+│      │      (also on 9 other events)│
 │      │                              │
 │      ▼                              │
 │  (repeat)                           │
@@ -156,6 +159,17 @@ Session End / Agent Teams
 **Input:** Consumes stdin (required) but doesn't use it. State passed as argument.
 
 **Output:** None (zellij pipe commands only)
+
+---
+
+### iterm-cc-status.sh
+**Trigger:** Every event iTerm2's integration registers on — `SessionStart`, `SessionEnd`, `UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `PermissionRequest`, `Notification`, `Stop`, `StopFailure`, `SubagentStop`. Always registered last in each event's list.
+
+**Purpose:** Guard for iTerm2's Claude Code status integration. iTerm2 installs `~/.config/iterm2/cc-status` (a symlink into `iTerm.app`) and writes direct calls to it into `settings.json`. Because `settings.json` is shared across machines, a direct call would fail on every event wherever iTerm2 isn't installed (Linux, SteamOS, other Macs).
+
+**Actions:** If `cc-status` is executable, `exec` it with stdin and args untouched. Otherwise consume stdin and exit 0 silently. Override the path with `ITERM_CC_STATUS` (used by tests).
+
+**Gotcha:** iTerm2 rewrites `settings.json` when it enables the integration: it reformats the file to `"key" : value` style and adds its own direct `cc-status` entries. If that happens, drop iTerm's entries and keep this guard; `make test-hooks` fails while a direct `iterm2/cc-status` path is in `settings.json`, or if any of the events above loses its guard entry.
 
 ---
 
