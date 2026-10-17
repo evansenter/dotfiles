@@ -28,6 +28,14 @@
             "command": "~/.claude/hooks/wake-state.sh busy"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/iterm-cc-status.sh"
+          }
+        ]
       }
     ],
     "Stop": [
@@ -50,6 +58,14 @@
             "command": "~/.claude/hooks/wake-state.sh idle"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/iterm-cc-status.sh"
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -60,6 +76,14 @@
             "command": "~/.claude/hooks/session-start.sh"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/iterm-cc-status.sh"
+          }
+        ]
       }
     ],
     "SessionEnd": [
@@ -68,6 +92,14 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/session-end.sh"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/iterm-cc-status.sh"
           }
         ]
       }
@@ -128,6 +160,64 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/notification.sh"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/iterm-cc-status.sh"
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/iterm-cc-status.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/iterm-cc-status.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/iterm-cc-status.sh"
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/iterm-cc-status.sh"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/iterm-cc-status.sh"
           }
         ]
       }
