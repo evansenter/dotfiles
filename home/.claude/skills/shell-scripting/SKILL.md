@@ -95,7 +95,7 @@ dest_dir="$(cd "$(dirname "$dest_file")" && pwd -P)"
 - Quote all variable expansions: `"$var"`, `"${var}"`, `"$@"`
 - Use `${var:-default}` for optional variables with defaults
 - Use `${var:?error message}` for required variables
-- Use `local` in functions: `local result="$(command)"`
+- Use `local` in functions, declared separately from a command-substitution assignment so the command's exit status isn't masked (shellcheck SC2155): `local result; result="$(command)"`
 
 ## Output
 
