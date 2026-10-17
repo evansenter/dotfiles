@@ -7,7 +7,7 @@ description: Workflow-aware task execution with checkpoints
 
 Execute tasks with checkpoints: [guided development] → develop → `/pr-review local` → `/pr-create` → `/watch-ci` → `/pr-review remote` → merge → reflect.
 
-Guided development (optional) runs exploration agents, asks clarifying questions, and designs architecture before implementation.
+Guided development (optional) explores the code, resolves open questions with the user, and settles the design before implementation.
 
 ## Usage
 
@@ -128,75 +128,19 @@ This prevents design specs or other artifacts from being committed to main, whic
 
 Ask: **Yes, explore first (Recommended)** / No, proceed directly
 
-**Default to "Yes"** - the cost of exploration is usually worth it, especially since issues may be stale and designs benefit from fresh review.
-
-**Only skip if ALL of these are true:**
-- You've already read the relevant code in this session
-- The change touches ≤3 files
-- No architectural decisions to make
-- Requirements are unambiguous
-- **OR** `PARALLEL_CONTEXT` indicates parent already explored
-
-**When skipping, justify it to the user.**
-
----
+Recommend exploring unless you've already read the relevant code this session, the change is small and unambiguous with no architectural decision, or `PARALLEL_CONTEXT` says the parent session already explored. Issues go stale, and designs benefit from a fresh look at the current code. When skipping, say why.
 
 #### Guided Development Phases
 
-**Effort guidance:** Vary reasoning depth by phase. Explore and implement at normal depth. Clarify and architect deserve deep, thorough thinking. Review feedback that disagrees with your opinion deserves maximum scrutiny.
+**Explore.** Read the code the change touches: similar features, the abstractions involved, and integration points. Do it yourself; use one built-in `Explore` agent only when the search genuinely spans many directories or naming conventions you can't guess.
 
-##### Phase 1: Explore
+**Clarify.** Before designing, resolve what the issue leaves open — intent, edge cases, integration points, scope boundaries — with AskUserQuestion, recommended option first. If the user says "whatever you think is best", give your recommendation and get an explicit yes.
 
-Launch 2-3 `feature-dev:code-explorer` agents in parallel, each targeting different aspects:
-- "Find features similar to [feature] and trace their implementation"
-- "Map the architecture and abstractions for [feature area]"
-- "Identify integration points and dependencies"
+**Design.** When there's a real architectural choice, present 2-3 approaches (for example: smallest change with maximum reuse, cleaner structure, pragmatic middle) with their trade-offs and your recommendation, and ask which to take. When there isn't, state the approach in a few sentences and move on.
 
-After agents return, read all identified files to build deep understanding.
+**Context check.** If more than 70% of the context window is used, suggest compacting before implementation: the pre-compact hook checkpoints WIP state, but a clean boundary is better than a mid-edit compaction.
 
-##### Phase 2: Clarify
-
-**CRITICAL: Do not skip this phase.**
-
-Use `superpowers:brainstorming` to structure the design conversation. Feed it the exploration findings + issue details. This skill will:
-- Explore user intent and requirements
-- Identify edge cases, integration points, and scope boundaries
-- Propose approaches and get approval before proceeding
-
-If user says "whatever you think is best", provide your recommendation and get explicit confirmation.
-
-##### Phase 3: Architect
-
-Launch 2-3 `feature-dev:code-architect` agents for different approaches:
-- **Minimal changes**: Smallest change, maximum reuse
-- **Clean architecture**: Maintainability, elegant abstractions
-- **Pragmatic balance**: Speed + quality
-
-Review all approaches and form your opinion on which fits best.
-
-Present to user:
-- Brief summary of each approach
-- Trade-offs comparison
-- Your recommendation with reasoning
-
-Ask which approach they prefer.
-
-##### Phase 4: Document
-
-Use `superpowers:writing-plans` to create a structured implementation plan. Feed it:
-- Key files to modify/create (from architecture phase)
-- Decisions made from clarifying questions
-- Chosen architecture approach
-
-This produces a bite-sized plan with task structure that feeds directly into Phase 5.
-
-##### Phase 4b: Context Check
-
-Before starting implementation, check how much of the context window has been used. If >70% full, proactively inform the user: "Context is high — consider compacting before implementation to avoid mid-work compaction." The pre-compact hook will checkpoint WIP state if compaction happens, but it's better to compact at a clean boundary.
-
-##### Phase 5: Derive Tasks
-
-Based on the architecture plan, derive final implementation tasks. These replace the initial tasks from step 5.
+**Derive tasks.** Turn the chosen approach into the final implementation tasks; they replace the initial tasks from step 5.
 
 ---
 
@@ -290,7 +234,7 @@ mcp__agent-event-bus__publish_event(
 )
 ```
 
-Suggest `/commit-commands:clean_gone`.
+Suggest pruning merged branches: `git fetch --prune && git for-each-ref --format='%(refname:short) %(upstream:track)' refs/heads | awk '$2 == "[gone]" {print $1}'` lists local branches whose remote is gone; delete them with `git branch -D` after confirming.
 
 **Reflect**:
 - **Difficulty**: Rate Easy/Medium/Hard. What was harder than expected?

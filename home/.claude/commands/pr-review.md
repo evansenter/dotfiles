@@ -40,11 +40,11 @@ Skill(skill="code-review", args="medium")
 
 Scale effort to the diff: `args="low"` for small or docs-only changes, `args="high"` for large or risky diffs (security-sensitive files, >10 files changed).
 
-**Fallback** (if the built-in skill is unavailable), use the plugin agent via the Agent tool:
+**Fallback** (if the built-in skill is unavailable), delegate one review to a general-purpose agent:
 
 ```
-Agent(subagent_type="pr-review-toolkit:code-reviewer",
-     prompt="Review the local diff (git diff against the base branch) for bugs, security issues, and convention violations. Report findings by severity.")
+Agent(subagent_type="general-purpose",
+     prompt="Review the local diff (git diff against the base branch) for bugs, security issues, and convention violations. Report every finding with its severity and confidence, and the file and line it's anchored to.")
 ```
 
 ### 3. Check Coverage Gaps
@@ -189,9 +189,9 @@ Continue until ALL items have answers, including Suggestions.
 
 ### 7. Act on Decisions
 
-For **Implement** decisions, use `superpowers:receiving-code-review` before making changes. This ensures you verify the reviewer's suggestion is technically correct and won't introduce regressions — don't blindly implement feedback.
+Reviewers lack your context, so check each **Implement** item against the code before changing anything: confirm the problem is real and the suggested fix won't regress something else. If it turns out wrong, say so with the reasoning instead of implementing it.
 
-- **Implement**: Verify via receiving-code-review, then fix
+- **Implement**: Confirm against the code, then fix
 - **Skip**: Note and move on
 - **Defer**: Create GitHub issue with appropriate label:
   - `priority:high` - Blocks other work, critical bug

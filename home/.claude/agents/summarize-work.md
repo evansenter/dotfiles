@@ -91,9 +91,9 @@ git diff main...HEAD -- <file1> <file2> <file3>
 
 Include only Critical and Important files (typically 3-6 files). This lets users quickly review the most important changes without scrolling through the full diff.
 
-## Offer to Post Summary
+## PR Comment Freshness
 
-After generating the summary, offer to post it to the PR if conditions are met.
+After the summary, report whether it should be posted to the PR. Don't post it yourself — the caller asks the user.
 
 ### 1. Gather Data
 
@@ -113,15 +113,8 @@ gh api "repos/$(gh repo view --json nameWithOwner -q .nameWithOwner)/issues/$(gh
 
 Compare the data gathered above:
 
-- If no PR → skip (nothing to post to)
-- If no existing "## Work Summary" comment → offer to post
-- If existing summary's `created_at` < HEAD commit timestamp → offer to post (stale)
-- Otherwise → skip (summary is current)
+- No PR → nothing to post
+- No existing "## Work Summary" comment, or its `created_at` is older than the HEAD commit → recommend posting (missing or stale)
+- Otherwise → the posted summary is current
 
-### 3. Ask User
-
-If stale/missing, use AskUserQuestion: "Post summary to PR #N?" with "Post (Recommended)" / "Skip"
-
-### 4. Post Summary
-
-If approved, use `gh pr comment` with "## Work Summary" header as marker for future staleness detection. Pass the body via `--body-file -` and a single-quoted heredoc — a bare `--body "..."` lets the shell evaluate `[[`, `==`, and parens in the markdown.
+When posting is recommended, end with the exact command for the caller: `gh pr comment <N> --body-file -` fed by a single-quoted heredoc whose body starts with the `## Work Summary` marker (a bare `--body "..."` lets the shell evaluate `[[`, `==`, and parens in the markdown).

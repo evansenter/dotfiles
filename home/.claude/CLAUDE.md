@@ -38,7 +38,7 @@ Non-obvious autonomy:
 
 ## Model Policy
 
-Default is the `opus` alias (the current Opus) — `settings.json` for interactive sessions, `--model opus` in `claude-code-review.yml` for the CI reviewer. Agents pin a tier alias in their frontmatter: opus for `audit-*` / `rfc-*` / `improve-workflow` (judgment-heavy sweeps), sonnet for `summarize-work`, haiku for `status-report`. Fable costs well over twice Opus per token; use it only when asked for by name. The `@claude` mention workflow is deliberately unpinned and tracks the action default.
+Default is the `opus` alias (the current Opus) — `settings.json` for interactive sessions, `--model opus` in `claude-code-review.yml` for the CI reviewer. Agents pin a tier alias in their frontmatter: opus for `audit-*` / `improve-workflow` (judgment-heavy sweeps), sonnet for `summarize-work`, haiku for `status-report`. Fable costs well over twice Opus per token; use it only when asked for by name. The `@claude` mention workflow is deliberately unpinned and tracks the action default.
 
 ### Working Style
 
