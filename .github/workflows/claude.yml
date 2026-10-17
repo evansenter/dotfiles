@@ -46,7 +46,7 @@ jobs:
           additional_permissions: |
             actions: read
           # Deliberately unpinned: @claude responses track the claude-code-action
-          # default model, matching every other repo.
+          # default model (Sonnet 5 as of v2.1.197), matching every other repo.
           # Only claude-code-review.yml pins a model, because review depth is the
           # thing worth paying for. Ask for a model by name in the @claude comment
           # when a specific task needs one.
