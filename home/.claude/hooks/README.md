@@ -169,7 +169,7 @@ Session End / Agent Teams
 
 **Actions:** If `cc-status` is executable, `exec` it with stdin and args untouched. Otherwise consume stdin and exit 0 silently. Override the path with `ITERM_CC_STATUS` (used by tests).
 
-**Gotcha:** iTerm2 rewrites `settings.json` when it enables the integration: it reformats the file to `"key" : value` style and adds its own direct `cc-status` entries. If that happens, drop iTerm's entries and keep this guard; `make test-hooks` fails while a direct `iterm2/cc-status` path is in `settings.json`.
+**Gotcha:** iTerm2 rewrites `settings.json` when it enables the integration: it reformats the file to `"key" : value` style and adds its own direct `cc-status` entries. If that happens, drop iTerm's entries and keep this guard; `make test-hooks` fails while a direct `iterm2/cc-status` path is in `settings.json`, or if any of the events above loses its guard entry.
 
 ---
 

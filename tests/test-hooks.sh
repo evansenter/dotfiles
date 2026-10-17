@@ -1295,10 +1295,23 @@ test_iterm_cc_status_forwards_stdin_and_args() {
 
 test_iterm_cc_status_settings_use_guard() {
     # settings.json must call the guard, never iTerm's binary directly
-    # (a direct path errors on every event on machines without iTerm2)
+    # (a direct path errors on every event on machines without iTerm2),
+    # and every event iTerm2 registers on must keep its guard entry
     local settings="$SCRIPT_DIR/../home/.claude/settings.json"
-    ! grep -q 'iterm2/cc-status' "$settings" && \
-        grep -q 'hooks/iterm-cc-status.sh' "$settings"
+    ! grep -q 'iterm2/cc-status' "$settings" || return 1
+
+    # Real jq: the harness puts a mock jq first on PATH, which would return
+    # nothing here and make this check pass vacuously
+    local missing
+    missing=$(PATH="$(_real_jq_path):$PATH" jq -r '
+        ["Notification","PermissionRequest","PostToolUse","PreToolUse",
+         "SessionEnd","SessionStart","Stop","StopFailure","SubagentStop",
+         "UserPromptSubmit"]
+        - [.hooks | to_entries[]
+           | select([.value[].hooks[].command] | any(endswith("hooks/iterm-cc-status.sh")))
+           | .key]
+        | .[]' "$settings") || return 1
+    [[ -z "$missing" ]]
 }
 
 # ============================================================================
