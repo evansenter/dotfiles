@@ -1263,6 +1263,45 @@ test_tmux_status_consumes_stdin() {
 }
 
 # ============================================================================
+# iterm-cc-status.sh tests
+# ============================================================================
+
+test_iterm_cc_status_syntax() {
+    bash -n "$HOOKS_DIR/iterm-cc-status.sh"
+}
+
+test_iterm_cc_status_graceful_no_binary() {
+    # Without cc-status (Linux, Macs without iTerm2), should exit silently
+    local output
+    local exit_code=0
+    output=$(echo '{"session_id":"test"}' | ITERM_CC_STATUS="/nonexistent/cc-status" bash "$HOOKS_DIR/iterm-cc-status.sh" 2>&1) || exit_code=$?
+
+    [[ $exit_code -eq 0 ]] && [[ -z "$output" ]]
+}
+
+test_iterm_cc_status_forwards_stdin_and_args() {
+    # With cc-status present, the hook JSON and args reach it unchanged
+    local tmp
+    tmp=$(mktemp -d)
+    printf '#!/bin/bash\necho "args=$*"\ncat\n' > "$tmp/cc-status"
+    chmod +x "$tmp/cc-status"
+
+    local output
+    output=$(echo '{"session_id":"test"}' | ITERM_CC_STATUS="$tmp/cc-status" bash "$HOOKS_DIR/iterm-cc-status.sh" a b)
+    rm -rf "$tmp"
+
+    [[ "$output" == $'args=a b\n{"session_id":"test"}' ]]
+}
+
+test_iterm_cc_status_settings_use_guard() {
+    # settings.json must call the guard, never iTerm's binary directly
+    # (a direct path errors on every event on machines without iTerm2)
+    local settings="$SCRIPT_DIR/../home/.claude/settings.json"
+    ! grep -q 'iterm2/cc-status' "$settings" && \
+        grep -q 'hooks/iterm-cc-status.sh' "$settings"
+}
+
+# ============================================================================
 # zj-status.sh tests
 # ============================================================================
 
@@ -2469,6 +2508,13 @@ main() {
     run_test "bounded consume tracks multi-event peeked count" "test_drain_directed_bounded_consume_multi_event"
     run_test "registered before enforce-insight (block precedence)" "test_drain_directed_registered_before_enforce_insight"
     run_test "lib keeps client-side --exclude (bounded-consume safety)" "test_eventbus_lib_uses_client_side_exclude"
+    echo ""
+
+    echo "=== iterm-cc-status.sh ==="
+    run_test "syntax check" "test_iterm_cc_status_syntax"
+    run_test "graceful degradation (no cc-status)" "test_iterm_cc_status_graceful_no_binary"
+    run_test "forwards stdin and args to cc-status" "test_iterm_cc_status_forwards_stdin_and_args"
+    run_test "settings.json uses the guard, not cc-status directly" "test_iterm_cc_status_settings_use_guard"
     echo ""
 
     # Summary
