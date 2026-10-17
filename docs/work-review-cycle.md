@@ -154,8 +154,8 @@ Most of the workflow lives in `~/.claude/` which is symlinked by `bootstrap.sh` 
 | Commands (`/work`, `/pr-review`, etc.) | `~/.claude/commands/` | Yes — via dotfiles symlink |
 | Hooks (session-start, pre-compact, etc.) | `~/.claude/hooks/` | Yes — via dotfiles symlink |
 | Skills (shell-scripting, hook-authoring, etc.) | `~/.claude/skills/` | Yes — via dotfiles symlink |
-| Agents (audit-*, rfc-*, etc.) | `~/.claude/agents/` | Yes — via dotfiles symlink |
-| Plugins (superpowers, feature-dev, etc.) | `~/.claude/settings.json` | Yes — via dotfiles symlink |
+| Agents (audit-*, summarize-work, etc.) | `~/.claude/agents/` | Yes — via dotfiles symlink |
+| Plugins (explanatory-output-style, LSP servers) | `~/.claude/settings.json` | Yes — via dotfiles symlink |
 | Review prompt (`claude-review.md`) | Fetched from dotfiles GitHub URL | Yes — centralized |
 | `claude-code-review.yml` workflow | `.github/workflows/` per repo | **No — must copy** |
 | `claude.yml` workflow (@claude mentions) | `.github/workflows/` per repo | **No — must copy** |
