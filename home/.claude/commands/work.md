@@ -213,7 +213,7 @@ Spawn summarize-work agent to show what's being merged:
 
 When showing the output from summarize-work, always highlight the key files to look at, and the PR URL. Include any other relevant data as well.
 
-**Always** ask user via AskUserQuestion (Merge now / Wait). Never auto-merge. After merge:
+**Always** ask user via AskUserQuestion (Merge now / Wait), adding a "Post summary to PR" option when summarize-work recommends posting (it returns the exact command). Never auto-merge. After merge:
 
 ```
 mcp__agent-event-bus__publish_event(
@@ -247,6 +247,8 @@ Publish insights to event bus with session_id (`gotcha_discovered`, `pattern_fou
 Spawn improve-workflow agent — it handles memory persistence, session analytics, and workflow improvement suggestions:
 
 `Agent(subagent_type="improve-workflow", prompt="Analyze this session for workflow improvements")`
+
+Present its findings (at most 3) via AskUserQuestion — Implement / Skip / Defer (a GitHub issue labeled `improvement`) — and act on the answers.
 
 ---
 
