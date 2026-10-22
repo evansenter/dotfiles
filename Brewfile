@@ -70,6 +70,12 @@ cask "steam"
 cask "transmission"             # BitTorrent client
 cask "whatsapp"
 
+# Gateway-only (mac-mini): same hostname match as is_gateway_host in bootstrap.sh
+require "socket"
+if Socket.gethostname.split(".").first.match?(/\Amac-mini(-\d+)?\z/)
+  cask "jellyfin"             # Media server (http://localhost:8096)
+end
+
 # Casks - Fonts
 cask "font-jetbrains-mono-nerd-font"
 
