@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.evansenter.jellyfin</string>
+
+    <!-- Runs the server binary from the jellyfin cask headless, in place of the
+         Jellyfin.app menu-bar wrapper (which can't be given an environment). -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Applications/Jellyfin.app/Contents/MacOS/jellyfin</string>
+        <string>--webdir</string>
+        <string>/Applications/Jellyfin.app/Contents/Resources/jellyfin-web</string>
+        <string>--ffmpeg</string>
+        <string>/Applications/Jellyfin.app/Contents/MacOS/ffmpeg</string>
+        <string>--datadir</string>
+        <string>__HOME__/Library/Application Support/jellyfin</string>
+    </array>
+
+    <!-- On macOS 27, starting the FSEvents-backed config watcher blocks forever
+         and the server never logs or binds 8096; polling avoids FSEvents. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>DOTNET_USE_POLLING_FILE_WATCHER</key>
+        <string>1</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+
+    <key>StandardOutPath</key>
+    <string>__HOME__/.local/log/jellyfin.stdout</string>
+
+    <key>StandardErrorPath</key>
+    <string>__HOME__/.local/log/jellyfin.err</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

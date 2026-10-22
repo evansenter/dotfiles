@@ -704,6 +704,12 @@ test_launch_agent_substitutes_home() {
     return $ok
 }
 
+test_jellyfin_agent_uses_polling_file_watcher() {
+    # Without it the server hangs before logging or binding 8096 on macOS 27
+    grep -A1 'DOTNET_USE_POLLING_FILE_WATCHER' "$SCRIPT_DIR/../LaunchAgents/com.evansenter.jellyfin.plist" \
+        | grep -q '<string>1</string>'
+}
+
 test_launch_agent_idempotent_on_unchanged_plist() {
     _load_install_launch_agent
     local root home stub; root=$(mktemp -d); home=$(mktemp -d); stub=$(mktemp -d)
@@ -1030,6 +1036,7 @@ main() {
     run_test "sysload-writer tolerates top failure" "test_sysload_writer_tolerates_top_failure"
     run_test "launch agent substitutes __HOME__ and reloads" "test_launch_agent_substitutes_home"
     run_test "launch agent idempotent on unchanged plist" "test_launch_agent_idempotent_on_unchanged_plist"
+    run_test "jellyfin agent uses polling file watcher" "test_jellyfin_agent_uses_polling_file_watcher"
     echo ""
 
     echo "=== INSTALL_AI & INSTALL_TAILSCALE gating ==="
