@@ -393,6 +393,11 @@ install_launch_agents() {
 		install_launch_agent "com.evansenter.obsidian-mcp.plist"
 	fi
 
+	# Install Jellyfin server LaunchAgent (gateway host, from the jellyfin cask)
+	if is_gateway_host && [[ -x /Applications/Jellyfin.app/Contents/MacOS/jellyfin ]]; then
+		install_launch_agent "com.evansenter.jellyfin.plist"
+	fi
+
 	# Install sysload writer LaunchAgent (only if zellij is installed)
 	# Caches `top` output to ~/.cache/sysload every 10s so the zjstatus
 	# sysload widget can read it without spawning `top` per-tab-per-redraw.
