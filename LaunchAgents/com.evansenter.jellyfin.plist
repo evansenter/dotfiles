@@ -38,13 +38,16 @@
     <key>ThrottleInterval</key>
     <integer>30</integer>
 
+    <!-- stdout duplicates the rotating logs Jellyfin writes under its datadir/log;
+         keep only stderr for crashes before logging is up. -->
     <key>StandardOutPath</key>
-    <string>__HOME__/.local/log/jellyfin.stdout</string>
+    <string>/dev/null</string>
 
     <key>StandardErrorPath</key>
     <string>__HOME__/.local/log/jellyfin.err</string>
 
+    <!-- Standard, not Background: Background caps CPU/IO, which starves transcoding. -->
     <key>ProcessType</key>
-    <string>Background</string>
+    <string>Standard</string>
 </dict>
 </plist>
