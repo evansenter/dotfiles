@@ -39,6 +39,11 @@ alias lg="lazygit"
 alias zj="zellij"
 alias ccyolo="claude --dangerously-skip-permissions"
 
+# The Mac App Store Tailscale ships its CLI inside the app bundle, not on PATH
+if ! command -v tailscale &>/dev/null && [[ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]]; then
+    alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+fi
+
 # ==============================================================================
 # Git
 # ==============================================================================
