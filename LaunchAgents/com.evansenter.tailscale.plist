@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.evansenter.tailscale</string>
+
+    <!-- Open the Standalone app in the background at login. `open` exits once
+         the app is launched (or already running), so no KeepAlive. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/open</string>
+        <string>-g</string>
+        <string>-a</string>
+        <string>/Applications/Tailscale.app</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>__HOME__/.local/log/tailscale.out</string>
+
+    <key>StandardErrorPath</key>
+    <string>__HOME__/.local/log/tailscale.err</string>
+</dict>
+</plist>
