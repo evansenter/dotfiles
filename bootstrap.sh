@@ -402,7 +402,9 @@ install_launch_agents() {
 	# Opens the Standalone app at login so the gateway's tailnet services come
 	# back after a reboot. The app can't run before login (only the open-source
 	# tailscaled can, and the two don't coexist); with FileVault on, nothing
-	# runs before the first unlock anyway.
+	# runs before the first unlock anyway. Overlaps the app's own "Launch at
+	# login" toggle on purpose: that lives in app prefs and is lost on reinstall,
+	# while this is tracked here and restored by bootstrap (a double `open` is a no-op).
 	if is_gateway_host && [[ -d /Applications/Tailscale.app ]]; then
 		install_launch_agent "com.evansenter.tailscale.plist"
 	fi
