@@ -93,7 +93,7 @@ Find the issue's **Done when** section (in the body, or a triage comment the use
 - **Present**: check that each command exists (make target, test filter, script path), or is marked NEW and created by this work.
 - **Missing**: propose one from the code and tests (narrowest command that proves the change, plus `make check`) and confirm it in the scope question. On confirmation, add it to the issue body.
 - **Ad-hoc or `event:` input** (no issue): propose one the same way and confirm it in the scope; it goes in the PR body instead.
-- **Can't be written yet** (open design question): guided development (step 7) is then required, not optional, and must end with a confirmed done-when before step 8 creates tasks. If it still can't be written (an external blocker), stop and label the issue `blocked` rather than starting work.
+- **Can't be written yet** (open design question): guided development (step 7) is then required, not optional, and must end with a confirmed done-when before step 8 creates tasks. If it still can't be written (an external blocker), stop rather than starting work: label the issue `blocked`, or for ad-hoc input tell the user what blocks it.
 
 ### 5. Derive Initial Tasks
 
@@ -138,11 +138,11 @@ git checkout -b issue-<N>   # or adhoc-<slug>
 
 This prevents design specs or other artifacts from being committed to main, which causes merge conflicts on squash-merge.
 
-### 7. Guided Development (Optional)
+### 7. Guided Development (Optional unless step 4b requires it)
 
 Ask: **Yes, explore first (Recommended)** / No, proceed directly
 
-Recommend exploring unless you've already read the relevant code this session, the change is small and unambiguous with no architectural decision, or `PARALLEL_CONTEXT` says the parent session already explored. Issues go stale, and designs benefit from a fresh look at the current code. When skipping, say why.
+Not optional when step 4b found no writable done-when: explore and settle one before step 8. Otherwise, recommend exploring unless you've already read the relevant code this session, the change is small and unambiguous with no architectural decision, or `PARALLEL_CONTEXT` says the parent session already explored. Issues go stale, and designs benefit from a fresh look at the current code. When skipping, say why.
 
 #### Guided Development Phases
 
