@@ -92,7 +92,8 @@ Find the issue's **Done when** section (in the body, or a triage comment the use
 
 - **Present**: check that each command exists (make target, test filter, script path), or is marked NEW and created by this work.
 - **Missing**: propose one from the code and tests (narrowest command that proves the change, plus `make check`) and confirm it in the scope question. On confirmation, add it to the issue body.
-- **Can't be written** (open design question, external blocker): say so; the work stays turn-based, and step 7's guided development settles it first.
+- **Ad-hoc or `event:` input** (no issue): propose one the same way and confirm it in the scope; it goes in the PR body instead.
+- **Can't be written yet** (open design question): guided development (step 7) is then required, not optional, and must end with a confirmed done-when before step 8 creates tasks. If it still can't be written (an external blocker), stop and label the issue `blocked` rather than starting work.
 
 ### 5. Derive Initial Tasks
 
