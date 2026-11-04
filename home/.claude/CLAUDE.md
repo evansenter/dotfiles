@@ -72,6 +72,8 @@ Use `/work <issue-number>` for guided development. `/work --attach` to join an e
 
 A loop is repeating cycles of work until a stop condition is met. Pick the lightest primitive that fits, and write the verification check *before* handing work to a loop — if "done" can't be checked deterministically, keep it turn-based.
 
+**Done when.** Issues carry a **Done when** section (any heading level; the task issue form renders it as `###`): the exact command(s) whose success proves the work complete, plus the repo's baseline gate (`make check`). It is the stop condition `/work` and `/goal` loop against, and the `ready` label means an issue has one. Mark a test or script that doesn't exist yet as NEW. No done-command means turn-based, never `/goal`.
+
 - **Turn-based** (default): user steers each iteration. For exploratory or judgment-heavy work.
 - **Goal-based** (`/goal`): work with a checkable done-condition. Use deterministic criteria (tests pass, CI green, zero Critical findings) — the evaluator blocks premature "good enough" stops. Set a turn cap.
 - **Time-based** (`/loop <interval>`): polling external systems only. Prefer event-driven signals (event bus, background task notifications, `--watch` flags) over time-driven polling; when you must poll, use the longest interval that works.
