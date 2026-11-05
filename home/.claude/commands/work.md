@@ -7,6 +7,8 @@ description: Workflow-aware task execution with checkpoints
 
 Execute tasks with checkpoints: [guided development] → develop → `/pr-review local` → `/pr-create` → `/watch-ci` → `/pr-review remote` → merge → reflect.
 
+**Without local infrastructure** (cloud or remote sessions with no event bus, `mcp__github__*` tools or zellij): use `gh` / `gh api` for GitHub reads and writes, skip event-bus publishes and tab renames, and keep `[work:*]` tasks as the only progress record. Every checkpoint still applies.
+
 Guided development (optional) explores the code, resolves open questions with the user, and settles the design before implementation.
 
 ## Usage
@@ -84,6 +86,15 @@ Store this as `PARALLEL_CONTEXT` for use in scope presentation and guided develo
 
 For issues: `mcp__github__issue_read(method: "get", owner, repo, issue_number)` for title, body, labels.
 
+### 4b. Read the Done-When
+
+Find the issue's **Done when** section (in the body, or a triage comment the user accepted). It is the stop condition for the work: carry its commands into the scope, and run them before `/pr-review local`.
+
+- **Present**: check that each command exists (make target, test filter, script path), or is marked NEW and created by this work.
+- **Missing**: propose one from the code and tests (narrowest command that proves the change, plus `make check`) and confirm it in the scope question. On confirmation, add it to the issue body.
+- **Ad-hoc or `event:` input** (no issue): propose one the same way and confirm it in the scope; it goes in the PR body instead.
+- **Can't be written yet** (open design question): guided development (step 7) is then required, not optional, and must end with a confirmed done-when before step 8 creates tasks. If it still can't be written (an external blocker), stop rather than starting work: label the issue `blocked`, or for ad-hoc input tell the user what blocks it.
+
 ### 5. Derive Initial Tasks
 
 ultrathink: Break down into 2-6 implementation tasks (imperative form).
@@ -105,8 +116,11 @@ These are preliminary - if user opts into guided development, they'll be refined
 ### Context from Parent Session (if PARALLEL_CONTEXT exists)
 [Summary of decisions, constraints, and exploration from parent]
 
+### Done When
+<commands from step 4b>
+
 ### Checkpoints
-- /pr-review local → /pr-create → /watch-ci → /pr-review remote → merge → reflect
+- done-when passes → /pr-review local → /pr-create → /watch-ci → /pr-review remote → merge → reflect
 ```
 
 Ask via AskUserQuestion:
@@ -124,11 +138,11 @@ git checkout -b issue-<N>   # or adhoc-<slug>
 
 This prevents design specs or other artifacts from being committed to main, which causes merge conflicts on squash-merge.
 
-### 7. Guided Development (Optional)
+### 7. Guided Development (Optional unless step 4b requires it)
 
 Ask: **Yes, explore first (Recommended)** / No, proceed directly
 
-Recommend exploring unless you've already read the relevant code this session, the change is small and unambiguous with no architectural decision, or `PARALLEL_CONTEXT` says the parent session already explored. Issues go stale, and designs benefit from a fresh look at the current code. When skipping, say why.
+Not optional when step 4b found no writable done-when: explore and settle one before step 8. Otherwise, recommend exploring unless you've already read the relevant code this session, the change is small and unambiguous with no architectural decision, or `PARALLEL_CONTEXT` says the parent session already explored. Issues go stale, and designs benefit from a fresh look at the current code. When skipping, say why.
 
 #### Guided Development Phases
 
@@ -151,6 +165,7 @@ Create via TaskCreate, one per item:
 ```
 [work:${ID}] <task 1>
 [work:${ID}] <task 2>
+[work:${ID}] Run the done-when commands
 [work:${ID}] Run /pr-review local
 [work:${ID}] Create PR with /pr-create
 [work:${ID}] Monitor CI with /watch-ci
