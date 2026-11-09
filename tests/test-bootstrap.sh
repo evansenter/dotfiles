@@ -970,6 +970,124 @@ test_source_only_ignored_when_executed() {
 # Run all tests
 # ============================================================================
 
+# ============================================================================
+# npm-auth (~/.npmrc Artifact Registry token)
+# ============================================================================
+# Run home/.bin/npm-auth against a throwaway HOME with stubbed gcloud/npm.
+# Stubs go first on PATH so a real gcloud (dev machine, CI image) never runs.
+# NPM_AUTH_ACCOUNT / NPM_AUTH_TOKEN control the stub (empty = failure).
+
+NPM_AUTH="$SCRIPT_DIR/../home/.bin/npm-auth"
+NPM_AUTH_REGISTRY="https://us-npm.pkg.dev/artifact-foundry-prod/ah-3p-staging-npm/"
+
+_npm_auth_sandbox() {
+    local dir; dir=$(mktemp -d) || return 1
+    mkdir -p "$dir/home" "$dir/stubs"
+    cat > "$dir/stubs/gcloud" <<STUB
+#!/bin/bash
+case "\$*" in
+    "config get-value account") echo "\${NPM_AUTH_ACCOUNT-user@example.com}" ;;
+    "auth print-access-token") [[ -n "\${NPM_AUTH_TOKEN-tok}" ]] || exit 1; echo "\${NPM_AUTH_TOKEN-tok}" ;;
+    artifacts\ print-settings\ npm*)
+        echo "# Insert the following snippet into your .npmrc"
+        echo ""
+        echo "registry=$NPM_AUTH_REGISTRY"
+        echo "${NPM_AUTH_REGISTRY#https:}:always-auth=true" ;;
+    *) exit 1 ;;
+esac
+STUB
+    printf '#!/bin/bash\nexit 0\n' > "$dir/stubs/npm"
+    chmod +x "$dir/stubs/gcloud" "$dir/stubs/npm"
+    echo "$dir"
+}
+
+# Usage: _npm_auth <sandbox> [args...]
+_npm_auth() {
+    local dir="$1"; shift
+    HOME="$dir/home" PATH="$dir/stubs:$PATH" "$NPM_AUTH" "$@"
+}
+
+_file_mode() {
+    stat -c '%a' "$1" 2>/dev/null || stat -f '%Lp' "$1"
+}
+
+test_npm_auth_rewrites_stale_npmrc() {
+    # Reviewer's fixture, shaped like what older versions left behind: each run
+    # appended a blank line + the gcloud snippet comment + settings, so stale
+    # artifact-foundry-prod lines and blank lines pile up at the end, with no
+    # final newline. Unrelated config (and its interior blank line) must survive.
+    local dir; dir=$(_npm_auth_sandbox) || return 1
+    printf 'color=false\n\nsave-exact=true\n\n# Insert the following snippet into your .npmrc\n\nregistry=https://us-npm.pkg.dev/artifact-foundry-prod/old/\n//us-npm.pkg.dev/artifact-foundry-prod/old/:_authToken=expired\n\n# Insert the following snippet into your .npmrc\n\nregistry=https://us-npm.pkg.dev/artifact-foundry-prod/old/' \
+        > "$dir/home/.npmrc"
+    _npm_auth "$dir" >/dev/null || { rm -rf "$dir"; return 1; }
+    local rc=0 expected
+    expected=$(printf 'color=false\n\nsave-exact=true\nregistry=%s\n%s:_authToken=tok' \
+        "$NPM_AUTH_REGISTRY" "${NPM_AUTH_REGISTRY#https:}")
+    [[ "$(cat "$dir/home/.npmrc")" == "$expected" ]] || rc=1
+    [[ "$(_file_mode "$dir/home/.npmrc")" == "600" ]] || rc=1
+    rm -rf "$dir"
+    return $rc
+}
+
+test_npm_auth_is_idempotent() {
+    # Refreshing must replace the credential, not stack another copy of it.
+    local dir; dir=$(_npm_auth_sandbox) || return 1
+    printf 'color=false\n' > "$dir/home/.npmrc"
+    if ! { _npm_auth "$dir" && NPM_AUTH_TOKEN=tok2 _npm_auth "$dir"; } >/dev/null; then rm -rf "$dir"; return 1; fi
+    local rc=0
+    [[ $(grep -c '^registry=' "$dir/home/.npmrc") -eq 1 ]] || rc=1
+    [[ $(grep -c ':_authToken=' "$dir/home/.npmrc") -eq 1 ]] || rc=1
+    grep -q ':_authToken=tok2$' "$dir/home/.npmrc" || rc=1
+    grep -q '^color=false$' "$dir/home/.npmrc" || rc=1
+    rm -rf "$dir"
+    return $rc
+}
+
+test_npm_auth_creates_missing_npmrc() {
+    local dir; dir=$(_npm_auth_sandbox) || return 1
+    _npm_auth "$dir" >/dev/null || { rm -rf "$dir"; return 1; }
+    local rc=0
+    [[ $(wc -l < "$dir/home/.npmrc") -eq 2 ]] || rc=1
+    [[ "$(_file_mode "$dir/home/.npmrc")" == "600" ]] || rc=1
+    rm -rf "$dir"
+    return $rc
+}
+
+test_npm_auth_token_failure_leaves_npmrc_unchanged() {
+    # No token → don't strip the old credential and leave npm with nothing.
+    local dir; dir=$(_npm_auth_sandbox) || return 1
+    printf 'registry=%s\nkeep=me\n' "$NPM_AUTH_REGISTRY" > "$dir/home/.npmrc"
+    local before; before=$(cat "$dir/home/.npmrc")
+    local rc=0
+    NPM_AUTH_TOKEN='' _npm_auth "$dir" >/dev/null 2>&1 && rc=1                 # manual: fails
+    NPM_AUTH_TOKEN='' _npm_auth "$dir" --if-available >/dev/null 2>&1 || rc=1  # bootstrap: doesn't
+    [[ "$(cat "$dir/home/.npmrc")" == "$before" ]] || rc=1
+    # No temp files left behind next to ~/.npmrc
+    [[ $(find "$dir/home" -name '.npmrc.*' | wc -l) -eq 0 ]] || rc=1
+    rm -rf "$dir"
+    return $rc
+}
+
+test_npm_auth_if_available_skips_quietly() {
+    # Non-corp machine (no active account): bootstrap mode is a silent no-op,
+    # manual mode is an error that says why.
+    local dir; dir=$(_npm_auth_sandbox) || return 1
+    local rc=0 out
+    out=$(NPM_AUTH_ACCOUNT='' _npm_auth "$dir" --if-available 2>&1) || rc=1
+    [[ -z "$out" ]] || rc=1
+    [[ ! -e "$dir/home/.npmrc" ]] || rc=1
+    out=$(NPM_AUTH_ACCOUNT='' _npm_auth "$dir" 2>&1) && rc=1
+    grep -q 'no active gcloud account' <<< "$out" || rc=1
+    rm -rf "$dir"
+    return $rc
+}
+
+test_bootstrap_delegates_to_npm_auth() {
+    # One implementation: bootstrap must call the helper, not carry a copy.
+    grep -q 'home/.bin/npm-auth" --if-available' "$BOOTSTRAP" &&
+        ! grep -q 'gcloud auth print-access-token' "$BOOTSTRAP"
+}
+
 main() {
     echo "Running bootstrap tests..."
     echo ""
@@ -1052,6 +1170,15 @@ main() {
     run_test "INSTALL_TAILSCALE default honours the environment" "test_install_tailscale_default_is_env_respecting"
     run_test "prompt_tailscale_install detects installed tailscale" "test_prompt_tailscale_install_detects_installed"
     run_test "INSTALL_AI and INSTALL_TAILSCALE are independent" "test_install_ai_and_tailscale_are_independent"
+    echo ""
+
+    echo "=== npm-auth ==="
+    run_test "rewrites stale ~/.npmrc fixture" "test_npm_auth_rewrites_stale_npmrc"
+    run_test "refresh is idempotent" "test_npm_auth_is_idempotent"
+    run_test "creates missing ~/.npmrc (mode 600)" "test_npm_auth_creates_missing_npmrc"
+    run_test "token failure leaves ~/.npmrc unchanged" "test_npm_auth_token_failure_leaves_npmrc_unchanged"
+    run_test "--if-available skips quietly" "test_npm_auth_if_available_skips_quietly"
+    run_test "bootstrap delegates to npm-auth" "test_bootstrap_delegates_to_npm_auth"
     echo ""
 
     echo "=== self-update re-exec ==="

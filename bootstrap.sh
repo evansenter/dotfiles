@@ -1320,35 +1320,12 @@ install_agy_mcp_servers() {
 }
 
 configure_npm_registry() {
-	# Require gcloud and npm to be installed
-	if ! command -v gcloud >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
-		return 0
-	fi
-
-	# Check if user has an active gcloud account
-	local active_account
-	active_account=$(gcloud config get-value account 2>/dev/null) || return 0
-	if [[ -z "$active_account" ]]; then
-		return 0
-	fi
-
-	local settings
-	if settings=$(gcloud artifacts print-settings npm --project=artifact-foundry-prod --repository=ah-3p-staging-npm --location=us 2>/dev/null); then
-		echo "Configuring NPM registry credentials via gcloud..."
-
-		# Remove old/expired artifact-foundry-prod lines if present
-		if [[ -f "$HOME/.npmrc" ]]; then
-			local tmp_npmrc
-			tmp_npmrc=$(mktemp)
-			grep -v "artifact-foundry-prod" "$HOME/.npmrc" > "$tmp_npmrc" || true
-			mv "$tmp_npmrc" "$HOME/.npmrc"
-		fi
-
-		# Strip the deprecated always-auth line. Prepend a newline so the first
-		# appended line can't concatenate onto an existing ~/.npmrc entry.
-		{ printf '\n'; echo "$settings" | { grep -v "always-auth" || true; }; } >> "$HOME/.npmrc"
-		echo "NPM registry credentials configured in ~/.npmrc"
-	fi
+	# Logic lives in home/.bin/npm-auth so the ~1h access token can be refreshed
+	# on its own (`npm-auth`) without a full sync. --if-available makes it a
+	# quiet no-op on machines without gcloud/npm or Artifact Registry access.
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	"$dotfiles_dir/home/.bin/npm-auth" --if-available || echo "  Warning: npm-auth failed; npm may return E401"
 }
 
 sync_dotfiles() {
