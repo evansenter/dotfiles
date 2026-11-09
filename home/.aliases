@@ -44,6 +44,9 @@ if ! command -v tailscale &>/dev/null && [[ -x /Applications/Tailscale.app/Conte
     alias tailscale="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
 fi
 
+# Refresh the ~1h Artifact Registry token in ~/.npmrc (run when npm hits E401)
+alias npm-auth="$HOME/.bin/npm-auth"
+
 # ==============================================================================
 # Git
 # ==============================================================================

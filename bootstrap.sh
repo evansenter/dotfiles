@@ -1320,51 +1320,12 @@ install_agy_mcp_servers() {
 }
 
 configure_npm_registry() {
-	# Require gcloud and npm to be installed
-	if ! command -v gcloud >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
-		return 0
-	fi
-
-	# Check if user has an active gcloud account
-	local active_account
-	active_account=$(gcloud config get-value account 2>/dev/null) || return 0
-	if [[ -z "$active_account" ]]; then
-		return 0
-	fi
-
-	local settings
-	if settings=$(gcloud artifacts print-settings npm --project=artifact-foundry-prod --repository=ah-3p-staging-npm --location=us 2>/dev/null); then
-		echo "Configuring NPM registry credentials via gcloud..."
-
-		# print-settings only emits the registry URL (plus a deprecated
-		# always-auth line) — it carries no credential. Without a token, npm
-		# hits the registry anonymously and fails with E401. Mint an OAuth access
-		# token (what `npx google-artifactregistry-auth` does). It expires after
-		# ~1h; re-run `./bootstrap.sh -f` to refresh it.
-		local registry token
-		registry=$(echo "$settings" | sed -n 's/^registry=//p' | head -n1)
-		token=$(gcloud auth print-access-token 2>/dev/null) || token=""
-		if [[ -z "$registry" || -z "$token" ]]; then
-			echo "Could not obtain NPM registry URL or gcloud access token; leaving ~/.npmrc unchanged."
-			return 0
-		fi
-
-		# Remove old/expired artifact-foundry-prod lines and the snippet comment
-		# gcloud prints (earlier versions of this function accumulated it), then
-		# squeeze runs of blank lines.
-		local tmp_npmrc
-		tmp_npmrc=$(mktemp)
-		if [[ -f "$HOME/.npmrc" ]]; then
-			grep -v -e "artifact-foundry-prod" -e "^# Insert the following snippet" "$HOME/.npmrc" | cat -s >"$tmp_npmrc" || true
-		fi
-		{
-			echo "registry=${registry}"
-			echo "${registry#https:}:_authToken=${token}"
-		} >>"$tmp_npmrc"
-		mv "$tmp_npmrc" "$HOME/.npmrc"
-		chmod 600 "$HOME/.npmrc"
-		echo "NPM registry credentials configured in ~/.npmrc (token valid ~1h)"
-	fi
+	# Logic lives in home/.bin/npm-auth so the ~1h access token can be refreshed
+	# on its own (`npm-auth`) without a full sync. --if-available makes it a
+	# quiet no-op on machines without gcloud/npm or Artifact Registry access.
+	local dotfiles_dir
+	dotfiles_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+	"$dotfiles_dir/home/.bin/npm-auth" --if-available || echo "  Warning: npm-auth failed; npm may return E401"
 }
 
 sync_dotfiles() {

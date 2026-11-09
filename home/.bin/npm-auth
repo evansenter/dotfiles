@@ -1,0 +1,88 @@
+#!/bin/bash
+# Refresh the Artifact Registry npm credential in ~/.npmrc.
+#
+# `gcloud artifacts print-settings npm` only emits the registry URL (plus a
+# deprecated always-auth line) — it carries no credential, so npm would hit the
+# registry anonymously and fail with E401. This mints an OAuth access token
+# (what `npx google-artifactregistry-auth` does) and writes it as _authToken.
+#
+# The token expires after ~1h: run `npm-auth` whenever npm starts returning
+# E401. bootstrap.sh calls this with --if-available during every sync.
+#
+# Usage: npm-auth [--if-available]
+#   --if-available  Exit 0 quietly when gcloud/npm/an active account/registry
+#                   access is missing (non-corp machines). Without it, those
+#                   cases are errors.
+set -euo pipefail
+
+PROJECT="artifact-foundry-prod"
+REPOSITORY="ah-3p-staging-npm"
+LOCATION="us"
+NPMRC="$HOME/.npmrc"
+
+if_available=false
+case "${1:-}" in
+	--if-available) if_available=true ;;
+	"") ;;
+	-h | --help)
+		sed -n '2,/^set -euo/{/^set -euo/d;s/^# \{0,1\}//;p;}' "$0"
+		exit 0
+		;;
+	*)
+		echo "npm-auth: unknown argument: $1" >&2
+		exit 2
+		;;
+esac
+
+# Prerequisite missing: silent no-op under --if-available, error otherwise.
+unavailable() {
+	if [[ "$if_available" == true ]]; then
+		exit 0
+	fi
+	echo "npm-auth: $1" >&2
+	exit 1
+}
+
+command -v gcloud >/dev/null 2>&1 || unavailable "gcloud not installed"
+command -v npm >/dev/null 2>&1 || unavailable "npm not installed"
+
+account=$(gcloud config get-value account 2>/dev/null) || account=""
+[[ -n "$account" ]] || unavailable "no active gcloud account (run: gcloud auth login)"
+
+settings=$(gcloud artifacts print-settings npm \
+	--project="$PROJECT" --repository="$REPOSITORY" --location="$LOCATION" 2>/dev/null) ||
+	unavailable "cannot read npm settings for $PROJECT/$REPOSITORY"
+
+registry=$(sed -n 's/^registry=//p' <<<"$settings" | head -n1)
+token=$(gcloud auth print-access-token 2>/dev/null) || token=""
+if [[ -z "$registry" || -z "$token" ]]; then
+	# Reached only once we know this is a machine that should have access, so
+	# always say so — but don't fail a bootstrap sync over it.
+	echo "npm-auth: could not obtain registry URL or gcloud access token; leaving ~/.npmrc unchanged." >&2
+	[[ "$if_available" == true ]] && exit 0
+	exit 1
+fi
+
+# Rewrite via a temp file in the same directory (atomic mv; mktemp is 0600, so
+# the token is never world-readable). Drop our previous entries and the snippet
+# comment gcloud prints (older bootstrap versions accumulated it), then trim the
+# blank lines those versions left at the end of the file. Everything else in
+# ~/.npmrc — including its interior blank lines — is left exactly as it was.
+tmp=$(mktemp "${NPMRC}.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+if [[ -f "$NPMRC" ]]; then
+	awk -v project="$PROJECT" '
+		index($0, project) || /^# Insert the following snippet/ { next }
+		{ lines[n++] = $0 }
+		END {
+			while (n > 0 && lines[n - 1] ~ /^[[:space:]]*$/) n--
+			for (i = 0; i < n; i++) print lines[i]
+		}
+	' "$NPMRC" >"$tmp"
+fi
+printf 'registry=%s\n%s:_authToken=%s\n' "$registry" "${registry#https:}" "$token" >>"$tmp"
+chmod 600 "$tmp"
+mv "$tmp" "$NPMRC"
+trap - EXIT
+
+echo "npm registry credentials refreshed in ~/.npmrc (token valid ~1h)"
