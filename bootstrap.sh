@@ -1336,18 +1336,34 @@ configure_npm_registry() {
 	if settings=$(gcloud artifacts print-settings npm --project=artifact-foundry-prod --repository=ah-3p-staging-npm --location=us 2>/dev/null); then
 		echo "Configuring NPM registry credentials via gcloud..."
 
-		# Remove old/expired artifact-foundry-prod lines if present
-		if [[ -f "$HOME/.npmrc" ]]; then
-			local tmp_npmrc
-			tmp_npmrc=$(mktemp)
-			grep -v "artifact-foundry-prod" "$HOME/.npmrc" > "$tmp_npmrc" || true
-			mv "$tmp_npmrc" "$HOME/.npmrc"
+		# print-settings only emits the registry URL (plus a deprecated
+		# always-auth line) — it carries no credential. Without a token, npm
+		# hits the registry anonymously and fails with E401. Mint an OAuth access
+		# token (what `npx google-artifactregistry-auth` does). It expires after
+		# ~1h; re-run `./bootstrap.sh -f` to refresh it.
+		local registry token
+		registry=$(echo "$settings" | sed -n 's/^registry=//p' | head -n1)
+		token=$(gcloud auth print-access-token 2>/dev/null) || token=""
+		if [[ -z "$registry" || -z "$token" ]]; then
+			echo "Could not obtain NPM registry URL or gcloud access token; leaving ~/.npmrc unchanged."
+			return 0
 		fi
 
-		# Strip the deprecated always-auth line. Prepend a newline so the first
-		# appended line can't concatenate onto an existing ~/.npmrc entry.
-		{ printf '\n'; echo "$settings" | { grep -v "always-auth" || true; }; } >> "$HOME/.npmrc"
-		echo "NPM registry credentials configured in ~/.npmrc"
+		# Remove old/expired artifact-foundry-prod lines and the snippet comment
+		# gcloud prints (earlier versions of this function accumulated it), then
+		# squeeze runs of blank lines.
+		local tmp_npmrc
+		tmp_npmrc=$(mktemp)
+		if [[ -f "$HOME/.npmrc" ]]; then
+			grep -v -e "artifact-foundry-prod" -e "^# Insert the following snippet" "$HOME/.npmrc" | cat -s >"$tmp_npmrc" || true
+		fi
+		{
+			echo "registry=${registry}"
+			echo "${registry#https:}:_authToken=${token}"
+		} >>"$tmp_npmrc"
+		mv "$tmp_npmrc" "$HOME/.npmrc"
+		chmod 600 "$HOME/.npmrc"
+		echo "NPM registry credentials configured in ~/.npmrc (token valid ~1h)"
 	fi
 }
 
