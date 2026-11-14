@@ -788,17 +788,6 @@ install_apt_packages() {
 	# Install bazelisk
 	install_npm_package "bazelisk" "bazelisk" "@aspect/bazelisk"
 
-	# Install piper-tts (text-to-speech)
-	prompt_ai_install
-	if [[ "$INSTALL_AI" == true ]] && ! command -v piper >/dev/null 2>&1; then
-		if command -v pip3 >/dev/null 2>&1; then
-			echo "Installing piper-tts..."
-			pip3 install --user piper-tts 2>/dev/null || pip3 install --user --break-system-packages piper-tts || echo "  Warning: Failed to install piper-tts (network issue?)"
-		else
-			echo "Skipping piper-tts (pip3 not installed)"
-		fi
-	fi
-
 	# Create fd alias (Debian/Ubuntu installs as fdfind)
 	if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
 		sudo ln -sf "$(which fdfind)" /usr/local/bin/fd
@@ -834,6 +823,9 @@ install_linux_common_packages() {
 		echo "Installing uv..."
 		curl -LsSf https://astral.sh/uv/install.sh | sh || echo "  Warning: Failed to install uv (network issue?)"
 	fi
+	# The uv installer only edits shell rc files; expose ~/.local/bin to this run so
+	# update_packages can find uv (and the tools it installs) on a first bootstrap.
+	[[ -d "$HOME/.local/bin" && ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"
 
 	# Install atuin (shell history)
 	if ! command -v atuin >/dev/null 2>&1; then
@@ -952,11 +944,20 @@ update_packages() {
 		fi
 	fi
 
-	# Update pip packages (no safe "update all" — list managed packages explicitly)
+	# Install/upgrade piper-tts (text-to-speech) as an isolated uv tool, pinned to
+	# Python 3.13. A pip install into the system Python breaks whenever Homebrew
+	# bumps python@3: the old interpreter is removed (leaving a dangling `piper`
+	# shebang) and onnxruntime lags new Python releases by months, so the
+	# reinstall has no wheels to resolve. uv fetches a managed 3.13 if needed.
 	prompt_ai_install
-	if [[ "$INSTALL_AI" == true ]] && command -v pip3 >/dev/null 2>&1; then
-		echo "Updating pip packages..."
-		pip3 install --upgrade piper-tts 2>/dev/null || pip3 install --upgrade --break-system-packages piper-tts 2>/dev/null || true
+	if [[ "$INSTALL_AI" == true ]]; then
+		if command -v uv >/dev/null 2>&1; then
+			echo "Installing/updating piper-tts..."
+			# --force: take over a `piper` entrypoint left by an earlier pip --user install
+			uv tool install --upgrade --force --python 3.13 piper-tts || echo "  Warning: Failed to install piper-tts"
+		else
+			echo "Skipping piper-tts (uv not installed)"
+		fi
 	fi
 
 	echo "Package updates complete."
