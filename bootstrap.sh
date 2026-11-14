@@ -823,6 +823,9 @@ install_linux_common_packages() {
 		echo "Installing uv..."
 		curl -LsSf https://astral.sh/uv/install.sh | sh || echo "  Warning: Failed to install uv (network issue?)"
 	fi
+	# The uv installer only edits shell rc files; expose ~/.local/bin to this run so
+	# update_packages can find uv (and the tools it installs) on a first bootstrap.
+	[[ -d "$HOME/.local/bin" && ":$PATH:" != *":$HOME/.local/bin:"* ]] && export PATH="$HOME/.local/bin:$PATH"
 
 	# Install atuin (shell history)
 	if ! command -v atuin >/dev/null 2>&1; then
